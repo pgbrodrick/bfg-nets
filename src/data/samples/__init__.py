@@ -75,7 +75,7 @@ class NumpyFileSampler(BaseSampler):
         inputs, targets = np.load(filepath)['arr_0']  # arr_0 = default key
         assert inputs.shape[1] == image_dim and inputs.shape[2] == image_dim, \
             'Sample image dim ({}) does not match requested image dim ({})' \
-                .format(list(inputs.shape)[1:3], [image_dim, image_dim])
+            .format(list(inputs.shape)[1:3], [image_dim, image_dim])
         assert inputs.shape[0] >= num_timesteps, \
             'Sample timeseries length ({}) is less than requested timesteps ({})'.format(inputs.shape[0], num_timesteps)
         filepath_metadata = os.path.splitext(filepath)[0] + '.json'
