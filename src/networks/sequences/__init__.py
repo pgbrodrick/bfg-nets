@@ -86,6 +86,9 @@ class BaseCNNSequence(BaseSequence):
     def _transform_x_y(self, x, y):
         # Segment images for better fit
         # TODO:  figure out whether we want this included and how to better handle?
+        # TODO:  I'm pretty sure there's something wrong with how data is handled
+        # TODO:  here, that I've got bugs that I haven't found due to how my data
+        # TODO:  is handled, we'll figure it out if we keep this function.
         if self.is_segmented is True:
             x, y = self._segment_x_y(x, y)
         # Required transforms for data quality
