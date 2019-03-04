@@ -4,7 +4,7 @@ import random
 
 import numpy as np
 
-from rsCNN.utils import logging
+from src.utils import logging
 
 
 # Data parameters

@@ -1,6 +1,6 @@
 import keras
 
-from rsCNN.networks.architectures.losses import cropped_mse
+from src.networks.architectures.losses import cropped_mse
 
 
 # TODO:  add to config
