@@ -1,0 +1,16 @@
+*
+!*/
+!*.sh
+!*.py
+!*.jl
+!*.R
+!*.c
+!*.h
+!*.hpp
+!*.cpp
+!*.idl
+!*.csh
+!*.txt
+!*.md
+!*.gitkeep
+
