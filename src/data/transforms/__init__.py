@@ -1,7 +1,7 @@
 import numpy as np
 import sklearn.preprocessing
 
-from rsCNN.utils import logging
+from src.utils import logging
 
 
 _logger = logging.get_child_logger(__name__)
