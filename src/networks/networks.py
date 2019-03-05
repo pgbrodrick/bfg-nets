@@ -3,7 +3,7 @@ import keras
 from keras.layers.convolutional import Conv2D, MaxPooling2D, UpSampling2D
 from keras.layers.normalization import BatchNormalization
 
-from general import *
+from src.util.general import *
 
 
 
