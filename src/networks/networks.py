@@ -7,74 +7,6 @@ from src.util.general import *
 
 
 
-class network_config:
-  def __init__(self,inshape,n_classes):
-    self.inshape = inshape
-    self.n_classes = n_classes
-
-    self.option = {}
-   
-  def fill_default_option(keyword,value):
-    """ Helper function to fill in option dictionary with a value
-        if it is not already populatedd     Arguments:
-    key - str
-      Key to search dictionary for.
-    value - value
-      Value to fill if no existing value for key
-  
-    Returns:
-      None
-    """
-    if (key not in option):
-      return self.option[key] = value
-
-
-def flex_unet(network_config):
-    """ Construct a U-net style network with flexible shape based on
-        a network_config class
-
-    Arguments:
-    network_config - custom class
-      Designate configuraiton information about the network in question.
-    """
-
-    # Update potentially non-standard network parameters
-    network_config.fill_default_option('conv_depth',16)
-    network_config.fill_default_option('batch_norm',False)
-
-    # Return a call to the argument-specific version of flex_unet
-    return flex_unet(network_config.inshape,
-                     network_config.n_classes,
-                     network_config['conv_depth'],
-                     network_config['batch_norm']):
-
-
-def flat_regress_net(network_config):
-    """ Construct a flat style network with flexible shape using
-        a network_config class
-
-    Arguments:
-    network_config - custom class
-      Designate configuraiton information about the network in question.
-    """
-
-    # Update potentially non-standard network parameters
-    network_config.fill_default_option('conv_depth',16)
-    network_config.fill_default_option('batch_norm',False)
-    network_config.fill_default_option('n_layers',8)
-    network_config.fill_default_option('conv_pattern',[3])
-    network_config.fill_default_option('output_activation','softmax')
-
-    # Return a call to the argument-specific version of flex_unet
-    return flex_unet(network_config.inshape,
-                     network_config.n_classes,
-                     network_config['conv_depth'],
-                     network_config['batch_norm'],
-                     network_config['n_layers'],
-                     network_config['conv_pattern'],
-                     network_config['output_activation']):
-
-
 
 def flex_unet(inshape, n_classes, conv_depth, batch_norm):
     """ Construct a U-net style network with flexible shape
@@ -205,29 +137,6 @@ def flat_regress_net(inshape, n_classes, conv_depth, batch_norm, n_layers, conv_
 
 
 
-
-def get_network(net_name,inshape,n_classes,kwargs={}):
-  """ Helper function to return the appropriate network.
-  
-  Arguments:
-  net_name - str
-    Name of the network to fetch.  Options are:
-      flex_unet - a flexible, U-net style network.
-  inshape - tuple/list
-    Designates the input shape of an image to be passed to
-    the network.
-  n_classes - int
-    The number of classes the network is meant to classify.
-  kwargs - dict
-    An optional dictionary of extra keywords for different networks.
-
-  Returns:
-    A Keras network in the designated style.
-  """
-  if (net_name == 'flex_unet'):
-    return flex_unet(inshape,n_classes,kwargs)
-  else:
-    raise NotImplementedError('Unknown network name')
 
 
 

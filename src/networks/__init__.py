@@ -6,7 +6,170 @@ import keras
 import keras.backend as K
 import numpy as np
 
+import src.networks.networks
 
+
+
+class network_config:
+  """ A wrapper class designed to hold all relevant configuration information for the
+      training of a new network.  
+  """ 
+  def __init__(self,network_name,inshape,n_classes):
+    """ 
+      Arguments:
+      network_name - str
+        Name of the network to use.  Options are:
+          flex_unet
+          flat_regress_net
+      inshape - tuple/list
+        Designates the input shape of an image to be passed to
+        the network.
+      n_classes - int
+        The number of classes the network is meant to classify/regress.
+    """ 
+    self.network_name = network_name
+    self.inshape = inshape
+    self.n_classes = n_classes
+
+    #TODO: Fabina, if there are other things you want to be read in (defaults like directories
+    #or whatnot, add them here as defaults.  The read_from* functions can pull in overwrite values
+    #as desired
+
+    self.option = {}
+   
+  def fill_default_option(keyword,value):
+    """ Helper function to fill in option dictionary with a value
+        if it is not already populatedd     
+    
+    Arguments:
+    key - str
+      Key to search dictionary for.
+    value - value
+      Value to fill if no existing value for key
+    """
+    if (key not in option):
+      return self.option[key] = value
+
+  def read_from_file(filename):
+    """ Read in optional arguments from file
+    Arguments:
+    filename - str
+      Name of file to read.
+    """
+
+    ################ TODO: Read in from file (yaml?)
+    a = None
+
+  def read_from_dict(in_dict):
+    """ Read in optional arguments from dictionary
+    Arguments:
+    in_dict - dictionary
+      Dictionary of values to read in.
+    """
+    for key in in_dict:
+      self.option[key] = in_dict[key]
+
+
+######## TODO - Fabina, can you populate this with the useful info you want to retain from training?
+class training_data:
+  """ A wrapper class designed to hold all relevant configuration information obtained
+      during training/testing the model.  
+  """ 
+
+
+class CNN():
+
+  def __init__(self):
+    self.model = None
+    self.config = None
+    self.training = None
+
+
+  def create_config(network_name,input_shape,n_classes,network_file=None,network_dictionary):
+    self.config = network_config(network_name,input_shape,n_classes)
+
+    if (network_file is not None):
+      self.config.read_from_file(network_file)
+
+    if (network_dictionary is not None):
+      self.config.read_from_dict(network_dictionary)
+
+
+  def create_network():
+    """ Initializes the appropriate network
+
+    Arguments:
+    net_name - str
+      Name of the network to fetch.  Options are:
+        flex_unet - a flexible, U-net style network.
+    inshape - tuple/list
+      Designates the input shape of an image to be passed to
+      the network.
+    n_classes - int
+      The number of classes the network is meant to classify.
+    """
+
+    if (self.network_name == 'flex_unet'):
+      # Update potentially non-standard network parameters
+      self.config.fill_default_option('conv_depth',16)
+      self.config.fill_default_option('batch_norm',False)
+
+      # Return a call to the argument-specific version of flex_unet
+      self.model =  flex_unet(self.config.inshape,
+                              self.config.n_classes,
+                              self.config['conv_depth'],
+                              self.config['batch_norm']):
+    elif (self.network_name == 'flat_regress_net'):
+
+      # Update potentially non-standard network parameters
+      self.config.fill_default_option('conv_depth',16)
+      self.config.fill_default_option('batch_norm',False)
+      self.config.fill_default_option('n_layers',8)
+      self.config.fill_default_option('conv_pattern',[3])
+      self.config.fill_default_option('output_activation','softmax')
+
+      self.model = networks.flat_regress_net(network_config)
+      self.model = flex_unet(network_config.inshape,
+                             self.config.n_classes,
+                             self.config['conv_depth'],
+                             self.config['batch_norm'],
+                             self.config['n_layers'],
+                             self.config['conv_pattern'],
+                             self.config['output_activation']):
+
+    else:
+      raise NotImplementedError('Unknown network name')
+
+
+  def calculate_training_memory_usage(batch_size):
+      # Shamelessly copied from
+      # https://stackoverflow.com/questions/43137288/how-to-determine-needed-memory-of-keras-model
+      # but not tested rigorously
+      shapes_mem_count = 0
+      for l in self.model.layers:
+          single_layer_mem = 1
+          for s in l.output_shape:
+              if s is None:
+                  continue
+              single_layer_mem *= s
+          shapes_mem_count += single_layer_mem
+  
+      trainable_count = np.sum([K.count_params(p) for p in set(self.model.trainable_weights)])
+      non_trainable_count = np.sum([K.count_params(p) for p in set(self.model.non_trainable_weights)])
+  
+      number_size = 4.0
+      if K.floatx() == 'float16':
+          number_size = 2.0
+      if K.floatx() == 'float64':
+          number_size = 8.0
+  
+      total_memory = number_size*(batch_size*shapes_mem_count + trainable_count + non_trainable_count)
+      gbytes = np.round(total_memory / (1024.0 ** 3), 3)
+      return gbytes
+
+
+
+######## Deprecated.  Let's migrate things upwards as necessary
 class NeuralNetwork(object):
     model = None
     history = None
@@ -138,29 +301,3 @@ class HistoryCheckpoint(keras.callbacks.Callback):
             old_history.setdefault(key, list()).extend(value)
         return old_history
 
-
-def calculate_model_memory_usage(model, batch_size):
-    # Shamelessly copied from
-    # https://stackoverflow.com/questions/43137288/how-to-determine-needed-memory-of-keras-model
-    # but not tested rigorously
-    shapes_mem_count = 0
-    for l in model.layers:
-        single_layer_mem = 1
-        for s in l.output_shape:
-            if s is None:
-                continue
-            single_layer_mem *= s
-        shapes_mem_count += single_layer_mem
-
-    trainable_count = np.sum([K.count_params(p) for p in set(model.trainable_weights)])
-    non_trainable_count = np.sum([K.count_params(p) for p in set(model.non_trainable_weights)])
-
-    number_size = 4.0
-    if K.floatx() == 'float16':
-        number_size = 2.0
-    if K.floatx() == 'float64':
-        number_size = 8.0
-
-    total_memory = number_size*(batch_size*shapes_mem_count + trainable_count + non_trainable_count)
-    gbytes = np.round(total_memory / (1024.0 ** 3), 3)
-    return gbytes
