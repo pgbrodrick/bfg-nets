@@ -48,19 +48,19 @@ def cropped_loss(outer_width,inner_width,loss_type,weighted=False):
           y_true = y_true[:, buffer:-buffer, buffer:-buffer, :]
           y_pred = y_pred[:, buffer:-buffer, buffer:-buffer, :]
 
-          if (loss_type == 'categorical_crossentropy'):
-            loss = keras.backend.categorical_crossentropy(y_true[...,:-1],y_pred)
-          elif (loss_type == 'mae'):
-            loss = keras.backend.mean(keras.backend.abs(y_true[...,:-1]-y_pred))
-          elif (loss_type == 'mse'):
-            loss = keras.backend.mean(keras.backend.power(y_true[...,:-1]-y_pred,2))
-          elif (loss_type == 'rmse'):
-            loss = keras.backend.power(keras.backend.mean(keras.backend.power(y_true[...,:-1]-y_pred,2)),0.5)
-          else:
-            raise NotImplementedError('Unknown loss function')
+        if (loss_type == 'categorical_crossentropy'):
+          loss = keras.backend.categorical_crossentropy(y_true[...,:-1],y_pred)
+        elif (loss_type == 'mae'):
+          loss = keras.backend.mean(keras.backend.abs(y_true[...,:-1]-y_pred))
+        elif (loss_type == 'mse'):
+          loss = keras.backend.mean(keras.backend.power(y_true[...,:-1]-y_pred,2))
+        elif (loss_type == 'rmse'):
+          loss = keras.backend.power(keras.backend.mean(keras.backend.power(y_true[...,:-1]-y_pred,2)),0.5)
+        else:
+          raise NotImplementedError('Unknown loss function')
 
-          if (weighted):
-            loss = loss * y_true[...,-1]
+        if (weighted):
+          loss = loss * y_true[...,-1]
         else:
           return loss
     return _cropped_cc
