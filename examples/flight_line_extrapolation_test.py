@@ -63,17 +63,13 @@ if (key == 'plot'):
   npzf = np.load(munge_file + '.npz')
   features = npzf['features']
   responses = npzf['responses']
-  print((np.min(features[features[...,0] != -9999,0]),np.max(features[features[...,0] != -9999,0])))
-  print((np.min(features[features[...,1] != -9999,1]),np.max(features[features[...,1] != -9999,1])))
-  print((np.min(features[features[...,2] != -9999,2]),np.max(features[features[...,2] != -9999,2])))
-  print((np.min(responses[responses != -9999]),np.max(responses[responses != -9999])))
   fold_assignments = npzf['fold_assignments']
   plot_utility.plot_training_data(features,responses,images_to_plot=5,feature_band=2)
   plt.savefig('figs/trainig_data.png',dpi=200)
 
 if (key == 'train' or key == 'all'):
-  responses[responses != -9999] = responses[responses != -9999]/1000.
-  features[features != -9999] = features[features != -9999]/1000.
+
+  ## TODO: rememeber to add option for constant value scaling
 
   model = train_model.train_regression(features,
                                      responses,
