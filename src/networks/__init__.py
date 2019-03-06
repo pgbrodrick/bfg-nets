@@ -14,11 +14,11 @@ class network_config:
   """ A wrapper class designed to hold all relevant configuration information for the
       training of a new network.  
   """ 
-  def __init__(self,network_name,inshape,n_classes):
+  def __init__(self,network_type,inshape,n_classes):
     """ 
       Arguments:
-      network_name - str
-        Name of the network to use.  Options are:
+      network_type - str
+        Style of the network to use.  Options are:
           flex_unet
           flat_regress_net
       inshape - tuple/list
@@ -27,7 +27,7 @@ class network_config:
       n_classes - int
         The number of classes the network is meant to classify/regress.
     """ 
-    self.network_name = network_name
+    self.network_type = network_type
     self.inshape = inshape
     self.n_classes = n_classes
 
@@ -37,19 +37,6 @@ class network_config:
 
     self.option = {}
    
-  def fill_default_option(keyword,value):
-    """ Helper function to fill in option dictionary with a value
-        if it is not already populatedd     
-    
-    Arguments:
-    key - str
-      Key to search dictionary for.
-    value - value
-      Value to fill if no existing value for key
-    """
-    if (key not in option):
-      return self.option[key] = value
-
   def read_from_file(filename):
     """ Read in optional arguments from file
     Arguments:
@@ -71,7 +58,7 @@ class network_config:
 
 
 ######## TODO - Fabina, can you populate this with the useful info you want to retain from training?
-class training_data:
+class training_history:
   """ A wrapper class designed to hold all relevant configuration information obtained
       during training/testing the model.  
   """ 
@@ -85,7 +72,7 @@ class CNN():
     self.training = None
 
 
-  def create_config(network_name,input_shape,n_classes,network_file=None,network_dictionary):
+  def create_config(network_name,input_shape,n_classes,network_file=None,network_dictionary=None):
     self.config = network_config(network_name,input_shape,n_classes)
 
     if (network_file is not None):
@@ -111,8 +98,8 @@ class CNN():
 
     if (self.network_name == 'flex_unet'):
       # Update potentially non-standard network parameters
-      self.config.fill_default_option('conv_depth',16)
-      self.config.fill_default_option('batch_norm',False)
+      self.config.set_default('conv_depth',16)
+      self.config.set_default('batch_norm',False)
 
       # Return a call to the argument-specific version of flex_unet
       self.model =  flex_unet(self.config.inshape,
@@ -122,11 +109,11 @@ class CNN():
     elif (self.network_name == 'flat_regress_net'):
 
       # Update potentially non-standard network parameters
-      self.config.fill_default_option('conv_depth',16)
-      self.config.fill_default_option('batch_norm',False)
-      self.config.fill_default_option('n_layers',8)
-      self.config.fill_default_option('conv_pattern',[3])
-      self.config.fill_default_option('output_activation','softmax')
+      self.config.set_default('conv_depth',16)
+      self.config.set_default('batch_norm',False)
+      self.config.set_default('n_layers',8)
+      self.config.set_default('conv_pattern',[3])
+      self.config.set_default('output_activation','softmax')
 
       self.model = networks.flat_regress_net(network_config)
       self.model = flex_unet(network_config.inshape,
