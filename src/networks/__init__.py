@@ -12,16 +12,7 @@ class CNN():
         self.config = None
         self.training = None
 
-    def create_config(self, network_name, input_shape, n_classes, network_file=None, network_dictionary=None):
-        self.config = NetworkConfig(network_name, input_shape, n_classes)
-
-        if (network_file is not None):
-            self.config.read_from_file(network_file)
-
-        if (network_dictionary is not None):
-            self.config.read_from_dict(network_dictionary)
-
-    def create_network(self):
+    def create_network(self, network_config):
         """ Initializes the appropriate network
 
         Arguments:
@@ -34,6 +25,7 @@ class CNN():
         n_classes - int
           The number of classes the network is meant to classify.
         """
+        self.config = network_config
 
         if (self.network_name == 'flex_unet'):
             # Update potentially non-standard network parameters
