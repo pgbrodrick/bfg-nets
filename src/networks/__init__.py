@@ -1,12 +1,10 @@
 import datetime
+import json
 import os
-import pickle
 
 import keras
 import keras.backend as K
 import numpy as np
-
-import src.networks.networks
 
 
 class NetworkConfig:
@@ -39,6 +37,7 @@ class NetworkConfig:
         self.filepath_history_out = kwargs.get('filepath_history_out', './history.json')
         self.checkpoint_periods = kwargs.get('checkpoint_periods', 5)
         self.verbosity = kwargs.get('verbosity', 1)
+        self.append_existing = kwargs.get('append_existing', False)
 
         # Callbacks
         self.callbacks_use_tensorboard = kwargs.get('callbacks_use_tensorboard', True)
@@ -62,10 +61,14 @@ class NetworkConfig:
 
 
 def get_callbacks(network_config):
+    if network_config.append_existing:
+        existing_history = load_history(network_config.filepath_history_out)
+    else:
+        existing_history = dict()
     callbacks = [
         HistoryCheckpoint(
             network_config.filepath_history_out,
-            existing_history=history,  # TODO
+            existing_history=existing_history,
             period=network_config.checkpoint_periods,
             verbose=network_config.verbosity
         ),
@@ -108,6 +111,13 @@ def get_callbacks(network_config):
     return callbacks
 
 
+def load_history(filepath):
+    with open(filepath, 'r') as file_:
+        history = json.load(file_)
+    return history
+
+
+
 # TODO - Fabina, can you populate this with the useful info you want to retain from training?
 class training_history:
     """ A wrapper class designed to hold all relevant configuration information obtained
@@ -122,7 +132,7 @@ class CNN():
         self.config = None
         self.training = None
 
-    def create_config(network_name, input_shape, n_classes, network_file=None, network_dictionary=None):
+    def create_config(self, network_name, input_shape, n_classes, network_file=None, network_dictionary=None):
         self.config = NetworkConfig(network_name, input_shape, n_classes)
 
         if (network_file is not None):
@@ -131,7 +141,7 @@ class CNN():
         if (network_dictionary is not None):
             self.config.read_from_dict(network_dictionary)
 
-    def create_network():
+    def create_network(self):
         """ Initializes the appropriate network
 
         Arguments:
