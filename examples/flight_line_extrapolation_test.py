@@ -26,15 +26,17 @@ window_radius = 16
 year = '2015'
 feature_files = ['dat/features/feat_subset.tif']
 response_files = ['dat/responses/resp_subset.tif']
+options = {
+    'max_samples': 30000,
+    'data_save_name': 'munged/cnn_munge_' + str(window_radius) + '_test',
+    'internal_window_radius': rint(window_radius*0.5),
+    'global_scaling': None,
+    'local_scaling': None,
+    'min_value': 0,
+    'max_value': 10000,
+}
 
-data_config = Data_Config(window_radius, feature_files, response_files)
-data_config.max_samples = 30000
-data_config.data_save_name = 'munged/cnn_munge_' + str(window_radius) + '_test'
-data_config.internal_window_radius = rint(window_radius*0.5)
-data_config.global_scaling = None
-data_config.local_scaling = None
-data_config.min_value = 0
-data_config.max_value = 10000
+data_config = Data_Config(window_radius, feature_files, response_files, **options)
 
 
 network_config = {}
