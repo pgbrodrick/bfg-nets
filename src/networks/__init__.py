@@ -280,6 +280,7 @@ class HistoryCheckpoint(keras.callbacks.Callback):
     def _format_history(self, new_history, old_history=None):
         if old_history is None:
             old_history = dict()
+        combined_history = old_history.copy()
         for key, value in new_history.history.items():
-            old_history.setdefault(key, list()).extend(value)
-        return old_history
+            combined_history.setdefault(key, list()).extend(value)
+        return combined_history

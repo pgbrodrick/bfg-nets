@@ -99,12 +99,12 @@ def _plot_predictions_page(predictions, targets, path_out=None):
                 axis.axis('off')
                 if idx_axis % 2 == 0:  # First plot in each pair
                     axis.imshow(targets[0, :, :, :])
-                    if idx_axis == 0:
+                    if idx_axis in (0, 2):
                         axis.set_title('Target')
                     targets = targets[1:, :, :, :]
                 else:  # Second plot in each pair
                     axis.imshow(predictions[0, :, :, :])
-                    if idx_axis == 0:
+                    if idx_axis in (1, 3):
                         axis.set_title('Prediction')
                     predictions = predictions[1:, :, :, :]
                     if predictions.shape[0] == 0:
