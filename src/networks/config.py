@@ -12,7 +12,7 @@ class NetworkConfig(object):
         training of a new network.
     """
 
-    def __init__(self, network_type, inshape, outshape, dir_out, **kwargs):
+    def __init__(self, network_type, inshape, n_classes, **kwargs):
         """
           Arguments:
           network_type - str
@@ -22,26 +22,24 @@ class NetworkConfig(object):
           inshape - tuple/list
             Designates the input shape of an image to be passed to
             the network.
-          outshape - tuple/list
+          n_classes - tuple/list
             Designates the output shape of targets to be fit by the network
-          dir_out - str
-            Directory for network output
         """
         self.network_type = network_type
         self.inshape = inshape
-        self.outshape = outshape
-        self.dir_out = dir_out
+        self.n_classes = n_classes
 
         # Optional arguments
-        self.filepath_model_out = kwargs.get('filepath_model_out', './model.h5')
-        self.filepath_history_out = kwargs.get('filepath_history_out', './history.json')
+        self.dir_out = kwargs.get('dir_out', './')
+        self.filepath_model_out = kwargs.get('filepath_model_out', 'model.h5')
+        self.filepath_history_out = kwargs.get('filepath_history_out', 'history.json')
         self.checkpoint_periods = kwargs.get('checkpoint_periods', 5)
         self.verbosity = kwargs.get('verbosity', 1)
         self.append_existing = kwargs.get('append_existing', False)
 
         # Callbacks
         self.callbacks_use_tensorboard = kwargs.get('callbacks_use_tensorboard', True)
-        self.filepath_tensorboard_out = kwargs.get('dir_tensorboard_out', './tensorboard')
+        self.filepath_tensorboard_out = kwargs.get('dir_tensorboard_out', 'tensorboard')
         self.tensorboard_update_freq = kwargs.get('tensorboard_update_freq', 'epoch')
         self.tensorboard_histogram_freq = kwargs.get('tensorboard_histogram_freq', 0)
         self.tensorboard_write_graph = kwargs.get('tensorboard', True)
