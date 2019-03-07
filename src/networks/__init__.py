@@ -61,62 +61,6 @@ class NetworkConfig:
         self.callbacks_use_terminate_on_nan = kwargs.get('terminate_on_nan', True)
 
 
-def get_callbacks(network_config):
-    if network_config.append_existing:
-        existing_history = load_history(network_config.filepath_history_out)
-    else:
-        existing_history = dict()
-    callbacks = [
-        callbacks.HistoryCheckpoint(
-            network_config.filepath_history_out,
-            existing_history=existing_history,
-            period=network_config.checkpoint_periods,
-            verbose=network_config.verbosity
-        ),
-        keras.callbacks.ModelCheckpoint(
-            network_config.filepath_model_out,
-            period=network_config.checkpoint_periods,
-            verbose=network_config.verbosity
-        ),
-    ]
-    if network_config.callbacks_use_early_stopping:
-        callbacks.append(
-            keras.callbacks.EarlyStopping(
-                monitor='loss',
-                min_delta=network_config.early_stopping_min_delta,
-                patience=network_config.early_stopping_patience
-            ),
-        )
-    if network_config.callbacks_use_reduced_learning_rate:
-        callbacks.append(
-            keras.callbacks.ReduceLROnPlateau(
-                monitor='loss',
-                factor=network_config.reduced_learning_rate_factor,
-                min_delta=network_config.reduced_learning_rate_min_delta,
-                patience=network_config.reduced_learning_rate_patience
-            ),
-        )
-    if network_config.callbacks_use_tensorboard:
-        callbacks.append(
-            keras.callbacks.TensorBoard(
-                network_config.filepath_tensorboard_out,
-                histogram_freq=network_config.tensorboard_histogram_freq,
-                write_graph=network_config.tensorboard_write_graph,
-                write_grads=network_config.tensorboard_write_grads,
-                write_images=network_config.tensorboard_write_images,
-                update_freq=network_config.tensorboard_update_freq,
-            ),
-        )
-    if network_config.callbacks.use_terminate_on_nan:
-        callbacks.append(keras.callbacks.TerminateOnNaN())
-    return callbacks
-
-
-def load_history(filepath):
-    with open(filepath, 'r') as file_:
-        history = json.load(file_)
-    return history
-
 
 # TODO - Fabina, can you populate this with the useful info you want to retain from training?
 class training_history:
@@ -257,5 +201,3 @@ class NeuralNetwork(object):
             use_multiprocessing=self._generator_use_multiprocessing, workers=self._generator_workers,
             verbose=self._verbosity
         )
-
-
