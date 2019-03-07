@@ -48,55 +48,41 @@ class BaseCNNSequence(BaseSequence):
 
     def __getitem__(self, idx):
         _logger.debug('Get {} batch with {} items via sequence'.format(self.type.lower(), self.batch_size))
+        if self.type is _TYPE_TESTING:
+            random.seed(a=0)
         if idx == 0:
             self.data_sampler.set_new_epoch()  # If new epoch, used to avoid using bootstrapped samples multiple times
         batch_inputs = None
         batch_targets = None
         for idx_pair in range(self.batch_size):
-            # TODO:  the sampler needs to return arrays of inputs and targets, where inputs = [x0, x1, x2 .. xN], etc,
-            # TODO:  and where the merge and transform steps assume that x and y come as arrays. More importantly, I
-            # TODO:  think we might want to change how samples are handled, since this pipeline is a bit gross and
-            # TODO:  hacky.
             x, y = self.data_sampler.get_sample(self.image_dim, self.num_timesteps)['sample']
-            x = self._merge_x_timesteps_and_channels(x)
             x, y = self._transform_x_y(x, y)
+            pair_input, pair_target = self._format_input_target_from_x_y(x, y)
             # Set input and target list lengths after seeing the dimension of inputs and targets
             if batch_inputs is None or batch_targets is None:
-                batch_inputs = [list() for _ in x]
-                batch_targets = [list() for _ in y]
+                batch_inputs = [list() for _ in pair_input]
+                batch_targets = [list() for _ in pair_target]
             # Append inputs and targets to the appropriate lists
-            for input_, inputs in zip(x, batch_inputs):
-                inputs.append([input_])
-            for target, targets in zip(y, batch_targets):
-                targets.append([target])
+            for input_, inputs in zip(pair_input, batch_inputs):
+                inputs.append(input_)
+            for target, targets in zip(pair_target, batch_targets):
+                targets.append(target)
         _logger.debug('Retrieved full batch'.format(self.batch_size))
         # Need list of np arrays for *_generator model methods
         batch_inputs = [np.array(inputs) for inputs in batch_inputs]
         batch_targets = [np.array(targets) for targets in batch_targets]
         return batch_inputs, batch_targets
 
-    def _merge_x_timesteps_and_channels(self, x):
-        # Start with (num_timesteps, image_dim, image_dim, num_channels)
-        # Moveaxis to (image_dim, image_dim, num_timesteps, num_channels)
-        # Reshape (image_dim, image_dim, num_timesteps * num_channels)
-        # Note the last axis will be (b0, g0, r0, b1, g1, r1 ... bn, gn, rn)
-        # Note that num_timesteps may be == 1 and this still works
-        return np.moveaxis(x, 0, 2).reshape(self.image_dim, self.image_dim, -1)
-
     def _transform_x_y(self, x, y):
         # Segment images for better fit
-        # TODO:  figure out whether we want this included and how to better handle?
-        # TODO:  I'm pretty sure there's something wrong with how data is handled
-        # TODO:  here, that I've got bugs that I haven't found due to how my data
-        # TODO:  is handled, we'll figure it out if we keep this function.
         if self.is_segmented is True:
             x, y = self._segment_x_y(x, y)
         # Required transforms for data quality
         x = self.data_transformer.transform(x)
         y = self.data_transformer.transform(y)
-        # TODO:  figure out how to better handle training (transform) vs testing (no transform) and how to better name
-        # TODO:  variables/modules to distinguish between pre-processing transforms and on-the-fly training variability
-        # TODO:  transforms
+        # Merge timesteps and channels into the same axis for the x array
+        x = self._merge_x_timesteps_and_channels(x)
+        # Return without transformations if testing and not training
         if self.type is not _TYPE_TRAINING:
             return x, y
         # Optional transforms for training variety
@@ -115,19 +101,34 @@ class BaseCNNSequence(BaseSequence):
         return x, y
 
     def _segment_x_y(self, x, y):
-        num_x_images = x.shape[2] / self.num_timesteps
+        num_x_images = x.shape[0]
         for idx_image in range(num_x_images):
-            idx_start = 2 * idx_image
-            idx_finish = idx_start + 2
-            x[:, :, idx_start:idx_finish] = self._segment_bands(x[:, :, idx_start:idx_finish])
+            x[idx_image, :, :, :] = self._segment_bands(x[idx_image, :, :, :])
         y = self._segment_bands(y)
         return x, y
 
     def _segment_bands(self, bands):
         # Not really RGB, just need the right dimensions
-        # TODO:  I can provide this code if we include segmentations ... I don't think we'll want this
         rgb_image = np.dstack([bands, np.zeros((bands.shape[0], bands.shape[1], 1))])
         segments = segmentation.generate_segmentation_felzenszwalb(rgb_image)
         idx_missing = ~np.all(np.isfinite(rgb_image), axis=2)
         segments = segmentation.remove_segments_for_missing_data(segments, idx_missing)
         return segmentation.calculate_segmentation_image(rgb_image, segments)[:, :, :2]
+
+    def _merge_x_timesteps_and_channels(self, x):
+        # Start with (num_timesteps, image_dim, image_dim, num_channels)
+        # Moveaxis to (image_dim, image_dim, num_timesteps, num_channels)
+        # Reshape (image_dim, image_dim, num_timesteps * num_channels)
+        # Note the last axis will be (b0, g0, r0, b1, g1, r1 ... bn, gn, rn)
+        # Note that num_timesteps may be == 1 and this still works
+        return np.moveaxis(x, 0, 2).reshape(self.image_dim, self.image_dim, -1)
+
+    def _format_input_target_from_x_y(self, x, y):
+        input_ = [x]
+        target = list()
+        if self.architecture in (_ARCH_RECONSTRUCTION, _ARCH_PREDICTION_RECONSTRUCTION):
+            target.append(x)
+        if self.architecture in (_ARCH_PREDICTION, _ARCH_PREDICTION_RECONSTRUCTION):
+            target.append(y)
+        return input_, target
+
