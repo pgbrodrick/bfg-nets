@@ -1,17 +1,20 @@
+import sys
+
 import gdal
-import ogr
-import rasterio.features
-import numpy as np
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
+import numpy as np
+import ogr
+import rasterio.features
 
+from src.data_management import Data_Config, training_data
+from src.networks import CNN
+from src.util.general import *
 #TODO manage imports
-import build_training_data
 import plot_utility
 import train_model
 import apply_model
-import sys
 
 
 
@@ -20,57 +23,52 @@ import sys
 key = sys.argv[1]
 
 window_radius=16
-internal_window_radius=int(round(window_radius*0.5))
 
 year = '2015'
 feature_files = ['dat/features/feat_subset.tif']
 response_files = ['dat/responses/resp_subset.tif']
-munge_file = 'munged/cnn_munge_' + str(window_radius) + '_test'
+
+data_config = Data_Config(window_radius, feature_files, response_files)
+data_config.max_samples = 30000
+data_config.data_save_name = 'munged/cnn_munge_' + str(window_radius) + '_test'
+data_config.internal_window_radius=rint(window_radius*0.5)
+data_config.global_scaling = None
+data_config.local_scaling=None
+data_config.min_value=0
+data_config.max_value=10000
 
 
-max_samples = 30000
+network_config = {}
+network_config['conv_depth'] = 16
+network_config['batch_norm'] = False
+network_config['n_layers'] = 10
+network_config['conv_pattern'] = 3
+network_config['output_activation'] = 'softplus'
+network_config['network_name'] = 'cwc_test_network'
+
+
+########## TODO: Training values that need to be set somewhere
+batch_size = 100
+verification_fold = 0
+n_noimprovement_repeats = 30
+
 model_name = 'test_flex'
-global_scaling=None
-local_scaling=None
 
 
 if (key == 'build' or key == 'all'):
-  features,responses,fold_assignments = build_training_data.\
-                                      build_regression_training_data_ordered(\
-                                      window_radius,
-                                      max_samples,
-                                      feature_files,
-                                      response_files,
-                                      internal_window_radius=internal_window_radius,
-                                      fill_in_feature_data=True,
-                                      local_scale_flag=local_scaling,
-                                      global_scale_flag=global_scaling,
-                                      nodata_maximum_fraction=0.0,
-                                      ignore_projections=True,
-                                      savename=munge_file,
-                                      response_min_value = 0,
-                                      response_max_value=10000,
-                                      verbose=2)
+  features,responses,fold_assignments = training_data.build_regression_training_data_ordered(data_config)
 
-
-if (key == 'train'):
-  npzf = np.load(munge_file + '.npz')
-  features = npzf['features']
-  responses = npzf['responses']
-  fold_assignments = npzf['fold_assignments']
-
-if (key == 'plot'):
-  npzf = np.load(munge_file + '.npz')
-  features = npzf['features']
-  responses = npzf['responses']
-  fold_assignments = npzf['fold_assignments']
-  plot_utility.plot_training_data(features,responses,images_to_plot=5,feature_band=2)
-  plt.savefig('figs/trainig_data.png',dpi=200)
+#TODO add option for plotting training data previews
 
 if (key == 'train' or key == 'all'):
 
   ## TODO: rememeber to add option for constant value scaling
 
+  cnn = CNN()
+  cnn.create_config('flat_regress_net',config.feature_shape[1:],1,network_dictionary=network_config)
+
+
+  # TODO: training needs to be done yet
   model = train_model.train_regression(features,
                                      responses,
                                      fold_assignments,
