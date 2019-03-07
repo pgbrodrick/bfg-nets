@@ -34,16 +34,7 @@ class CNN():
                                    self.config['conv_depth'],
                                    self.config['batch_norm']):
         elif (self.network_name == 'flat_regress_net'):
-
-            # Update potentially non-standard network parameters
-            self.config.set_default('conv_depth', 16)
-            self.config.set_default('batch_norm', False)
-            self.config.set_default('n_layers', 8)
-            self.config.set_default('conv_pattern', [3])
-            self.config.set_default('output_activation', 'softmax')
-
-            self.model = networks.flat_regress_net(NetworkConfig)
-            self.model = flex_unet(NetworkConfig.inshape,
+            self.model = flat_regress_net(NetworkConfig.inshape,
                                    self.config.n_classes,
                                    self.config['conv_depth'],
                                    self.config['batch_norm'],

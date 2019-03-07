@@ -19,7 +19,6 @@ class FlexUnetConfig(NetworkConfig):
         self.batch_norm = kwargs.get('batch_norm', False)
 
 
-
 def flex_unet(inshape, n_classes, conv_depth, batch_norm):
     """ Construct a U-net style network with flexible shape
 

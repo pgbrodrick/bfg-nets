@@ -3,10 +3,23 @@ import keras
 from keras.layers.convolutional import Conv2D
 from keras.layers.normalization import BatchNormalization
 
-from src.util.general import *
+from src.networks.config import NetworkConfig
 
 
-##### Networks #####
+# TODO:  Phil:  like with u-net, is this the name we want to use? If so, please rename the script how you see fit.
+
+
+class FlexUnetConfig(NetworkConfig):
+
+    def __init__(self, network_type, inshape, n_classes, **kwargs):
+        super().__init__(network_type, inshape, n_classes)
+        self.conv_depth = kwargs.get('conv_depth', 16)
+        self.batch_norm = kwargs.get('batch_norm', False)
+        self.n_layers = kwargs.get('n_layers', 8)
+        self.conv_pattern = kwargs.get('conv_pattern', [3])
+        self.output_activation = kwargs.get('output_activation', 'softmax')
+
+
 def flat_regress_net(inshape, n_classes, conv_depth, batch_norm, n_layers, conv_pattern, output_activation):
     """ Construct a flat style network with flexible shape
 
@@ -52,3 +65,4 @@ def flat_regress_net(inshape, n_classes, conv_depth, batch_norm, n_layers, conv_
     output_layer = Conv2D(n_classes, (1, 1), activation=output_activation, padding='same')(b1)
     model = keras.models.Model(input=inlayer, output=output_layer)
     return model
+
