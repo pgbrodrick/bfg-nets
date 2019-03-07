@@ -1,11 +1,8 @@
-import json
 import os
 
 import keras
 import keras.backend as K
 import numpy as np
-
-from src.networks import callbacks
 
 
 class NetworkConfig:
@@ -59,7 +56,6 @@ class NetworkConfig:
         self.reduced_learning_rate_patience = kwargs.get('reduced_learning_rate_patience', 10)
 
         self.callbacks_use_terminate_on_nan = kwargs.get('terminate_on_nan', True)
-
 
 
 # TODO - Fabina, can you populate this with the useful info you want to retain from training?
