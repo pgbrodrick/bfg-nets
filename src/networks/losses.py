@@ -1,12 +1,8 @@
 import keras
 
 
-
-
-
-
 # TODO: - delete if you're okay with the update
-#def cropped_mse(loss_buffer_constant):
+# def cropped_mse(loss_buffer_constant):
 #    def _cropped_mse(y_true, y_pred):
 #        # Need to reference y_pred shape, y_true shape will be tuple of Nones during compilation
 #        buffer_x = int(loss_buffer_constant * keras.backend.int_shape(y_pred)[1])
@@ -17,9 +13,7 @@ import keras
 #    return _cropped_mse
 
 
-
-
-def cropped_loss(outer_width,inner_width,loss_type,weighted=False):
+def cropped_loss(outer_width, inner_width, loss_type, weighted=False):
     """ Loss function with optional per-pixel weighting
         and edge trimming options.
 
@@ -44,39 +38,23 @@ def cropped_loss(outer_width,inner_width,loss_type,weighted=False):
 
     def _cropped_cc(y_true, y_pred):
         if (outer_width != inner_width):
-          buffer = rint((outer_width-inner_width) / 2)
-          y_true = y_true[:, buffer:-buffer, buffer:-buffer, :]
-          y_pred = y_pred[:, buffer:-buffer, buffer:-buffer, :]
+            buffer = rint((outer_width-inner_width) / 2)
+            y_true = y_true[:, buffer:-buffer, buffer:-buffer, :]
+            y_pred = y_pred[:, buffer:-buffer, buffer:-buffer, :]
 
         if (loss_type == 'categorical_crossentropy'):
-          loss = keras.backend.categorical_crossentropy(y_true[...,:-1],y_pred)
+            loss = keras.backend.categorical_crossentropy(y_true[..., :-1], y_pred)
         elif (loss_type == 'mae'):
-          loss = keras.backend.mean(keras.backend.abs(y_true[...,:-1]-y_pred))
+            loss = keras.backend.mean(keras.backend.abs(y_true[..., :-1]-y_pred))
         elif (loss_type == 'mse'):
-          loss = keras.backend.mean(keras.backend.power(y_true[...,:-1]-y_pred,2))
+            loss = keras.backend.mean(keras.backend.power(y_true[..., :-1]-y_pred, 2))
         elif (loss_type == 'rmse'):
-          loss = keras.backend.power(keras.backend.mean(keras.backend.power(y_true[...,:-1]-y_pred,2)),0.5)
+            loss = keras.backend.power(keras.backend.mean(keras.backend.power(y_true[..., :-1]-y_pred, 2)), 0.5)
         else:
-          raise NotImplementedError('Unknown loss function')
+            raise NotImplementedError('Unknown loss function')
 
         if (weighted):
-          loss = loss * y_true[...,-1]
+            loss = loss * y_true[..., -1]
         else:
-          return loss
+            return loss
     return _cropped_cc
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
