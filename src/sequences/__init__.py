@@ -131,4 +131,3 @@ class BaseCNNSequence(BaseSequence):
         if self.architecture in (_ARCH_PREDICTION, _ARCH_PREDICTION_RECONSTRUCTION):
             target.append(y)
         return input_, target
-
