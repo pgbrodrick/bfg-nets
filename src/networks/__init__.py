@@ -28,10 +28,6 @@ class CNN():
         self.config = network_config
 
         if (self.network_name == 'flex_unet'):
-            # Update potentially non-standard network parameters
-            self.config.set_default('conv_depth', 16)
-            self.config.set_default('batch_norm', False)
-
             # Return a call to the argument-specific version of flex_unet
             self.model = flex_unet(self.config.inshape,
                                    self.config.n_classes,
