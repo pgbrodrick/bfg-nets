@@ -87,12 +87,3 @@ class DataConfig:
         # stored values for the eventual feature and response shapes
         self.response_shape = kwargs.get('response_shape', None)
         self.feature_shape = kwargs.get('feature_shape', None)
-
-
-# TODO
-# def read_from_file(filename):
-#  """ Read in optional arguments from file
-#  Arguments:
-#  filename - str
-#    Name of file to read.
-#  """
