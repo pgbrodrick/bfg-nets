@@ -5,7 +5,7 @@ import keras.backend as K
 import numpy as np
 
 
-class NetworkConfig:
+class NetworkConfig(object):
     """ A wrapper class designed to hold all relevant configuration information for the
         training of a new network.  
     """
@@ -161,14 +161,15 @@ class NeuralNetwork(object):
     _generator_use_multiprocessing = True
 
     def __init__(self, model=None, dir_load=None, custom_objects=None):
-        assert model is None or dir_load is None, 'Must either pass compiled model or directory with saved model data'
+        # If the user created a model, use the model -> unnecessary given the network config now
         if model:
             self.model = model
+        # Otherwise load up the model and history from a previously trained model
         elif dir_load:
             self.model = keras.models.load_model(
                 os.path.join(dir_load, self._filename_model), custom_objects=custom_objects)
             with open(os.path.join(dir_load, self._filename_history), 'rb') as file_:
-                self.history = pickle.load(file_)
+                callbacks.load_history(file_)
             self._initial_epoch = len(self.history['lr'])
             K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
 
