@@ -1,12 +1,7 @@
-
-
 import gdal
 import numpy as np
 
 from src.util.general import *
-
-
-window_radius, max_samples, feature_file_list, response_file_list, boundary_file_list = [], boundary_as_vectors = True, boundary_bad_value = 0, internal_window_radius = None, savename = None, nodata_maximum_fraction = 0.5, fill_in_feature_data = False, global_scale_flag = None, local_scale_flag = None, nodata_value = -9999, random_seed = 13, n_folds = 10, verbose = False, ignore_projections = False, response_min_value = None, response_max_value = None
 
 
 def build_regression_training_data_ordered(config):
