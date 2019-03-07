@@ -9,12 +9,12 @@ import numpy as np
 import src.networks.networks
 
 
-class network_config:
+class NetworkConfig:
     """ A wrapper class designed to hold all relevant configuration information for the
         training of a new network.  
     """
 
-    def __init__(self, network_type, inshape, n_classes):
+    def __init__(self, network_type, inshape, outshape, dir_out, **kwargs):
         """ 
           Arguments:
           network_type - str
@@ -24,37 +24,88 @@ class network_config:
           inshape - tuple/list
             Designates the input shape of an image to be passed to
             the network.
-          n_classes - int
-            The number of classes the network is meant to classify/regress.
+          outshape - tuple/list
+            Designates the output shape of targets to be fit by the network
+          dir_out - str
+            Directory for network output
         """
         self.network_type = network_type
         self.inshape = inshape
-        self.n_classes = n_classes
+        self.outshape = outshape
+        self.dir_out = dir_out
 
-        # TODO: Fabina, if there are other things you want to be read in (defaults like directories
-        # or whatnot, add them here as defaults.  The read_from* functions can pull in overwrite values
-        # as desired
+        # Optional arguments
+        self.filepath_model_out = kwargs.get('filepath_model_out', './model.h5')
+        self.filepath_history_out = kwargs.get('filepath_history_out', './history.json')
+        self.checkpoint_periods = kwargs.get('checkpoint_periods', 5)
+        self.verbosity = kwargs.get('verbosity', 1)
 
-        self.option = {}
+        # Callbacks
+        self.callbacks_use_tensorboard = kwargs.get('callbacks_use_tensorboard', True)
+        self.filepath_tensorboard_out = kwargs.get('dir_tensorboard_out', './tensorboard')
+        self.tensorboard_update_freq = kwargs.get('tensorboard_update_freq', 'epoch')
+        self.tensorboard_histogram_freq = kwargs.get('tensorboard_histogram_freq', 0)
+        self.tensorboard_write_graph = kwargs.get('tensorboard', True)
+        self.tensorboard_write_grads = kwargs.get('tensorboard', False)
+        self.tensorboard_write_images = kwargs.get('tensorboard', True)
 
-    def read_from_file(filename):
-        """ Read in optional arguments from file
-        Arguments:
-        filename - str
-          Name of file to read.
-        """
+        self.callbacks_use_early_stopping = kwargs.get('callbacks_use_early_stopping', True)
+        self.early_stopping_min_delta = kwargs.get('early_stopping_min_delta', 10**-4)
+        self.early_stopping_patience = kwargs.get('early_stopping_patience', 50)
 
-        # TODO: Read in from file (yaml?)
-        a = None
+        self.callbacks_use_reduced_learning_rate = kwargs.get('callbacks_use_reduced_learning_rate', True)
+        self.reduced_learning_rate_factor = kwargs.get('reduced_learning_rate_factor', 0.5)
+        self.reduced_learning_rate_min_delta = kwargs.get('reduced_learning_rate_min_delta', 10**-4)
+        self.reduced_learning_rate_patience = kwargs.get('reduced_learning_rate_patience', 10)
 
-    def read_from_dict(in_dict):
-        """ Read in optional arguments from dictionary
-        Arguments:
-        in_dict - dictionary
-          Dictionary of values to read in.
-        """
-        for key in in_dict:
-            self.option[key] = in_dict[key]
+        self.callbacks_use_terminate_on_nan = kwargs.get('terminate_on_nan', True)
+
+
+def get_callbacks(network_config):
+    callbacks = [
+        HistoryCheckpoint(
+            network_config.filepath_history_out,
+            existing_history=history,  # TODO
+            period=network_config.checkpoint_periods,
+            verbose=network_config.verbosity
+        ),
+        keras.callbacks.ModelCheckpoint(
+            network_config.filepath_model_out,
+            period=network_config.checkpoint_periods,
+            verbose=network_config.verbosity
+        ),
+    ]
+    if network_config.callbacks_use_early_stopping:
+        callbacks.append(
+            keras.callbacks.EarlyStopping(
+                monitor='loss',
+                min_delta=network_config.early_stopping_min_delta,
+                patience=network_config.early_stopping_patience
+            ),
+        )
+    if network_config.callbacks_use_reduced_learning_rate:
+        callbacks.append(
+            keras.callbacks.ReduceLROnPlateau(
+                monitor='loss',
+                factor=network_config.reduced_learning_rate_factor,
+                min_delta=network_config.reduced_learning_rate_min_delta,
+                patience=network_config.reduced_learning_rate_patience
+            ),
+        )
+    if network_config.callbacks_use_tensorboard:
+        callbacks.append(
+            keras.callbacks.TensorBoard(
+                network_config.filepath_tensorboard_out,
+                histogram_freq=network_config.tensorboard_histogram_freq,
+                write_graph=network_config.tensorboard_write_graph,
+                write_grads=network_config.tensorboard_write_grads,
+                write_images=network_config.tensorboard_write_images,
+                update_freq=network_config.tensorboard_update_freq,
+            ),
+        )
+    if network_config.callbacks.use_terminate_on_nan:
+        callbacks.append(keras.callbacks.TerminateOnNaN())
+    return callbacks
 
 
 # TODO - Fabina, can you populate this with the useful info you want to retain from training?
@@ -72,7 +123,7 @@ class CNN():
         self.training = None
 
     def create_config(network_name, input_shape, n_classes, network_file=None, network_dictionary=None):
-        self.config = network_config(network_name, input_shape, n_classes)
+        self.config = NetworkConfig(network_name, input_shape, n_classes)
 
         if (network_file is not None):
             self.config.read_from_file(network_file)
@@ -113,8 +164,8 @@ class CNN():
             self.config.set_default('conv_pattern', [3])
             self.config.set_default('output_activation', 'softmax')
 
-            self.model = networks.flat_regress_net(network_config)
-            self.model = flex_unet(network_config.inshape,
+            self.model = networks.flat_regress_net(NetworkConfig)
+            self.model = flex_unet(NetworkConfig.inshape,
                                    self.config.n_classes,
                                    self.config['conv_depth'],
                                    self.config['batch_norm'],
@@ -154,31 +205,8 @@ class CNN():
 
 # Deprecated.  Let's migrate things upwards as necessary
 class NeuralNetwork(object):
-    model = None
-    history = None
     _verbosity = 1
-    _filename_model = 'model.h5'
-    _filename_history = 'history.pkl'
-    _dir_tensorboard = 'tensorboard'
     _initial_epoch = 0
-    # TODO:  break the following out into a config? not critical unless there's a reason for vastly different values
-    _cbs_es_min_delta = 10**-4
-    _cbs_es_patience = 50
-    _cbs_rlr_factor = 0.5
-    _cbs_rlr_min_delta = 10**-4
-    _cbs_rlr_patience = 10
-    _cbs_period = 5
-    _cbs_tb_histogram_freq = 0
-    _cbs_tb_write_graph = True
-    _cbs_tb_write_grads = False
-    _cbs_tb_write_images = True
-    _cbs_tb_update_freq = 'epoch'
-    _callbacks = [
-        keras.callbacks.TerminateOnNaN(),
-        keras.callbacks.EarlyStopping(monitor='loss', min_delta=_cbs_es_min_delta, patience=_cbs_es_patience),
-        keras.callbacks.ReduceLROnPlateau(
-            factor=_cbs_rlr_factor, monitor='loss', min_delta=_cbs_rlr_min_delta, patience=_cbs_rlr_patience),
-    ]
     _generator_max_queue_size = 100
     _generator_workers = 1
     _generator_use_multiprocessing = True
@@ -195,25 +223,8 @@ class NeuralNetwork(object):
             self._initial_epoch = len(self.history['lr'])
             K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
 
-    def calculate_model_memory_usage(self, batch_size):
-        return calculate_model_memory_usage(self.model, batch_size)
-
     def fit_sequence(self, train_sequence, dir_out, max_training_epochs, validation_sequence=None):
         # Prep callbacks with dynamic parameters
-        filepath_model = os.path.join(dir_out, self._filename_model)
-        filepath_history = os.path.join(dir_out, self._filename_history)
-        dir_tensorboard = os.path.join(dir_out, self._dir_tensorboard)
-        callbacks_dynamic = [
-            HistoryCheckpoint(
-                filepath_history, existing_history=self.history, period=self._cbs_period, verbose=self._verbosity),
-            keras.callbacks.ModelCheckpoint(filepath_model, period=self._cbs_period, verbose=self._verbosity),
-            keras.callbacks.TensorBoard(
-                dir_tensorboard, histogram_freq=self._cbs_tb_histogram_freq, write_graph=self._cbs_tb_write_graph,
-                write_grads=self._cbs_tb_write_grads, write_images=self._cbs_tb_write_images,
-                update_freq=self._cbs_tb_update_freq
-            ),
-        ]
-        callbacks = self._callbacks + callbacks_dynamic
         # Train model
         self.model.fit_generator(
             train_sequence, epochs=max_training_epochs, callbacks=callbacks, validation_data=validation_sequence,
