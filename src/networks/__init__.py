@@ -35,12 +35,12 @@ class CNN():
                                    self.config['batch_norm']):
         elif (self.network_name == 'flat_regress_net'):
             self.model = flat_regress_net(NetworkConfig.inshape,
-                                   self.config.n_classes,
-                                   self.config['conv_depth'],
-                                   self.config['batch_norm'],
-                                   self.config['n_layers'],
-                                   self.config['conv_pattern'],
-                                   self.config['output_activation']):
+                                          self.config.n_classes,
+                                          self.config['conv_depth'],
+                                          self.config['batch_norm'],
+                                          self.config['n_layers'],
+                                          self.config['conv_pattern'],
+                                          self.config['output_activation']):
 
         else:
             raise NotImplementedError('Unknown network name')

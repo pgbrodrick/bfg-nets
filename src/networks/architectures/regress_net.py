@@ -65,4 +65,3 @@ def flat_regress_net(inshape, n_classes, conv_depth, batch_norm, n_layers, conv_
     output_layer = Conv2D(n_classes, (1, 1), activation=output_activation, padding='same')(b1)
     model = keras.models.Model(input=inlayer, output=output_layer)
     return model
-
