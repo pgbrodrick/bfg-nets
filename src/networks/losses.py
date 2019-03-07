@@ -26,17 +26,19 @@ def cropped_loss(outer_width, inner_width, loss_type, weighted=False):
 
     def _cropped_cc(y_true, y_pred):
         if (outer_width != inner_width):
-            buffer = rint((outer_width-inner_width) / 2)
+            buffer = int(round((outer_width-inner_width) / 2))
             y_true = y_true[:, buffer:-buffer, buffer:-buffer, :]
             y_pred = y_pred[:, buffer:-buffer, buffer:-buffer, :]
 
         if (loss_type == 'categorical_crossentropy'):
             loss = keras.backend.categorical_crossentropy(y_true[..., :-1], y_pred)
         elif (loss_type == 'mae'):
-            loss = keras.backend.mean(keras.backend.abs(y_true[..., :-1]-y_pred))
+            loss = keras.backend.mean(keras.backend.abs(y_true[..., :-1] - y_pred))
         elif (loss_type == 'mse'):
-            loss = keras.backend.mean(keras.backend.power(y_true[..., :-1]-y_pred, 2))
+            # TODO:  power?
+            loss = keras.backend.mean(keras.backend.power(y_true[..., :-1] - y_pred, 2))
         elif (loss_type == 'rmse'):
+            # TODO:  power?
             loss = keras.backend.power(keras.backend.mean(keras.backend.power(y_true[..., :-1]-y_pred, 2)), 0.5)
         else:
             raise NotImplementedError('Unknown loss function')
