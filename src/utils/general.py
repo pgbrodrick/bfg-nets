@@ -42,6 +42,7 @@ def scale_vector(dat, flag, nodata_value=VALUE_NO_DATA):
 
 
 def rint(num):
+    # TODO:  we may need to handle nans here?
     """ Round a number to it's nearest integer value, and cast it as an integer. """
     return int(round(num))
 
