@@ -27,6 +27,9 @@ class HistoryCheckpoint(keras.callbacks.Callback):
             self.existing_history.setdefault(key, list())
         super().on_train_begin(logs)
 
+    def on_train_end(self, logs=None):
+        self._save_history()
+
     def on_epoch_begin(self, epoch, logs=None):
         self.epoch_begin = datetime.datetime.now()
 
@@ -38,14 +41,14 @@ class HistoryCheckpoint(keras.callbacks.Callback):
         self.epoch_begin = None
         # Save if necessary
         self.epochs_since_last_save += 1
-        if self.epochs_since_last_save < self.period:
-            return
-        self.epochs_since_last_save = 0
+        if self.epochs_since_last_save >= self.period:
+            self._save_history()
+            self.epochs_since_last_save = 0
+
+    def _save_history(self):
+        _logger.debug('Save model history')
         history = self._format_history(self.model.history, self.existing_history)
         save_history(history, self.filepath)
-        _logger.debug('Epoch %05d: saving history to %s' % (epoch + 1, self.filepath))
-        if self.verbose > 0:
-            print('\nEpoch %05d: saving history to %s' % (epoch + 1, self.filepath))
 
     def _format_history(self, new_history, old_history=None):
         if old_history is None:
