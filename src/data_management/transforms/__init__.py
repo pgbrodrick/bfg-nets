@@ -18,15 +18,16 @@ class BaseGlobalTransformer(object):
     is_fitted = False
     scaler = None
     scaler_name = None
+    savename = None
 
-    def __init__(nodata_value,savename_base=None):
-        self.nodata_value = nodata_value
-        self.savename = savename_base + '_' + self.scaler_name
-
-
-    def fit(self, image_array):
+    def fit(self, image_array, data_config):
         assert self.is_fitted is False, 'Transformer has already been fit to data'
-        image_array = self._reshape_image_array(image_array)  # Needs to be reshaped for (num_samples, num_features)
+        self.nodata_value = nodata_value
+        if (data_config.data_save_name is not None):
+          self.savename = data_config.data_save_name + '_' + self.scaler_name
+
+        # Reshape to (num_samples, num_features)
+        image_array = self._reshape_image_array(image_array)  
         image_array[image_array == self.nodata_value] = np.nan
         self.scaler.fit(image_array)
         self.is_fitted = True
@@ -37,7 +38,8 @@ class BaseGlobalTransformer(object):
         bad_dat = image_array == self.nodata_value
         image_array[bad_dat] = np.nan
 
-        image_array = self._reshape_image_array(image_array)  # Needs to be reshaped for (num_samples, num_features)
+        # Reshape to (num_samples, num_features)
+        image_array = self._reshape_image_array(image_array)
 
         image_array = self.scaler.inverse_transform(image_array).reshape(shape)
         image_array[bad_dat] = self.nodata_value
@@ -46,7 +48,8 @@ class BaseGlobalTransformer(object):
 
     def transform(self, image_array):
         shape = image_array.shape
-        image_array = self._reshape_image_array(image_array)  # Needs to be reshaped for (num_samples, num_features)
+        # Reshape to (num_samples, num_features)
+        image_array = self._reshape_image_array(image_array)
 
         # convert nodata values to nans temporarily
         bad_dat = image_array == self.nodata_value
@@ -67,15 +70,21 @@ class BaseGlobalTransformer(object):
 
     def save(self):
         if ('sklearn' in self.scaler_name):
-          joblib.dump(self.savename)
+          if (self.savename is not None):
+            joblib.dump(self.savename)
         elif (self.scaler_name == 'ConstantScaler'):
-          np.savez(self.savename + '.npz',
-                   constant_scaler=self.constant_scaler,
-                   constant_offset=self.constant_offset)
+          if (self.savename is not None):
+            np.savez(self.savename + '.npz',
+                     constant_scaler=self.constant_scaler,
+                     constant_offset=self.constant_offset)
         else:
           raise NotImplementedError('Need to write code to load/save transformers')
 
     def load_transformer():
+        if (self.savename is None):
+          Exception('Tyring to laod transformer without file name')
+
+
         if ('sklearn' in self.scaler_name):
           self.scaler = joblib.load(self.savename)
         elif (self.scaler_name == 'ConstantScaler'):
@@ -93,7 +102,6 @@ class ConstantTransformer(BaseTransformer):
         self.constant_offset = offset
 
         self.scaler_name = 'ConstantScaler'
-        super().__init__(self)
 
     def fit(x):
         a = None # nothing to do here #TODO: fix if there's a more appropriate way to do this
@@ -111,7 +119,6 @@ class StandardTransformer(BaseTransformer):
     def __init__(self):
         self.scaler = sklearn.preprocessing.StandardScaler(copy=True)
         self.scaler_name = 'sklearn_StandardScaler'
-        super().__init__(self)
 
 
 class MinMaxTransformer(BaseTransformer):
@@ -119,7 +126,6 @@ class MinMaxTransformer(BaseTransformer):
     def __init__(self, feature_range=(-1, 1)):
         self.scaler = sklearn.preprocessing.MinMaxScaler(feature_range=feature_range, copy=True)
         self.scaler_name = 'sklearn_MinMaxScaler'
-        super().__init__(self)
 
 
 class RobustTransformer(BaseTransformer):
@@ -127,7 +133,6 @@ class RobustTransformer(BaseTransformer):
     def __init__(self, quantile_range=(10.0, 90.0)):
         self.scaler = sklearn.preprocessing.RobustScaler(quantile_range=quantile_range, copy=True)
         self.scaler_name = 'sklearn_RobustScaler'
-        super().__init__(self)
 
 
 class PowerTransformer(BaseTransformer):
@@ -135,7 +140,6 @@ class PowerTransformer(BaseTransformer):
     def __init__(self, method='box-cox'):
         self.scaler = sklearn.preprocessing.PowerTransformer(method=method, copy=True)
         self.scaler_name = 'sklearn_PowerTransformer'
-        super().__init__(self)
 
 
 class QuantileUniformTransformer(BaseTransformer):
@@ -143,7 +147,6 @@ class QuantileUniformTransformer(BaseTransformer):
     def __init__(self, output_distribution='uniform'):
         self.scaler = sklearn.preprocessing.QuantileTransformer(output_distribution=output_distribution, copy=True)
         self.scaler_name = 'sklearn_QuantileTransformer'
-        super().__init__(self)
 
 
 
