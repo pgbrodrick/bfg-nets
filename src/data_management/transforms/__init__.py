@@ -15,16 +15,16 @@ class BaseGlobalTransformer(object):
     scalers from the scikit-learn package to handle the nitty-gritty of the transform and inverse transform, and we use
     the Transformer class to handle the nitty-gritty of reshaping and otherwise handling the image arrays.
     """
-    is_fitted = False
-    scaler = None
-    scaler_name = None
-    savename = None
 
-    def fit(self, image_array, data_config):
-        assert self.is_fitted is False, 'Transformer has already been fit to data'
+    def __init__(save_name_base):
         self.nodata_value = nodata_value
-        if (data_config.data_save_name is not None):
-          self.savename = data_config.data_save_name + '_' + self.scaler_name
+        if (save_name_base is not None):
+          self.savename = save_name_base + '_' + self.scaler_name
+
+        self.is_fitted = False
+
+    def fit(self, image_array, save_name_base):
+        assert self.is_fitted is False, 'Transformer has already been fit to data'
 
         # Reshape to (num_samples, num_features)
         image_array = self._reshape_image_array(image_array)  
@@ -97,11 +97,12 @@ class BaseGlobalTransformer(object):
 
 class ConstantTransformer(BaseTransformer):
 
-    def __init__(self,scaler,offset=None):
-        self.constant_scaler = scaler
-        self.constant_offset = offset
+    def __init__(self,constant_scaler,constant_offset=None):
+        self.constant_scaler = constant_scaler
+        self.constant_offset = constant_offset
 
         self.scaler_name = 'ConstantScaler'
+        super().__init__(savename_base)
 
     def fit(x):
         a = None # nothing to do here #TODO: fix if there's a more appropriate way to do this
@@ -119,6 +120,7 @@ class StandardTransformer(BaseTransformer):
     def __init__(self):
         self.scaler = sklearn.preprocessing.StandardScaler(copy=True)
         self.scaler_name = 'sklearn_StandardScaler'
+        super().__init__(savename_base)
 
 
 class MinMaxTransformer(BaseTransformer):
@@ -126,6 +128,7 @@ class MinMaxTransformer(BaseTransformer):
     def __init__(self, feature_range=(-1, 1)):
         self.scaler = sklearn.preprocessing.MinMaxScaler(feature_range=feature_range, copy=True)
         self.scaler_name = 'sklearn_MinMaxScaler'
+        super().__init__(savename_base)
 
 
 class RobustTransformer(BaseTransformer):
@@ -133,6 +136,7 @@ class RobustTransformer(BaseTransformer):
     def __init__(self, quantile_range=(10.0, 90.0)):
         self.scaler = sklearn.preprocessing.RobustScaler(quantile_range=quantile_range, copy=True)
         self.scaler_name = 'sklearn_RobustScaler'
+        super().__init__(savename_base)
 
 
 class PowerTransformer(BaseTransformer):
@@ -140,6 +144,7 @@ class PowerTransformer(BaseTransformer):
     def __init__(self, method='box-cox'):
         self.scaler = sklearn.preprocessing.PowerTransformer(method=method, copy=True)
         self.scaler_name = 'sklearn_PowerTransformer'
+        super().__init__(savename_base)
 
 
 class QuantileUniformTransformer(BaseTransformer):
@@ -147,6 +152,7 @@ class QuantileUniformTransformer(BaseTransformer):
     def __init__(self, output_distribution='uniform'):
         self.scaler = sklearn.preprocessing.QuantileTransformer(output_distribution=output_distribution, copy=True)
         self.scaler_name = 'sklearn_QuantileTransformer'
+        super().__init__(savename_base)
 
 
 
