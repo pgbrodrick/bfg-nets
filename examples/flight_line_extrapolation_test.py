@@ -3,7 +3,7 @@ import train_model
 import plot_utility
 from src.util.general import *
 from src.networks import CNN
-from src.data_management import Data_Config, training_data
+from src.data_management import Data_Config, training_data, transforms
 import rasterio.features
 import ogr
 import numpy as np
@@ -30,8 +30,10 @@ options = {
     'max_samples': 30000,
     'data_save_name': 'munged/cnn_munge_' + str(window_radius) + '_test',
     'internal_window_radius': rint(window_radius*0.5),
-    'global_scaling': None,
-    'local_scaling': None,
+    'global_feature_scaling': None,
+    'global_response_scaling': None,
+    'local_feature_scaling': None,
+    'local_response_scaling': None,
     'min_value': 0,
     'max_value': 10000,
 }
@@ -58,6 +60,8 @@ model_name = 'test_flex'
 
 if (key == 'build' or key == 'all'):
     features, responses, fold_assignments = training_data.build_regression_training_data_ordered(data_config)
+    features, responses, fold_assignments = transforms.build_scaling(config, features, responses, fold_assignments)
+    
 
 # TODO add option for plotting training data previews
 
