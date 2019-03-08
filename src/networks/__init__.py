@@ -5,14 +5,92 @@ import keras.backend as K
 import numpy as np
 
 
+class TrainingHistory(object):
+    """ A wrapper class designed to hold all relevant configuration information obtained
+        during training/testing the model.
+    """
+    # TODO - Fabina, can you populate this with the useful info you want to retain from training?
+    # TODO - Phil:  let's punt until we know what we need and what everything else looks like?
+    pass
+
+
+class NetworkConfig(object):
+    """ A wrapper class designed to hold all relevant configuration information for the
+        training of a new network.
+    """
+
+    def __init__(self, network_type, inshape, n_classes, **kwargs):
+        """
+          Arguments:
+          network_type - str
+            Style of the network to use.  Options are:
+              flex_unet
+              flat_regress_net
+          inshape - tuple/list
+            Designates the input shape of an image to be passed to
+            the network.
+          n_classes - tuple/list
+            Designates the output shape of targets to be fit by the network
+        """
+        self.network_type = network_type
+        self.inshape = inshape
+        self.n_classes = n_classes
+
+        if (self.network_type == 'flex_unet'):
+            self.conv_depth = kwargs.get('conv_depth', 16)
+            self.batch_norm = kwargs.get('batch_norm', False)
+        elif (self.network_type == 'flat_regress_net'):
+            self.conv_depth = kwargs.get('conv_depth', 16)
+            self.batch_norm = kwargs.get('batch_norm', False)
+            self.n_layers = kwargs.get('n_layers', 8)
+            self.conv_pattern = kwargs.get('conv_pattern', [3])
+            self.output_activation = kwargs.get('output_activation', 'softmax')
+        else:
+            NotImplementedError('Invalid network type: ' + self.network_type)
+
+
+        # Optional arguments
+        self.dir_out = kwargs.get('dir_out', './')
+        self.filepath_model_out = kwargs.get('filepath_model_out', 'model.h5')
+        self.filepath_history_out = kwargs.get('filepath_history_out', 'history.json')
+        self.checkpoint_periods = kwargs.get('checkpoint_periods', 5)
+        self.verbosity = kwargs.get('verbosity', 1)
+        self.append_existing = kwargs.get('append_existing', False)
+
+        # Training arguments
+        self.batch_size = 1
+        self.max_epochs = 100
+        self.n_noimprovement_repeats = 10
+        self.output_directory = None  #TODO: give a default
+        self.verification_fold = 0
+
+
+        # Callbacks
+        self.callbacks_use_tensorboard = kwargs.get('callbacks_use_tensorboard', True)
+        self.filepath_tensorboard_out = kwargs.get('dir_tensorboard_out', 'tensorboard')
+        self.tensorboard_update_freq = kwargs.get('tensorboard_update_freq', 'epoch')
+        self.tensorboard_histogram_freq = kwargs.get('tensorboard_histogram_freq', 0)
+        self.tensorboard_write_graph = kwargs.get('tensorboard', True)
+        self.tensorboard_write_grads = kwargs.get('tensorboard', False)
+        self.tensorboard_write_images = kwargs.get('tensorboard', True)
+
+        self.callbacks_use_early_stopping = kwargs.get('callbacks_use_early_stopping', True)
+        self.early_stopping_min_delta = kwargs.get('early_stopping_min_delta', 10**-4)
+        self.early_stopping_patience = kwargs.get('early_stopping_patience', 50)
+
+        self.callbacks_use_reduced_learning_rate = kwargs.get('callbacks_use_reduced_learning_rate', True)
+        self.reduced_learning_rate_factor = kwargs.get('reduced_learning_rate_factor', 0.5)
+        self.reduced_learning_rate_min_delta = kwargs.get('reduced_learning_rate_min_delta', 10**-4)
+        self.reduced_learning_rate_patience = kwargs.get('reduced_learning_rate_patience', 10)
+
+        self.callbacks_use_terminate_on_nan = kwargs.get('terminate_on_nan', True)
+
+
+
+
 class CNN():
 
-    def __init__(self):
-        self.model = None
-        self.config = None
-        self.training = None
-
-    def create_network(self, network_config):
+    def __init__(self, network_config):
         """ Initializes the appropriate network
 
         Arguments:
@@ -26,6 +104,8 @@ class CNN():
           Designates the number of response layers.
         """
         self.config = network_config
+        self.model = None
+        self.training = None
 
         if (self.network_name == 'flex_unet'):
             # Return a call to the argument-specific version of flex_unet
@@ -34,7 +114,7 @@ class CNN():
                                    self.config['conv_depth'],
                                    self.config['batch_norm']):
         elif (self.network_name == 'flat_regress_net'):
-            self.model = flat_regress_net(NetworkConfig.inshape,
+            self.model = flat_regress_net(self.config.inshape,
                                           self.config.n_classes,
                                           self.config['conv_depth'],
                                           self.config['batch_norm'],
@@ -73,20 +153,33 @@ class CNN():
 
 
     #TODO during fit, make sure that all training_options (as well as network options) are saved with the model
-    def scale_and_fit(self, features, responses, train_sequence, data_config, **kwargs):
-        self.batch_size = kwargs.get('batch_size')
-        self.max_epochs = kwargs.get('max_epochs')
-        self.no_improvement_repeats = kwargs.get('no_improvement_repeats')
-        self.output_directory = kwargs.get('output_directory')
-        self.verification_fold = kwargs.get('verification_fold')
+    def fit(self, features, responses, fold_assignments, verbose=True):
 
-        data_config.global_feature_scaler.fit(features)
-        data_config.global_response_scaler.fit(responses)
+        if (self.verification_fold is not None):
+          train_subset = fold_assignments == self.config.verification_fold
+          test_subset = np.logical_not(train_subset)
+           
+          #TODO: add callbacks
+          self.model.fit(features[train_subset,...], 
+                         responses[train_subset,...], 
+                         validation_data=(features[test_subset,...],responses[test_subset,...]),
+                         epochs = self.config.max_epochs,
+                         batch_size = self.config.batch_size,
+                         verbose = verbose,
+                         shuffle = False)
+        else:
+          #TODO: add callbacks
+          self.model.fit(features[train_subset,...], 
+                         responses[train_subset,...], 
+                         epochs = self.config.max_epochs,
+                         batch_size = self.config.batch_size,
+                         verbose = verbose,
+                         shuffle = False)
 
 
  
     #TODO during fit, make sure that all training_options (as well as network options) are saved with the model
-    def scale_and_fit_sequence(self, train_sequence, dir_out, max_training_epochs, validation_sequence=None):
+    def fit_sequence(self, train_sequence, dir_out, max_training_epochs, validation_sequence=None):
         # Prep callbacks with dynamic parameters
         # Train model
         self.model.fit_generator(
