@@ -23,7 +23,7 @@ class CNN():
           Designates the input shape of an image to be passed to
           the network.
         n_classes - int
-          The number of classes the network is meant to classify.
+          Designates the number of response layers.
         """
         self.config = network_config
 
@@ -71,6 +71,17 @@ class CNN():
         gbytes = np.round(total_memory / (1024.0 ** 3), 3)
         return gbytes
 
+    def fit_sequence(self, train_sequence, dir_out, max_training_epochs, validation_sequence=None):
+        # Prep callbacks with dynamic parameters
+        # Train model
+        self.model.fit_generator(
+            train_sequence, epochs=max_training_epochs, callbacks=callbacks, validation_data=validation_sequence,
+            max_queue_size=self._generator_max_queue_size, use_multiprocessing=self._generator_use_multiprocessing,
+            workers=self._generator_workers, initial_epoch=self._initial_epoch, verbose=self._verbosity,
+        )
+
+
+
 
 # Deprecated.  Let's migrate things upwards as necessary
 class NeuralNetwork(object):
@@ -91,15 +102,6 @@ class NeuralNetwork(object):
                 callbacks.load_history(file_)
             self._initial_epoch = len(self.history['lr'])
             K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
-
-    def fit_sequence(self, train_sequence, dir_out, max_training_epochs, validation_sequence=None):
-        # Prep callbacks with dynamic parameters
-        # Train model
-        self.model.fit_generator(
-            train_sequence, epochs=max_training_epochs, callbacks=callbacks, validation_data=validation_sequence,
-            max_queue_size=self._generator_max_queue_size, use_multiprocessing=self._generator_use_multiprocessing,
-            workers=self._generator_workers, initial_epoch=self._initial_epoch, verbose=self._verbosity,
-        )
 
     def evaluate(self, evaluate_sequence):
         return self.model.evaluate_generator(

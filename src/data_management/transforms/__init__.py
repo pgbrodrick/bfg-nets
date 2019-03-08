@@ -19,9 +19,9 @@ class BaseGlobalTransformer(object):
     scaler = None
     scaler_name = None
 
-    def __init__(nodata_value,savename=None,):
+    def __init__(nodata_value,savename_base=None):
         self.nodata_value = nodata_value
-        self.savename = savename
+        self.savename = savename_base + '_' + self.scaler_name
 
 
     def fit(self, image_array):
@@ -67,22 +67,48 @@ class BaseGlobalTransformer(object):
 
     def save(self):
         if ('sklearn' in self.scaler_name):
-          joblib.dump(self.scaler,self.savename)
+          joblib.dump(self.savename)
+        elif (self.scaler_name == 'ConstantScaler'):
+          np.savez(self.savename + '.npz',
+                   constant_scaler=self.constant_scaler,
+                   constant_offset=self.constant_offset)
         else:
           raise NotImplementedError('Need to write code to load/save transformers')
 
     def load_transformer():
         if ('sklearn' in self.scaler_name):
           self.scaler = joblib.load(self.savename)
+        elif (self.scaler_name == 'ConstantScaler'):
+          npzf = np.load(self.savename + '.npz')
+          self.constant_scaler = npzf['constant_scaler']
+          self.constant_offset = npzf['constant_offset']
         else: 
           raise NotImplementedError('Need to write code to load/save transformers')
 
 
+class ConstantTransformer(BaseTransformer):
+
+    def __init__(self,scaler,offset=None):
+        self.constant_scaler = scaler
+        self.constant_offset = offset
+
+        self.scaler_name = 'ConstantScaler'
+        super().__init__(self)
+
+    def fit(x):
+        a = None # nothing to do here #TODO: fix if there's a more appropriate way to do this
+    def transform(data):
+        data[data != self.nodata_value] = data[data != self.nodata_value] / self.constant_scaler + self.constant_offset
+        return data
+
+    def inverse_transform(data):
+        data[data !+ self.nodata_value] = (data[data != self.nodata_value] + self.constant_offset) * self.constant_scaler 
+        return data
 
 
 class StandardTransformer(BaseTransformer):
 
-    def __init__(self, feature_range=(-1, 1)):
+    def __init__(self):
         self.scaler = sklearn.preprocessing.StandardScaler(copy=True)
         self.scaler_name = 'sklearn_StandardScaler'
         super().__init__(self)
@@ -118,20 +144,6 @@ class QuantileUniformTransformer(BaseTransformer):
         self.scaler = sklearn.preprocessing.QuantileTransformer(output_distribution=output_distribution, copy=True)
         self.scaler_name = 'sklearn_QuantileTransformer'
         super().__init__(self)
-
-
-
-def build_scaling(config,features,responses,fold_assignments):
-
-    
-    if (global_feature_scaling
-
-
-
-
-
-
-
 
 
 
