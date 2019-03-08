@@ -26,63 +26,57 @@ window_radius = 16
 year = '2015'
 feature_files = ['dat/features/feat_subset.tif']
 response_files = ['dat/responses/resp_subset.tif']
-options = {
+data_options = {
     'max_samples': 30000,
     'data_save_name': 'munged/cnn_munge_' + str(window_radius) + '_test',
     'internal_window_radius': rint(window_radius*0.5),
-    'global_feature_scaling': None,
-    'global_response_scaling': None,
-    'local_feature_scaling': None,
-    'local_response_scaling': None,
     'min_value': 0,
     'max_value': 10000,
 }
 
-data_config = Data_Config(window_radius, feature_files, response_files, **options)
+data_config = Data_Config(window_radius, feature_files, response_files, **data_options)
 
 
-network_config = {}
-network_config['conv_depth'] = 16
-network_config['batch_norm'] = False
-network_config['n_layers'] = 10
-network_config['conv_pattern'] = 3
-network_config['output_activation'] = 'softplus'
-network_config['network_name'] = 'cwc_test_network'
+network_options = {
+    'conv_depth' = 16
+    'batch_norm' = False
+    'n_layers' = 10
+    'conv_pattern' = 3
+    'output_activation' = 'softplus'
+    'network_name' = 'cwc_test_network'
+}
 
+training_options = {
+    'batch_size' = 100
+    'verification_fold' = 0
+    'n_noimprovement_repeats' = 30
+}
 
-# TODO: Training values that need to be set somewhere
-batch_size = 100
-verification_fold = 0
-n_noimprovement_repeats = 30
-
-model_name = 'test_flex'
 
 
 if (key == 'build' or key == 'all'):
     features, responses, fold_assignments = training_data.build_regression_training_data_ordered(data_config)
-    features, responses, fold_assignments = transforms.build_scaling(config, features, responses, fold_assignments)
-    
+
+    feature_scaler = transforms.RobustScaler(nodata_value,config.savename)
+    feature_scaler.fit(features)
+    response_scaler = transforms.StandardScaler(nodata_value,config.savename)
+    response_scaler.fit(responses)
+
 
 # TODO add option for plotting training data previews
 
 if (key == 'train' or key == 'all'):
 
-    # TODO: rememeber to add option for constant value scaling
-
     cnn = CNN()
-    cnn.create_config('flat_regress_net', config.feature_shape[1:], 1, network_dictionary=network_config)
+    cnn.create_config('flat_regress_net', 
+                      config.feature_shape[1:], 
+                      n_classes=1, 
+                      network_dictionary=network_config)
 
-    # TODO: training needs to be done yet
-    model = train_model.train_regression(features,
-                                         responses,
-                                         fold_assignments,
-                                         model_name,
-                                         internal_window_radius=internal_window_radius,
-                                         network_name='flex_unet',
-                                         verification_fold=0,
-                                         batch_size=100,
-                                         n_noimprovement_repeats=30,
-                                         network_kwargs={'conv_depth': 'growth', 'batch_norm': True, 'output_activation': 'softplus'})
+    cnn.fit(features,\
+            responses,\
+            fold_assignments,\
+            **training_options)
 
 
 if (key == 'apply' or key == 'all'):
