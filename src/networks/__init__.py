@@ -71,7 +71,22 @@ class CNN():
         gbytes = np.round(total_memory / (1024.0 ** 3), 3)
         return gbytes
 
-    def fit_sequence(self, train_sequence, dir_out, max_training_epochs, validation_sequence=None):
+
+    #TODO during fit, make sure that all training_options (as well as network options) are saved with the model
+    def scale_and_fit(self, features, responses, train_sequence, data_config, **kwargs):
+        self.batch_size = kwargs.get('batch_size')
+        self.max_epochs = kwargs.get('max_epochs')
+        self.no_improvement_repeats = kwargs.get('no_improvement_repeats')
+        self.output_directory = kwargs.get('output_directory')
+        self.verification_fold = kwargs.get('verification_fold')
+
+        data_config.global_feature_scaler.fit(features)
+        data_config.global_response_scaler.fit(responses)
+
+
+ 
+    #TODO during fit, make sure that all training_options (as well as network options) are saved with the model
+    def scale_and_fit_sequence(self, train_sequence, dir_out, max_training_epochs, validation_sequence=None):
         # Prep callbacks with dynamic parameters
         # Train model
         self.model.fit_generator(

@@ -26,41 +26,42 @@ window_radius = 16
 year = '2015'
 feature_files = ['dat/features/feat_subset.tif']
 response_files = ['dat/responses/resp_subset.tif']
+
+# TODO: if we want to grab these from a config file, need to write a wrapper to read the transform in
 data_options = {
-    'max_samples': 30000,
     'data_save_name': 'munged/cnn_munge_' + str(window_radius) + '_test',
+    'global_feature_scaler':  transforms.RobustTransformer()
+    'global_feature_scaler':  transforms.StandardTransformer()
     'internal_window_radius': rint(window_radius*0.5),
-    'min_value': 0,
+    'max_samples': 30000,
     'max_value': 10000,
+    'min_value': 0,
 }
 
 data_config = Data_Config(window_radius, feature_files, response_files, **data_options)
 
 
 network_options = {
-    'conv_depth' = 16
     'batch_norm' = False
-    'n_layers' = 10
+    'conv_depth' = 16
     'conv_pattern' = 3
-    'output_activation' = 'softplus'
+    'n_layers' = 10
     'network_name' = 'cwc_test_network'
+    'output_activation' = 'softplus'
 }
 
 training_options = {
     'batch_size' = 100
-    'verification_fold' = 0
+    'max_epochs' = 100
     'n_noimprovement_repeats' = 30
+    'output_directory' = None
+    'verification_fold' = 0
 }
 
 
 
 if (key == 'build' or key == 'all'):
     features, responses, fold_assignments = training_data.build_regression_training_data_ordered(data_config)
-
-    feature_scaler = transforms.RobustScaler(nodata_value,config.savename)
-    feature_scaler.fit(features)
-    response_scaler = transforms.StandardScaler(nodata_value,config.savename)
-    response_scaler.fit(responses)
 
 
 # TODO add option for plotting training data previews
