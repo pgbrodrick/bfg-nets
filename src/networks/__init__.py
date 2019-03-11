@@ -48,7 +48,6 @@ class NetworkConfig(object):
         else:
             NotImplementedError('Invalid network type: ' + self.network_type)
 
-
         # Optional arguments
         self.dir_out = kwargs.get('dir_out', './')
         self.filepath_model_out = kwargs.get('filepath_model_out', 'model.h5')
@@ -61,9 +60,8 @@ class NetworkConfig(object):
         self.batch_size = 1
         self.max_epochs = 100
         self.n_noimprovement_repeats = 10
-        self.output_directory = None  #TODO: give a default
+        self.output_directory = None  # TODO: give a default
         self.verification_fold = 0
-
 
         # Callbacks
         self.callbacks_use_tensorboard = kwargs.get('callbacks_use_tensorboard', True)
@@ -84,8 +82,6 @@ class NetworkConfig(object):
         self.reduced_learning_rate_patience = kwargs.get('reduced_learning_rate_patience', 10)
 
         self.callbacks_use_terminate_on_nan = kwargs.get('terminate_on_nan', True)
-
-
 
 
 class CNN():
@@ -151,34 +147,32 @@ class CNN():
         gbytes = np.round(total_memory / (1024.0 ** 3), 3)
         return gbytes
 
-
-    #TODO during fit, make sure that all training_options (as well as network options) are saved with the model
+    # TODO during fit, make sure that all training_options (as well as network options) are saved with the model
     def fit(self, features, responses, fold_assignments, verbose=True):
 
         if (self.verification_fold is not None):
-          train_subset = fold_assignments == self.config.verification_fold
-          test_subset = np.logical_not(train_subset)
-           
-          #TODO: add callbacks
-          self.model.fit(features[train_subset,...], 
-                         responses[train_subset,...], 
-                         validation_data=(features[test_subset,...],responses[test_subset,...]),
-                         epochs = self.config.max_epochs,
-                         batch_size = self.config.batch_size,
-                         verbose = verbose,
-                         shuffle = False)
+            train_subset = fold_assignments == self.config.verification_fold
+            test_subset = np.logical_not(train_subset)
+
+            # TODO: add callbacks
+            self.model.fit(features[train_subset, ...],
+                           responses[train_subset, ...],
+                           validation_data=(features[test_subset, ...], responses[test_subset, ...]),
+                           epochs=self.config.max_epochs,
+                           batch_size=self.config.batch_size,
+                           verbose=verbose,
+                           shuffle=False)
         else:
-          #TODO: add callbacks
-          self.model.fit(features[train_subset,...], 
-                         responses[train_subset,...], 
-                         epochs = self.config.max_epochs,
-                         batch_size = self.config.batch_size,
-                         verbose = verbose,
-                         shuffle = False)
+            # TODO: add callbacks
+            self.model.fit(features[train_subset, ...],
+                           responses[train_subset, ...],
+                           epochs=self.config.max_epochs,
+                           batch_size=self.config.batch_size,
+                           verbose=verbose,
+                           shuffle=False)
 
+    # TODO during fit, make sure that all training_options (as well as network options) are saved with the model
 
- 
-    #TODO during fit, make sure that all training_options (as well as network options) are saved with the model
     def fit_sequence(self, train_sequence, dir_out, max_training_epochs, validation_sequence=None):
         # Prep callbacks with dynamic parameters
         # Train model
@@ -187,8 +181,6 @@ class CNN():
             max_queue_size=self._generator_max_queue_size, use_multiprocessing=self._generator_use_multiprocessing,
             workers=self._generator_workers, initial_epoch=self._initial_epoch, verbose=self._verbosity,
         )
-
-
 
 
 # Deprecated.  Let's migrate things upwards as necessary
