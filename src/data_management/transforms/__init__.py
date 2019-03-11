@@ -40,6 +40,7 @@ class BaseGlobalTransformer(object):
     def inverse_transform(self, image_array):
         shape = image_array.shape
 
+        # User can overwrite image_array values with nodata_value if input data is missing
         bad_dat = image_array == self.nodata_value
         image_array[bad_dat] = np.nan
 
@@ -65,15 +66,14 @@ class BaseGlobalTransformer(object):
         image_array[bad_dat] = np.nan
 
         image_array = self._transform(image_array)
-        image_array = image_array.reshape(shape)
-        image_array[bad_dat] = self.nodata_value
 
-        num_conflicts = np.sum(image_array[np.isfinite(image_array)] != self.nodata_value)
+        num_conflicts = np.sum(image_array == self.nodata_value)
         if num_conflicts > 0:
-            _logger.warn('{} values in transformed data are not equal to nodata value'
-                         .format(num_conflicts))
-        image_array[~np.isfinite(image_array)] = self.nodata_value
-        return image_array
+            _logger.warn('{} values in transformed data are equal to nodata value'.format(num_conflicts))
+
+        # Revert nans to nodata values
+        image_array[bad_dat] = self.nodata_value
+        return image_array.reshape(shape)
 
     def _transform(self, image_array):
         raise NotImplementedError
