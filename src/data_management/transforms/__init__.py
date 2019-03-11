@@ -75,6 +75,7 @@ class BaseGlobalTransformer(object):
         return image_array
 
     def _transform(self, image_array):
+        raise NotImplementedError
 
     def _reshape_image_array(self, image_array):
         # The second dimension is image_array.shape[-1] which is the num_channels, so the first dimension is
@@ -177,4 +178,3 @@ class QuantileUniformTransformer(BaseSklearnTransformer):
     def __init__(self, nodata_value, output_distribution='uniform'):
         self.scaler = sklearn.preprocessing.QuantileTransformer(output_distribution=output_distribution, copy=True)
         super().__init__(nodata_value)
-
