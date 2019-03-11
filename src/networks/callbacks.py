@@ -1,9 +1,9 @@
 import datetime
-import json
 
 import keras
 
-from utils import logger
+from src.networks import history
+from src.utils import logger
 
 
 _logger = logger.get_child_logger(__name__)
@@ -47,33 +47,15 @@ class HistoryCheckpoint(keras.callbacks.Callback):
 
     def _save_history(self):
         _logger.debug('Save model history')
-        history = self._format_history(self.model.history, self.existing_history)
-        save_history(history, self.filepath)
-
-    def _format_history(self, new_history, old_history=None):
-        if old_history is None:
-            old_history = dict()
-        combined_history = old_history.copy()
-        for key, value in new_history.history.items():
+        combined_history = self.existing_history.copy()
+        for key, value in self.model.history.history.items():
             combined_history.setdefault(key, list()).extend(value)
-        return combined_history
-
-
-# TODO:  these functions will need to be moved to wherever handles history state, not really callback relevant
-def load_history(filepath):
-    with open(filepath, 'r') as file_:
-        history = json.load(file_)
-    return history
-
-
-def save_history(history, filepath):
-    with open(filepath, 'wb') as file_:
-        json.dump(history, file_)
+        history.save_history(combined_history, self.filepath)
 
 
 def get_callbacks(network_config):
     if network_config.append_existing:
-        existing_history = load_history(network_config.filepath_history_out)
+        existing_history = history.load_history(network_config.filepath_history_out)
     else:
         existing_history = dict()
     callbacks = [
