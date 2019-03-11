@@ -91,6 +91,10 @@ class BaseGlobalTransformer(object):
 class BaseSklearnTransformer(BaseGlobalTransformer):
     scaler = None
 
+    def __init__(self, nodata_value):
+        self.scaler_name = 'sklearn_' + self.scaler.__class__.__name__
+        super().__init__(nodata_value)
+
     def _fit(self, image_array):
         self.scaler.fit(image_array)
 
@@ -142,39 +146,35 @@ class ConstantTransformer(BaseGlobalTransformer):
 
 class StandardTransformer(BaseSklearnTransformer):
 
-    def __init__(self):
+    def __init__(self, nodata_value):
         self.scaler = sklearn.preprocessing.StandardScaler(copy=True)
-        self.scaler_name = 'sklearn_StandardScaler'
-        super().__init__()
+        super().__init__(nodata_value)
 
 
 class MinMaxTransformer(BaseSklearnTransformer):
 
-    def __init__(self, feature_range=(-1, 1)):
+    def __init__(self, nodata_value, feature_range=(-1, 1)):
         self.scaler = sklearn.preprocessing.MinMaxScaler(feature_range=feature_range, copy=True)
-        self.scaler_name = 'sklearn_MinMaxScaler'
-        super().__init__()
+        super().__init__(nodata_value)
 
 
 class RobustTransformer(BaseSklearnTransformer):
 
-    def __init__(self, quantile_range=(10.0, 90.0)):
+    def __init__(self, nodata_value, quantile_range=(10.0, 90.0)):
         self.scaler = sklearn.preprocessing.RobustScaler(quantile_range=quantile_range, copy=True)
-        self.scaler_name = 'sklearn_RobustScaler'
-        super().__init__()
+        super().__init__(nodata_value)
 
 
 class PowerTransformer(BaseSklearnTransformer):
 
-    def __init__(self, method='box-cox'):
+    def __init__(self, nodata_value, method='box-cox'):
         self.scaler = sklearn.preprocessing.PowerTransformer(method=method, copy=True)
-        self.scaler_name = 'sklearn_PowerTransformer'
-        super().__init__()
+        super().__init__(nodata_value)
 
 
 class QuantileUniformTransformer(BaseSklearnTransformer):
 
-    def __init__(self, output_distribution='uniform'):
+    def __init__(self, nodata_value, output_distribution='uniform'):
         self.scaler = sklearn.preprocessing.QuantileTransformer(output_distribution=output_distribution, copy=True)
-        self.scaler_name = 'sklearn_QuantileTransformer'
-        super().__init__()
+        super().__init__(nodata_value)
+
