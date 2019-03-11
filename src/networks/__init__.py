@@ -69,7 +69,7 @@ class NetworkConfig(object):
         self.max_epochs = 100
         self.n_noimprovement_repeats = 10
         self.output_directory = None  # TODO: give a default
-        self.verification_fold = 0
+        self.verification_fold = None
 
         # Callbacks
         self.callbacks_use_tensorboard = kwargs.get('callbacks_use_tensorboard', True)
@@ -142,27 +142,25 @@ class CNN():
     def fit(self, features, responses, fold_assignments, verbose=True):
         model_callbacks = callbacks.get_callbacks(self.config)
 
-        if (self.verification_fold is not None):
+        if (self.config.verification_fold is not None):
             train_subset = fold_assignments == self.config.verification_fold
             test_subset = np.logical_not(train_subset)
-
-            self.model.fit(features[train_subset, ...],
-                           responses[train_subset, ...],
-                           validation_data=(features[test_subset, ...], responses[test_subset, ...]),
-                           epochs=self.config.max_epochs,
-                           batch_size=self.config.batch_size,
-                           verbose=verbose,
-                           shuffle=False,
-                           callbacks=model_callbacks)
+            train_features = features[train_subset, ...]
+            train_responses = responses[train_subset]
+            validation_data = (features[test_subset, ...], responses[test_subset, ...])
         else:
-            # TODO: add callbacks
-            self.model.fit(features[train_subset, ...],
-                           responses[train_subset, ...],
-                           epochs=self.config.max_epochs,
-                           batch_size=self.config.batch_size,
-                           verbose=verbose,
-                           shuffle=False,
-                           callbacks=model_callbacks)
+            train_features = features
+            train_responses = responses
+            validation_data = None
+
+        self.model.fit(train_features,
+                       train_responses,
+                       validation_data=validation_data,
+                       epochs=self.config.max_epochs,
+                       batch_size=self.config.batch_size,
+                       verbose=verbose,
+                       shuffle=False,
+                       callbacks=model_callbacks)
 
     def fit_sequence(self, train_sequence, dir_out, max_training_epochs, validation_sequence=None):
         # Prep callbacks with dynamic parameters
