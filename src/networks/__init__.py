@@ -4,6 +4,8 @@ import keras
 import keras.backend as K
 import numpy as np
 
+from src.networks import architectures
+
 
 class TrainingHistory(object):
     """ A wrapper class designed to hold all relevant configuration information obtained
@@ -37,14 +39,20 @@ class NetworkConfig(object):
         self.n_classes = n_classes
 
         if (self.network_type == 'flex_unet'):
-            self.conv_depth = kwargs.get('conv_depth', 16)
-            self.batch_norm = kwargs.get('batch_norm', False)
+            self.create_architecture = architectures.unet.flex_unet
+            self.architecture_options = {
+                'conv_depth': kwargs.get('conv_depth', 16),
+                'batch_norm': kwargs.get('batch_norm', False),
+            }
         elif (self.network_type == 'flat_regress_net'):
-            self.conv_depth = kwargs.get('conv_depth', 16)
-            self.batch_norm = kwargs.get('batch_norm', False)
-            self.n_layers = kwargs.get('n_layers', 8)
-            self.conv_pattern = kwargs.get('conv_pattern', [3])
-            self.output_activation = kwargs.get('output_activation', 'softmax')
+            self.create_architecture = architectures.regress_net.flat_regress_net
+            self.architecture_options = {
+                'conv_depth': kwargs.get('conv_depth', 16),
+                'batch_norm': kwargs.get('batch_norm', False),
+                'n_layers': kwargs.get('n_layers', 8),
+                'conv_pattern': kwargs.get('conv_pattern', [3]),
+                'output_activation': kwargs.get('output_activation', 'softmax'),
+            }
         else:
             NotImplementedError('Invalid network type: ' + self.network_type)
 
@@ -102,24 +110,7 @@ class CNN():
         self.config = network_config
         self.model = None
         self.training = None
-
-        if (self.network_name == 'flex_unet'):
-            # Return a call to the argument-specific version of flex_unet
-            self.model = flex_unet(self.config.inshape,
-                                   self.config.n_classes,
-                                   self.config['conv_depth'],
-                                   self.config['batch_norm']):
-        elif (self.network_name == 'flat_regress_net'):
-            self.model = flat_regress_net(self.config.inshape,
-                                          self.config.n_classes,
-                                          self.config['conv_depth'],
-                                          self.config['batch_norm'],
-                                          self.config['n_layers'],
-                                          self.config['conv_pattern'],
-                                          self.config['output_activation']):
-
-        else:
-            raise NotImplementedError('Unknown network name')
+        self.model = self.config.create_architecture(**self.config.architecture_options)
 
     def calculate_training_memory_usage(batch_size):
             # Shamelessly copied from
