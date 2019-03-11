@@ -17,14 +17,13 @@ class BaseGlobalTransformer(object):
     """
     nodata_value = None
     savename = None
+    _savename_prefix = 'transformer'
     scaler = None
     scaler_name = None
 
-    def __init__(self, nodata_value, save_name_base=None):
+    def __init__(self, nodata_value):
         self.nodata_value = nodata_value
-        if (save_name_base is not None):
-            self.savename = save_name_base + '_' + self.scaler_name
-
+        self.savename = self._savename_prefix + '_' + self.scaler_name
         self.is_fitted = False
 
     def fit(self, image_array):
@@ -84,26 +83,20 @@ class BaseGlobalTransformer(object):
         return image_array.reshape(-1, image_array.shape[-1])
 
     def save(self):
-        if ('sklearn' in self.scaler_name):
-            if (self.savename is not None):
-                joblib.dump(self.savename)
-        elif (self.scaler_name == 'ConstantScaler'):
-            if (self.savename is not None):
-                np.savez(self.savename + '.npz',
-                         constant_scaler=self.constant_scaler,
-                         constant_offset=self.constant_offset)
-        else:
-            raise NotImplementedError('Need to write code to load/save transformers')
+        raise NotImplementedError
 
-    def load_transformer(self):
-        if ('sklearn' in self.scaler_name):
-            self.scaler = joblib.load(self.savename)
-        elif (self.scaler_name == 'ConstantScaler'):
-            npzf = np.load(self.savename + '.npz')
-            self.constant_scaler = npzf['constant_scaler']
-            self.constant_offset = npzf['constant_offset']
-        else:
-            raise NotImplementedError('Need to write code to load/save transformers')
+    def load(self):
+        raise NotImplementedError
+
+
+class BaseSklearnTransformer(BaseGlobalTransformer):
+
+    def save(self):
+        joblib.dump(self.scaler, self.savename)
+
+    def load(self):
+        self.scaler = joblib.load(self.savename)
+
 
 
 class ConstantTransformer(BaseTransformer):
@@ -125,6 +118,14 @@ class ConstantTransformer(BaseTransformer):
     def inverse_transform(data):
         data[data !+ self.nodata_value] = (data[data != self.nodata_value] + self.constant_offset) * self.constant_scaler
         return data
+
+    def save(self):
+        np.savez(self.savename + '.npz', constant_scaler=self.constant_scaler, constant_offset=self.constant_offset)
+
+    def load(self):
+        npzf = np.load(self.savename + '.npz')
+        self.constant_scaler = npzf['constant_scaler']
+        self.constant_offset = npzf['constant_offset']
 
 
 class StandardTransformer(BaseTransformer):
