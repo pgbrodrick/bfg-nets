@@ -3,8 +3,6 @@ import keras
 from keras.layers.convolutional import Conv2D, MaxPooling2D, UpSampling2D
 from keras.layers.normalization import BatchNormalization
 
-from src.networks.config import NetworkConfig
-
 
 def flex_unet(inshape, n_classes, conv_depth, batch_norm):
     """ Construct a U-net style network with flexible shape

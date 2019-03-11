@@ -41,12 +41,6 @@ def scale_vector(dat, flag, nodata_value=VALUE_NO_DATA):
         return [0, 1]
 
 
-def rint(num):
-    # TODO:  we may need to handle nans here?
-    """ Round a number to it's nearest integer value, and cast it as an integer. """
-    return int(round(num))
-
-
 def scale_image(image, flag, nodata_value=VALUE_NO_DATA):
     """ Scale an image based on preset flag.
     Arguments:

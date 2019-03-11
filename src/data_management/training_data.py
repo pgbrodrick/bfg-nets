@@ -1,7 +1,11 @@
 import gdal
 import numpy as np
 
+from src.utils import logger
 from src.util.general import *
+
+
+_logger = logger.get_child_logger(__name__)
 
 
 def build_regression_training_data_ordered(config):
@@ -68,6 +72,7 @@ def build_regression_training_data_ordered(config):
                 response[mask == config.boundary_bad_value] = config.response_nodata_value
 
         # TODO: log feature shape
+        # _logger.trace(whatever)
 
         # ensure nodata values are consistent
         if (not dataset.GetRasterBand(1).GetNoDataValue() is None):
@@ -126,18 +131,16 @@ def build_regression_training_data_ordered(config):
     fold_assignments = np.zeros(responses.shape[0])
 
     for f in range(0, config.n_folds):
-        fold_assignments[rint(float(f)/float(n_folds)*len(fold_assignments))
-                              :rint(float(f+1)/float(n_folds)*len(fold_assignments))] = f
+        idx_start = int(round(f / config.n_folds * len(fold_assignments)))
+        idx_finish = int(round((f + 1) / config.n_folds * len(fold_assignments)))
+        fold_assignments[idx_start:idx_finish] = f
 
     # reshape images for the CNN
     features = features.reshape((features.shape[0], features.shape[1], features.shape[2], n_features))
     responses = responses.reshape((responses.shape[0], responses.shape[1], responses.shape[2], 1))
 
-    # TODO: convert below to log
-    if(verbose > 0):
-        print(('feature shape', features.shape))
-    if(verbose > 0):
-        print(('response shape', responses.shape))
+    _logger.debug('Feature shape: {}'.format(features.shape))
+    _logger.debug('Response shape: {}'.format(response.shape))
 
     if (config.savename is not None):
         np.savez(config.savename, features=features, responses=responses, fold_assignments=fold_assignments)
