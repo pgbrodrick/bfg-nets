@@ -18,7 +18,6 @@ class BaseGlobalTransformer(object):
     nodata_value = None
     savename = None
     _savename_prefix = 'transformer'
-    scaler = None
     scaler_name = None
 
     def __init__(self, nodata_value):
@@ -90,13 +89,22 @@ class BaseGlobalTransformer(object):
 
 
 class BaseSklearnTransformer(BaseGlobalTransformer):
+    scaler = None
+
+    def _fit(self, image_array):
+        self.scaler.fit(image_array)
+
+    def _inverse_transform(self, image_array):
+        return self.scaler.inverse_transform(image_array)
+
+    def _transform(self, image_array):
+        return self.scaler.transform(image_array)
 
     def save(self):
         joblib.dump(self.scaler, self.savename)
 
     def load(self):
         self.scaler = joblib.load(self.savename)
-
 
 
 class ConstantTransformer(BaseTransformer):
