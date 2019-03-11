@@ -4,7 +4,7 @@ import keras
 import keras.backend as K
 import numpy as np
 
-from src.networks import architectures
+from src.networks import architectures, callbacks, history
 
 
 class TrainingHistory(object):
@@ -140,19 +140,20 @@ class CNN():
 
     # TODO during fit, make sure that all training_options (as well as network options) are saved with the model
     def fit(self, features, responses, fold_assignments, verbose=True):
+        model_callbacks = callbacks.get_callbacks(self.config)
 
         if (self.verification_fold is not None):
             train_subset = fold_assignments == self.config.verification_fold
             test_subset = np.logical_not(train_subset)
 
-            # TODO: add callbacks
             self.model.fit(features[train_subset, ...],
                            responses[train_subset, ...],
                            validation_data=(features[test_subset, ...], responses[test_subset, ...]),
                            epochs=self.config.max_epochs,
                            batch_size=self.config.batch_size,
                            verbose=verbose,
-                           shuffle=False)
+                           shuffle=False,
+                           callbacks=model_callbacks)
         else:
             # TODO: add callbacks
             self.model.fit(features[train_subset, ...],
@@ -160,9 +161,8 @@ class CNN():
                            epochs=self.config.max_epochs,
                            batch_size=self.config.batch_size,
                            verbose=verbose,
-                           shuffle=False)
-
-    # TODO during fit, make sure that all training_options (as well as network options) are saved with the model
+                           shuffle=False,
+                           callbacks=model_callbacks)
 
     def fit_sequence(self, train_sequence, dir_out, max_training_epochs, validation_sequence=None):
         # Prep callbacks with dynamic parameters

@@ -10,5 +10,3 @@ def load_history(filepath):
 def save_history(history, filepath):
     with open(filepath, 'wb') as file_:
         json.dump(history, file_)
-
-
