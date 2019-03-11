@@ -2,10 +2,10 @@ import numpy as np
 from sklearn.externals import joblib
 import sklearn.preprocessing
 
-from src.utils import logging
+from src.utils import logger
 
 
-_logger = logging.get_child_logger(__name__)
+_logger = logger.get_child_logger(__name__)
 
 
 class BaseGlobalTransformer(object):
@@ -15,22 +15,28 @@ class BaseGlobalTransformer(object):
     scalers from the scikit-learn package to handle the nitty-gritty of the transform and inverse transform, and we use
     the Transformer class to handle the nitty-gritty of reshaping and otherwise handling the image arrays.
     """
+    nodata_value = None
+    savename = None
+    scaler = None
+    scaler_name = None
 
-    def __init__(save_name_base):
+    def __init__(self, nodata_value, save_name_base=None):
         self.nodata_value = nodata_value
         if (save_name_base is not None):
             self.savename = save_name_base + '_' + self.scaler_name
 
         self.is_fitted = False
 
-    def fit(self, image_array, save_name_base):
+    def fit(self, image_array):
         assert self.is_fitted is False, 'Transformer has already been fit to data'
-
         # Reshape to (num_samples, num_features)
         image_array = self._reshape_image_array(image_array)
         image_array[image_array == self.nodata_value] = np.nan
-        self.scaler.fit(image_array)
+        self._fit(image_array)
         self.is_fitted = True
+
+    def _fit(self, image_array):
+        raise NotImplementedError
 
     def inverse_transform(self, image_array):
         shape = image_array.shape
@@ -41,10 +47,14 @@ class BaseGlobalTransformer(object):
         # Reshape to (num_samples, num_features)
         image_array = self._reshape_image_array(image_array)
 
-        image_array = self.scaler.inverse_transform(image_array).reshape(shape)
+        image_array = self._inverse_transform(image_array)
+        image_array = image_array.reshape(shape)
         image_array[bad_dat] = self.nodata_value
 
         return image_array
+
+    def _inverse_transform(self, image_array):
+        raise NotImplementedError
 
     def transform(self, image_array):
         shape = image_array.shape
@@ -55,7 +65,8 @@ class BaseGlobalTransformer(object):
         bad_dat = image_array == self.nodata_value
         image_array[bad_dat] = np.nan
 
-        image_array = self.scaler.transform(image_array).reshape(shape)
+        image_array = self._transform(image_array)
+        image_array = image_array.reshape(shape)
         image_array[bad_dat] = self.nodata_value
 
         num_conflicts = np.sum(image_array[np.isfinite(image_array)] != self.nodata_value)
@@ -65,7 +76,11 @@ class BaseGlobalTransformer(object):
         image_array[~np.isfinite(image_array)] = self.nodata_value
         return image_array
 
+    def _transform(self, image_array):
+
     def _reshape_image_array(self, image_array):
+        # The second dimension is image_array.shape[-1] which is the num_channels, so the first dimension is
+        # image width x image height
         return image_array.reshape(-1, image_array.shape[-1])
 
     def save(self):
@@ -80,10 +95,7 @@ class BaseGlobalTransformer(object):
         else:
             raise NotImplementedError('Need to write code to load/save transformers')
 
-    def load_transformer():
-        if (self.savename is None):
-            Exception('Tyring to laod transformer without file name')
-
+    def load_transformer(self):
         if ('sklearn' in self.scaler_name):
             self.scaler = joblib.load(self.savename)
         elif (self.scaler_name == 'ConstantScaler'):
