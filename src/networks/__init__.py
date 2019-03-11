@@ -112,7 +112,7 @@ class CNN():
         self.training = None
         self.model = self.config.create_architecture(**self.config.architecture_options)
 
-    def calculate_training_memory_usage(batch_size):
+    def calculate_training_memory_usage(self, batch_size):
             # Shamelessly copied from
             # https://stackoverflow.com/questions/43137288/how-to-determine-needed-memory-of-keras-model
             # but not tested rigorously
