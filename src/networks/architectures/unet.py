@@ -6,19 +6,6 @@ from keras.layers.normalization import BatchNormalization
 from src.networks.config import NetworkConfig
 
 
-# TODO:  Phil:  Is it worth renaming this architecture? Was "flex" u-net a holdover from when we had w-net but you
-# TODO:  wanted the architecture to be more flexible? Is u-net commonly used and clear to more network users, or is
-# TODO:  something else more appropriate? Do we want to punt on naming of architectures until the end? etc
-
-
-class FlexUnetConfig(NetworkConfig):
-
-    def __init__(self, network_type, inshape, n_classes, **kwargs):
-        super().__init__(network_type, inshape, n_classes)
-        self.conv_depth = kwargs.get('conv_depth', 16)
-        self.batch_norm = kwargs.get('batch_norm', False)
-
-
 def flex_unet(inshape, n_classes, conv_depth, batch_norm):
     """ Construct a U-net style network with flexible shape
 
