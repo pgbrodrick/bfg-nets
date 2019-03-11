@@ -57,6 +57,10 @@ class NetworkConfig(object):
             NotImplementedError('Invalid network type: ' + self.network_type)
 
         # Optional arguments
+        # TODO:  Phil: I have dir_out which is supposed to control where models, history, etc are saved. Based on your
+        # TODO:  comments this morning and the output_directory parameter for training arguments (below), I don't know
+        # TODO:  if dir_out makes sense any longer. e.g., we expect filepath_model_out, filepath_history_out to have the
+        # TODO:  full path now? We should refactor for whatever intentions we have.
         self.dir_out = kwargs.get('dir_out', './')
         self.filepath_model_out = kwargs.get('filepath_model_out', 'model.h5')
         self.filepath_history_out = kwargs.get('filepath_history_out', 'history.json')
@@ -108,14 +112,24 @@ class CNN():
           Designates the number of response layers.
         """
         self.config = network_config
-        self.model = None
-        self.training = None
+        # TODO:  how do we want to reload models? in init? in reload function? just putting outlined code here for now,
+        # TODO:  and letting you make the decision about what's best given your experience with this workflow. Not sure
+        # TODO:  if we want to explicitly check for existing model objects and assert that the user wants to load
+        # TODO:  existing content, but this depends on the other decisions that are made
+        # if (model objects are not saved at the config-specified locations) and (config.load_existing = False):
         self.model = self.config.create_architecture(**self.config.architecture_options)
+        self.history = dict()
+        self.training = None
+        # elif (model objects exist) and (config.load_existing = True):
+        #self.model = keras.models.load_model(filepath depends on config decision above, custom_objects=TODO)
+        #self.history = history.load_history(filepath depends on config decision above)
+        #self._initial_epoch = len(self.history['lr'])  # Probably want this if training is continued
+        #K.set_value(self.model.optimizer.lr, self.history['lr'][-1])  # Probably don't want this
 
     def calculate_training_memory_usage(self, batch_size):
-            # Shamelessly copied from
-            # https://stackoverflow.com/questions/43137288/how-to-determine-needed-memory-of-keras-model
-            # but not tested rigorously
+        # Shamelessly copied from
+        # https://stackoverflow.com/questions/43137288/how-to-determine-needed-memory-of-keras-model
+        # but not tested rigorously
         shapes_mem_count = 0
         for l in self.model.layers:
             single_layer_mem = 1
@@ -139,7 +153,7 @@ class CNN():
         return gbytes
 
     # TODO during fit, make sure that all training_options (as well as network options) are saved with the model
-    def fit(self, features, responses, fold_assignments, verbose=True):
+    def fit(self, features, responses, fold_assignments):
         model_callbacks = callbacks.get_callbacks(self.config)
 
         if (self.config.verification_fold is not None):
@@ -158,53 +172,17 @@ class CNN():
                        validation_data=validation_data,
                        epochs=self.config.max_epochs,
                        batch_size=self.config.batch_size,
-                       verbose=verbose,
+                       verbose=self.config.verbosity,
                        shuffle=False,
                        callbacks=model_callbacks)
 
-    def fit_sequence(self, train_sequence, dir_out, max_training_epochs, validation_sequence=None):
-        # Prep callbacks with dynamic parameters
-        # Train model
-        self.model.fit_generator(
-            train_sequence, epochs=max_training_epochs, callbacks=callbacks, validation_data=validation_sequence,
-            max_queue_size=self._generator_max_queue_size, use_multiprocessing=self._generator_use_multiprocessing,
-            workers=self._generator_workers, initial_epoch=self._initial_epoch, verbose=self._verbosity,
-        )
+    def fit_sequence(self, train_sequence, validation_sequence=None):
+        # TODO:  reimplement if/when we need generators, ignore for now
+        raise NotImplementedError
 
-
-# Deprecated.  Let's migrate things upwards as necessary
-class NeuralNetwork(object):
-    _initial_epoch = 0
-    _generator_max_queue_size = 100
-    _generator_workers = 1
-    _generator_use_multiprocessing = True
-
-    def __init__(self, model=None, dir_load=None, custom_objects=None):
-        # If the user created a model, use the model -> unnecessary given the network config now
-        if model:
-            self.model = model
-        # Otherwise load up the model and history from a previously trained model
-        elif dir_load:
-            self.model = keras.models.load_model(
-                os.path.join(dir_load, self._filename_model), custom_objects=custom_objects)
-            with open(os.path.join(dir_load, self._filename_history), 'rb') as file_:
-                callbacks.load_history(file_)
-            self._initial_epoch = len(self.history['lr'])
-            K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
-
-    def evaluate(self, evaluate_sequence):
-        return self.model.evaluate_generator(
-            evaluate_sequence, max_queue_size=self._generator_max_queue_size,
-            use_multiprocessing=self._generator_use_multiprocessing, workers=self._generator_workers,
-            verbose=self._verbosity
-        )
-
-    def predict(self, inputs):
-        return self.model.predict(inputs, batch_size=None, verbose=self._verbosity)
+    def predict(self, features):
+        return self.model.predict(features, batch_size=self.config.batch_size, verbose=self.config.verbosity)
 
     def predict_sequence(self, predict_sequence):
-        return self.model.predict_generator(
-            predict_sequence, max_queue_size=self._generator_max_queue_size,
-            use_multiprocessing=self._generator_use_multiprocessing, workers=self._generator_workers,
-            verbose=self._verbosity
-        )
+        # TODO:  reimplement if/when we need generators, ignore for now
+        raise NotImplementedError
