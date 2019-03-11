@@ -19,7 +19,7 @@ class BaseGlobalTransformer(object):
     def __init__(save_name_base):
         self.nodata_value = nodata_value
         if (save_name_base is not None):
-          self.savename = save_name_base + '_' + self.scaler_name
+            self.savename = save_name_base + '_' + self.scaler_name
 
         self.is_fitted = False
 
@@ -27,7 +27,7 @@ class BaseGlobalTransformer(object):
         assert self.is_fitted is False, 'Transformer has already been fit to data'
 
         # Reshape to (num_samples, num_features)
-        image_array = self._reshape_image_array(image_array)  
+        image_array = self._reshape_image_array(image_array)
         image_array[image_array == self.nodata_value] = np.nan
         self.scaler.fit(image_array)
         self.is_fitted = True
@@ -70,34 +70,33 @@ class BaseGlobalTransformer(object):
 
     def save(self):
         if ('sklearn' in self.scaler_name):
-          if (self.savename is not None):
-            joblib.dump(self.savename)
+            if (self.savename is not None):
+                joblib.dump(self.savename)
         elif (self.scaler_name == 'ConstantScaler'):
-          if (self.savename is not None):
-            np.savez(self.savename + '.npz',
-                     constant_scaler=self.constant_scaler,
-                     constant_offset=self.constant_offset)
+            if (self.savename is not None):
+                np.savez(self.savename + '.npz',
+                         constant_scaler=self.constant_scaler,
+                         constant_offset=self.constant_offset)
         else:
-          raise NotImplementedError('Need to write code to load/save transformers')
+            raise NotImplementedError('Need to write code to load/save transformers')
 
     def load_transformer():
         if (self.savename is None):
-          Exception('Tyring to laod transformer without file name')
-
+            Exception('Tyring to laod transformer without file name')
 
         if ('sklearn' in self.scaler_name):
-          self.scaler = joblib.load(self.savename)
+            self.scaler = joblib.load(self.savename)
         elif (self.scaler_name == 'ConstantScaler'):
-          npzf = np.load(self.savename + '.npz')
-          self.constant_scaler = npzf['constant_scaler']
-          self.constant_offset = npzf['constant_offset']
-        else: 
-          raise NotImplementedError('Need to write code to load/save transformers')
+            npzf = np.load(self.savename + '.npz')
+            self.constant_scaler = npzf['constant_scaler']
+            self.constant_offset = npzf['constant_offset']
+        else:
+            raise NotImplementedError('Need to write code to load/save transformers')
 
 
 class ConstantTransformer(BaseTransformer):
 
-    def __init__(self,constant_scaler,constant_offset=None):
+    def __init__(self, constant_scaler, constant_offset=None):
         self.constant_scaler = constant_scaler
         self.constant_offset = constant_offset
 
@@ -105,13 +104,14 @@ class ConstantTransformer(BaseTransformer):
         super().__init__(savename_base)
 
     def fit(x):
-        a = None # nothing to do here #TODO: fix if there's a more appropriate way to do this
+        a = None  # nothing to do here #TODO: fix if there's a more appropriate way to do this
+
     def transform(data):
         data[data != self.nodata_value] = data[data != self.nodata_value] / self.constant_scaler + self.constant_offset
         return data
 
     def inverse_transform(data):
-        data[data !+ self.nodata_value] = (data[data != self.nodata_value] + self.constant_offset) * self.constant_scaler 
+        data[data !+ self.nodata_value] = (data[data != self.nodata_value] + self.constant_offset) * self.constant_scaler
         return data
 
 
@@ -153,11 +153,3 @@ class QuantileUniformTransformer(BaseTransformer):
         self.scaler = sklearn.preprocessing.QuantileTransformer(output_distribution=output_distribution, copy=True)
         self.scaler_name = 'sklearn_QuantileTransformer'
         super().__init__(savename_base)
-
-
-
-
-
-
-
-

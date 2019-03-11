@@ -29,25 +29,25 @@ data_options = {
 data_config = Data_Config(window_radius, feature_files, response_files, **data_options)
 
 
-network_options : {,
-    'batch_norm' : False,
-    'conv_depth' : 16,
-    'conv_pattern' : 3,
-    'n_layers' : 10,
-    'network_name' : 'cwc_test_network',
-    'output_activation' : 'softplus',
+network_options: {,
+                  'batch_norm': False,
+                  'conv_depth': 16,
+                  'conv_pattern': 3,
+                  'n_layers': 10,
+                  'network_name': 'cwc_test_network',
+                  'output_activation': 'softplus',
 
-    'batch_size' : 100,
-    'max_epochs' : 100,
-    'n_noimprovement_repeats' : 30,
-    'output_directory' : None,
-    'verification_fold' : 0,
-}
+                  'batch_size': 100,
+                  'max_epochs': 100,
+                  'n_noimprovement_repeats': 30,
+                  'output_directory': None,
+                  'verification_fold': 0,
+                  }
 
-network_config = NetworkConfig('flat_regress_net', 
-                 config.feature_shape[1:], 
-                 n_classes=1, 
-                 **network_options)
+network_config = NetworkConfig('flat_regress_net',
+                               config.feature_shape[1:],
+                               n_classes=1,
+                               **network_options)
 
 cnn = CNN(network_config)
 
@@ -60,13 +60,12 @@ if (key == 'build' or key == 'all'):
 
 if (key == 'train' or key == 'all'):
 
-
     feature_scaler = RobustTransformer(data_config.data_save_name + '_feature_')
     response_scaler = StandardTransformer(data_config.data_save_name + '_response_')
 
     train_set = fold_assignments == data_config.verification_fold
-    feature_scaler.fit(features[train_set,...])
-    response_scaler.fit(responses[train_set,...])
+    feature_scaler.fit(features[train_set, ...])
+    response_scaler.fit(responses[train_set, ...])
 
     cnn.fit(feature_scaler.transform(features), response_scaler.transform(responses), fold_assignments)
 
