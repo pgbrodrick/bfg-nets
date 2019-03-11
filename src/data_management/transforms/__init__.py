@@ -107,25 +107,29 @@ class BaseSklearnTransformer(BaseGlobalTransformer):
         self.scaler = joblib.load(self.savename)
 
 
-class ConstantTransformer(BaseTransformer):
+class ConstantTransformer(BaseGlobalTransformer):
+    constant_scaler = None
+    constant_offset = None
 
-    def __init__(self, constant_scaler, constant_offset=None):
+    def __init__(self, nodata_value, constant_scaler, constant_offset=None):
         self.constant_scaler = constant_scaler
         self.constant_offset = constant_offset
 
         self.scaler_name = 'ConstantScaler'
-        super().__init__(savename_base)
+        super().__init__(nodata_value)
 
-    def fit(x):
-        a = None  # nothing to do here #TODO: fix if there's a more appropriate way to do this
+    def _fit(self, image_array):
+        pass
 
-    def transform(data):
-        data[data != self.nodata_value] = data[data != self.nodata_value] / self.constant_scaler + self.constant_offset
-        return data
+    def _inverse_transform(self, image_array):
+        idx_valid = image_array != self.nodata_value
+        image_array[idx_valid] = (image_array[idx_valid] - self.constant_offset) * self.constant_scaler
+        return image_array
 
-    def inverse_transform(data):
-        data[data !+ self.nodata_value] = (data[data != self.nodata_value] + self.constant_offset) * self.constant_scaler
-        return data
+    def _transform(self, image_array):
+        idx_valid = image_array != self.nodata_value
+        image_array[idx_valid] = image_array[idx_valid] / self.constant_scaler + self.constant_offset
+        return image_array
 
     def save(self):
         np.savez(self.savename + '.npz', constant_scaler=self.constant_scaler, constant_offset=self.constant_offset)
