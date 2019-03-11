@@ -140,41 +140,41 @@ class ConstantTransformer(BaseGlobalTransformer):
         self.constant_offset = npzf['constant_offset']
 
 
-class StandardTransformer(BaseTransformer):
+class StandardTransformer(BaseSklearnTransformer):
 
     def __init__(self):
         self.scaler = sklearn.preprocessing.StandardScaler(copy=True)
         self.scaler_name = 'sklearn_StandardScaler'
-        super().__init__(savename_base)
+        super().__init__()
 
 
-class MinMaxTransformer(BaseTransformer):
+class MinMaxTransformer(BaseSklearnTransformer):
 
     def __init__(self, feature_range=(-1, 1)):
         self.scaler = sklearn.preprocessing.MinMaxScaler(feature_range=feature_range, copy=True)
         self.scaler_name = 'sklearn_MinMaxScaler'
-        super().__init__(savename_base)
+        super().__init__()
 
 
-class RobustTransformer(BaseTransformer):
+class RobustTransformer(BaseSklearnTransformer):
 
     def __init__(self, quantile_range=(10.0, 90.0)):
         self.scaler = sklearn.preprocessing.RobustScaler(quantile_range=quantile_range, copy=True)
         self.scaler_name = 'sklearn_RobustScaler'
-        super().__init__(savename_base)
+        super().__init__()
 
 
-class PowerTransformer(BaseTransformer):
+class PowerTransformer(BaseSklearnTransformer):
 
     def __init__(self, method='box-cox'):
         self.scaler = sklearn.preprocessing.PowerTransformer(method=method, copy=True)
         self.scaler_name = 'sklearn_PowerTransformer'
-        super().__init__(savename_base)
+        super().__init__()
 
 
-class QuantileUniformTransformer(BaseTransformer):
+class QuantileUniformTransformer(BaseSklearnTransformer):
 
     def __init__(self, output_distribution='uniform'):
         self.scaler = sklearn.preprocessing.QuantileTransformer(output_distribution=output_distribution, copy=True)
         self.scaler_name = 'sklearn_QuantileTransformer'
-        super().__init__(savename_base)
+        super().__init__()
