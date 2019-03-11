@@ -1,6 +1,3 @@
-import os
-
-import keras
 import keras.backend as K
 import numpy as np
 
@@ -121,10 +118,10 @@ class CNN():
         self.history = dict()
         self.training = None
         # elif (model objects exist) and (config.load_existing = True):
-        #self.model = keras.models.load_model(filepath depends on config decision above, custom_objects=TODO)
-        #self.history = history.load_history(filepath depends on config decision above)
-        #self._initial_epoch = len(self.history['lr'])  # Probably want this if training is continued
-        #K.set_value(self.model.optimizer.lr, self.history['lr'][-1])  # Probably don't want this
+        # self.model = keras.models.load_model(filepath depends on config decision above, custom_objects=TODO)
+        # self.history = history.load_history(filepath depends on config decision above)
+        # self._initial_epoch = len(self.history['lr'])  # Probably want this if training is continued
+        # K.set_value(self.model.optimizer.lr, self.history['lr'][-1])  # Probably don't want this
 
     def calculate_training_memory_usage(self, batch_size):
         # Shamelessly copied from

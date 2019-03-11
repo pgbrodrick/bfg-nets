@@ -126,8 +126,8 @@ def build_regression_training_data_ordered(config):
     fold_assignments = np.zeros(responses.shape[0])
 
     for f in range(0, config.n_folds):
-        fold_assignments[rint(float(f)/float(n_folds)*len(fold_assignments))
-                              :rint(float(f+1)/float(n_folds)*len(fold_assignments))] = f
+        fold_assignments[int(round(float(f)/float(n_folds)*len(fold_assignments)))
+                              :int(round(float(f+1)/float(n_folds)*len(fold_assignments)))] = f
 
     # reshape images for the CNN
     features = features.reshape((features.shape[0], features.shape[1], features.shape[2], n_features))

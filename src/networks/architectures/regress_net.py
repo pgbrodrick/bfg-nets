@@ -3,8 +3,6 @@ import keras
 from keras.layers.convolutional import Conv2D
 from keras.layers.normalization import BatchNormalization
 
-from src.networks.config import NetworkConfig
-
 
 def flat_regress_net(inshape, n_classes, conv_depth, batch_norm, n_layers, conv_pattern, output_activation):
     """ Construct a flat style network with flexible shape
