@@ -49,10 +49,6 @@ class DataConfig:
         # A flag to fill in missing data with a nearest neighbor interpolation.
         self.fill_in_feature_data = kwargs.get('fill_in_feature_data', False)
 
-        # TODO: rename/revise these as appropriate
-        self.global_scaling = kwargs.get('global_scaling', None)
-        self.local_scaling = kwargs.get('local_scaling', None)
-
         # A random seed to set (for reproducability), set to None to not set a seed.
         self.random_seed = kwargs.get('random_seed', 13)
 
