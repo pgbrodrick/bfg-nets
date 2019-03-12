@@ -51,6 +51,9 @@ class NetworkConfig(object):
                 'conv_pattern': kwargs.get('conv_pattern', [3]),
                 'output_activation': kwargs.get('output_activation', 'softmax'),
             }
+        elif (self.network_type == 'residual_net'):
+            self.create_architecture = architectures.residual_net.create_residual_network
+            self.architecture_options = architectures.residual_net.parse_architecture_options(**kwargs)
         else:
             NotImplementedError('Invalid network type: ' + self.network_type)
 
