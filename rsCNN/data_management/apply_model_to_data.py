@@ -1,4 +1,4 @@
-from src.util.general import *
+from rsCNN.util.general import *
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import gdal
@@ -11,7 +11,7 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
   """ Apply a trained model to a raster file.
 
     Arguments:
-    cnn - CNN (src/networks/__init__.py)
+    cnn - CNN (rsCNN/networks/__init__.py)
       Pre-trained model.
     data_config - DataConfig
       Tells us how the data was prepared for the cnn.
@@ -70,7 +70,7 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
                 # TODO: implement local scaling if necessary
 
                 # TODO: consider having this as an option
-                #d = fill_nearest_neighbor(d)
+                # d = fill_nearest_neighbor(d)
                 images.append(d)
             images = np.stack(images)
             images = images.reshape((images.shape[0], images.shape[1], images.shape[2],dataset.RasterCount))
