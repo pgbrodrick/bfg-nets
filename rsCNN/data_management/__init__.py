@@ -1,5 +1,6 @@
 import os
 
+
 class DataConfig:
     """ A wrapper class designed to hold all relevant information about data sources,
         sample generation, and scaling.
@@ -80,8 +81,7 @@ class DataConfig:
         # based on this root extension
         self.data_save_name = kwargs.get('data_save_name', None)
         if (self.data_save_name is not None):
-            assert  os.path.isdir(os.path.dirname(self.data_save_name)) , 'Invalid path for data_save_name'
-                
+            assert os.path.isdir(os.path.dirname(self.data_save_name)), 'Invalid path for data_save_name'
 
         # stored values for the eventual feature and response shapes
         self.response_shape = kwargs.get('response_shape', None)
