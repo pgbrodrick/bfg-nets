@@ -17,6 +17,10 @@ year = '2015'
 feature_files = ['dat/features/feat_subset.tif']
 response_files = ['dat/responses/resp_subset.tif']
 
+# could (and typically are) different, but using for now
+application_feature_files = feature_files
+application_output_basenames = ['examples/output/' + os.path.basename(x).split('.') + '_applied_cnn' for x in feature_files]
+
 # TODO: if we want to grab these from a config file, need to write a wrapper to read the transform in
 data_options = {
     'data_save_name': 'munged/cnn_munge_' + str(window_radius) + '_test',
@@ -73,3 +77,19 @@ if (key == 'train' or key == 'all'):
 if (key == 'apply' or key == 'all'):
     a = None
     # :TODO finish
+
+    apply_model_to_data(cnn,\
+                        data_config,\
+                        application_feature_files,\
+                        application_output_basenames,\
+                        make_png = False,\
+                        make_tif = True,\
+                        feature_transformer=feature_scaler,\
+                        response_transformer=response_scaler)
+
+                        
+
+
+
+
+
