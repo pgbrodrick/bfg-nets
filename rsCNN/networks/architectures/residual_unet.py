@@ -15,7 +15,7 @@ def create_residual_network(
         padding: str = 'same',
         pool_size: Iterable[int] = (3, 3),
         strides: Iterable[int] = (1, 1),
-)-> keras.models.Model:
+) -> keras.models.Model:
 
     # Initial convolution
     input_tensor = keras.layers.Input(shape=input_shape)
