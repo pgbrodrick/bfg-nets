@@ -1,10 +1,11 @@
+from typing import Iterable
 import keras
 
 from keras.layers.convolutional import Conv2D
 from keras.layers.normalization import BatchNormalization
 
 
-def flat_regress_net(inshape, n_classes, conv_depth, batch_norm, n_layers, conv_pattern, output_activation):
+def flat_regress_net(inshape : Iterable[int], n_classes : int, conv_depth : int, batch_norm : bool, n_layers : int, conv_pattern : Iterable[int], output_activation : str):
     """ Construct a flat style network with flexible shape
 
     Arguments:
@@ -17,6 +18,8 @@ def flat_regress_net(inshape, n_classes, conv_depth, batch_norm, n_layers, conv_
       A dictionary of optional keyword arguments, which may contain
       extra keywords.  Values to use are:
 
+      conv_pattern - tuple/list
+        Designates the (repeating) order of convolution filter sizes.
       conv_depth - int/str
         If integer, a fixed number of convolution filters to use
         in the network.  If 'growth' tells the network to grow
@@ -47,5 +50,5 @@ def flat_regress_net(inshape, n_classes, conv_depth, batch_norm, n_layers, conv_
             b1 = BatchNormalization()(b1)
 
     output_layer = Conv2D(n_classes, (1, 1), activation=output_activation, padding='same')(b1)
-    model = keras.models.Model(input=inlayer, output=output_layer)
+    model = keras.models.Model(inputs=inlayer, outputs=output_layer)
     return model
