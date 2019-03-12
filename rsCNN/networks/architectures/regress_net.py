@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Tuple
 
 import keras
 from keras.layers.convolutional import Conv2D
@@ -8,12 +8,12 @@ from keras.layers.normalization import BatchNormalization
 # TODO:  Convert to kwargs with default settings, use those default settings in NetworkConfig
 
 def flat_regress_net(
-    inshape: Iterable[int, int, int],
+    inshape: Tuple[int, int, int],
     n_classes: int,
     conv_depth: int,
     batch_norm: bool,
     n_layers: int,
-    conv_pattern: Iterable[int],
+    conv_pattern: Tuple[int],
     output_activation: keras.layers.Activation,
 ) -> keras.models.Model:
     """ Construct a flat style network with flexible shape

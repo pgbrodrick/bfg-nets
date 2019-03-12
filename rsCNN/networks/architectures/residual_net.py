@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Tuple
 
 import keras
 
@@ -25,15 +25,15 @@ def parse_architecture_options(**kwargs):
 
 
 def create_residual_network(
-    input_shape: Iterable[int],
+    input_shape: Tuple[int, int, int],
     num_outputs: int,
-    block_structure: Iterable[int] = DEFAULT_BLOCK_STRUCTURE,
+    block_structure: Tuple[int, ...] = DEFAULT_BLOCK_STRUCTURE,
     batch_norm: bool = DEFAULT_BATCH_NORM,
     initial_filters: int = DEFAULT_INITIAL_FILTERS,
-    kernel_size: Iterable[int] = DEFAULT_KERNEL_SIZE,
+    kernel_size: Tuple[int, int] = DEFAULT_KERNEL_SIZE,
     padding: str = DEFAULT_PADDING,
-    pool_size: Iterable[int] = DEFAULT_POOL_SIZE,
-    strides: Iterable[int] = DEFAULT_STRIDES,
+    pool_size: Tuple[int, int] = DEFAULT_POOL_SIZE,
+    strides: Tuple[int, int] = DEFAULT_STRIDES,
 ) -> keras.models.Model:
 
     # Initial convolution
@@ -67,7 +67,7 @@ def create_residual_network(
     return keras.models.Model(inputs=[input_tensor], outputs=[output_tensor])
 
 
-def _add_residual_shortcut(input_tensor, residual_module):
+def _add_residual_shortcut(input_tensor: keras.layers.Layer, residual_module: keras.layers.Layer):
     """
     Adds a shortcut connection by combining a input tensor and residual module
     """
