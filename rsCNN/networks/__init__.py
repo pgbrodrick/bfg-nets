@@ -1,3 +1,4 @@
+from typing import Iterable
 import keras.backend as K
 import numpy as np
 
@@ -18,7 +19,7 @@ class NetworkConfig(object):
         training of a new network.
     """
 
-    def __init__(self, network_type, inshape, n_classes, **kwargs):
+    def __init__(self, network_type: str, inshape: Iterable[int], n_classes: Iterable[int], **kwargs):
         """
           Arguments:
           network_type - str
@@ -50,6 +51,9 @@ class NetworkConfig(object):
                 'conv_pattern': kwargs.get('conv_pattern', [3]),
                 'output_activation': kwargs.get('output_activation', 'softmax'),
             }
+        elif (self.network_type == 'residual_net'):
+            self.create_architecture = architectures.residual_net.create_residual_network
+            self.architecture_options = architectures.residual_net.parse_architecture_options(**kwargs)
         else:
             NotImplementedError('Invalid network type: ' + self.network_type)
 
@@ -66,11 +70,11 @@ class NetworkConfig(object):
         self.append_existing = kwargs.get('append_existing', False)
 
         # Training arguments
-        self.batch_size = 1
-        self.max_epochs = 100
-        self.n_noimprovement_repeats = 10
+        self.batch_size = kwargs.get('batch_size', 1)
+        self.max_epochs = kwargs.get('max_epochs', 100)
+        self.n_noimprovement_repeats = kwargs.get('n_noimprovement_repeats', 10)
         self.output_directory = None  # TODO: give a default
-        self.verification_fold = None
+        self.verification_fold = kwargs.get('verification_fold', None)
 
         # Callbacks
         self.callbacks_use_tensorboard = kwargs.get('callbacks_use_tensorboard', True)
@@ -114,7 +118,8 @@ class CNN():
         # TODO:  if we want to explicitly check for existing model objects and assert that the user wants to load
         # TODO:  existing content, but this depends on the other decisions that are made
         # if (model objects are not saved at the config-specified locations) and (config.load_existing = False):
-        self.model = self.config.create_architecture(**self.config.architecture_options)
+        self.model = self.config.create_architecture(
+            self.config.inshape, self.config.n_classes, **self.config.architecture_options)
         self.history = dict()
         self.training = None
         # elif (model objects exist) and (config.load_existing = True):
