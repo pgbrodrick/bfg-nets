@@ -1,39 +1,20 @@
-from typing import Tuple
+from typing import Iterable
 
 import keras
 
 
-DEFAULT_BLOCK_STRUCTURE = (2, 2, 2, 2)
-DEFAULT_BATCH_NORM = True
-DEFAULT_INITIAL_FILTERS = 64
-DEFAULT_KERNEL_SIZE = (3, 3)
-DEFAULT_PADDING = 'same'
-DEFAULT_POOL_SIZE = (3, 3)
-DEFAULT_STRIDES = (1, 1)
-
-
-def parse_architecture_options(**kwargs):
-    return {
-        'block_structure': kwargs.get('block_structure', DEFAULT_BLOCK_STRUCTURE),
-        'batch_norm': kwargs.get('batch_norm', DEFAULT_BATCH_NORM),
-        'initial_filters': kwargs.get('initial_filters', DEFAULT_INITIAL_FILTERS),
-        'kernel_size': kwargs.get('kernel_size', DEFAULT_KERNEL_SIZE),
-        'padding': kwargs.get('padding', DEFAULT_PADDING),
-        'pool_size': kwargs.get('pool_size', DEFAULT_POOL_SIZE),
-        'strides': kwargs.get('strides', DEFAULT_STRIDES),
-    }
-
+# TODO:  incorporate defaults from here into NetworkConfig
 
 def create_residual_network(
-    input_shape: Tuple[int, int, int],
-    num_outputs: int,
-    block_structure: Tuple[int, ...] = DEFAULT_BLOCK_STRUCTURE,
-    batch_norm: bool = DEFAULT_BATCH_NORM,
-    initial_filters: int = DEFAULT_INITIAL_FILTERS,
-    kernel_size: Tuple[int, int] = DEFAULT_KERNEL_SIZE,
-    padding: str = DEFAULT_PADDING,
-    pool_size: Tuple[int, int] = DEFAULT_POOL_SIZE,
-    strides: Tuple[int, int] = DEFAULT_STRIDES,
+        input_shape: Iterable[int],
+        num_outputs: int,
+        block_structure: Iterable[int] = (2, 2, 2, 2),
+        batch_norm: bool = True,
+        initial_filters: int = 64,
+        kernel_size: Iterable[int] = (3, 3),
+        padding: str = 'same',
+        pool_size: Iterable[int] = (3, 3),
+        strides: Iterable[int] = (1, 1),
 ) -> keras.models.Model:
 
     # Initial convolution
@@ -67,7 +48,7 @@ def create_residual_network(
     return keras.models.Model(inputs=[input_tensor], outputs=[output_tensor])
 
 
-def _add_residual_shortcut(input_tensor: keras.layers.Layer, residual_module: keras.layers.Layer):
+def _add_residual_shortcut(input_tensor, residual_module):
     """
     Adds a shortcut connection by combining a input tensor and residual module
     """

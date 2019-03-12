@@ -1,11 +1,112 @@
 import gdal
 import numpy as np
+import re
+from tqdm import tqdm
 
 from rsCNN.utils import logger
-from rsCNN.util.general import *
+from rsCNN.utils.general import *
 
 
 _logger = logger.get_child_logger(__name__)
+
+
+def get_proj(fname, is_vector):
+    """ Get the projection of a raster/vector dataset.
+    Arguments:
+    fname - str
+      Name of input file.
+    is_vector - boolean
+      Boolean indication of whether the file is a vector or a raster.
+
+    Returns:
+    The projection of the input fname
+    """
+    if (is_vector):
+        if (os.path.basename(fname).split('.')[-1] == 'shp'):
+            vset = ogr.GetDriverByName('ESRI Shapefile').Open(fname, gdal.GA_ReadOnly)
+        elif (os.path.basename(fname).split('.')[-1] == 'kml'):
+            vset = ogr.GetDriverByName('KML').Open(fname, gdal.GA_ReadOnly)
+        else:
+            raise Exception('unsupported vector file type from file ' + fname)
+
+        b_proj = vset.GetLayer().GetSpatialRef()
+    else:
+        b_proj = gdal.Open(fname, gdal.GA_ReadOnly).GetProjection()
+
+    return re.sub('\W', '', str(b_proj))
+
+
+def check_data_matches(set_a, set_b, set_b_is_vector=False, set_c=[], set_c_is_vector=False, ignore_projections=False):
+    """ Check to see if two different gdal datasets have the same projection, geotransform, and extent.
+    Arguments:
+    set_a - list
+      First list of gdal datasets to check.
+    set_b - list
+      Second list of gdal datasets (or vectors) to check.
+
+    Keyword Arguments:
+    set_b_is_vector - boolean
+      Flag to indicate if set_b is a vector, as opposed to a gdal_dataset.
+    set_c - list
+      A third (optional) list of gdal datasets to check.
+    set_c_is_vector - boolean
+      Flag to indicate if set_c is a vector, as opposed to a gdal_dataset.
+    ignore_projections - boolean
+      A flag to ignore projection differences between feature and response sets - use only if you 
+      are sure the projections are really the same.
+
+
+    Return: 
+    None, simply throw error if the check fails
+    """
+    if (len(set_a) != len(set_b)):
+        raise Exception('different number of training features and responses')
+    if (len(set_c) > 0):
+        if (len(set_a) != len(set_c)):
+            raise Exception('different number of training features and boundary files - give None for blank boundary')
+
+    for n in range(0, len(set_a)):
+        a_proj = get_proj(set_a[n], False)
+        b_proj = get_proj(set_b[n], set_b_is_vector)
+
+        if (a_proj != b_proj and ignore_projections == False):
+            raise Exception(('projection mismatch between', set_a[n], 'and', set_b[n]))
+
+        if (len(set_c) > 0):
+            if (set_c[n] is not None):
+                c_proj = get_proj(set_c[n], set_c_is_vector)
+            else:
+                c_proj = b_proj
+
+            if (a_proj != c_proj and ignore_projections == False):
+                raise Exception(('projection mismatch between', set_a[n], 'and', set_c[n]))
+
+        if (set_b_is_vector == False):
+            dataset_a = gdal.Open(set_a[n], gdal.GA_ReadOnly)
+            dataset_b = gdal.Open(set_b[n], gdal.GA_ReadOnly)
+
+            if (dataset_a.GetProjection() != dataset_b.GetProjection() and ignore_projections == False):
+                raise Exception(('projection mismatch between', set_a[n], 'and', set_b[n]))
+
+            if (dataset_a.GetGeoTransform() != dataset_b.GetGeoTransform()):
+                raise Exception(('geotransform mismatch between', set_a[n], 'and', set_b[n]))
+
+            if (dataset_a.RasterXSize != dataset_b.RasterXSize or dataset_a.RasterYSize != dataset_b.RasterYSize):
+                raise Exception(('extent mismatch between', set_a[n], 'and', set_b[n]))
+
+        if (len(set_c) > 0):
+            if (set_c[n] is not None and set_c_is_vector == False):
+                dataset_a = gdal.Open(set_a[n], gdal.GA_ReadOnly)
+                dataset_c = gdal.Open(set_c[n], gdal.GA_ReadOnly)
+
+                if (dataset_a.GetProjection() != dataset_c.GetProjection() and ignore_projections == False):
+                    raise Exception(('projection mismatch between', set_a[n], 'and', set_c[n]))
+
+                if (dataset_a.GetGeoTransform() != dataset_c.GetGeoTransform()):
+                    raise Exception(('geotransform mismatch between', set_a[n], 'and', set_c[n]))
+
+                if (dataset_a.RasterXSize != dataset_c.RasterXSize or dataset_a.RasterYSize != dataset_c.RasterYSize):
+                    raise Exception(('extent mismatch between', set_a[n], 'and', set_c[n]))
 
 
 def build_regression_training_data_ordered(config):
@@ -31,6 +132,7 @@ def build_regression_training_data_ordered(config):
     if (config.random_seed is not None):
         np.random.seed(config.random_seed)
 
+    # TODO: relax reading style to not force all of these conditions (e.g., flex extents, though proj and px size should match for now)
     check_data_matches(config.feature_file_list, config.response_file_list, False,
                        config.boundary_file_list, config.boundary_as_vectors, config.ignore_projections)
 
@@ -58,7 +160,7 @@ def build_regression_training_data_ordered(config):
         response = gdal.Open(config.response_file_list[_i]).ReadAsArray().astype(float)
         if (config.response_min_value is not None):
             response[response < config.response_min_value] = config.response_nodata_value
-        if (response_max_value is not None):
+        if (config.response_max_value is not None):
             response[response > config.response_max_value] = config.response_nodata_value
 
         if (len(config.boundary_file_list) > 0):
@@ -101,7 +203,7 @@ def build_regression_training_data_ordered(config):
 
         colrow = colrow[np.random.permutation(colrow.shape[0]), :]
 
-        # TODO: replace tqdm with log?
+        # TODO: replace tqdm with log
         for _cr in tqdm(range(len(colrow)), ncols=80):
             col = colrow[_cr, 0]
             row = colrow[_cr, 1]
@@ -117,7 +219,7 @@ def build_regression_training_data_ordered(config):
                     features.append(d)
                     pos_len += 1
 
-                    if (pos_len >= max_samples):
+                    if (pos_len >= config.max_samples):
                         break
 
     # stack images up
@@ -128,7 +230,7 @@ def build_regression_training_data_ordered(config):
     perm = np.random.permutation(features.shape[0])
     features = features[perm, :]
     responses = responses[perm, :]
-    fold_assignments = np.zeros(responses.shape[0])
+    fold_assignments = np.zeros(responses.shape[0]).astype(int)
 
     for f in range(0, config.n_folds):
         idx_start = int(round(f / config.n_folds * len(fold_assignments)))
@@ -142,8 +244,8 @@ def build_regression_training_data_ordered(config):
     _logger.debug('Feature shape: {}'.format(features.shape))
     _logger.debug('Response shape: {}'.format(response.shape))
 
-    if (config.savename is not None):
-        np.savez(config.savename, features=features, responses=responses, fold_assignments=fold_assignments)
+    if (config.data_save_name is not None):
+        np.savez(config.data_save_name, features=features, responses=responses, fold_assignments=fold_assignments)
 
     config.response_shape = responses.shape
     config.feature_shape = features.shape
