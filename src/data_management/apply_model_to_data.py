@@ -35,6 +35,9 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
   
     # TODO: probably do some quick check to make sure the output location is accessible
 
+    if (os.path.dirname(destination_basename) == False):
+        print('Output directory does not exist')
+
     dataset = gdal.Open(feature_file,gdal.GA_ReadOnly)
 
     # TODO: implement an out-of core version here (IE, apply and write on the fly)
