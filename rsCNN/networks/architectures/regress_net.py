@@ -49,6 +49,7 @@ def flat_regress_net(
     for i in range(n_layers):
         kernel_size = conv_pattern[i % len(conv_pattern)]
         b1 = Conv2D(conv_depth, (kernel_size, kernel_size), activation='relu', padding='same')(b1)
+        # TODO:  Phil:  no batch norm after first convolution? just curious
         b1 = Conv2D(conv_depth, (kernel_size, kernel_size), activation='relu', padding='same')(b1)
         if (batch_norm):
             b1 = BatchNormalization()(b1)
