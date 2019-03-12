@@ -96,7 +96,7 @@ def get_callbacks(network_config):
                 write_graph=network_config.tensorboard_write_graph,
                 write_grads=network_config.tensorboard_write_grads,
                 write_images=network_config.tensorboard_write_images,
-                update_freq=network_config.tensorboard_update_freq,
+                update_freq=network_config.tensorboard_update_freq
             ),
         )
     if network_config.callbacks.use_terminate_on_nan:
