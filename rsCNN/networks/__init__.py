@@ -1,7 +1,7 @@
 import keras.backend as K
 import numpy as np
 
-from src.networks import architectures, callbacks, history
+from rsCNN.networks import architectures, callbacks, history
 
 
 class TrainingHistory(object):

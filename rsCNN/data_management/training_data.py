@@ -1,8 +1,8 @@
 import gdal
 import numpy as np
 
-from src.utils import logger
-from src.util.general import *
+from rsCNN.utils import logger
+from rsCNN.util.general import *
 
 
 _logger = logger.get_child_logger(__name__)

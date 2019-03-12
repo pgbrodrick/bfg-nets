@@ -13,7 +13,7 @@ def get_child_logger(logger_name):
 
 def get_root_logger(log_outfile=None):
     _configure_logging()
-    logger = logging.getLogger('src')
+    logger = logging.getLogger('rsCNN')
     logger.setLevel(logging.INFO)
     formatter = logging.Formatter(fmt='%(asctime)s - %(processName)s - %(name)s - %(levelname)s - %(message)s')
     # Stream handler

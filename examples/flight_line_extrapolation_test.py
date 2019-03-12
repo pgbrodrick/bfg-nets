@@ -2,10 +2,10 @@ import sys
 import gdal
 
 # TODO manage imports
-from src.util.general import *
-from src.networks import CNN, NetworkConfig
-from src.data_management import Data_Config, training_data, transforms
-fr
+from rsCNN.util.general import *
+from rsCNN.networks import CNN, NetworkConfig
+from rsCNN.data_management import Data_Config, training_data, transforms
+
 
 # TODO script needs to be adapted yet
 

@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.externals import joblib
 import sklearn.preprocessing
 
-from src.utils import logger
+from rsCNN.utils import logger
 
 
 _logger = logger.get_child_logger(__name__)

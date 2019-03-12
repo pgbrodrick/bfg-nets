@@ -2,8 +2,8 @@ import datetime
 
 import keras
 
-from src.networks import history
-from src.utils import logger
+from rsCNN.networks import history
+from rsCNN.utils import logger
 
 
 _logger = logger.get_child_logger(__name__)
