@@ -5,7 +5,7 @@ import gdal
 # TODO manage imports
 from rsCNN.utils.general import *
 from rsCNN.networks import CNN, NetworkConfig, losses
-from rsCNN.data_management import DataConfig, training_data, transforms
+from rsCNN.data_management import DataConfig, training_data, transforms, apply_model_to_data
 
 
 # TODO script needs to be adapted yet
@@ -50,7 +50,7 @@ network_options = {
     'output_activation': 'softplus',
 
     'batch_size': 100,
-    'max_epochs': 100,
+    'max_epochs': 10,
     'n_noimprovement_repeats': 30,
     'output_directory': None,
     'verification_fold': 0

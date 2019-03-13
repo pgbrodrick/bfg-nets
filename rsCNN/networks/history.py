@@ -1,12 +1,12 @@
-import json
+import pickle
 
 
 def load_history(filepath):
-    with open(filepath, 'r') as file_:
-        history = json.load(file_)
+    with open(filepath, 'rb') as file_:
+        history = pickle.load(file_)
     return history
 
 
 def save_history(history, filepath):
     with open(filepath, 'wb') as file_:
-        json.dump(history, file_)
+        pickle.dump(history, file_)
