@@ -240,6 +240,8 @@ def build_regression_training_data_ordered(config):
     # reshape images for the CNN
     features = features.reshape((features.shape[0], features.shape[1], features.shape[2], n_features))
     responses = responses.reshape((responses.shape[0], responses.shape[1], responses.shape[2], 1))
+    responses = np.append(responses,np.ones(responses.shape),axis=-1)
+    responses[responses[...,0] == config.response_nodata_value] = 0
 
     _logger.debug('Feature shape: {}'.format(features.shape))
     _logger.debug('Response shape: {}'.format(response.shape))
