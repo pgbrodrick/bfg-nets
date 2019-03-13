@@ -63,7 +63,7 @@ network_config = NetworkConfig('flat_regress_net',
                                n_classes=1,
                                **network_options)
 
-cnn = CNN(network_config, reinitialize=True, load_history=True)
+cnn = CNN(network_config, reinitialize=True, load_history=False)
 
 
 # TODO add option for plotting training data previews
@@ -83,9 +83,6 @@ if (key == 'train' or key == 'all'):
 
 
 if (key == 'apply' or key == 'all'):
-    a = None
-    # :TODO finish
-
     apply_model_to_data(cnn,
                         data_config,
                         application_feature_files,
