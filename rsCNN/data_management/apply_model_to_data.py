@@ -1,39 +1,39 @@
-from rsCNN.util.general import *
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
 import gdal
-import numpy as np
 import matplotlib as mpl
 mpl.use('Agg')
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+import numpy as np
 
+from rsCNN.utils.general import *
 
-def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, make_png=False, make_tif=True, feature_transformer=None, response_transformer=None)
-  """ Apply a trained model to a raster file.
+def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, make_png=False, make_tif=True, feature_transformer=None, response_transformer=None):
+    """ Apply a trained model to a raster file.
 
-    Arguments:
-    cnn - CNN (rsCNN/networks/__init__.py)
-      Pre-trained model.
-    data_config - DataConfig
-      Tells us how the data was prepared for the cnn.
-    feature_file - str
-      File with feature data to apply the model to.
-    destination_basename -  str
-      Base of the output file (will get a .tif or .png extention).
+      Arguments:
+      cnn - CNN (rsCNN/networks/__init__.py)
+        Pre-trained model.
+      data_config - DataConfig
+        Tells us how the data was prepared for the cnn.
+      feature_file - str
+        File with feature data to apply the model to.
+      destination_basename -  str
+        Base of the output file (will get a .tif or .png extention).
 
-    Keyword Arguments:
-    make_png - boolean
-      Should an output be created in PNG format?
-    make_tif - boolean
-      Should an output be created in TIF format?
-    feature_transformer - object that inherets from BaseGlobalTransform
-      If not none, this transform is applied to feature data before model application.
-    response_transformer - object that inherets from BaseGlobalTransform
-      If not none, this transform is applied to model output response data before writing tif/png.
+      Keyword Arguments:
+      make_png - boolean
+        Should an output be created in PNG format?
+      make_tif - boolean
+        Should an output be created in TIF format?
+      feature_transformer - object that inherets from BaseGlobalTransform
+        If not none, this transform is applied to feature data before model application.
+      response_transformer - object that inherets from BaseGlobalTransform
+        If not none, this transform is applied to model output response data before writing tif/png.
     """
 
    # TODO: probably do some quick check to make sure the output location is accessible
 
-   if (os.path.dirname(destination_basename) == False):
+    if (os.path.dirname(destination_basename) == False):
         print('Output directory does not exist')
 
     dataset = gdal.Open(feature_file, gdal.GA_ReadOnly)
