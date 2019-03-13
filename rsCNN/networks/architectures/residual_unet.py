@@ -8,6 +8,7 @@ DEFAULT_BLOCK_STRUCTURE = (2, 2, 2, 2)
 DEFAULT_BATCH_NORM = True
 DEFAULT_INITIAL_FILTERS = 64
 DEFAULT_KERNEL_SIZE = (3, 3)
+DEFAULT_MIN_CONV_WIDTH = 8
 DEFAULT_PADDING = 'same'
 DEFAULT_POOL_SIZE = (2, 2)
 DEFAULT_STRIDES = (1, 1)
@@ -19,6 +20,7 @@ def parse_architecture_options(**kwargs):
         'batch_norm': kwargs.get('batch_norm', DEFAULT_BATCH_NORM),
         'initial_filters': kwargs.get('initial_filters', DEFAULT_INITIAL_FILTERS),
         'kernel_size': kwargs.get('kernel_size', DEFAULT_KERNEL_SIZE),
+        'min_conv_width': kwargs.get('min_conv_width', DEFAULT_MIN_CONV_WIDTH),
         'padding': kwargs.get('padding', DEFAULT_PADDING),
         'pool_size': kwargs.get('pool_size', DEFAULT_POOL_SIZE),
         'strides': kwargs.get('strides', DEFAULT_STRIDES),
@@ -33,17 +35,21 @@ def create_residual_network(
         batch_norm: bool = DEFAULT_BATCH_NORM,
         initial_filters: int = DEFAULT_INITIAL_FILTERS,
         kernel_size: Tuple[int, int] = DEFAULT_KERNEL_SIZE,
+        min_conv_width: int = DEFAULT_MIN_CONV_WIDTH,
         padding: str = DEFAULT_PADDING,
         pool_size: Tuple[int, int] = DEFAULT_POOL_SIZE,
-        strides: Tuple[int, int] = DEFAULT_STRIDES,
         use_growth: bool = False,
 ) -> keras.models.Model:
 
-    # TODO:  unnest one layer, calculate that input_width stays above 8 for block structure, assert in beginning
-    #assert min_input_width > 8
+    input_width = input_shape[0]
+    minimum_width = input_width / 2 ** len(block_structure)
+    assert minimum_width > min_conv_width, \
+        'The convolution width in the last encoding block ({}) is less than '.format(minimum_width) + \
+        'the minimum specified width ({}). Either reduce '.format(min_conv_width) + \
+        'the number of blocks in block_structure (currently {}) or '.format(len(block_structure)) + \
+        'the value of min_conv_width.'
 
     # Need to track the following throughout the model creation
-    input_width = input_shape[0]
     filters = initial_filters
     layers_pass_through = list()
 
