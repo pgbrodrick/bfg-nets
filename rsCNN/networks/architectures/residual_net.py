@@ -19,8 +19,6 @@ def parse_architecture_options(**kwargs):
         'initial_filters': kwargs.get('initial_filters', DEFAULT_INITIAL_FILTERS),
         'kernel_size': kwargs.get('kernel_size', DEFAULT_KERNEL_SIZE),
         'padding': kwargs.get('padding', DEFAULT_PADDING),
-        'pool_size': kwargs.get('pool_size', DEFAULT_POOL_SIZE),
-        'strides': kwargs.get('strides', DEFAULT_STRIDES),
     }
 
 
@@ -32,14 +30,11 @@ def create_residual_network(
     initial_filters: int = DEFAULT_INITIAL_FILTERS,
     kernel_size: Tuple[int, int] = DEFAULT_KERNEL_SIZE,
     padding: str = DEFAULT_PADDING,
-    pool_size: Tuple[int, int] = DEFAULT_POOL_SIZE,
-    strides: Tuple[int, int] = DEFAULT_STRIDES,
 ) -> keras.models.Model:
 
     # Initial convolution
     input_tensor = keras.layers.Input(shape=input_shape)
-    conv = keras.layers.Conv2D(
-        filters=initial_filters, kernel_size=kernel_size, padding=padding, strides=strides)(input_tensor)
+    conv = keras.layers.Conv2D(filters=initial_filters, kernel_size=kernel_size, padding=padding)(input_tensor)
     if batch_norm:
         conv = keras.layers.BatchNormalization()(conv)
 
@@ -52,8 +47,7 @@ def create_residual_network(
             subblock = subblock_input
             if batch_norm and not is_first_subblock_in_first_block:
                 subblock = keras.layers.BatchNormalization()(subblock)
-            subblock = keras.layers.Conv2D(
-                filters=filters, kernel_size=kernel_size, padding=padding, strides=strides)(subblock)
+            subblock = keras.layers.Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(subblock)
             subblock_input = _add_residual_shortcut(subblock_input, subblock)
         filters *= 2
 
