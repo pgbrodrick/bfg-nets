@@ -79,6 +79,11 @@ class BaseGlobalTransformer(object):
     def _transform(self, image_array):
         raise NotImplementedError
 
+    def fit_transform(self, image_array):
+        self.fit(image_array)
+        self.transform(image_array)
+        return image_array
+
     def _reshape_image_array(self, image_array):
         # The second dimension is image_array.shape[-1] which is the num_channels, so the first dimension is
         # image width x image height

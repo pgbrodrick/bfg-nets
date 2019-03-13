@@ -76,18 +76,19 @@ if (key == 'train' or key == 'all'):
         data_config.response_nodata_value, data_config.data_save_name + '_response_')
 
     train_set = fold_assignments == network_config.verification_fold
-    feature_scaler.fit(features[train_set, ...])
-    response_scaler.fit(responses[train_set, ...])
+    feature_scaler.fit_transform(features[train_set, ...])
+    response_scaler.fit_transform(responses[train_set, ...,:-1])
 
-    cnn.fit(feature_scaler.transform(features), response_scaler.transform(responses), fold_assignments)
+    cnn.fit(features, responses, fold_assignments)
 
 
 if (key == 'apply' or key == 'all'):
-    apply_model_to_data(cnn,
-                        data_config,
-                        application_feature_files,
-                        application_output_basenames,
-                        make_png=False,
-                        make_tif=True,
-                        feature_transformer=feature_scaler,
-                        response_transformer=response_scaler)
+    for _f in range(len(application_feature_files)):
+        apply_model_to_data.apply_model_to_raster(cnn,
+                            data_config,
+                            application_feature_files[_f],
+                            application_output_basenames[_f],
+                            make_png=False,
+                            make_tif=True,
+                            feature_transformer=feature_scaler,
+                            response_transformer=response_scaler)
