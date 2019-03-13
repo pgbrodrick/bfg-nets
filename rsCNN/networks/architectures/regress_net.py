@@ -1,11 +1,22 @@
-from typing import Iterable
+from typing import Tuple
+
 import keras
 
 from keras.layers.convolutional import Conv2D
 from keras.layers.normalization import BatchNormalization
 
 
-def flat_regress_net(inshape : Iterable[int], n_classes : int, conv_depth : int, batch_norm : bool, n_layers : int, conv_pattern : Iterable[int], output_activation : str):
+# TODO:  Convert to kwargs with default settings, use those default settings in NetworkConfig
+
+def flat_regress_net(
+    inshape: Tuple[int, int, int],
+    n_classes: int,
+    conv_depth: int,
+    batch_norm: bool,
+    n_layers: int,
+    conv_pattern: Tuple[int],
+    output_activation: str,
+) -> keras.models.Model:
     """ Construct a flat style network with flexible shape
 
     Arguments:
@@ -31,21 +42,14 @@ def flat_regress_net(inshape : Iterable[int], n_classes : int, conv_depth : int,
       A flexible flat style network keras network.
     """
     if (len(conv_pattern) > 0):
-        if (n_layers % len(conv_pattern) != 0):
-            Exception('conv_pattern must divide into n_layers')
-            quit()
-
-    if (isinstance(conv_depth, int) == False):
-        Exception('conv_depth parameter must be an integer')
-        quit()
+        assert (n_layers % len(conv_pattern) == 0), 'conv_pattern must divide into n_layers'
 
     inlayer = keras.layers.Input(inshape)
     b1 = inlayer
     for i in range(n_layers):
-        b1 = Conv2D(conv_depth, (conv_pattern[i % len(conv_pattern)], conv_pattern[i %
-                                                                                   len(conv_pattern)]), activation='relu', padding='same')(b1)
-        b1 = Conv2D(conv_depth, (conv_pattern[i % len(conv_pattern)], conv_pattern[i %
-                                                                                   len(conv_pattern)]), activation='relu', padding='same')(b1)
+        kernel_size = conv_pattern[i % len(conv_pattern)]
+        b1 = Conv2D(conv_depth, (kernel_size, kernel_size), activation='relu', padding='same')(b1)
+        b1 = Conv2D(conv_depth, (kernel_size, kernel_size), activation='relu', padding='same')(b1)
         if (batch_norm):
             b1 = BatchNormalization()(b1)
 

@@ -1,4 +1,5 @@
-import os,sys
+import os
+import sys
 import gdal
 
 # TODO manage imports
@@ -37,7 +38,7 @@ data_config = DataConfig(window_radius, feature_files, response_files, **data_op
 if (key == 'build' or key == 'all'):
     features, responses, fold_assignments = training_data.build_regression_training_data_ordered(data_config)
 else:
-    data_config = None #TODO: load data_config from disk
+    data_config = None  # TODO: load data_config from disk
 
 
 network_options = {
@@ -65,15 +66,14 @@ network_config = NetworkConfig('flat_regress_net',
 cnn = CNN(network_config, reinitialize=True, load_history=True)
 
 
-
-
-
 # TODO add option for plotting training data previews
 
 if (key == 'train' or key == 'all'):
 
-    feature_scaler = transforms.RobustTransformer(data_config.feature_nodata_value, data_config.data_save_name + '_feature_')
-    response_scaler = transforms.StandardTransformer(data_config.response_nodata_value, data_config.data_save_name + '_response_')
+    feature_scaler = transforms.RobustTransformer(
+        data_config.feature_nodata_value, data_config.data_save_name + '_feature_')
+    response_scaler = transforms.StandardTransformer(
+        data_config.response_nodata_value, data_config.data_save_name + '_response_')
 
     train_set = fold_assignments == network_config.verification_fold
     feature_scaler.fit(features[train_set, ...])
