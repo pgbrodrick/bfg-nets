@@ -1,54 +1,112 @@
-from typing import Iterable
+from typing import Tuple
 
 import keras
+from keras.layers import BatchNormalization, Concatenate, Conv2D, MaxPooling2D, UpSampling2D
 
 
-# TODO:  incorporate defaults from here into NetworkConfig
+DEFAULT_BLOCK_STRUCTURE = (2, 2, 2, 2)
+DEFAULT_BATCH_NORM = True
+DEFAULT_INITIAL_FILTERS = 64
+DEFAULT_KERNEL_SIZE = (3, 3)
+DEFAULT_PADDING = 'same'
+DEFAULT_POOL_SIZE = (2, 2)
+DEFAULT_STRIDES = (1, 1)
+
+
+def parse_architecture_options(**kwargs):
+    return {
+        'block_structure': kwargs.get('block_structure', DEFAULT_BLOCK_STRUCTURE),
+        'batch_norm': kwargs.get('batch_norm', DEFAULT_BATCH_NORM),
+        'initial_filters': kwargs.get('initial_filters', DEFAULT_INITIAL_FILTERS),
+        'kernel_size': kwargs.get('kernel_size', DEFAULT_KERNEL_SIZE),
+        'padding': kwargs.get('padding', DEFAULT_PADDING),
+        'pool_size': kwargs.get('pool_size', DEFAULT_POOL_SIZE),
+        'strides': kwargs.get('strides', DEFAULT_STRIDES),
+    }
+
 
 def create_residual_network(
-        input_shape: Iterable[int],
+        input_shape: Tuple[int, int, int],
         num_outputs: int,
-        block_structure: Iterable[int] = (2, 2, 2, 2),
-        batch_norm: bool = True,
-        initial_filters: int = 64,
-        kernel_size: Iterable[int] = (3, 3),
-        padding: str = 'same',
-        pool_size: Iterable[int] = (3, 3),
-        strides: Iterable[int] = (1, 1),
+        output_activation: str,
+        block_structure: Tuple[int, ...] = DEFAULT_BLOCK_STRUCTURE,
+        batch_norm: bool = DEFAULT_BATCH_NORM,
+        initial_filters: int = DEFAULT_INITIAL_FILTERS,
+        kernel_size: Tuple[int, int] = DEFAULT_KERNEL_SIZE,
+        padding: str = DEFAULT_PADDING,
+        pool_size: Tuple[int, int] = DEFAULT_POOL_SIZE,
+        strides: Tuple[int, int] = DEFAULT_STRIDES,
+        use_growth: bool = False,
 ) -> keras.models.Model:
 
-    # Initial convolution
-    input_tensor = keras.layers.Input(shape=input_shape)
-    conv = keras.layers.Conv2D(
-        filters=initial_filters, kernel_size=kernel_size, padding=padding, strides=strides)(input_tensor)
-    if batch_norm:
-        conv = keras.layers.BatchNormalization()(conv)
-    pool = keras.layers.MaxPooling2D(pool_size)(conv)
+    # TODO:  unnest one layer, calculate that input_width stays above 8 for block structure, assert in beginning
+    #assert min_input_width > 8
 
-    # Iterate blocks and subblocks
-    subblock_input = pool
+    # Need to track the following throughout the model creation
+    input_width = input_shape[0]
     filters = initial_filters
-    for idx_block, num_subblocks in enumerate(block_structure):
+    layers_pass_through = list()
+
+    # Encodings
+    input_layer = keras.layers.Input(shape=input_shape)
+    encoder = input_layer
+    # Each encoder block has a number of subblocks
+    for num_subblocks in block_structure:
         for idx_sublayer in range(num_subblocks):
-            is_first_subblock_in_first_block = idx_block == 0 and idx_sublayer == 0
-            subblock = subblock_input
-            if batch_norm and not is_first_subblock_in_first_block:
-                subblock = keras.layers.BatchNormalization()(subblock)
-            subblock = keras.layers.Conv2D(
-                filters=filters, kernel_size=kernel_size, padding=padding, strides=strides)(subblock)
-            subblock_input = _add_residual_shortcut(subblock_input, subblock)
-        filters *= 2
+            # Store the subblock input for the residual connection
+            input_subblock = encoder
+            # Each subblock has two convolutions
+            encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, strides=strides)(encoder)
+            if (batch_norm):
+                encoder = BatchNormalization()(encoder)
+            encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, strides=strides)(encoder)
+            if (batch_norm):
+                encoder = BatchNormalization()(encoder)
+            # Add the residual connection from the previous subblock output to the current subblock output
+            encoder = _add_residual_shortcut(input_subblock, encoder)
+        # Each encoder block passes its pre-pooled layers through to the decoder
+        layers_pass_through.append(encoder)
+        encoder = MaxPooling2D(pool_size=pool_size)(encoder)
+        if use_growth:
+            filters *= 2
 
-    # Output convolutions
-    output_tensor = subblock_input
-    if batch_norm:
-        output_tensor = keras.layers.BatchNormalization()(output_tensor)
-    output_tensor = keras.layers.Conv2D(
-        filters=num_outputs, kernel_size=(1, 1), padding='same')(output_tensor)
-    return keras.models.Model(inputs=[input_tensor], outputs=[output_tensor])
+    # Decodings
+    decoder = encoder
+    # Each decoder block has a number of subblocks, but in reverse order of encoder
+    for num_subblocks, layer_passed_through in zip(reversed(block_structure), reversed(layers_pass_through)):
+        for idx_sublayer in range(num_subblocks):
+            # Store the subblock input for the residual connection
+            input_subblock = decoder
+            # Each subblock has two convolutions
+            decoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, strides=strides)(decoder)
+            if (batch_norm):
+                decoder = BatchNormalization()(decoder)
+            decoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, strides=strides)(decoder)
+            if (batch_norm):
+                decoder = BatchNormalization()(decoder)
+            # Add the residual connection from the previous subblock output to the current subblock output
+            decoder = _add_residual_shortcut(input_subblock, decoder)
+        decoder = UpSampling2D(size=pool_size)(decoder)
+        decoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, strides=strides)(decoder)
+        if (batch_norm):
+            decoder = BatchNormalization()(decoder)
+        decoder = Concatenate()([layer_passed_through, decoder])
+        if use_growth:
+            filters /= 2
+
+    # Last convolutions
+    output_layer = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, strides=strides)(decoder)
+    if (batch_norm):
+        output_layer = BatchNormalization()(output_layer)
+    output_layer = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, strides=strides)(output_layer)
+    if (batch_norm):
+        output_layer = BatchNormalization()(output_layer)
+    output_layer = Conv2D(
+        filters=num_outputs, kernel_size=(1, 1), padding='same', activation=output_activation)(output_layer)
+    return keras.models.Model(inputs=[input_layer], outputs=[output_layer])
 
 
-def _add_residual_shortcut(input_tensor, residual_module):
+def _add_residual_shortcut(input_tensor: keras.layers.Layer, residual_module: keras.layers.Layer):
     """
     Adds a shortcut connection by combining a input tensor and residual module
     """
