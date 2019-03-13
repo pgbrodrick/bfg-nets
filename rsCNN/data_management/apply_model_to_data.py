@@ -4,6 +4,7 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import numpy as np
+import os
 
 from rsCNN.utils.general import *
 
@@ -49,9 +50,9 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
     feature[np.isinf(feature)] = data_config.feature_nodata_value
 
     if (feature_transformer is not None):
-        feature = feature_transformer(feature)
+        feature = feature_transformer.transform(feature)
 
-    output = np.zeros((feature.shape[0], feature.shape[1], cnn.n_classes)) + data_config.response_nodata_value
+    output = np.zeros((feature.shape[0], feature.shape[1], cnn.config.n_classes)) + data_config.response_nodata_value
 
     cr = [0, feature.shape[1]]
     rr = [0, feature.shape[0]]
@@ -72,52 +73,52 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
                 # TODO: consider having this as an option
                 # d = fill_nearest_neighbor(d)
                 images.append(d)
-            images = np.stack(images)
-            images = images.reshape((images.shape[0], images.shape[1], images.shape[2],dataset.RasterCount))
+    images = np.stack(images)
+    images = images.reshape((images.shape[0], images.shape[1], images.shape[2],dataset.RasterCount))
 
-            pred_y = model.predict(images)
+    pred_y = cnn.predict(images)
 
-            _i = 0
-            for n in rowlist:
-                p = pred_y[_i, ...]
-                if (data_config.internal_window_radius < data_config.window_radius):
-                    mm = int(round(data_config.window_radius - data_config.internal_window_radius))
-                    p = p[mm:-mm, mm:-mm, :]
-                output[n-data_config.internal_window_radius:n+data_config.internal_window_radius, col-data_config.internal_window_radius:col+data_config.internal_window_radius, :] = p
-                _i += 1
-                if (_i >= len(images)):
-                    break
+    _i = 0
+    for n in rowlist:
+        p = pred_y[_i, ...]
+        if (data_config.internal_window_radius < data_config.window_radius):
+            mm = int(round(data_config.window_radius - data_config.internal_window_radius))
+            p = p[mm:-mm, mm:-mm, :]
+        output[n-data_config.internal_window_radius:n+data_config.internal_window_radius, col-data_config.internal_window_radius:col+data_config.internal_window_radius, :] = p
+        _i += 1
+        if (_i >= len(images)):
+            break
 
-        # TODO: think through if this order of operations screws things up if response_nodata_value != feature_nodata_value
-        output[np.all(feature == data_config.feature_nodata_value, axis=-1), :] = data_config.response_nodata_value
-        if (feature_transformer is not None):
-            output = feature_transformer.inverse_transform(output)
+    # TODO: think through if this order of operations screws things up if response_nodata_value != feature_nodata_value
+    output[np.all(feature == data_config.feature_nodata_value, axis=-1), :] = data_config.response_nodata_value
+    if (feature_transformer is not None):
+        output = response_transformer.inverse_transform(output)
 
-        if (make_png):
-            output[output == data_config.response_nodata_value] = np.nan
-            feature[feature == data_config.response_nodata_value] = np.nan
-            gs1 = gridspec.GridSpec(1, cnn.n_classes+1)
-            for n in range(0, cnn.n_classes):
-                ax = plt.subplot(gs1[0, n])
-                im = plt.imshow(output[:, :, n], vmin=0, vmax=1)
-                plt.axis('off')
-
-            ax = plt.subplot(gs1[0, cnn.n_classes])
-            im = plt.imshow(np.squeeze(feature[..., 0]))
+    if (make_png):
+        output[output == data_config.response_nodata_value] = np.nan
+        feature[feature == data_config.response_nodata_value] = np.nan
+        gs1 = gridspec.GridSpec(1, cnn.config.n_classes+1)
+        for n in range(0, cnn.config.n_classes):
+            ax = plt.subplot(gs1[0, n])
+            im = plt.imshow(output[:, :, n], vmin=0, vmax=1)
             plt.axis('off')
-            plt.savefig(destination_basename + '.png', dpi=png_dpi, bbox_inches='tight')
-            plt.clf()
 
-        if (make_tif):
-            driver = gdal.GetDriverByName('GTiff')
-            driver.Register()
-            output[np.isnan(output)] = data_config.response_nodata_value
+        ax = plt.subplot(gs1[0, cnn.config.n_classes])
+        im = plt.imshow(np.squeeze(feature[..., 0]))
+        plt.axis('off')
+        plt.savefig(destination_basename + '.png', dpi=png_dpi, bbox_inches='tight')
+        plt.clf()
 
-            outDataset = driver.Create(destination_basename + '.tif',
-                                       output.shape[1], output.shape[0], cnn.n_classes, gdal.GDT_Float32)
-            outDataset.SetProjection(dataset.GetProjection())
-            outDataset.SetGeoTransform(dataset.GetGeoTransform())
-            for n in range(0, cnn.n_classes):
-                outDataset.GetRasterBand(n+1).WriteArray(np.squeeze(output[:, :, n]),0,0)
-            del outDataset
-        del dataset
+    if (make_tif):
+        driver = gdal.GetDriverByName('GTiff')
+        driver.Register()
+        output[np.isnan(output)] = data_config.response_nodata_value
+
+        outDataset = driver.Create(destination_basename + '.tif',
+                                   output.shape[1], output.shape[0], cnn.config.n_classes, gdal.GDT_Float32)
+        outDataset.SetProjection(dataset.GetProjection())
+        outDataset.SetGeoTransform(dataset.GetGeoTransform())
+        for n in range(0, cnn.config.n_classes):
+            outDataset.GetRasterBand(n+1).WriteArray(np.squeeze(output[:, :, n]),0,0)
+        del outDataset
+    del dataset
