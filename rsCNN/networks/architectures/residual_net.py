@@ -42,10 +42,9 @@ def create_residual_network(
         filters=initial_filters, kernel_size=kernel_size, padding=padding, strides=strides)(input_tensor)
     if batch_norm:
         conv = keras.layers.BatchNormalization()(conv)
-    pool = keras.layers.MaxPooling2D(pool_size)(conv)
 
     # Iterate blocks and subblocks
-    subblock_input = pool
+    subblock_input = conv
     filters = initial_filters
     for idx_block, num_subblocks in enumerate(block_structure):
         for idx_sublayer in range(num_subblocks):
