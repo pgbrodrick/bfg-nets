@@ -19,62 +19,53 @@ def parse_architecture_options(**kwargs):
         'initial_filters': kwargs.get('initial_filters', DEFAULT_INITIAL_FILTERS),
         'kernel_size': kwargs.get('kernel_size', DEFAULT_KERNEL_SIZE),
         'padding': kwargs.get('padding', DEFAULT_PADDING),
-        'pool_size': kwargs.get('pool_size', DEFAULT_POOL_SIZE),
-        'strides': kwargs.get('strides', DEFAULT_STRIDES),
     }
 
 
 def create_residual_network(
     input_shape: Tuple[int, int, int],
     num_outputs: int,
+    output_activation: str,
     block_structure: Tuple[int, ...] = DEFAULT_BLOCK_STRUCTURE,
     batch_norm: bool = DEFAULT_BATCH_NORM,
     initial_filters: int = DEFAULT_INITIAL_FILTERS,
     kernel_size: Tuple[int, int] = DEFAULT_KERNEL_SIZE,
     padding: str = DEFAULT_PADDING,
-    pool_size: Tuple[int, int] = DEFAULT_POOL_SIZE,
-    strides: Tuple[int, int] = DEFAULT_STRIDES,
 ) -> keras.models.Model:
 
     # Initial convolution
-    input_tensor = keras.layers.Input(shape=input_shape)
-    conv = keras.layers.Conv2D(
-        filters=initial_filters, kernel_size=kernel_size, padding=padding, strides=strides)(input_tensor)
-    if batch_norm:
-        conv = keras.layers.BatchNormalization()(conv)
-    pool = keras.layers.MaxPooling2D(pool_size)(conv)
+    input_layer = keras.layers.Input(shape=input_shape)
+    conv = keras.layers.Conv2D(filters=initial_filters, kernel_size=kernel_size, padding=padding)(input_layer)
 
     # Iterate blocks and subblocks
-    subblock_input = pool
+    subblock_input = conv
     filters = initial_filters
     for idx_block, num_subblocks in enumerate(block_structure):
         for idx_sublayer in range(num_subblocks):
-            is_first_subblock_in_first_block = idx_block == 0 and idx_sublayer == 0
             subblock = subblock_input
-            if batch_norm and not is_first_subblock_in_first_block:
+            if batch_norm:
                 subblock = keras.layers.BatchNormalization()(subblock)
-            subblock = keras.layers.Conv2D(
-                filters=filters, kernel_size=kernel_size, padding=padding, strides=strides)(subblock)
+            subblock = keras.layers.Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(subblock)
             subblock_input = _add_residual_shortcut(subblock_input, subblock)
         filters *= 2
 
     # Output convolutions
-    output_tensor = subblock_input
+    output_layer = subblock_input
     if batch_norm:
-        output_tensor = keras.layers.BatchNormalization()(output_tensor)
-    output_tensor = keras.layers.Conv2D(
-        filters=num_outputs, kernel_size=(1, 1), padding='same')(output_tensor)
-    return keras.models.Model(inputs=[input_tensor], outputs=[output_tensor])
+        output_layer = keras.layers.BatchNormalization()(output_layer)
+    output_layer = keras.layers.Conv2D(
+        filters=num_outputs, kernel_size=(1, 1), padding='same', activation=output_activation)(output_layer)
+    return keras.models.Model(inputs=[input_layer], outputs=[output_layer])
 
 
-def _add_residual_shortcut(input_tensor: keras.layers.Layer, residual_module: keras.layers.Layer):
+def _add_residual_shortcut(input_layer: keras.layers.Layer, residual_module: keras.layers.Layer):
     """
     Adds a shortcut connection by combining a input tensor and residual module
     """
-    shortcut = input_tensor
+    shortcut = input_layer
 
     # We need to apply a convolution if the input and block shapes do not match, every block transition
-    input_shape = keras.backend.int_shape(input_tensor)[1:]
+    input_shape = keras.backend.int_shape(input_layer)[1:]
     residual_shape = keras.backend.int_shape(residual_module)[1:]
     if input_shape != residual_shape:
         strides = (int(round(input_shape[0] / residual_shape[0])), int(round(input_shape[1] / residual_shape[1])))
