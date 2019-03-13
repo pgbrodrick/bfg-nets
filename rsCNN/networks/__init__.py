@@ -22,6 +22,7 @@ class NetworkConfig(object):
     """
 
 
+    # TODO: typedef loss_function 
     def __init__(self, network_type : str, loss_function, inshape : Iterable[int], n_classes : Iterable[int], **kwargs):
         """
           Arguments:
@@ -130,12 +131,14 @@ class CNN():
         if (load_history and not reinitialize):
             warning.warn('Warning: loading model history and re-initializing the model')
             
+        #TODO: condense to one check 
         if (reinitialize == False):
             if (os.path.isfile(self.config.filepath_model_out)):
                 self.model = keras.models.load_model(self.config.filepath_model_out)
             else:
                 reinitialize = True
                 
+        # TODO: probably remove history load here and move it over to training
         if (reinitialize):
             self.model = self.config.create_architecture(self.config.inshape, self.config.n_classes, **self.config.architecture_options)
         if (load_history):
