@@ -4,7 +4,7 @@ import gdal
 
 # TODO manage imports
 from rsCNN.utils.general import *
-from rsCNN.networks import CNN, NetworkConfig
+from rsCNN.networks import CNN, NetworkConfig, losses
 from rsCNN.data_management import DataConfig, training_data, transforms
 
 
@@ -26,10 +26,10 @@ application_output_basenames = ['examples/output/' +
 # TODO: if we want to grab these from a config file, need to write a wrapper to read the transform in
 data_options = {
     'data_save_name': 'examples/munged/cnn_munge_' + str(window_radius) + '_test',
-    'internal_window_radius': int(round(window_radius*0.5)),
     'max_samples': 30000,
-    'max_value': 10000,
-    'min_value': 0
+    'internal_window_radius': int(round(window_radius*0.5)),
+    'response_max_value': 10000,
+    'response_min_value': 0
 }
 
 data_config = DataConfig(window_radius, feature_files, response_files, **data_options)
@@ -56,12 +56,14 @@ network_options = {
     'verification_fold': 0
 }
 
+loss_function = losses.cropped_loss('mae',features.shape[1],data_config.internal_window_radius*2)
 network_config = NetworkConfig('flat_regress_net',
-                               data_config.feature_shape[1:],
+                               loss_function,
+                               features.shape[1:],
                                n_classes=1,
                                **network_options)
 
-cnn = CNN(network_config)
+cnn = CNN(network_config, reinitialize=True, load_history=True)
 
 
 # TODO add option for plotting training data previews

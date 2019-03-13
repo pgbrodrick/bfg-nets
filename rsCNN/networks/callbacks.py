@@ -99,6 +99,6 @@ def get_callbacks(network_config):
                 update_freq=network_config.tensorboard_update_freq
             ),
         )
-    if network_config.callbacks.use_terminate_on_nan:
+    if network_config.callbacks_use_terminate_on_nan:
         callbacks.append(keras.callbacks.TerminateOnNaN())
     return callbacks
