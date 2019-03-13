@@ -1,6 +1,8 @@
 from typing import Iterable
 import keras.backend as K
 import numpy as np
+import os
+import warnings
 
 from rsCNN.networks import architectures, callbacks, history
 
@@ -19,13 +21,15 @@ class NetworkConfig(object):
         training of a new network.
     """
 
-    def __init__(self, network_type : str, inshape : Iterable[int], n_classes : Iterable[int], **kwargs):
+    def __init__(self, network_type : str, loss_function, inshape : Iterable[int], n_classes : Iterable[int], **kwargs):
         """
           Arguments:
           network_type - str
             Style of the network to use.  Options are:
               flex_unet
               flat_regress_net
+          loss_function - function
+            Keras or tensor flow based loss function for the cnn.
           inshape - tuple/list
             Designates the input shape of an image to be passed to
             the network.
@@ -33,8 +37,10 @@ class NetworkConfig(object):
             Designates the output shape of targets to be fit by the network
         """
         self.network_type = network_type
+        self.loss_function = loss_function
         self.inshape = inshape
         self.n_classes = n_classes
+
 
         if (self.network_type == 'flex_unet'):
             self.create_architecture = architectures.unet.flex_unet
@@ -59,6 +65,7 @@ class NetworkConfig(object):
         # TODO:  comments this morning and the output_directory parameter for training arguments (below), I don't know
         # TODO:  if dir_out makes sense any longer. e.g., we expect filepath_model_out, filepath_history_out to have the
         # TODO:  full path now? We should refactor for whatever intentions we have.
+        
         self.dir_out = kwargs.get('dir_out', './')
         self.filepath_model_out = kwargs.get('filepath_model_out', 'model.h5')
         self.filepath_history_out = kwargs.get('filepath_history_out', 'history.json')
@@ -96,18 +103,18 @@ class NetworkConfig(object):
 
 class CNN():
 
-    def __init__(self, network_config):
+    def __init__(self, network_config : NetworkConfig, load_history = True, reinitialize = False):
         """ Initializes the appropriate network
 
         Arguments:
-        net_name - str
-          Name of the network to fetch.  Options are:
-            flex_unet - a flexible, U-net style network.
-        inshape - tuple/list
-          Designates the input shape of an image to be passed to
-          the network.
-        n_classes - int
-          Designates the number of response layers.
+        network_config - NetworkConfig
+          Configuration parameter object for the network.
+
+        Keyword Arguments:
+        reinitialize - bool
+          Flag directing whether the model should be re-initialized from scratch (no weights).
+        load_history - bool
+          Flag directing whether the model should load it's training history.
         """
         self.config = network_config
         # TODO:  how do we want to reload models? in init? in reload function? just putting outlined code here for now,
@@ -115,12 +122,28 @@ class CNN():
         # TODO:  if we want to explicitly check for existing model objects and assert that the user wants to load
         # TODO:  existing content, but this depends on the other decisions that are made
         # if (model objects are not saved at the config-specified locations) and (config.load_existing = False):
-        self.model = self.config.create_architecture(self.config.inshape, self.config.n_classes, **self.config.architecture_options)
+        if (load_history and not reinitialize):
+            warning.warn('Warning: loading model history and re-initializing the model')
+
+        if (reinitialize == False):
+            if (os.path.isfile(self.config.filepath_model_out)):
+                self.model = keras.models.load_model(self.config.filepath_model_out)
+            else:
+                reinitialize = True
+                
+        if (reinitialize):
+            self.model = self.config.create_architecture(self.config.inshape, self.config.n_classes, **self.config.architecture_options)
+        if (load_history):
+            if (os.path.isfile(self.config.filepath_history_out)): history.load_history(self.config.filepath_history_out)
+
+        #TODO: finish adjusting history updates / optimizer settings
+
+        # TODO: set optimizer as config param
+        self.model.compile(loss=self.config.loss_function,optimizer='adam')
         self.history = dict()
         self.training = None
         # elif (model objects exist) and (config.load_existing = True):
         # self.model = keras.models.load_model(filepath depends on config decision above, custom_objects=TODO)
-        # self.history = history.load_history(filepath depends on config decision above)
         # self._initial_epoch = len(self.history['lr'])  # Probably want this if training is continued
         # K.set_value(self.model.optimizer.lr, self.history['lr'][-1])  # Probably don't want this
 
