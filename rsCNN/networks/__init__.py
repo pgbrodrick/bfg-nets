@@ -21,9 +21,8 @@ class NetworkConfig(object):
         training of a new network.
     """
 
-
-    # TODO: typedef loss_function 
-    def __init__(self, network_type : str, loss_function, inshape : Iterable[int], n_classes : Iterable[int], **kwargs):
+    # TODO: typedef loss_function
+    def __init__(self, network_type: str, loss_function, inshape: Iterable[int], n_classes: Iterable[int], **kwargs):
         """
           Arguments:
           network_type - str
@@ -43,8 +42,7 @@ class NetworkConfig(object):
         self.inshape = inshape
         self.n_classes = n_classes
 
-
-        #TODO: conform the models below tot he residual_net parse_architecture_options model
+        # TODO: conform the models below tot he residual_net parse_architecture_options model
         if (self.network_type == 'flex_unet'):
             self.create_architecture = architectures.unet.flex_unet
             self.architecture_options = {
@@ -66,15 +64,12 @@ class NetworkConfig(object):
         else:
             NotImplementedError('Invalid network type: ' + self.network_type)
 
-
-
         # Training arguments
         self.batch_size = kwargs.get('batch_size', 1)
         self.max_epochs = kwargs.get('max_epochs', 100)
         self.n_noimprovement_repeats = kwargs.get('n_noimprovement_repeats', 10)
         self.verification_fold = kwargs.get('verification_fold', None)
-        self.optimizer = kwargs.get('optimizer','adam')
-
+        self.optimizer = kwargs.get('optimizer', 'adam')
 
         # Optional arguments
         self.dir_out = kwargs.get('dir_out', './')
@@ -82,13 +77,12 @@ class NetworkConfig(object):
         self.filepath_model = kwargs.get('filepath_model', 'model.h5')
         self.filepath_history = kwargs.get('filepath_history', 'history.json')
 
-        self.filepath_model = os.path.join(self.model_info_base_path,self.filepath_model)
-        self.filepath_history = os.path.join(self.model_info_base_path,self.filepath_history)
+        self.filepath_model = os.path.join(self.model_info_base_path, self.filepath_model)
+        self.filepath_history = os.path.join(self.model_info_base_path, self.filepath_history)
 
         self.checkpoint_periods = kwargs.get('checkpoint_periods', 5)
         self.verbosity = kwargs.get('verbosity', 1)
         self.append_existing = kwargs.get('append_existing', False)
-
 
         # Callbacks
         self.callbacks_use_tensorboard = kwargs.get('callbacks_use_tensorboard', True)
@@ -114,16 +108,16 @@ class NetworkConfig(object):
     def _add_base_path(self, base_path, append_path):
         outpath = append_path
         if (base_path is not None):
-            outpath = os.path.join(base_path,append_path)
+            outpath = os.path.join(base_path, append_path)
             if (os.path.isabs(base_path)):
-                warnings.warn('using filepath ' + append_path + ' , which might be a concatenation of a local base_path and an absolute path')
+                warnings.warn('using filepath ' + append_path +
+                              ' , which might be a concatenation of a local base_path and an absolute path')
         return outpath
-
 
 
 class CNN(object):
 
-    def __init__(self, network_config : NetworkConfig, reinitialize = False):
+    def __init__(self, network_config: NetworkConfig, reinitialize=False):
         """ Initializes the appropriate network
 
         Arguments:
@@ -140,13 +134,14 @@ class CNN(object):
 
         if (load_history and not reinitialize):
             warning.warn('Warning: loading model history and re-initializing the model')
-            
+
         if (reinitialize == False and os.path.isfile(self.config.filepath_model_out)):
             self.model = keras.models.load_model(self.config.filepath_model)
         else:
-            self.model = self.config.create_architecture(self.config.inshape, self.config.n_classes, **self.config.architecture_options)
+            self.model = self.config.create_architecture(
+                self.config.inshape, self.config.n_classes, **self.config.architecture_options)
 
-        self.model.compile(loss=self.config.loss_function,optimizer=self.config.optimizer)
+        self.model.compile(loss=self.config.loss_function, optimizer=self.config.optimizer)
 
         self.history = dict()
         self.training = None
@@ -184,7 +179,7 @@ class CNN(object):
             history.load_history(self.config.filepath_history)
             self.initial_epoch = len(self.history['lr'])
 
-            #TODO: check into if this is legit, I think it probably is the right call
+            # TODO: check into if this is legit, I think it probably is the right call
             K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
 
         model_callbacks = callbacks.get_callbacks(self.config)
@@ -215,7 +210,7 @@ class CNN(object):
         raise NotImplementedError
 
     def predict(self, features):
-        # TODO: Fabina, the verbosity below could be a config parameter, but you basically always want this off (it's either super 
+        # TODO: Fabina, the verbosity below could be a config parameter, but you basically always want this off (it's either super
         # fast or we're running some structured read/write that has an external reporting setup)
         return self.model.predict(features, batch_size=self.config.batch_size, verbose=False)
 
