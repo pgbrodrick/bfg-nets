@@ -24,7 +24,7 @@ def parse_architecture_options(**kwargs):
 
 
 # TODO:  Convert to kwargs with default settings, use those default settings in NetworkConfig
-def flat_regress_net(
+def create_model(
     inshape: Tuple[int, int, int],
     n_classes: int,
     conv_depth: int,
