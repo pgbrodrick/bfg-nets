@@ -1,6 +1,5 @@
 import ast
 import configparser
-import os
 from typing import Callable, Tuple
 
 from rsCNN.networks import architectures
@@ -19,6 +18,9 @@ def read_network_config_from_file(filepath):
     return config_kwargs
 
 
+
+# TODO:  generate networkconfig template automatically like in architectures/__init__.py
+
 class NetworkConfig(object):
     """ A wrapper class designed to hold all relevant configuration information for the
         training of a new network.
@@ -28,6 +30,7 @@ class NetworkConfig(object):
     def __init__(
             self,
             network_type: str,
+            model_name: str,
             loss_function: Callable,
             inshape: Tuple[int, int, int],
             n_classes: Tuple[int, ...],
@@ -48,6 +51,7 @@ class NetworkConfig(object):
             Designates the output shape of targets to be fit by the network
         """
         self.network_type = network_type
+        self.model_name = model_name
         self.loss_function = loss_function
         self.inshape = inshape
         self.n_classes = n_classes
@@ -62,12 +66,8 @@ class NetworkConfig(object):
         self.verification_fold = kwargs.get('verification_fold', None)
         self.optimizer = kwargs.get('optimizer', 'adam')
 
-        # Optional arguments
-        self.dir_out = kwargs.get('dir_out', './')
-        self.filepath_prefix_model = os.path.join(self.dir_out, kwargs.get('filename_model', 'model'))
-        self.filepath_prefix_history = os.path.join(self.dir_out, kwargs.get('filename_history', 'history'))
-
         # Model
+        self.dir_out = kwargs.get('dir_out', './')
         self.checkpoint_periods = kwargs.get('checkpoint_periods', 5)
         self.verbosity = kwargs.get('verbosity', 1)
         self.assert_gpu = kwargs.get('assert_gpu', False)
