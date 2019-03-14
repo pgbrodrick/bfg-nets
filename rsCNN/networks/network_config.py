@@ -64,8 +64,8 @@ class NetworkConfig(object):
 
         # Optional arguments
         self.dir_out = kwargs.get('dir_out', './')
-        self.filepath_model = os.path.join(self.dir_out, kwargs.get('filename_model', 'model.h5'))
-        self.filepath_history = os.path.join(self.dir_out, kwargs.get('filename_history', 'history.json'))
+        self.filepath_prefix_model = os.path.join(self.dir_out, kwargs.get('filename_model', 'model'))
+        self.filepath_prefix_history = os.path.join(self.dir_out, kwargs.get('filename_history', 'history'))
 
         # Model
         self.checkpoint_periods = kwargs.get('checkpoint_periods', 5)
@@ -76,7 +76,7 @@ class NetworkConfig(object):
 
         # Callbacks
         self.callbacks_use_tensorboard = kwargs.get('callbacks_use_tensorboard', True)
-        self.dirname_tensorboard = kwargs.get('dirname_tensorboard', 'tensorboard')
+        self.dirname_prefix_tensorboard = kwargs.get('dirname_prefix_tensorboard', 'tensorboard')
         self.tensorboard_update_freq = kwargs.get('tensorboard_update_freq', 'epoch')
         self.tensorboard_histogram_freq = kwargs.get('tensorboard_histogram_freq', 0)
         self.tensorboard_write_graph = kwargs.get('tensorboard_write_graph', True)

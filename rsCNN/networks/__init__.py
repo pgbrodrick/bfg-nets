@@ -23,8 +23,6 @@ class CNN(object):
     def __init__(
         self,
         network_config: network_config.NetworkConfig,
-        load_history: bool = True,
-        reinitialize: bool = False
     ) -> None:
         """ Initializes the appropriate network
 
@@ -87,20 +85,22 @@ class CNN(object):
         """
         self.config = network_config
 
-        if (load_history and not reinitialize):
+        """
+        if model file exists with prefix:
+            get most recent file
+            warn user that file is being loaded via warnings and be sure to propagate to logs
             warnings.warn('Warning: loading model history and re-initializing the model')
-
-        if (reinitialize == False and os.path.isfile(self.config.filepath_model)):
-            self.model = keras.models.load_model(self.config.filepath_model)
+            get most recent file via datetime
+            self.model = keras.models.load_model()
+            self.history = load_history()
+            assert model type is the same as the one specified in the config
+            warn if not
         else:
             self.model = self.config.create_model(
                 self.config.inshape, self.config.n_classes, **self.config.architecture_options)
-
-        self.model.compile(loss=self.config.loss_function, optimizer=self.config.optimizer)
-
-        self.history = dict()
-        self.training = None
-        self.initial_epoch = 0
+            self.model.compile(loss=self.config.loss_function, optimizer=self.config.optimizer)
+            self.history = dict()
+        """
 
     def calculate_training_memory_usage(self, batch_size):
         # Shamelessly copied from
@@ -128,15 +128,13 @@ class CNN(object):
         gbytes = np.round(total_memory / (1024.0 ** 3), 3)
         return gbytes
 
-    def fit(self, features, responses, fold_assignments, load_history=True):
+    def fit(self, features, responses, fold_assignments, continue_training=True):
         if self.config.assert_gpu:
             assert_gpu_available()
 
-        if (load_history and os.path.isfile(self.config.filepath_history)):
-            history.load_history(self.config.filepath_history)
-            self.initial_epoch = len(self.history['lr'])
-
-            # TODO: check into if this is legit, I think it probably is the right call
+        self.initial_epoch = 0
+        if continue_training:
+            self.initial_epoch = len(self.history.get('lr', list()))
             K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
 
         model_callbacks = callbacks.get_callbacks(self.config)
