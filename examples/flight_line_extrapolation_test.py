@@ -46,9 +46,10 @@ network_options = {
     'conv_depth': 16,
     'conv_pattern': [3],
     'n_layers': 10,
-    'network_name': 'cwc_test_network',
     'output_activation': 'softplus',
 
+    'network_name': 'cwc_test_network',
+    'optimzer': 'adam',
     'batch_size': 100,
     'max_epochs': 200,
     'n_noimprovement_repeats': 30,
@@ -63,7 +64,7 @@ network_config = NetworkConfig('flat_regress_net',
                                n_classes=1,
                                **network_options)
 
-cnn = CNN(network_config, reinitialize=True, load_history=False)
+cnn = CNN(network_config, reinitialize=True)
 
 
 # TODO add option for plotting training data previews
@@ -84,7 +85,7 @@ if (key == 'train' or key == 'all'):
     responses[...,:-1] = response_scaler.transform(responses[...,:-1])
     print(np.mean(responses[responses[...,0] != -9999,0]))
 
-    cnn.fit(features, responses, fold_assignments)
+    cnn.fit(features, responses, fold_assignments, load_history=False)
 
 
 if (key == 'apply' or key == 'all'):
