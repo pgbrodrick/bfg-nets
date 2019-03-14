@@ -1,7 +1,7 @@
 import ast
 import configparser
 import os
-from typing import Iterable
+from typing import Callable, Tuple
 
 from rsCNN.networks import architectures
 
@@ -25,8 +25,14 @@ class NetworkConfig(object):
     """
 
     # TODO: maybe add the args to config template, which means we may just read in directly
-    # TODO: typedef loss_function
-    def __init__(self, network_type: str, loss_function, inshape: Iterable[int], n_classes: Iterable[int], **kwargs):
+    def __init__(
+            self,
+            network_type: str,
+            loss_function: Callable,
+            inshape: Tuple[int, int, int],
+            n_classes: Tuple[int, ...],
+            **kwargs
+    ) -> None:
         """
           Arguments:
           network_type - str
@@ -58,8 +64,8 @@ class NetworkConfig(object):
 
         # Optional arguments
         self.dir_out = kwargs.get('dir_out', './')
-        self.filename_model = os.path.join(self.dir_out, kwargs.get('filename_model', 'model.h5'))
-        self.filename_history = os.path.join(self.dir_out, kwargs.get('filename_history', 'history.json'))
+        self.filepath_model = os.path.join(self.dir_out, kwargs.get('filename_model', 'model.h5'))
+        self.filepath_history = os.path.join(self.dir_out, kwargs.get('filename_history', 'history.json'))
 
         # Model
         self.checkpoint_periods = kwargs.get('checkpoint_periods', 5)

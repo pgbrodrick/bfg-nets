@@ -1,8 +1,11 @@
 import keras.backend as K
 import numpy as np
 import os
+import warnings
 
-from rsCNN.networks import callbacks, history, network_config
+import keras
+
+from rsCNN.networks import callbacks, history, losses, network_config
 from rsCNN.utils import assert_gpu_available
 
 
@@ -17,7 +20,12 @@ class TrainingHistory(object):
 
 class CNN(object):
 
-    def __init__(self, network_config: network_config.NetworkConfig, reinitialize=False):
+    def __init__(
+        self,
+        network_config: network_config.NetworkConfig,
+        load_history: bool = True,
+        reinitialize: bool = False
+    ) -> None:
         """ Initializes the appropriate network
 
         Arguments:
@@ -33,12 +41,12 @@ class CNN(object):
         self.config = network_config
 
         if (load_history and not reinitialize):
-            warning.warn('Warning: loading model history and re-initializing the model')
+            warnings.warn('Warning: loading model history and re-initializing the model')
 
-        if (reinitialize == False and os.path.isfile(self.config.filepath_model_out)):
+        if (reinitialize == False and os.path.isfile(self.config.filepath_model)):
             self.model = keras.models.load_model(self.config.filepath_model)
         else:
-            self.model = self.config.create_architecture(
+            self.model = self.config.create_model(
                 self.config.inshape, self.config.n_classes, **self.config.architecture_options)
 
         self.model.compile(loss=self.config.loss_function, optimizer=self.config.optimizer)
