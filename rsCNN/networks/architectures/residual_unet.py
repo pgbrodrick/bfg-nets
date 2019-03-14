@@ -84,16 +84,16 @@ def create_residual_network(
             # Store the subblock input for the residual connection
             input_subblock = decoder
             # Each subblock has two convolutions
-            decoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, strides=strides)(decoder)
+            decoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(decoder)
             if (batch_norm):
                 decoder = BatchNormalization()(decoder)
-            decoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, strides=strides)(decoder)
+            decoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(decoder)
             if (batch_norm):
                 decoder = BatchNormalization()(decoder)
             # Add the residual connection from the previous subblock output to the current subblock output
             decoder = _add_residual_shortcut(input_subblock, decoder)
         decoder = UpSampling2D(size=pool_size)(decoder)
-        decoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, strides=strides)(decoder)
+        decoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(decoder)
         if (batch_norm):
             decoder = BatchNormalization()(decoder)
         decoder = Concatenate()([layer_passed_through, decoder])
@@ -101,7 +101,7 @@ def create_residual_network(
             filters /= 2
 
     # Last convolutions
-    output_layer = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, strides=strides)(decoder)
+    output_layer = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(decoder)
     if (batch_norm):
         output_layer = BatchNormalization()(output_layer)
     output_layer = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, strides=strides)(output_layer)
