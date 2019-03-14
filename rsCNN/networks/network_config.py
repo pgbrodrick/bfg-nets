@@ -1,3 +1,4 @@
+import ast
 import configparser
 import os
 from typing import Iterable
@@ -8,6 +9,14 @@ from rsCNN.networks import architectures
 def read_network_config_from_file(filepath):
     config = configparser.ConfigParser()
     config.read(filepath)
+    config_kwargs = dict()
+    for section in config.sections():
+        for key, value in section.items():
+            assert key not in config_kwargs, 'Configuration file contains multiple entries for key:  {}'.format(key)
+            # Note:  the following doesn't work with floats written as '10**-4' or strings without surrounding quotes
+            value = ast.literal_eval(value)
+            config_kwargs[key] = value
+    return config_kwargs
 
 
 class NetworkConfig(object):
