@@ -44,6 +44,7 @@ class NetworkConfig(object):
         self.n_classes = n_classes
 
 
+        #TODO: conform the models below tot he residual_net parse_architecture_options model
         if (self.network_type == 'flex_unet'):
             self.create_architecture = architectures.unet.flex_unet
             self.architecture_options = {
@@ -65,29 +66,34 @@ class NetworkConfig(object):
         else:
             NotImplementedError('Invalid network type: ' + self.network_type)
 
-        # Optional arguments
-        # TODO:  Phil: I have dir_out which is supposed to control where models, history, etc are saved. Based on your
-        # TODO:  comments this morning and the output_directory parameter for training arguments (below), I don't know
-        # TODO:  if dir_out makes sense any longer. e.g., we expect filepath_model_out, filepath_history_out to have the
-        # TODO:  full path now? We should refactor for whatever intentions we have.
-        
-        self.dir_out = kwargs.get('dir_out', './')
-        self.filepath_model_out = kwargs.get('filepath_model_out', 'model.h5')
-        self.filepath_history_out = kwargs.get('filepath_history_out', 'history.json')
-        self.checkpoint_periods = kwargs.get('checkpoint_periods', 5)
-        self.verbosity = kwargs.get('verbosity', 1)
-        self.append_existing = kwargs.get('append_existing', False)
+
 
         # Training arguments
         self.batch_size = kwargs.get('batch_size', 1)
         self.max_epochs = kwargs.get('max_epochs', 100)
         self.n_noimprovement_repeats = kwargs.get('n_noimprovement_repeats', 10)
-        self.output_directory = None  # TODO: give a default
         self.verification_fold = kwargs.get('verification_fold', None)
+        self.optimizer = kwargs.get('optimizer','adam')
+
+
+        # Optional arguments
+        self.dir_out = kwargs.get('dir_out', './')
+        self.model_info_base_path = kwargs.get('model_info_base_path', None)
+        self.filepath_model = kwargs.get('filepath_model', 'model.h5')
+        self.filepath_history = kwargs.get('filepath_history', 'history.json')
+
+        self.filepath_model = os.path.join(self.model_info_base_path,self.filepath_model)
+        self.filepath_history = os.path.join(self.model_info_base_path,self.filepath_history)
+
+        self.checkpoint_periods = kwargs.get('checkpoint_periods', 5)
+        self.verbosity = kwargs.get('verbosity', 1)
+        self.append_existing = kwargs.get('append_existing', False)
+
 
         # Callbacks
         self.callbacks_use_tensorboard = kwargs.get('callbacks_use_tensorboard', True)
-        self.filepath_tensorboard_out = kwargs.get('dir_tensorboard_out', 'tensorboard')
+
+        self.filepath_tensorboard = kwargs.get('dir_tensorboard_out', 'tensorboard')
         self.tensorboard_update_freq = kwargs.get('tensorboard_update_freq', 'epoch')
         self.tensorboard_histogram_freq = kwargs.get('tensorboard_histogram_freq', 0)
         self.tensorboard_write_graph = kwargs.get('tensorboard', True)
@@ -105,10 +111,19 @@ class NetworkConfig(object):
 
         self.callbacks_use_terminate_on_nan = kwargs.get('terminate_on_nan', True)
 
+    def _add_base_path(self, base_path, append_path):
+        outpath = append_path
+        if (base_path is not None):
+            outpath = os.path.join(base_path,append_path)
+            if (os.path.isabs(base_path)):
+                warnings.warn('using filepath ' + append_path + ' , which might be a concatenation of a local base_path and an absolute path')
+        return outpath
 
-class CNN():
 
-    def __init__(self, network_config : NetworkConfig, load_history = True, reinitialize = False):
+
+class CNN(object):
+
+    def __init__(self, network_config : NetworkConfig, reinitialize = False):
         """ Initializes the appropriate network
 
         Arguments:
@@ -122,39 +137,20 @@ class CNN():
           Flag directing whether the model should load it's training history.
         """
         self.config = network_config
-        # TODO:  how do we want to reload models? in init? in reload function? just putting outlined code here for now,
-        # TODO:  and letting you make the decision about what's best given your experience with this workflow. Not sure
-        # TODO:  if we want to explicitly check for existing model objects and assert that the user wants to load
-        # TODO:  existing content, but this depends on the other decisions that are made
-        # if (model objects are not saved at the config-specified locations) and (config.load_existing = False):
 
         if (load_history and not reinitialize):
             warning.warn('Warning: loading model history and re-initializing the model')
             
-        #TODO: condense to one check 
-        if (reinitialize == False):
-            if (os.path.isfile(self.config.filepath_model_out)):
-                self.model = keras.models.load_model(self.config.filepath_model_out)
-            else:
-                reinitialize = True
-                
-        # TODO: probably remove history load here and move it over to training
-        if (reinitialize):
+        if (reinitialize == False and os.path.isfile(self.config.filepath_model_out)):
+            self.model = keras.models.load_model(self.config.filepath_model)
+        else:
             self.model = self.config.create_architecture(self.config.inshape, self.config.n_classes, **self.config.architecture_options)
-        if (load_history):
-            if (os.path.isfile(self.config.filepath_history_out)): history.load_history(self.config.filepath_history_out)
 
-        #TODO: finish adjusting history updates / optimizer settings
-
-        # TODO: set optimizer as config param
-        self.model.compile(loss=self.config.loss_function,optimizer='adam')
+        self.model.compile(loss=self.config.loss_function,optimizer=self.config.optimizer)
 
         self.history = dict()
         self.training = None
-        # elif (model objects exist) and (config.load_existing = True):
-        # self.model = keras.models.load_model(filepath depends on config decision above, custom_objects=TODO)
-        # self._initial_epoch = len(self.history['lr'])  # Probably want this if training is continued
-        # K.set_value(self.model.optimizer.lr, self.history['lr'][-1])  # Probably don't want this
+        self.initial_epoch = 0
 
     def calculate_training_memory_usage(self, batch_size):
         # Shamelessly copied from
@@ -182,8 +178,15 @@ class CNN():
         gbytes = np.round(total_memory / (1024.0 ** 3), 3)
         return gbytes
 
-    # TODO during fit, make sure that all training_options (as well as network options) are saved with the model
-    def fit(self, features, responses, fold_assignments):
+    def fit(self, features, responses, fold_assignments, load_history=True):
+
+        if (load_history and os.path.isfile(self.config.filepath_history)):
+            history.load_history(self.config.filepath_history)
+            self.initial_epoch = len(self.history['lr'])
+
+            #TODO: check into if this is legit, I think it probably is the right call
+            K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
+
         model_callbacks = callbacks.get_callbacks(self.config)
 
         if (self.config.verification_fold is not None):
@@ -204,6 +207,7 @@ class CNN():
                        batch_size=self.config.batch_size,
                        verbose=self.config.verbosity,
                        shuffle=False,
+                       initial_epoch=self.intial_epoch,
                        callbacks=model_callbacks)
 
     def fit_sequence(self, train_sequence, validation_sequence=None):
