@@ -42,22 +42,12 @@ class NetworkConfig(object):
         self.inshape = inshape
         self.n_classes = n_classes
 
-        # TODO: conform the models below tot he residual_net parse_architecture_options model
+        # TODO:  convert names to 'create_network' and then get modules automatically, perhaps in arch/__init__
         if (self.network_type == 'flex_unet'):
             self.create_architecture = architectures.unet.flex_unet
-            self.architecture_options = {
-                'conv_depth': kwargs.get('conv_depth', 16),
-                'batch_norm': kwargs.get('batch_norm', False),
-            }
+            self.architecture_options = architectures.unet.parse_architecture_options
         elif (self.network_type == 'flat_regress_net'):
             self.create_architecture = architectures.regress_net.flat_regress_net
-            self.architecture_options = {
-                'conv_depth': kwargs.get('conv_depth', 16),
-                'batch_norm': kwargs.get('batch_norm', False),
-                'n_layers': kwargs.get('n_layers', 8),
-                'conv_pattern': kwargs.get('conv_pattern', [3]),
-                'output_activation': kwargs.get('output_activation', 'softmax'),
-            }
         elif (self.network_type == 'residual_net'):
             self.create_architecture = architectures.residual_net.create_residual_network
             self.architecture_options = architectures.residual_net.parse_architecture_options(**kwargs)
@@ -73,15 +63,13 @@ class NetworkConfig(object):
 
         # Optional arguments
         self.dir_out = kwargs.get('dir_out', './')
-        self.model_info_base_path = kwargs.get('model_info_base_path', None)
-        self.filepath_model = kwargs.get('filepath_model', 'model.h5')
-        self.filepath_history = kwargs.get('filepath_history', 'history.json')
+        self.filepath_model = os.path.join(self.dir_out, kwargs.get('filepath_model', 'model.h5'))
+        self.filepath_history = os.path.join(self.dir_out, kwargs.get('filepath_history', 'history.json'))
 
-        self.filepath_model = os.path.join(self.model_info_base_path, self.filepath_model)
-        self.filepath_history = os.path.join(self.model_info_base_path, self.filepath_history)
-
+        # Model
         self.checkpoint_periods = kwargs.get('checkpoint_periods', 5)
         self.verbosity = kwargs.get('verbosity', 1)
+        # TODO:  unclear name, but could be streamlined? add to config template if we keep
         self.append_existing = kwargs.get('append_existing', False)
 
         # Callbacks
@@ -90,9 +78,9 @@ class NetworkConfig(object):
         self.filepath_tensorboard = kwargs.get('dir_tensorboard_out', 'tensorboard')
         self.tensorboard_update_freq = kwargs.get('tensorboard_update_freq', 'epoch')
         self.tensorboard_histogram_freq = kwargs.get('tensorboard_histogram_freq', 0)
-        self.tensorboard_write_graph = kwargs.get('tensorboard', True)
-        self.tensorboard_write_grads = kwargs.get('tensorboard', False)
-        self.tensorboard_write_images = kwargs.get('tensorboard', True)
+        self.tensorboard_write_graph = kwargs.get('tensorboard_write_graph', True)
+        self.tensorboard_write_grads = kwargs.get('tensorboard_write_grads', False)
+        self.tensorboard_write_images = kwargs.get('tensorboard_write_images', True)
 
         self.callbacks_use_early_stopping = kwargs.get('callbacks_use_early_stopping', True)
         self.early_stopping_min_delta = kwargs.get('early_stopping_min_delta', 10**-4)
@@ -103,7 +91,7 @@ class NetworkConfig(object):
         self.reduced_learning_rate_min_delta = kwargs.get('reduced_learning_rate_min_delta', 10**-4)
         self.reduced_learning_rate_patience = kwargs.get('reduced_learning_rate_patience', 10)
 
-        self.callbacks_use_terminate_on_nan = kwargs.get('terminate_on_nan', True)
+        self.callbacks_use_terminate_on_nan = kwargs.get('callbacks_use_terminate_on_nan', True)
 
     def _add_base_path(self, base_path, append_path):
         outpath = append_path
