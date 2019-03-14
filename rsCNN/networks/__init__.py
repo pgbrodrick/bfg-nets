@@ -211,7 +211,9 @@ class CNN():
         raise NotImplementedError
 
     def predict(self, features):
-        return self.model.predict(features, batch_size=self.config.batch_size, verbose=self.config.verbosity)
+        # TODO: Fabina, the verbosity below could be a config parameter, but you basically always want this off (it's either super 
+        # fast or we're running some structured read/write that has an external reporting setup)
+        return self.model.predict(features, batch_size=self.config.batch_size, verbose=False)
 
     def predict_sequence(self, predict_sequence):
         # TODO:  reimplement if/when we need generators, ignore for now
