@@ -5,6 +5,7 @@ import os
 import warnings
 
 from rsCNN.networks import architectures, callbacks, history
+from rsCNN.utils import assert_gpu_available
 
 
 class TrainingHistory(object):
@@ -60,6 +61,7 @@ class NetworkConfig(object):
         # Model
         self.checkpoint_periods = kwargs.get('checkpoint_periods', 5)
         self.verbosity = kwargs.get('verbosity', 1)
+        self.assert_gpu = kwargs.get('assert_gpu', False)
         # TODO:  unclear name, but could be streamlined? add to config template if we keep
         self.append_existing = kwargs.get('append_existing', False)
 
@@ -153,6 +155,8 @@ class CNN(object):
         return gbytes
 
     def fit(self, features, responses, fold_assignments, load_history=True):
+        if self.config.assert_gpu:
+            assert_gpu_available()
 
         if (load_history and os.path.isfile(self.config.filepath_history)):
             history.load_history(self.config.filepath_history)
