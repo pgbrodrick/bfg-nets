@@ -50,7 +50,7 @@ network_options = {
     'output_activation': 'softplus',
 
     'batch_size': 100,
-    'max_epochs': 10,
+    'max_epochs': 200,
     'n_noimprovement_repeats': 30,
     'output_directory': None,
     'verification_fold': 0
@@ -75,9 +75,14 @@ if (key == 'train' or key == 'all'):
     response_scaler = transforms.StandardTransformer(
         data_config.response_nodata_value, data_config.data_save_name + '_response_')
 
+    print(np.mean(responses[responses[...,0] != -9999,0]))
     train_set = fold_assignments == network_config.verification_fold
-    feature_scaler.fit_transform(features[train_set, ...])
-    response_scaler.fit_transform(responses[train_set, ...,:-1])
+    feature_scaler.fit(features[train_set, ...])
+    response_scaler.fit(responses[train_set, ...,:-1])
+
+    features = feature_scaler.transform(features)
+    responses[...,:-1] = response_scaler.transform(responses[...,:-1])
+    print(np.mean(responses[responses[...,0] != -9999,0]))
 
     cnn.fit(features, responses, fold_assignments)
 

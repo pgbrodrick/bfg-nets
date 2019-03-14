@@ -73,21 +73,21 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
                 # TODO: consider having this as an option
                 # d = fill_nearest_neighbor(d)
                 images.append(d)
-    images = np.stack(images)
-    images = images.reshape((images.shape[0], images.shape[1], images.shape[2],dataset.RasterCount))
+        images = np.stack(images)
+        images = images.reshape((images.shape[0], images.shape[1], images.shape[2],dataset.RasterCount))
 
-    pred_y = cnn.predict(images)
+        pred_y = cnn.predict(images)
 
-    _i = 0
-    for n in rowlist:
-        p = pred_y[_i, ...]
-        if (data_config.internal_window_radius < data_config.window_radius):
-            mm = int(round(data_config.window_radius - data_config.internal_window_radius))
-            p = p[mm:-mm, mm:-mm, :]
-        output[n-data_config.internal_window_radius:n+data_config.internal_window_radius, col-data_config.internal_window_radius:col+data_config.internal_window_radius, :] = p
-        _i += 1
-        if (_i >= len(images)):
-            break
+        _i = 0
+        for n in rowlist:
+            p = pred_y[_i, ...]
+            if (data_config.internal_window_radius < data_config.window_radius):
+                mm = int(round(data_config.window_radius - data_config.internal_window_radius))
+                p = p[mm:-mm, mm:-mm, :]
+            output[n-data_config.internal_window_radius:n+data_config.internal_window_radius, col-data_config.internal_window_radius:col+data_config.internal_window_radius, :] = p
+            _i += 1
+            if (_i >= len(images)):
+                break
 
     # TODO: think through if this order of operations screws things up if response_nodata_value != feature_nodata_value
     output[np.all(feature == data_config.feature_nodata_value, axis=-1), :] = data_config.response_nodata_value
