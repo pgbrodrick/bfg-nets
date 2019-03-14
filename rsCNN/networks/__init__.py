@@ -41,18 +41,9 @@ class NetworkConfig(object):
         self.loss_function = loss_function
         self.inshape = inshape
         self.n_classes = n_classes
-
-        # TODO:  convert names to 'create_network' and then get modules automatically, perhaps in arch/__init__
-        if (self.network_type == 'flex_unet'):
-            self.create_architecture = architectures.unet.flex_unet
-            self.architecture_options = architectures.unet.parse_architecture_options
-        elif (self.network_type == 'flat_regress_net'):
-            self.create_architecture = architectures.regress_net.flat_regress_net
-        elif (self.network_type == 'residual_net'):
-            self.create_architecture = architectures.residual_net.create_residual_network
-            self.architecture_options = architectures.residual_net.parse_architecture_options(**kwargs)
-        else:
-            NotImplementedError('Invalid network type: ' + self.network_type)
+        architecture_creator = architectures.get_architecture_creator(self.network_type)
+        self.create_model = architecture_creator.create_model
+        self.architecture_options = architecture_creator.parse_architecture_options(**kwargs)
 
         # Training arguments
         self.batch_size = kwargs.get('batch_size', 1)

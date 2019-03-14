@@ -16,7 +16,7 @@ def parse_architecture_options(**kwargs):
 
 
 # TODO:  typing and kwargs with defaults
-def flex_unet(inshape, n_classes, conv_depth, batch_norm):
+def create_model(inshape, n_classes, conv_depth, batch_norm):
     """ Construct a U-net style network with flexible shape
 
     Arguments:
