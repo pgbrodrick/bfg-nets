@@ -1,8 +1,11 @@
 import datetime
+import os
+from typing import List
 
 import keras
 
 from rsCNN.networks import history
+from rsCNN.networks.network_config import NetworkConfig
 from rsCNN.utils import logger
 
 
@@ -11,9 +14,9 @@ _logger = logger.get_child_logger(__name__)
 
 class HistoryCheckpoint(keras.callbacks.Callback):
 
-    def __init__(self, filepath, existing_history=None, period=1, verbose=0):
+    def __init__(self, dir_out, existing_history=None, period=1, verbose=0):
         super().__init__()
-        self.filepath = filepath
+        self.dir_out = dir_out
         if existing_history is None:
             existing_history = dict()
         self.existing_history = existing_history
@@ -50,19 +53,20 @@ class HistoryCheckpoint(keras.callbacks.Callback):
         combined_history = self.existing_history.copy()
         for key, value in self.model.history.history.items():
             combined_history.setdefault(key, list()).extend(value)
-        history.save_history(combined_history, self.filepath)
+        history.save_history(combined_history, dir_out)
 
 
-def get_callbacks(network_config, existing_history):
+def get_callbacks(network_config: NetworkConfig, existing_history: dict) -> List[keras.callbacks.Callback]:
+    # TODO:  remove the hacky implementation of modelcheckpoint filepath, needs to use datetime from history module
     callbacks = [
         HistoryCheckpoint(
-            network_config.filepath_history_out,
+            dir_out=network_config.dir_out,
             existing_history=existing_history,
             period=network_config.checkpoint_periods,
             verbose=network_config.verbosity
         ),
         keras.callbacks.ModelCheckpoint(
-            network_config.filepath_model_out,
+            os.path.join(network_config.dir_out, 'model.h5'),
             period=network_config.checkpoint_periods,
             verbose=network_config.verbosity
         ),
@@ -87,7 +91,7 @@ def get_callbacks(network_config, existing_history):
     if network_config.callbacks_use_tensorboard:
         callbacks.append(
             keras.callbacks.TensorBoard(
-                network_config.filepath_tensorboard_out,
+                network_config.dirname_prefix_tensorboard,
                 histogram_freq=network_config.tensorboard_histogram_freq,
                 write_graph=network_config.tensorboard_write_graph,
                 write_grads=network_config.tensorboard_write_grads,
