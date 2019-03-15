@@ -23,7 +23,6 @@ def parse_architecture_options(**kwargs):
         'min_conv_width': kwargs.get('min_conv_width', DEFAULT_MIN_CONV_WIDTH),
         'padding': kwargs.get('padding', DEFAULT_PADDING),
         'pool_size': kwargs.get('pool_size', DEFAULT_POOL_SIZE),
-        'output_activation': kwargs['output_activation'],
     }
 
 

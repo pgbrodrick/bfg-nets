@@ -18,11 +18,10 @@ def parse_architecture_options(**kwargs):
         'conv_depth': kwargs.get('conv_depth', DEFAULT_INITIAL_FILTERS),
         'n_layers': kwargs.get('n_layers', DEFAULT_N_LAYERS),
         'conv_pattern': kwargs.get('conv_pattern', DEFAULT_KERNEL_SIZE),
-        'output_activation': kwargs['output_activation'],
     }
 
 
-# TODO:  Convert to kwargs with default settings, use those default settings in NetworkConfig
+# TODO:  Convert to kwargs with default settings, use those default settings in config
 def create_model(
     inshape: Tuple[int, int, int],
     n_classes: int,
