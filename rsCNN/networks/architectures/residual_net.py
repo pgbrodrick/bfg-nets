@@ -21,8 +21,8 @@ def parse_architecture_options(**kwargs):
 
 
 def create_model(
-    input_shape: Tuple[int, int, int],
-    num_outputs: int,
+    inshape: Tuple[int, int, int],
+    n_classes: int,
     output_activation: str,
     block_structure: Tuple[int, ...] = DEFAULT_BLOCK_STRUCTURE,
     initial_filters: int = DEFAULT_INITIAL_FILTERS,
@@ -32,7 +32,7 @@ def create_model(
 ) -> keras.models.Model:
 
     # Initial convolution
-    input_layer = keras.layers.Input(shape=input_shape)
+    input_layer = keras.layers.Input(shape=inshape)
     conv = keras.layers.Conv2D(filters=initial_filters, kernel_size=kernel_size, padding=padding)(input_layer)
 
     # Iterate blocks and subblocks
@@ -52,7 +52,7 @@ def create_model(
     if use_batch_norm:
         output_layer = keras.layers.BatchNormalization()(output_layer)
     output_layer = keras.layers.Conv2D(
-        filters=num_outputs, kernel_size=(1, 1), padding='same', activation=output_activation)(output_layer)
+        filters=n_classes, kernel_size=(1, 1), padding='same', activation=output_activation)(output_layer)
     return keras.models.Model(inputs=[input_layer], outputs=[output_layer])
 
 
@@ -63,10 +63,10 @@ def _add_residual_shortcut(input_layer: keras.layers.Layer, residual_module: ker
     shortcut = input_layer
 
     # We need to apply a convolution if the input and block shapes do not match, every block transition
-    input_shape = keras.backend.int_shape(input_layer)[1:]
+    inshape = keras.backend.int_shape(input_layer)[1:]
     residual_shape = keras.backend.int_shape(residual_module)[1:]
-    if input_shape != residual_shape:
-        strides = (int(round(input_shape[0] / residual_shape[0])), int(round(input_shape[1] / residual_shape[1])))
+    if inshape != residual_shape:
+        strides = (int(round(inshape[0] / residual_shape[0])), int(round(inshape[1] / residual_shape[1])))
         shortcut = keras.layers.Conv2D(
             filters=residual_shape[-1], kernel_size=(1, 1), padding='valid', strides=strides)(shortcut)
 

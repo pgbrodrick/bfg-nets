@@ -24,8 +24,8 @@ def parse_architecture_options(**kwargs):
 
 
 def create_model(
-        input_shape: Tuple[int, int, int],
-        num_outputs: int,
+        inshape: Tuple[int, int, int],
+        n_classes: int,
         output_activation: str,
         initial_filters: int = DEFAULT_INITIAL_FILTERS,
         kernel_size: Union[Tuple[int, int], List[Tuple[int, int]]] = DEFAULT_KERNEL_SIZE,
@@ -36,10 +36,10 @@ def create_model(
     """ Construct a flat style network with flexible shape
 
     Arguments:
-    input_shape - tuple/list
+    inshape - tuple/list
       Designates the input shape of an image to be passed to
       the network.
-    num_outputs - int
+    n_classes - int
       The number of classes the network is meant to regress
     kwargs - dict
       A dictionary of optional keyword arguments, which may contain
@@ -57,7 +57,7 @@ def create_model(
     Returns:
       A flexible flat style network keras network.
     """
-    inlayer = keras.layers.Input(input_shape)
+    inlayer = keras.layers.Input(inshape)
 
     if type(kernel_size) is tuple:
         kernel_sizes = [kernel_size] * len(num_layers)
@@ -72,6 +72,6 @@ def create_model(
         if use_batch_norm:
             b1 = BatchNormalization()(b1)
 
-    output_layer = Conv2D(num_outputs, (1, 1), activation=output_activation, padding=padding)(b1)
+    output_layer = Conv2D(n_classes, (1, 1), activation=output_activation, padding=padding)(b1)
     model = keras.models.Model(inputs=inlayer, outputs=output_layer)
     return model
