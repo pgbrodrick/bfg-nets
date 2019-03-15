@@ -2,11 +2,13 @@ import keras
 import keras.backend as K
 import numpy as np
 import os
-import psutil
 from typing import List, Union
 
+import psutil
+
 from rsCNN import utils
-from rsCNN.networks import callbacks, history, losses, network_config
+from rsCNN.networks import callbacks, history, losses
+from rsCNN.networks.network_config import NetworkConfig
 
 
 class TrainingHistory(object):
@@ -22,7 +24,7 @@ class CNN(object):
     network_config = None
     _is_model_new = None
 
-    def __init__(self, network_config: network_config.NetworkConfig,) -> None:
+    def __init__(self, network_config: NetworkConfig) -> None:
         """ Initializes the appropriate network
 
         Arguments:
@@ -113,7 +115,7 @@ class CNN(object):
             self,
             train_generator: keras.utils.Sequence,
             validation_generator: keras.utils.Sequence = None,
-            continue_training: bool = False,
+            continue_training: bool = False
     ) -> None:
         # TODO: I'm realizing we're kinda sorta putting in docstrings, but we could do them in such a way where we
         #  auto-generate documentation from the docstrings. I'd just need to look up the package and format for that.
