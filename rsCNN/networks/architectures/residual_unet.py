@@ -28,8 +28,8 @@ def parse_architecture_options(**kwargs):
 
 
 def create_model(
-        input_shape: Tuple[int, int, int],
-        num_outputs: int,
+        inshape: Tuple[int, int, int],
+        n_classes: int,
         output_activation: str,
         block_structure: Tuple[int, ...] = DEFAULT_BLOCK_STRUCTURE,
         initial_filters: int = DEFAULT_INITIAL_FILTERS,
@@ -41,7 +41,7 @@ def create_model(
         use_growth: bool = False,
 ) -> keras.models.Model:
 
-    input_width = input_shape[0]
+    input_width = inshape[0]
     minimum_width = input_width / 2 ** len(block_structure)
     assert minimum_width > min_conv_width, \
         'The convolution width in the last encoding block ({}) is less than '.format(minimum_width) + \
@@ -54,7 +54,7 @@ def create_model(
     layers_pass_through = list()
 
     # Encodings
-    input_layer = keras.layers.Input(shape=input_shape)
+    input_layer = keras.layers.Input(shape=inshape)
     encoder = input_layer
     # Each encoder block has a number of subblocks
     for num_subblocks in block_structure:
@@ -108,7 +108,7 @@ def create_model(
     if use_batch_norm:
         output_layer = BatchNormalization()(output_layer)
     output_layer = Conv2D(
-        filters=num_outputs, kernel_size=(1, 1), padding='same', activation=output_activation)(output_layer)
+        filters=n_classes, kernel_size=(1, 1), padding='same', activation=output_activation)(output_layer)
     return keras.models.Model(inputs=[input_layer], outputs=[output_layer])
 
 
@@ -119,10 +119,10 @@ def _add_residual_shortcut(input_tensor: keras.layers.Layer, residual_module: ke
     shortcut = input_tensor
 
     # We need to apply a convolution if the input and block shapes do not match, every block transition
-    input_shape = keras.backend.int_shape(input_tensor)[1:]
+    inshape = keras.backend.int_shape(input_tensor)[1:]
     residual_shape = keras.backend.int_shape(residual_module)[1:]
-    if input_shape != residual_shape:
-        strides = (int(round(input_shape[0] / residual_shape[0])), int(round(input_shape[1] / residual_shape[1])))
+    if inshape != residual_shape:
+        strides = (int(round(inshape[0] / residual_shape[0])), int(round(inshape[1] / residual_shape[1])))
         shortcut = keras.layers.Conv2D(
             filters=residual_shape[-1], kernel_size=(1, 1), padding='valid', strides=strides)(shortcut)
 
