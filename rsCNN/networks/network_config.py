@@ -1,5 +1,6 @@
 import ast
 import configparser
+import os
 from typing import Callable, Tuple
 
 from rsCNN.networks import architectures
@@ -64,13 +65,14 @@ class NetworkConfig(object):
         self.optimizer = kwargs.get('optimizer', 'adam')
 
         # Model
-        self.dir_out = kwargs.get('dir_out', './')
+        self.dir_out = os.path.join(kwargs.get('dir_out', './'), self.model_name)
         self.checkpoint_periods = kwargs.get('checkpoint_periods', 5)
         self.verbosity = kwargs.get('verbosity', 1)
         self.assert_gpu = kwargs.get('assert_gpu', False)
 
         # Callbacks
         self.callbacks_use_tensorboard = kwargs.get('callbacks_use_tensorboard', True)
+        # TODO:  handle datetime addition to tensorboard name
         self.dirname_prefix_tensorboard = kwargs.get('dirname_prefix_tensorboard', 'tensorboard')
         self.tensorboard_update_freq = kwargs.get('tensorboard_update_freq', 'epoch')
         self.tensorboard_histogram_freq = kwargs.get('tensorboard_histogram_freq', 0)
