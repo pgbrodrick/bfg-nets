@@ -10,7 +10,6 @@ DEFAULT_BATCH_NORM = False
 DEFAULT_INITIAL_FILTERS = 16
 DEFAULT_KERNEL_SIZE = [3]
 DEFAULT_N_LAYERS = 8
-DEFAULT_OUTPUT_ACTIVATION = 'softmax'
 
 
 def parse_architecture_options(**kwargs):
@@ -19,7 +18,7 @@ def parse_architecture_options(**kwargs):
         'conv_depth': kwargs.get('conv_depth', DEFAULT_INITIAL_FILTERS),
         'n_layers': kwargs.get('n_layers', DEFAULT_N_LAYERS),
         'conv_pattern': kwargs.get('conv_pattern', DEFAULT_KERNEL_SIZE),
-        'output_activation': kwargs.get('output_activation', DEFAULT_OUTPUT_ACTIVATION),
+        'output_activation': kwargs['output_activation'],
     }
 
 
