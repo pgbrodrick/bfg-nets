@@ -88,7 +88,7 @@ class CNN(object):
         self._run_checks_before_model_fit(continue_training)
         if continue_training:
             self._set_model_initial_learning_rate_from_last_epoch()
-        model_callbacks = callbacks.get_callbacks(self.network_config)
+        model_callbacks = callbacks.get_callbacks(self.network_config, self.history)
 
         # TODO:  Does it make sense to have verification fold defined in the config and fold assignments passed here?
         #  this seems a little unusual, where you need to know your verification fold beforehand but you can change
@@ -122,7 +122,7 @@ class CNN(object):
         self._run_checks_before_model_fit(continue_training)
         if continue_training:
             self._set_model_initial_learning_rate_from_last_epoch()
-        model_callbacks = callbacks.get_callbacks(self.network_config)
+        model_callbacks = callbacks.get_callbacks(self.network_config, self.history)
 
         # TODO:  Same parameter questions as with fit()
         # TODO:  Check whether psutil.cpu_count gives the right answer on SLURM, i.e., the number of CPUs available to

@@ -53,11 +53,7 @@ class HistoryCheckpoint(keras.callbacks.Callback):
         history.save_history(combined_history, self.filepath)
 
 
-def get_callbacks(network_config):
-    if network_config.append_existing:
-        existing_history = history.load_history(network_config.filepath_history_out)
-    else:
-        existing_history = dict()
+def get_callbacks(network_config, existing_history):
     callbacks = [
         HistoryCheckpoint(
             network_config.filepath_history_out,
