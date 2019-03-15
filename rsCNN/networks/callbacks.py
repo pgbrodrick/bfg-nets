@@ -1,3 +1,4 @@
+import configparser
 import datetime
 import os
 from typing import List
@@ -5,7 +6,6 @@ from typing import List
 import keras
 
 from rsCNN.networks import history
-from rsCNN.networks.network_config import NetworkConfig
 from rsCNN.utils import logger
 
 
@@ -56,7 +56,7 @@ class HistoryCheckpoint(keras.callbacks.Callback):
         history.save_history(combined_history, dir_out)
 
 
-def get_callbacks(network_config: NetworkConfig, existing_history: dict) -> List[keras.callbacks.Callback]:
+def get_callbacks(network_config: configparser.ConfigParser, existing_history: dict) -> List[keras.callbacks.Callback]:
     # TODO:  remove the hacky implementation of modelcheckpoint filepath, needs to use datetime from history module
     callbacks = [
         HistoryCheckpoint(

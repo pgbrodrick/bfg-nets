@@ -12,7 +12,6 @@ def parse_architecture_options(**kwargs):
     return {
         'batch_norm': kwargs.get('batch_norm', DEFAULT_BATCH_NORM),
         'conv_depth': kwargs.get('conv_depth', DEFAULT_INITIAL_FILTERS),
-        'output_activation': kwargs['output_activation'],
     }
 
 

@@ -1,3 +1,4 @@
+import configparser
 import keras
 import keras.backend as K
 import numpy as np
@@ -8,7 +9,6 @@ import psutil
 
 from rsCNN import utils
 from rsCNN.networks import callbacks, history, losses
-from rsCNN.networks.network_config import NetworkConfig
 
 
 class TrainingHistory(object):
@@ -24,11 +24,11 @@ class CNN(object):
     network_config = None
     _is_model_new = None
 
-    def __init__(self, network_config: NetworkConfig) -> None:
+    def __init__(self, network_config: configparser.ConfigParser) -> None:
         """ Initializes the appropriate network
 
         Arguments:
-        network_config - NetworkConfig
+        network_config -
           Configuration parameter object for the network.
         """
         self.network_config = network_config
