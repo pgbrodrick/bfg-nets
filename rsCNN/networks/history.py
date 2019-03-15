@@ -15,7 +15,7 @@ FILENAME_HISTORY = '{}_history.pkl'
 FILENAME_MODEL = '{}_model.h5'
 
 
-def load_history(dir_history: str):
+def load_history(dir_history: str) -> dict:
     filename = _get_existing_filename(dir_history, FILENAME_HISTORY)
     if not filename:
         return None
@@ -25,7 +25,7 @@ def load_history(dir_history: str):
     return history
 
 
-def save_history(history: dict, dir_history: str):
+def save_history(history: dict, dir_history: str) -> None:
     filename = _get_existing_filename(dir_history, FILENAME_HISTORY)
     if not filename:
         filename = _set_filename(FILENAME_HISTORY)
@@ -34,7 +34,7 @@ def save_history(history: dict, dir_history: str):
         pickle.dump(history, file_)
 
 
-def load_model(dir_model: str, custom_objects: dict):
+def load_model(dir_model: str, custom_objects: dict) -> keras.models.Model:
     filename = _get_existing_filename(dir_model, FILENAME_MODEL)
     if not filename:
         return None
@@ -42,7 +42,7 @@ def load_model(dir_model: str, custom_objects: dict):
     return keras.models.load_model(filepath, custom_objects=custom_objects)
 
 
-def save_model(model: keras.models.Model, dir_model: str):
+def save_model(model: keras.models.Model, dir_model: str) -> None:
     filename = _get_existing_filename(dir_model, FILENAME_MODEL)
     if not filename:
         filename = _set_filename(FILENAME_MODEL)
