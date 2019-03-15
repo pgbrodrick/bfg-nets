@@ -130,8 +130,8 @@ class CNN(object):
         self.model.fit_generator(
             train_generator, steps_per_epoch=1, epochs=self.network_config.max_epochs,
             verbose=self.network_config.verbosity, callbacks=model_callbacks, validation_data=validation_generator,
-            validation_steps=1, validation_freq=1, max_queue_size=10, workers=psutil.cpu_count(logical=True),
-            use_multiprocessing=True, shuffle=False, initial_epoch=self._get_initial_epoch(),
+            max_queue_size=10, workers=psutil.cpu_count(logical=True), use_multiprocessing=True, shuffle=False,
+            initial_epoch=self._get_initial_epoch(),
         )
 
     def _run_checks_before_model_fit(self, continue_training):
