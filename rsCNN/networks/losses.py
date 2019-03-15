@@ -44,6 +44,6 @@ def cropped_loss(loss_type, outer_width, inner_width, weighted=True):
         # TODO: check that this after the fact weight multiplication works properly
         if (weighted):
             loss = loss * y_true[..., -1]
-        
+
         return loss
     return _cropped_loss

@@ -1,12 +1,12 @@
+from rsCNN.utils.general import *
+import os
+import numpy as np
+import matplotlib.gridspec as gridspec
+import matplotlib.pyplot as plt
 import gdal
 import matplotlib as mpl
 mpl.use('Agg')
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
-import numpy as np
-import os
 
-from rsCNN.utils.general import *
 
 def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, make_png=False, make_tif=True, feature_transformer=None, response_transformer=None):
     """ Apply a trained model to a raster file.
@@ -57,16 +57,18 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
     cr = [0, feature.shape[1]]
     rr = [0, feature.shape[0]]
 
-    collist = [x for x in range(cr[0]+data_config.window_radius, cr[1]-data_config.window_radius, data_config.internal_window_radius*2)]
+    collist = [x for x in range(cr[0]+data_config.window_radius, cr[1] -
+                                data_config.window_radius, data_config.internal_window_radius*2)]
     collist.append(cr[1]-data_config.window_radius)
-    rowlist = [x for x in range(rr[0]+data_config.window_radius, rr[1]-data_config.window_radius, data_config.internal_window_radius*2)]
+    rowlist = [x for x in range(rr[0]+data_config.window_radius, rr[1] -
+                                data_config.window_radius, data_config.internal_window_radius*2)]
     rowlist.append(rr[1]-data_config.window_radius)
 
     for col in collist:
         images = []
         for n in rowlist:
             d = feature[n-data_config.window_radius:n+data_config.window_radius,
-               col-data_config.window_radius:col+data_config.window_radius].copy()
+                        col-data_config.window_radius:col+data_config.window_radius].copy()
             if(d.shape[0] == data_config.window_radius*2 and d.shape[1] == data_config.window_radius*2):
                 # TODO: implement local scaling if necessary
 
@@ -74,7 +76,7 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
                 # d = fill_nearest_neighbor(d)
                 images.append(d)
         images = np.stack(images)
-        images = images.reshape((images.shape[0], images.shape[1], images.shape[2],dataset.RasterCount))
+        images = images.reshape((images.shape[0], images.shape[1], images.shape[2], dataset.RasterCount))
 
         pred_y = cnn.predict(images)
 
@@ -84,7 +86,8 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
             if (data_config.internal_window_radius < data_config.window_radius):
                 mm = int(round(data_config.window_radius - data_config.internal_window_radius))
                 p = p[mm:-mm, mm:-mm, :]
-            output[n-data_config.internal_window_radius:n+data_config.internal_window_radius, col-data_config.internal_window_radius:col+data_config.internal_window_radius, :] = p
+            output[n-data_config.internal_window_radius:n+data_config.internal_window_radius, col -
+                   data_config.internal_window_radius:col+data_config.internal_window_radius, :] = p
             _i += 1
             if (_i >= len(images)):
                 break
@@ -119,6 +122,6 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
         outDataset.SetProjection(dataset.GetProjection())
         outDataset.SetGeoTransform(dataset.GetGeoTransform())
         for n in range(0, cnn.config.n_classes):
-            outDataset.GetRasterBand(n+1).WriteArray(np.squeeze(output[:, :, n]),0,0)
+            outDataset.GetRasterBand(n+1).WriteArray(np.squeeze(output[:, :, n]), 0, 0)
         del outDataset
     del dataset

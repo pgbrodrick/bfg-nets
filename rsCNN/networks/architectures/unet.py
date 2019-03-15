@@ -4,7 +4,19 @@ from keras.layers.convolutional import Conv2D, MaxPooling2D, UpSampling2D
 from keras.layers.normalization import BatchNormalization
 
 
-def flex_unet(inshape, n_classes, conv_depth, batch_norm):
+DEFAULT_BATCH_NORM = True
+DEFAULT_INITIAL_FILTERS = 64
+
+
+def parse_architecture_options(**kwargs):
+    return {
+        'batch_norm': kwargs.get('batch_norm', DEFAULT_BATCH_NORM),
+        'conv_depth': kwargs.get('conv_depth', DEFAULT_INITIAL_FILTERS),
+    }
+
+
+# TODO:  typing and kwargs with defaults
+def create_model(inshape, n_classes, conv_depth, batch_norm):
     """ Construct a U-net style network with flexible shape
 
     Arguments:

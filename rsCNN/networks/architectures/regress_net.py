@@ -6,9 +6,25 @@ from keras.layers.convolutional import Conv2D
 from keras.layers.normalization import BatchNormalization
 
 
-# TODO:  Convert to kwargs with default settings, use those default settings in NetworkConfig
+DEFAULT_BATCH_NORM = False
+DEFAULT_INITIAL_FILTERS = 16
+DEFAULT_KERNEL_SIZE = [3]
+DEFAULT_N_LAYERS = 8
+DEFAULT_OUTPUT_ACTIVATION = 'softmax'
 
-def flat_regress_net(
+
+def parse_architecture_options(**kwargs):
+    return {
+        'batch_norm': kwargs.get('batch_norm', DEFAULT_BATCH_NORM),
+        'conv_depth': kwargs.get('conv_depth', DEFAULT_INITIAL_FILTERS),
+        'n_layers': kwargs.get('n_layers', DEFAULT_N_LAYERS),
+        'conv_pattern': kwargs.get('conv_pattern', DEFAULT_KERNEL_SIZE),
+        'output_activation': kwargs.get('output_activation', DEFAULT_OUTPUT_ACTIVATION),
+    }
+
+
+# TODO:  Convert to kwargs with default settings, use those default settings in NetworkConfig
+def create_model(
     inshape: Tuple[int, int, int],
     n_classes: int,
     conv_depth: int,
