@@ -27,7 +27,7 @@ def parse_architecture_options(**kwargs):
     }
 
 
-def create_residual_network(
+def create_model(
         input_shape: Tuple[int, int, int],
         num_outputs: int,
         output_activation: str,
