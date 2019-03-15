@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import List, Tuple, Union
 
 import keras
 
@@ -6,38 +6,40 @@ from keras.layers.convolutional import Conv2D
 from keras.layers.normalization import BatchNormalization
 
 
-DEFAULT_BATCH_NORM = False
-DEFAULT_INITIAL_FILTERS = 16
-DEFAULT_KERNEL_SIZE = [3]
-DEFAULT_N_LAYERS = 8
+DEFAULT_INITIAL_FILTERS = 64
+DEFAULT_KERNEL_SIZE = (3, 3)
+DEFAULT_NUM_LAYERS = 8
+DEFAULT_PADDING = 'same'
+DEFAULT_USE_BATCH_NORM = True
 
 
 def parse_architecture_options(**kwargs):
     return {
-        'batch_norm': kwargs.get('batch_norm', DEFAULT_BATCH_NORM),
-        'conv_depth': kwargs.get('conv_depth', DEFAULT_INITIAL_FILTERS),
-        'n_layers': kwargs.get('n_layers', DEFAULT_N_LAYERS),
-        'conv_pattern': kwargs.get('conv_pattern', DEFAULT_KERNEL_SIZE),
+        'initial_filters': kwargs.get('initial_filters', DEFAULT_INITIAL_FILTERS),
+        'kernel_size': kwargs.get('kernel_size', DEFAULT_KERNEL_SIZE),
+        'num_layers': kwargs.get('num_layers', DEFAULT_NUM_LAYERS),
+        'padding': kwargs.get('padding', DEFAULT_PADDING),
+        'use_batch_norm': kwargs.get('use_batch_norm', DEFAULT_USE_BATCH_NORM),
     }
 
 
-# TODO:  Convert to kwargs with default settings, use those default settings in config
 def create_model(
-    inshape: Tuple[int, int, int],
-    n_classes: int,
-    conv_depth: int,
-    batch_norm: bool,
-    n_layers: int,
-    conv_pattern: Tuple[int],
-    output_activation: str,
+        input_shape: Tuple[int, int, int],
+        num_outputs: int,
+        output_activation: str,
+        initial_filters: int = DEFAULT_INITIAL_FILTERS,
+        kernel_size: Union[Tuple[int, int], List[Tuple[int, int]]] = DEFAULT_KERNEL_SIZE,
+        num_layers: int = DEFAULT_NUM_LAYERS,
+        padding: str = DEFAULT_PADDING,
+        use_batch_norm: bool = DEFAULT_USE_BATCH_NORM,
 ) -> keras.models.Model:
     """ Construct a flat style network with flexible shape
 
     Arguments:
-    inshape - tuple/list
+    input_shape - tuple/list
       Designates the input shape of an image to be passed to
       the network.
-    n_classes - int
+    num_outputs - int
       The number of classes the network is meant to regress
     kwargs - dict
       A dictionary of optional keyword arguments, which may contain
@@ -49,24 +51,27 @@ def create_model(
         If integer, a fixed number of convolution filters to use
         in the network.  If 'growth' tells the network to grow
         in depth to maintain a constant number of neurons.
-      batch_norm - bool
+      use_batch_norm - bool
         Whether or not to use batch normalization after each layer.
 
     Returns:
       A flexible flat style network keras network.
     """
-    if (len(conv_pattern) > 0):
-        assert (n_layers % len(conv_pattern) == 0), 'conv_pattern must divide into n_layers'
+    inlayer = keras.layers.Input(input_shape)
 
-    inlayer = keras.layers.Input(inshape)
+    if type(kernel_size) is tuple:
+        kernel_sizes = [kernel_size] * len(num_layers)
+    else:
+        assert len(kernel_size) == num_layers, 'If providing a list of kernel sizes, length must equal num_layers'
+        kernel_sizes = kernel_size
+
     b1 = inlayer
-    for i in range(n_layers):
-        kernel_size = conv_pattern[i % len(conv_pattern)]
-        b1 = Conv2D(conv_depth, (kernel_size, kernel_size), activation='relu', padding='same')(b1)
-        b1 = Conv2D(conv_depth, (kernel_size, kernel_size), activation='relu', padding='same')(b1)
-        if (batch_norm):
+    for kernel_size in kernel_sizes:
+        b1 = Conv2D(filters=initial_filters, kernel_size=kernel_size, padding=padding)(b1)
+        b1 = Conv2D(filters=initial_filters, kernel_size=kernel_size, padding=padding)(b1)
+        if use_batch_norm:
             b1 = BatchNormalization()(b1)
 
-    output_layer = Conv2D(n_classes, (1, 1), activation=output_activation, padding='same')(b1)
+    output_layer = Conv2D(num_outputs, (1, 1), activation=output_activation, padding=padding)(b1)
     model = keras.models.Model(inputs=inlayer, outputs=output_layer)
     return model

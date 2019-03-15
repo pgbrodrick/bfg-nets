@@ -4,21 +4,19 @@ import keras
 
 
 DEFAULT_BLOCK_STRUCTURE = (2, 2, 2, 2)
-DEFAULT_BATCH_NORM = True
 DEFAULT_INITIAL_FILTERS = 64
 DEFAULT_KERNEL_SIZE = (3, 3)
 DEFAULT_PADDING = 'same'
-DEFAULT_POOL_SIZE = (3, 3)
-DEFAULT_STRIDES = (1, 1)
+DEFAULT_USE_BATCH_NORM = True
 
 
 def parse_architecture_options(**kwargs):
     return {
         'block_structure': kwargs.get('block_structure', DEFAULT_BLOCK_STRUCTURE),
-        'batch_norm': kwargs.get('batch_norm', DEFAULT_BATCH_NORM),
         'initial_filters': kwargs.get('initial_filters', DEFAULT_INITIAL_FILTERS),
         'kernel_size': kwargs.get('kernel_size', DEFAULT_KERNEL_SIZE),
         'padding': kwargs.get('padding', DEFAULT_PADDING),
+        'use_batch_norm': kwargs.get('use_batch_norm', DEFAULT_USE_BATCH_NORM),
     }
 
 
@@ -27,10 +25,10 @@ def create_model(
     num_outputs: int,
     output_activation: str,
     block_structure: Tuple[int, ...] = DEFAULT_BLOCK_STRUCTURE,
-    batch_norm: bool = DEFAULT_BATCH_NORM,
     initial_filters: int = DEFAULT_INITIAL_FILTERS,
     kernel_size: Tuple[int, int] = DEFAULT_KERNEL_SIZE,
     padding: str = DEFAULT_PADDING,
+    use_batch_norm: bool = DEFAULT_USE_BATCH_NORM,
 ) -> keras.models.Model:
 
     # Initial convolution
@@ -43,7 +41,7 @@ def create_model(
     for idx_block, num_subblocks in enumerate(block_structure):
         for idx_sublayer in range(num_subblocks):
             subblock = subblock_input
-            if batch_norm:
+            if use_batch_norm:
                 subblock = keras.layers.BatchNormalization()(subblock)
             subblock = keras.layers.Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(subblock)
             subblock_input = _add_residual_shortcut(subblock_input, subblock)
@@ -51,7 +49,7 @@ def create_model(
 
     # Output convolutions
     output_layer = subblock_input
-    if batch_norm:
+    if use_batch_norm:
         output_layer = keras.layers.BatchNormalization()(output_layer)
     output_layer = keras.layers.Conv2D(
         filters=num_outputs, kernel_size=(1, 1), padding='same', activation=output_activation)(output_layer)

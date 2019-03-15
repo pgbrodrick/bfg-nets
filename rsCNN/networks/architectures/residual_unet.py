@@ -5,24 +5,25 @@ from keras.layers import BatchNormalization, Concatenate, Conv2D, MaxPooling2D, 
 
 
 DEFAULT_BLOCK_STRUCTURE = (2, 2, 2, 2)
-DEFAULT_BATCH_NORM = True
+DEFAULT_USE_BATCH_NORM = True
 DEFAULT_INITIAL_FILTERS = 64
 DEFAULT_KERNEL_SIZE = (3, 3)
 DEFAULT_MIN_CONV_WIDTH = 8
 DEFAULT_PADDING = 'same'
 DEFAULT_POOL_SIZE = (2, 2)
-DEFAULT_STRIDES = (1, 1)
+DEFAULT_USE_GROWTH = False
 
 
 def parse_architecture_options(**kwargs):
     return {
         'block_structure': kwargs.get('block_structure', DEFAULT_BLOCK_STRUCTURE),
-        'batch_norm': kwargs.get('batch_norm', DEFAULT_BATCH_NORM),
         'initial_filters': kwargs.get('initial_filters', DEFAULT_INITIAL_FILTERS),
         'kernel_size': kwargs.get('kernel_size', DEFAULT_KERNEL_SIZE),
         'min_conv_width': kwargs.get('min_conv_width', DEFAULT_MIN_CONV_WIDTH),
         'padding': kwargs.get('padding', DEFAULT_PADDING),
         'pool_size': kwargs.get('pool_size', DEFAULT_POOL_SIZE),
+        'use_batch_norm': kwargs.get('use_batch_norm', DEFAULT_USE_BATCH_NORM),
+        'use_growth': kwargs.get('use_growth', DEFAULT_USE_GROWTH)
     }
 
 
@@ -31,12 +32,12 @@ def create_model(
         num_outputs: int,
         output_activation: str,
         block_structure: Tuple[int, ...] = DEFAULT_BLOCK_STRUCTURE,
-        batch_norm: bool = DEFAULT_BATCH_NORM,
         initial_filters: int = DEFAULT_INITIAL_FILTERS,
         kernel_size: Tuple[int, int] = DEFAULT_KERNEL_SIZE,
         min_conv_width: int = DEFAULT_MIN_CONV_WIDTH,
         padding: str = DEFAULT_PADDING,
         pool_size: Tuple[int, int] = DEFAULT_POOL_SIZE,
+        use_batch_norm: bool = DEFAULT_USE_BATCH_NORM,
         use_growth: bool = False,
 ) -> keras.models.Model:
 
@@ -62,10 +63,10 @@ def create_model(
             input_subblock = encoder
             # Each subblock has two convolutions
             encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(encoder)
-            if (batch_norm):
+            if use_batch_norm:
                 encoder = BatchNormalization()(encoder)
             encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(encoder)
-            if (batch_norm):
+            if use_batch_norm:
                 encoder = BatchNormalization()(encoder)
             # Add the residual connection from the previous subblock output to the current subblock output
             encoder = _add_residual_shortcut(input_subblock, encoder)
@@ -84,16 +85,16 @@ def create_model(
             input_subblock = decoder
             # Each subblock has two convolutions
             decoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(decoder)
-            if (batch_norm):
+            if use_batch_norm:
                 decoder = BatchNormalization()(decoder)
             decoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(decoder)
-            if (batch_norm):
+            if use_batch_norm:
                 decoder = BatchNormalization()(decoder)
             # Add the residual connection from the previous subblock output to the current subblock output
             decoder = _add_residual_shortcut(input_subblock, decoder)
         decoder = UpSampling2D(size=pool_size)(decoder)
         decoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(decoder)
-        if (batch_norm):
+        if use_batch_norm:
             decoder = BatchNormalization()(decoder)
         decoder = Concatenate()([layer_passed_through, decoder])
         if use_growth:
@@ -101,10 +102,10 @@ def create_model(
 
     # Last convolutions
     output_layer = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(decoder)
-    if (batch_norm):
+    if use_batch_norm:
         output_layer = BatchNormalization()(output_layer)
     output_layer = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(output_layer)
-    if (batch_norm):
+    if use_batch_norm:
         output_layer = BatchNormalization()(output_layer)
     output_layer = Conv2D(
         filters=num_outputs, kernel_size=(1, 1), padding='same', activation=output_activation)(output_layer)
