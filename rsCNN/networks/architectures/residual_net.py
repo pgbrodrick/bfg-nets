@@ -19,6 +19,7 @@ def parse_architecture_options(**kwargs):
         'initial_filters': kwargs.get('initial_filters', DEFAULT_INITIAL_FILTERS),
         'kernel_size': kwargs.get('kernel_size', DEFAULT_KERNEL_SIZE),
         'padding': kwargs.get('padding', DEFAULT_PADDING),
+        'output_activation': kwargs['output_activation'],
     }
 
 
