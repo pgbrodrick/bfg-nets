@@ -1,10 +1,12 @@
+import keras
 import keras.backend as K
 import numpy as np
 import os
+import psutil
 from typing import List, Union
 
+from rsCNN import utils
 from rsCNN.networks import callbacks, history, losses, network_config
-from rsCNN.utils import assert_gpu_available
 
 
 class TrainingHistory(object):
@@ -20,10 +22,7 @@ class CNN(object):
     network_config = None
     _is_model_new = None
 
-    def __init__(
-        self,
-        network_config: network_config.NetworkConfig,
-    ) -> None:
+    def __init__(self, network_config: network_config.NetworkConfig,) -> None:
         """ Initializes the appropriate network
 
         Arguments:
@@ -49,7 +48,7 @@ class CNN(object):
             self.model.compile(loss=self.network_config.loss_function, optimizer=self.network_config.optimizer)
             self._is_model_new = True
 
-    def calculate_training_memory_usage(self, batch_size):
+    def calculate_training_memory_usage(self, batch_size: int) -> float:
         # Shamelessly copied from
         # https://stackoverflow.com/questions/43137288/how-to-determine-needed-memory-of-keras-model
         # but not tested rigorously
@@ -76,24 +75,17 @@ class CNN(object):
         return gbytes
 
     def fit(
-        self,
-        train_features: Union[np.ndarray, List[np.ndarray, ...]],
-        train_responses: Union[np.ndarray, List[np.ndarray, ...]],
-        validation_split: float = None,
-        validation_data: tuple = None,
-        continue_training: bool = False
+            self,
+            train_features: Union[np.ndarray, List[np.ndarray, ...]],
+            train_responses: Union[np.ndarray, List[np.ndarray, ...]],
+            validation_split: float = None,
+            validation_data: tuple = None,
+            continue_training: bool = False
     ) -> None:
-        assert not (continue_training is False and self._is_model_new is False), \
-            'The parameter continue_training must be true to continue training an existing model'
 
-        if self.network_config.assert_gpu:
-            assert_gpu_available()
-
-        initial_epoch = 0
+        self._run_checks_before_model_fit(continue_training)
         if continue_training:
-            initial_epoch = len(self.history.get('lr', list()))
-            K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
-
+            self._set_model_initial_learning_rate_from_last_epoch()
         model_callbacks = callbacks.get_callbacks(self.network_config)
 
         # TODO:  Does it make sense to have verification fold defined in the config and fold assignments passed here?
@@ -114,12 +106,44 @@ class CNN(object):
             train_features, train_responses, batch_size=self.network_config.batch_size,
             epochs=self.network_config.max_epochs, verbose=self.network_config.verbosity, callbacks=model_callbacks,
             validation_split=validation_split, validation_data=validation_data, shuffle=False,
-            initial_epoch=initial_epoch, steps_per_epoch=1, validation_steps=1, validation_freq=1
+            initial_epoch=self._get_initial_epoch(), steps_per_epoch=1, validation_steps=1, validation_freq=1
         )
 
-    def fit_sequence(self, train_sequence, validation_sequence=None):
-        # TODO:  reimplement if/when we need generators, ignore for now
-        raise NotImplementedError
+    def fit_generator(
+            self,
+            train_generator: keras.utils.Sequence,
+            validation_generator: keras.utils.Sequence = None,
+            continue_training: bool = False,
+    ) -> None:
+        # TODO: I'm realizing we're kinda sorta putting in docstrings, but we could do them in such a way where we
+        #  auto-generate documentation from the docstrings. I'd just need to look up the package and format for that.
+        self._run_checks_before_model_fit(continue_training)
+        if continue_training:
+            self._set_model_initial_learning_rate_from_last_epoch()
+        model_callbacks = callbacks.get_callbacks(self.network_config)
+
+        # TODO:  Same parameter questions as with fit()
+        # TODO:  Check whether psutil.cpu_count gives the right answer on SLURM, i.e., the number of CPUs available to
+        #  the job and not the total number on the instance.
+        self.model.fit_generator(
+            train_generator, steps_per_epoch=1, epochs=self.network_config.max_epochs,
+            verbose=self.network_config.verbosity, callbacks=model_callbacks, validation_data=validation_generator,
+            validation_steps=1, validation_freq=1, max_queue_size=10, workers=psutil.cpu_count(logical=True),
+            use_multiprocessing=True, shuffle=False, initial_epoch=self._get_initial_epoch(),
+        )
+
+    def _run_checks_before_model_fit(self, continue_training):
+        if self.network_config.assert_gpu:
+            utils.assert_gpu_available()
+
+        assert not (continue_training is False and self._is_model_new is False), \
+            'The parameter continue_training must be true to continue training an existing model'
+
+    def _set_model_initial_learning_rate_from_last_epoch(self):
+        K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
+
+    def _get_initial_epoch(self):
+        return len(self.history.get('lr', list()))
 
     def predict(self, features):
         # TODO: Fabina, the verbosity below could be a config parameter, but you basically always want this off (it's either super
