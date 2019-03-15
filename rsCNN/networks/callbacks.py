@@ -53,52 +53,52 @@ class HistoryCheckpoint(keras.callbacks.Callback):
         combined_history = self.existing_history.copy()
         for key, value in self.model.history.history.items():
             combined_history.setdefault(key, list()).extend(value)
-        history.save_history(combined_history, dir_out)
+        history.save_history(combined_history, self.dir_out)
 
 
 def get_callbacks(network_config: configparser.ConfigParser, existing_history: dict) -> List[keras.callbacks.Callback]:
     # TODO:  remove the hacky implementation of modelcheckpoint filepath, needs to use datetime from history module
     callbacks = [
         HistoryCheckpoint(
-            dir_out=network_config.dir_out,
+            dir_out=network_config['model']['dir_out'],
             existing_history=existing_history,
-            period=network_config.checkpoint_periods,
-            verbose=network_config.verbosity
+            period=network_config['callbacks_general']['checkpoint_periods'],
+            verbose=network_config['model']['verbosity']
         ),
         keras.callbacks.ModelCheckpoint(
-            os.path.join(network_config.dir_out, 'model.h5'),
-            period=network_config.checkpoint_periods,
-            verbose=network_config.verbosity
+            os.path.join(network_config['model']['dir_out'], 'model.h5'),
+            period=network_config['callbacks_general']['checkpoint_periods'],
+            verbose=network_config['model']['verbosity']
         ),
     ]
-    if network_config.callbacks_use_early_stopping:
+    if network_config['callbacks_early_stopping']['use_early_stopping']:
         callbacks.append(
             keras.callbacks.EarlyStopping(
                 monitor='loss',
-                min_delta=network_config.early_stopping_min_delta,
-                patience=network_config.early_stopping_patience
+                min_delta=network_config['callbacks_early_stopping']['es_min_delta'],
+                patience=network_config['callbacks_early_stopping']['es_patience']
             ),
         )
-    if network_config.callbacks_use_reduced_learning_rate:
+    if network_config['callbacks_reduced_learning_rate']['use_reduced_learning_rate']:
         callbacks.append(
             keras.callbacks.ReduceLROnPlateau(
                 monitor='loss',
-                factor=network_config.reduced_learning_rate_factor,
-                min_delta=network_config.reduced_learning_rate_min_delta,
-                patience=network_config.reduced_learning_rate_patience
+                factor=network_config['callbacks_reduced_learning_rate']['rlr_factor'],
+                min_delta=network_config['callbacks_reduced_learning_rate']['rlr_min_delta'],
+                patience=network_config['callbacks_reduced_learning_rate']['rlr_patience']
             ),
         )
-    if network_config.callbacks_use_tensorboard:
+    if network_config['callbacks_tensorboard']['use_tensorboard']:
         callbacks.append(
             keras.callbacks.TensorBoard(
-                network_config.dirname_prefix_tensorboard,
-                histogram_freq=network_config.tensorboard_histogram_freq,
-                write_graph=network_config.tensorboard_write_graph,
-                write_grads=network_config.tensorboard_write_grads,
-                write_images=network_config.tensorboard_write_images,
-                update_freq=network_config.tensorboard_update_freq
+                network_config['callbacks_tensorboard']['dirname_prefix_tensorboard'],
+                histogram_freq=network_config['callbacks_tensorboard']['t_histogram_freq'],
+                write_graph=network_config['callbacks_tensorboard']['t_write_graph'],
+                write_grads=network_config['callbacks_tensorboard']['t_write_grads'],
+                write_images=network_config['callbacks_tensorboard']['t_write_images'],
+                update_freq=network_config['callbacks_tensorboard']['t_update_freq']
             ),
         )
-    if network_config.callbacks_use_terminate_on_nan:
+    if network_config['callbacks_general']['use_terminate_on_nan']:
         callbacks.append(keras.callbacks.TerminateOnNaN())
     return callbacks

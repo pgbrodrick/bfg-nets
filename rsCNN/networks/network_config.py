@@ -86,29 +86,29 @@ def create_network_config(
     # TODO:  handle datetime addition to tensorboard directory name
     config['callbacks_general'] = {
         'checkpoint_periods': kwargs.get('checkpoint_periods', 5),
-        'callbacks_use_terminate_on_nan': kwargs.get('callbacks_use_terminate_on_nan', True),
+        'use_terminate_on_nan': kwargs.get('use_terminate_on_nan', True),
     }
 
     config['callbacks_tensorboard'] = {
-        'callbacks_use_tensorboard': kwargs.get('callbacks_use_tensorboard', True),
+        'use_tensorboard': kwargs.get('use_tensorboard', True),
         'dirname_prefix_tensorboard': kwargs.get('dirname_prefix_tensorboard', 'tensorboard'),
-        'tensorboard_update_freq': kwargs.get('tensorboard_update_freq', 'epoch'),
-        'tensorboard_histogram_freq': kwargs.get('tensorboard_histogram_freq', 0),
-        'tensorboard_write_graph': kwargs.get('tensorboard_write_graph', True),
-        'tensorboard_write_grads': kwargs.get('tensorboard_write_grads', False),
-        'tensorboard_write_images': kwargs.get('tensorboard_write_images', True),
+        't_update_freq': kwargs.get('t_update_freq', 'epoch'),
+        't_histogram_freq': kwargs.get('t_histogram_freq', 0),
+        't_write_graph': kwargs.get('t_write_graph', True),
+        't_write_grads': kwargs.get('t_write_grads', False),
+        't_write_images': kwargs.get('t_write_images', True),
     }
 
     config['callbacks_early_stopping'] = {
-        'callbacks_use_early_stopping': kwargs.get('callbacks_use_early_stopping', True),
-        'early_stopping_min_delta': kwargs.get('early_stopping_min_delta', 0.0001),
-        'early_stopping_patience': kwargs.get('early_stopping_patience', 50),
+        'use_early_stopping': kwargs.get('use_early_stopping', True),
+        'es_min_delta': kwargs.get('es_min_delta', 0.0001),
+        'es_patience': kwargs.get('es_patience', 50),
     }
 
     config['callbacks_reduced_learning_rate'] = {
-        'callbacks_use_reduced_learning_rate': kwargs.get('callbacks_use_reduced_learning_rate', True),
-        'reduced_learning_rate_factor': kwargs.get('reduced_learning_rate_factor', 0.5),
-        'reduced_learning_rate_min_delta': kwargs.get('reduced_learning_rate_min_delta', 0.0001),
-        'reduced_learning_rate_patience': kwargs.get('reduced_learning_rate_patience', 10),
+        'use_reduced_learning_rate': kwargs.get('use_reduced_learning_rate', True),
+        'rlr_factor': kwargs.get('rlr_factor', 0.5),
+        'rlr_min_delta': kwargs.get('rlr_min_delta', 0.0001),
+        'rlr_patience': kwargs.get('rlr_patience', 10),
     }
     return config
