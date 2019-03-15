@@ -142,7 +142,8 @@ class CNN(object):
             'The parameter continue_training must be true to continue training an existing model'
 
     def _set_model_initial_learning_rate_from_last_epoch(self):
-        K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
+        if 'lr' in self.history:
+            K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
 
     def _get_initial_epoch(self):
         return len(self.history.get('lr', list()))
