@@ -10,7 +10,7 @@ def read_network_config_from_file(filepath):
     config.read(filepath)
     config_kwargs = dict()
     for section in config.sections():
-        for key, value in section.items():
+        for key, value in config[section].items():
             assert key not in config_kwargs, 'Configuration file contains multiple entries for key:  {}'.format(key)
             # Note:  the following doesn't work with floats written as '10**-4' or strings without surrounding quotes
             value = ast.literal_eval(value)
