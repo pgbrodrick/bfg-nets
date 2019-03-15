@@ -18,7 +18,6 @@ def read_network_config_from_file(filepath):
     return config_kwargs
 
 
-
 # TODO:  generate networkconfig template automatically like in architectures/__init__.py
 
 class NetworkConfig(object):
@@ -62,8 +61,6 @@ class NetworkConfig(object):
         # Training arguments
         self.batch_size = kwargs.get('batch_size', 1)
         self.max_epochs = kwargs.get('max_epochs', 100)
-        self.n_noimprovement_repeats = kwargs.get('n_noimprovement_repeats', 10)
-        self.verification_fold = kwargs.get('verification_fold', None)
         self.optimizer = kwargs.get('optimizer', 'adam')
 
         # Model
@@ -71,8 +68,6 @@ class NetworkConfig(object):
         self.checkpoint_periods = kwargs.get('checkpoint_periods', 5)
         self.verbosity = kwargs.get('verbosity', 1)
         self.assert_gpu = kwargs.get('assert_gpu', False)
-        # TODO:  unclear name, but could be streamlined? add to config template if we keep
-        self.append_existing = kwargs.get('append_existing', False)
 
         # Callbacks
         self.callbacks_use_tensorboard = kwargs.get('callbacks_use_tensorboard', True)
