@@ -151,8 +151,8 @@ class CNN(object):
             callbacks=model_callbacks,
             validation_data=validation_generator,
             max_queue_size=2,
-            #workers=psutil.cpu_count(logical=True),
-            #use_multiprocessing=True,
+            # workers=psutil.cpu_count(logical=True),
+            # use_multiprocessing=True,
             shuffle=False,
             initial_epoch=len(self.history.get('lr', list())),
         )
@@ -170,8 +170,8 @@ class CNN(object):
         return self.model.predict_generator(
             predict_sequence,
             max_queue_size=2,
-            #workers=psutil.cpu_count(logical=True),
-            #use_multiprocessing=True,
+            # workers=psutil.cpu_count(logical=True),
+            # use_multiprocessing=True,
             verbose=0
         )
 
