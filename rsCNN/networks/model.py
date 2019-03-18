@@ -106,7 +106,7 @@ class CNN(object):
         # TODO:  Do we need the flexibility to set steps_per_epoch, validation_steps, or validation_freq, or are there
         #  obvious and reasonable defaults to just use? w.r.t. validation steps and freq, I can only think of
         #  reasons to change them based on computational resource budgets.
-        self.model.fit(
+        new_history = self.model.fit(
             train_features,
             train_responses,
             batch_size=self.network_config['training']['batch_size'],
@@ -121,6 +121,9 @@ class CNN(object):
             validation_steps=1,
             validation_freq=1
         )
+        self.history = history.combine_histories(self.history, new_history)
+        history.save_history(self.history, self.network_config['model']['dir_out'])
+        history.save_model(self.model, self.network_config['model']['dir_out'])
 
     def fit_generator(
             self,
@@ -143,7 +146,7 @@ class CNN(object):
         # TODO:  Same parameter questions as with fit()
         # TODO:  Check whether psutil.cpu_count gives the right answer on SLURM, i.e., the number of CPUs available to
         #  the job and not the total number on the instance.
-        self.model.fit_generator(
+        new_history = self.model.fit_generator(
             train_generator,
             steps_per_epoch=1,
             epochs=self.network_config['training']['max_epochs'],
@@ -156,6 +159,9 @@ class CNN(object):
             shuffle=False,
             initial_epoch=len(self.history.get('lr', list())),
         )
+        self.history = history.combine_histories(self.history, new_history)
+        history.save_history(self.history, self.network_config['model']['dir_out'])
+        history.save_model(self.model, self.network_config['model']['dir_out'])
 
     def predict(self, features: Union[np.ndarray, List[np.ndarray]]):
         if self.network_config['model']['assert_gpu']:
