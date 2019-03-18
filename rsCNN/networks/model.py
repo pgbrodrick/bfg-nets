@@ -52,7 +52,7 @@ class CNN(object):
             # TODO:  do we want to warn or raise or nothing if the network type doesn't match the model type?
             self._is_model_new = False
         else:
-            self.model = self.network_config['model']['create_model'](
+            self.model = self.network_config['architecture']['create_model'](
                 self.network_config['architecture']['inshape'],
                 self.network_config['architecture']['n_classes'],
                 **self.network_config['architecture_options']
