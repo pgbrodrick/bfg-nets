@@ -1,9 +1,14 @@
+import keras
 import keras.backend as K
 import numpy as np
 import os
+from typing import List, Union
 
-from rsCNN.networks import callbacks, history, network_config
-from rsCNN.utils import assert_gpu_available
+import psutil
+
+from rsCNN import utils
+from rsCNN.networks import callbacks, history, losses
+from rsCNN.networks.network_config import NetworkConfig
 
 
 class TrainingHistory(object):
@@ -16,38 +21,36 @@ class TrainingHistory(object):
 
 
 class CNN(object):
+    network_config = None
+    _is_model_new = None
 
-    def __init__(self, network_config: network_config.NetworkConfig, reinitialize=False):
+    def __init__(self, network_config: NetworkConfig) -> None:
         """ Initializes the appropriate network
 
         Arguments:
         network_config - NetworkConfig
           Configuration parameter object for the network.
-
-        Keyword Arguments:
-        reinitialize - bool
-          Flag directing whether the model should be re-initialized from scratch (no weights).
-        load_history - bool
-          Flag directing whether the model should load it's training history.
         """
-        self.config = network_config
+        self.network_config = network_config
 
-        if (load_history and not reinitialize):
-            warning.warn('Warning: loading model history and re-initializing the model')
+        path_base = os.path.join(self.network_config.dir_out, self.network_config.model_name)
+        if not os.path.exists(path_base):
+            os.makedirs(path_base)
 
-        if (reinitialize == False and os.path.isfile(self.config.filepath_model_out)):
-            self.model = keras.models.load_model(self.config.filepath_model)
+        self.history = history.load_history(path_base) or dict()
+        if self.history:
+            # TODO:  we need to automatically know what custom_objects are OR save custom_objects along with the model,
+            #  these will probably? just be loss functions; this will fail until populated
+            self.model = history.load_model(path_base, self.network_config.custom_objects)
+            # TODO:  do we want to warn or raise or nothing if the network type doesn't match the model type?
+            self._is_model_new = False
         else:
-            self.model = self.config.create_architecture(
-                self.config.inshape, self.config.n_classes, **self.config.architecture_options)
+            self.model = self.network_config.create_model(
+                self.network_config.inshape, self.network_config.n_classes, **self.network_config.architecture_options)
+            self.model.compile(loss=self.network_config.loss_function, optimizer=self.network_config.optimizer)
+            self._is_model_new = True
 
-        self.model.compile(loss=self.config.loss_function, optimizer=self.config.optimizer)
-
-        self.history = dict()
-        self.training = None
-        self.initial_epoch = 0
-
-    def calculate_training_memory_usage(self, batch_size):
+    def calculate_training_memory_usage(self, batch_size: int) -> float:
         # Shamelessly copied from
         # https://stackoverflow.com/questions/43137288/how-to-determine-needed-memory-of-keras-model
         # but not tested rigorously
@@ -73,48 +76,82 @@ class CNN(object):
         gbytes = np.round(total_memory / (1024.0 ** 3), 3)
         return gbytes
 
-    def fit(self, features, responses, fold_assignments, load_history=True):
-        if self.config.assert_gpu:
-            assert_gpu_available()
+    def fit(
+            self,
+            train_features: Union[np.ndarray, List[np.ndarray]],
+            train_responses: Union[np.ndarray, List[np.ndarray]],
+            validation_split: float = None,
+            validation_data: tuple = None,
+            continue_training: bool = False
+    ) -> None:
 
-        if (load_history and os.path.isfile(self.config.filepath_history)):
-            history.load_history(self.config.filepath_history)
-            self.initial_epoch = len(self.history['lr'])
+        self._run_checks_before_model_fit(continue_training)
+        if continue_training:
+            self._set_model_initial_learning_rate_from_last_epoch()
+        model_callbacks = callbacks.get_callbacks(self.network_config, self.history)
 
-            # TODO: check into if this is legit, I think it probably is the right call
+        # TODO:  Does it make sense to have verification fold defined in the config and fold assignments passed here?
+        #  this seems a little unusual, where you need to know your verification fold beforehand but you can change
+        #  your fold assignments on the fly. I'm wondering whether it should even be the responsibility of the fit
+        #  function to *also* handle the data folds. Perhaps this should be handled at a higher level? I'm thinking
+        #  of the case where you want to iterate through all of your folds. It seems a little cleaner to just pass
+        #  the correct training and validation values to this function, so that you can change your verification fold
+        #  on the fly without changing your fold assignments. I'm guessing you're probably on board because
+        #  it looks like we have a few logic errors here, so we must have been just writing this quickly (e.g., it looks
+        #  like fold_assignments is required even though it may not be used). I've removed the code from this section
+        #  and we can either 1) add that code here again or 2) add that code at a higher level.
+
+        # TODO:  Do we need the flexibility to set steps_per_epoch, validation_steps, or validation_freq, or are there
+        #  obvious and reasonable defaults to just use? w.r.t. validation steps and freq, I can only think of
+        #  reasons to change them based on computational resource budgets.
+        self.model.fit(
+            train_features, train_responses, batch_size=self.network_config.batch_size,
+            epochs=self.network_config.max_epochs, verbose=self.network_config.verbosity, callbacks=model_callbacks,
+            validation_split=validation_split, validation_data=validation_data, shuffle=False,
+            initial_epoch=self._get_initial_epoch(), steps_per_epoch=1, validation_steps=1, validation_freq=1
+        )
+
+    def fit_generator(
+            self,
+            train_generator: keras.utils.Sequence,
+            validation_generator: keras.utils.Sequence = None,
+            continue_training: bool = False
+    ) -> None:
+        # TODO: I'm realizing we're kinda sorta putting in docstrings, but we could do them in such a way where we
+        #  auto-generate documentation from the docstrings. I'd just need to look up the package and format for that.
+        self._run_checks_before_model_fit(continue_training)
+        if continue_training:
+            self._set_model_initial_learning_rate_from_last_epoch()
+        model_callbacks = callbacks.get_callbacks(self.network_config, self.history)
+
+        # TODO:  Same parameter questions as with fit()
+        # TODO:  Check whether psutil.cpu_count gives the right answer on SLURM, i.e., the number of CPUs available to
+        #  the job and not the total number on the instance.
+        self.model.fit_generator(
+            train_generator, steps_per_epoch=1, epochs=self.network_config.max_epochs,
+            verbose=self.network_config.verbosity, callbacks=model_callbacks, validation_data=validation_generator,
+            max_queue_size=10, workers=psutil.cpu_count(logical=True), use_multiprocessing=True, shuffle=False,
+            initial_epoch=self._get_initial_epoch(),
+        )
+
+    def _run_checks_before_model_fit(self, continue_training):
+        if self.network_config.assert_gpu:
+            utils.assert_gpu_available()
+
+        assert not (continue_training is False and self._is_model_new is False), \
+            'The parameter continue_training must be true to continue training an existing model'
+
+    def _set_model_initial_learning_rate_from_last_epoch(self):
+        if 'lr' in self.history:
             K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
 
-        model_callbacks = callbacks.get_callbacks(self.config)
-
-        if (self.config.verification_fold is not None):
-            train_subset = fold_assignments == self.config.verification_fold
-            test_subset = np.logical_not(train_subset)
-            train_features = features[train_subset, ...]
-            train_responses = responses[train_subset]
-            validation_data = (features[test_subset, ...], responses[test_subset, ...])
-        else:
-            train_features = features
-            train_responses = responses
-            validation_data = None
-
-        self.model.fit(train_features,
-                       train_responses,
-                       validation_data=validation_data,
-                       epochs=self.config.max_epochs,
-                       batch_size=self.config.batch_size,
-                       verbose=self.config.verbosity,
-                       shuffle=False,
-                       initial_epoch=self.intial_epoch,
-                       callbacks=model_callbacks)
-
-    def fit_sequence(self, train_sequence, validation_sequence=None):
-        # TODO:  reimplement if/when we need generators, ignore for now
-        raise NotImplementedError
+    def _get_initial_epoch(self):
+        return len(self.history.get('lr', list()))
 
     def predict(self, features):
         # TODO: Fabina, the verbosity below could be a config parameter, but you basically always want this off (it's either super
         # fast or we're running some structured read/write that has an external reporting setup)
-        return self.model.predict(features, batch_size=self.config.batch_size, verbose=False)
+        return self.model.predict(features, batch_size=self.network_config.batch_size, verbose=False)
 
     def predict_sequence(self, predict_sequence):
         # TODO:  reimplement if/when we need generators, ignore for now

@@ -1,7 +1,7 @@
 import ast
 import configparser
 import os
-from typing import Iterable
+from typing import Callable, Tuple
 
 from rsCNN.networks import architectures
 
@@ -11,7 +11,7 @@ def read_network_config_from_file(filepath):
     config.read(filepath)
     config_kwargs = dict()
     for section in config.sections():
-        for key, value in section.items():
+        for key, value in config[section].items():
             assert key not in config_kwargs, 'Configuration file contains multiple entries for key:  {}'.format(key)
             # Note:  the following doesn't work with floats written as '10**-4' or strings without surrounding quotes
             value = ast.literal_eval(value)
@@ -19,14 +19,23 @@ def read_network_config_from_file(filepath):
     return config_kwargs
 
 
+# TODO:  generate networkconfig template automatically like in architectures/__init__.py
+
 class NetworkConfig(object):
     """ A wrapper class designed to hold all relevant configuration information for the
         training of a new network.
     """
 
     # TODO: maybe add the args to config template, which means we may just read in directly
-    # TODO: typedef loss_function
-    def __init__(self, network_type: str, loss_function, inshape: Iterable[int], n_classes: Iterable[int], **kwargs):
+    def __init__(
+            self,
+            network_type: str,
+            model_name: str,
+            loss_function: Callable,
+            inshape: Tuple[int, int, int],
+            n_classes: Tuple[int, ...],
+            **kwargs
+    ) -> None:
         """
           Arguments:
           network_type - str
@@ -42,6 +51,7 @@ class NetworkConfig(object):
             Designates the output shape of targets to be fit by the network
         """
         self.network_type = network_type
+        self.model_name = model_name
         self.loss_function = loss_function
         self.inshape = inshape
         self.n_classes = n_classes
@@ -52,25 +62,18 @@ class NetworkConfig(object):
         # Training arguments
         self.batch_size = kwargs.get('batch_size', 1)
         self.max_epochs = kwargs.get('max_epochs', 100)
-        self.n_noimprovement_repeats = kwargs.get('n_noimprovement_repeats', 10)
-        self.verification_fold = kwargs.get('verification_fold', None)
         self.optimizer = kwargs.get('optimizer', 'adam')
 
-        # Optional arguments
-        self.dir_out = kwargs.get('dir_out', './')
-        self.filename_model = os.path.join(self.dir_out, kwargs.get('filename_model', 'model.h5'))
-        self.filename_history = os.path.join(self.dir_out, kwargs.get('filename_history', 'history.json'))
-
         # Model
+        self.dir_out = os.path.join(kwargs.get('dir_out', './'), self.model_name)
         self.checkpoint_periods = kwargs.get('checkpoint_periods', 5)
         self.verbosity = kwargs.get('verbosity', 1)
         self.assert_gpu = kwargs.get('assert_gpu', False)
-        # TODO:  unclear name, but could be streamlined? add to config template if we keep
-        self.append_existing = kwargs.get('append_existing', False)
 
         # Callbacks
         self.callbacks_use_tensorboard = kwargs.get('callbacks_use_tensorboard', True)
-        self.dirname_tensorboard = kwargs.get('dirname_tensorboard', 'tensorboard')
+        # TODO:  handle datetime addition to tensorboard name
+        self.dirname_prefix_tensorboard = kwargs.get('dirname_prefix_tensorboard', 'tensorboard')
         self.tensorboard_update_freq = kwargs.get('tensorboard_update_freq', 'epoch')
         self.tensorboard_histogram_freq = kwargs.get('tensorboard_histogram_freq', 0)
         self.tensorboard_write_graph = kwargs.get('tensorboard_write_graph', True)

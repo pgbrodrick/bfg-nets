@@ -12,11 +12,12 @@ def parse_architecture_options(**kwargs):
     return {
         'batch_norm': kwargs.get('batch_norm', DEFAULT_BATCH_NORM),
         'conv_depth': kwargs.get('conv_depth', DEFAULT_INITIAL_FILTERS),
+        'output_activation': kwargs['output_activation'],
     }
 
 
 # TODO:  typing and kwargs with defaults
-def create_model(inshape, n_classes, conv_depth, batch_norm):
+def create_model(inshape, n_classes, conv_depth, batch_norm, output_activation):
     """ Construct a U-net style network with flexible shape
 
     Arguments:
@@ -98,6 +99,6 @@ def create_model(inshape, n_classes, conv_depth, batch_norm):
     if (batch_norm):
         e2 = BatchNormalization()(e2)
 
-    output_layer = Conv2D(n_classes, (1, 1), activation='softmax', padding='same')(e2)
+    output_layer = Conv2D(n_classes, (1, 1), activation=output_activation, padding='same')(e2)
     model = keras.models.Model(input=inlayer, output=output_layer)
     return model

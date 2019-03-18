@@ -23,7 +23,7 @@ def parse_architecture_options(**kwargs):
         'min_conv_width': kwargs.get('min_conv_width', DEFAULT_MIN_CONV_WIDTH),
         'padding': kwargs.get('padding', DEFAULT_PADDING),
         'pool_size': kwargs.get('pool_size', DEFAULT_POOL_SIZE),
-        'strides': kwargs.get('strides', DEFAULT_STRIDES),
+        'output_activation': kwargs['output_activation'],
     }
 
 
@@ -62,10 +62,10 @@ def create_model(
             # Store the subblock input for the residual connection
             input_subblock = encoder
             # Each subblock has two convolutions
-            encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, strides=strides)(encoder)
+            encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(encoder)
             if (batch_norm):
                 encoder = BatchNormalization()(encoder)
-            encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, strides=strides)(encoder)
+            encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(encoder)
             if (batch_norm):
                 encoder = BatchNormalization()(encoder)
             # Add the residual connection from the previous subblock output to the current subblock output
@@ -104,7 +104,7 @@ def create_model(
     output_layer = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(decoder)
     if (batch_norm):
         output_layer = BatchNormalization()(output_layer)
-    output_layer = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, strides=strides)(output_layer)
+    output_layer = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(output_layer)
     if (batch_norm):
         output_layer = BatchNormalization()(output_layer)
     output_layer = Conv2D(
