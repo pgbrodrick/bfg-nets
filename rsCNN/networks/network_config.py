@@ -26,11 +26,14 @@ def read_network_config_from_file(filepath):
     for section in config.sections():
         for key, value in config[section].items():
             assert key not in kwargs, 'Configuration file contains multiple entries for key:  {}'.format(key)
-            # Note:  the following doesn't work with floats written as '10**-4' or strings without surrounding quotes
-            # Note:  if there are errors after reading/writing templates generated from the fxn above, then we need to
-            #        either change how the values are parsed (different module) or just have a check for the bad values
-            #        or do a try/except
-            value = ast.literal_eval(value)
+            # Note:  literal_eval doesn't work with scientific notation '10**-4' or strings without quotes. The
+            # try/except catches string errors which are very inconvenient to address in the config files with quotes,
+            # but the float issue isn't a problem if we're just careful. There's not an out-of-the-box way to sanitize
+            # everything, unfortunately, so just be diligent with config files.
+            try:
+                value = ast.literal_eval(value)
+            except ValueError:
+                value = str(value)
             kwargs[key] = value
     return create_network_config(**kwargs)
 
