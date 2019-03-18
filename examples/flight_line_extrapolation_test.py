@@ -56,7 +56,7 @@ network_options = {
     'network_name': 'cwc_test_network',
     'optimzer': 'adam',
     'batch_size': 100,
-    'max_epochs': 200,
+    'max_epochs': 10,
     'n_noimprovement_repeats': 30,
     'output_directory': None,
 }

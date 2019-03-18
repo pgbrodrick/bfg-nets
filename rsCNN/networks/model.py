@@ -103,18 +103,7 @@ class CNN(object):
                 K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
 
         model_callbacks = callbacks.get_callbacks(self.network_config, self.history)
-        # TODO:  Do we need the flexibility to set steps_per_epoch, validation_steps, or validation_freq, or are there
-        #  obvious and reasonable defaults to just use? w.r.t. validation steps and freq, I can only think of
-        #  reasons to change them based on computational resource budgets.
 
-        # Shouldn't our stopping criteria be dependent on validation data by default?  
-        # I'm pro evaluating that at every step, almost no matter what (it should be a fraction of the trianign cost)
-        # I haven't dug into steps_per_epoch as I haven't used fit_generators yet, but I'd imagine you just
-        # want the standard # samples / batch_size...that might change with use though.
-
-        # I have, however, removed validation_split, as I think in the context of spatial/temporal models it's extremely
-        # dangerous to have the ability for anyone to think this can be done randomly...and because we already have full
-        # functionality built in externally...
         new_history = self.model.fit(
             train_features,
             train_responses,
