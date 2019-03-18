@@ -77,11 +77,11 @@ def create_network_config(
         'inshape': inshape,
         'n_classes': n_classes,
         'loss_function': loss_function,
-        'output_activation': output_activation,
         'create_model': architecture_creator.create_model,
     }
 
     config['architecture_options'] = architecture_creator.parse_architecture_options(**kwargs)
+    config['architecture_options']['output_activation'] = output_activation
 
     config['training'] = {
         'batch_size': kwargs.get('batch_size', 1),
