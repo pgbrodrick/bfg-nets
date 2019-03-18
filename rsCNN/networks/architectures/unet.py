@@ -107,7 +107,7 @@ def create_model(
             decoder = BatchNormalization()(decoder)
         decoder = Concatenate()([layer_passed_through, decoder])
         if use_growth:
-            filters /= 2
+            filters = int(filters / 2)
 
     # Last convolutions
     output_layer = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(decoder)
