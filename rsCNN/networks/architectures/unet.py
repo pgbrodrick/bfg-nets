@@ -60,7 +60,7 @@ def create_model(
     """
     input_width = inshape[0]
     minimum_width = input_width / 2 ** len(block_structure)
-    assert minimum_width > min_conv_width, \
+    assert minimum_width >= min_conv_width, \
         'The convolution width in the last encoding block ({}) is less than '.format(minimum_width) + \
         'the minimum specified width ({}). Either reduce '.format(min_conv_width) + \
         'the number of blocks in block_structure (currently {}) or '.format(len(block_structure)) + \
@@ -107,7 +107,7 @@ def create_model(
             decoder = BatchNormalization()(decoder)
         decoder = Concatenate()([layer_passed_through, decoder])
         if use_growth:
-            filters /= 2
+            filters = int(filters / 2)
 
     # Last convolutions
     output_layer = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(decoder)

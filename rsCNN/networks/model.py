@@ -39,13 +39,20 @@ class CNN(object):
 
         self.history = history.load_history(path_base) or dict()
         # TODO:  this needs a reference to a loss function str, but it also needs the window information and others
-        loss_function = losses.cropped_loss()
+        #  I'm just getting around this now by using the inshape and dividing it in half, and we'll address it later
+        #  when Phil has the config fully fleshed out.
+        loss_function = losses.cropped_loss(
+            self.network_config['architecture']['loss_function'],
+            self.network_config['architecture']['inshape'][0],
+            int(self.network_config['architecture']['inshape'][0] / 2),
+            weighted=False
+        )
         if self.history:
             self.model = history.load_model(path_base, custom_objects={'_cropped_loss': loss_function})
             # TODO:  do we want to warn or raise or nothing if the network type doesn't match the model type?
             self._is_model_new = False
         else:
-            self.model = self.network_config['model']['create_model'](
+            self.model = self.network_config['architecture']['create_model'](
                 self.network_config['architecture']['inshape'],
                 self.network_config['architecture']['n_classes'],
                 **self.network_config['architecture_options']
@@ -87,23 +94,17 @@ class CNN(object):
             validation_data: tuple = None,
             continue_training: bool = False
     ) -> None:
+        if self.network_config['model']['assert_gpu']:
+            utils.assert_gpu_available()
 
-        self._run_checks_before_model_fit(continue_training)
+        assert not (continue_training is False and self._is_model_new is False), \
+            'The parameter continue_training must be true to continue training an existing model'
+
         if continue_training:
-            self._set_model_initial_learning_rate_from_last_epoch()
+            if 'lr' in self.history:
+                K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
+
         model_callbacks = callbacks.get_callbacks(self.network_config, self.history)
-
-        # TODO:  Does it make sense to have verification fold defined in the config and fold assignments passed here?
-        #  this seems a little unusual, where you need to know your verification fold beforehand but you can change
-        #  your fold assignments on the fly. I'm wondering whether it should even be the responsibility of the fit
-        #  function to *also* handle the data folds. Perhaps this should be handled at a higher level? I'm thinking
-        #  of the case where you want to iterate through all of your folds. It seems a little cleaner to just pass
-        #  the correct training and validation values to this function, so that you can change your verification fold
-        #  on the fly without changing your fold assignments. I'm guessing you're probably on board because
-        #  it looks like we have a few logic errors here, so we must have been just writing this quickly (e.g., it looks
-        #  like fold_assignments is required even though it may not be used). I've removed the code from this section
-        #  and we can either 1) add that code here again or 2) add that code at a higher level.
-
         # TODO:  Do we need the flexibility to set steps_per_epoch, validation_steps, or validation_freq, or are there
         #  obvious and reasonable defaults to just use? w.r.t. validation steps and freq, I can only think of
         #  reasons to change them based on computational resource budgets.
@@ -117,7 +118,7 @@ class CNN(object):
             validation_split=validation_split,
             validation_data=validation_data,
             shuffle=False,
-            initial_epoch=self._get_initial_epoch(),
+            initial_epoch=len(self.history.get('lr', list())),
             steps_per_epoch=1,
             validation_steps=1,
             validation_freq=1
@@ -129,11 +130,16 @@ class CNN(object):
             validation_generator: keras.utils.Sequence = None,
             continue_training: bool = False
     ) -> None:
-        # TODO: I'm realizing we're kinda sorta putting in docstrings, but we could do them in such a way where we
-        #  auto-generate documentation from the docstrings. I'd just need to look up the package and format for that.
-        self._run_checks_before_model_fit(continue_training)
+        if self.network_config['model']['assert_gpu']:
+            utils.assert_gpu_available()
+
+        assert not (continue_training is False and self._is_model_new is False), \
+            'The parameter continue_training must be true to continue training an existing model'
+
         if continue_training:
-            self._set_model_initial_learning_rate_from_last_epoch()
+            if 'lr' in self.history:
+                K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
+
         model_callbacks = callbacks.get_callbacks(self.network_config, self.history)
 
         # TODO:  Same parameter questions as with fit()
@@ -150,28 +156,26 @@ class CNN(object):
             workers=psutil.cpu_count(logical=True),
             use_multiprocessing=True,
             shuffle=False,
-            initial_epoch=self._get_initial_epoch(),
+            initial_epoch=len(self.history.get('lr', list())),
         )
 
-    def _run_checks_before_model_fit(self, continue_training):
+    def predict(self, features: Union[np.ndarray, List[np.ndarray]]):
         if self.network_config['model']['assert_gpu']:
             utils.assert_gpu_available()
 
-        assert not (continue_training is False and self._is_model_new is False), \
-            'The parameter continue_training must be true to continue training an existing model'
+        return self.model.predict(features, batch_size=self.network_config['training']['batch_size'], verbose=0)
 
-    def _set_model_initial_learning_rate_from_last_epoch(self):
-        if 'lr' in self.history:
-            K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
+    def predict_sequence(self, predict_sequence: keras.utils.Sequence):
+        if self.network_config['model']['assert_gpu']:
+            utils.assert_gpu_available()
 
-    def _get_initial_epoch(self):
-        return len(self.history.get('lr', list()))
+        return self.model.predict_generator(
+            predict_sequence,
+            max_queue_size=10,
+            workers=psutil.cpu_count(logical=True),
+            use_multiprocessing=True,
+            verbose=0
+        )
 
-    def predict(self, features):
-        # TODO: Fabina, the verbosity below could be a config parameter, but you basically always want this off (it's either super
-        # fast or we're running some structured read/write that has an external reporting setup)
-        return self.model.predict(features, batch_size=self.network_config['training']['batch_size'], verbose=False)
-
-    def predict_sequence(self, predict_sequence):
-        # TODO:  reimplement if/when we need generators, ignore for now
-        raise NotImplementedError
+    def plot_history(self, path_out=None):
+        history.plot_history(self.history, path_out)
