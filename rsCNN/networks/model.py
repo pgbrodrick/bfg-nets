@@ -31,11 +31,10 @@ class CNN(object):
         """
         self.network_config = network_config
 
-        path_base = os.path.join(self.network_config['model']['dir_out'], self.network_config['model']['model_name'])
-        if not os.path.exists(path_base):
-            os.makedirs(path_base)
+        if not os.path.exists(self.network_config['model']['dir_out']):
+            os.makedirs(self.network_config['model']['dir_out'])
 
-        self.history = history.load_history(path_base) or dict()
+        self.history = history.load_history(self.network_config['model']['dir_out']) or dict()
         # TODO:  this needs a reference to a loss function str, but it also needs the window information and others
         #  I'm just getting around this now by using the inshape and dividing it in half, and we'll address it later
         #  when Phil has the config fully fleshed out.
@@ -46,7 +45,8 @@ class CNN(object):
             weighted=False
         )
         if self.history:
-            self.model = history.load_model(path_base, custom_objects={'_cropped_loss': loss_function})
+            self.model = history.load_model(
+                self.network_config['model']['dir_out'], custom_objects={'_cropped_loss': loss_function})
             # TODO:  do we want to warn or raise or nothing if the network type doesn't match the model type?
             self._is_model_new = False
         else:

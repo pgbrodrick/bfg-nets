@@ -24,10 +24,10 @@ def load_history(dir_history: str) -> Union[dict, None]:
 
 
 def save_history(history: dict, dir_history: str) -> None:
-    filepath = os.path.join(dir_history, FILENAME_HISTORY)
-    if not os.path.exists(filepath):
+    if not os.path.exists(dir_history):
         os.makedirs(dir_history)
-    with open(os.path.join(dir_history, FILENAME_HISTORY), 'wb') as file_:
+    filepath = os.path.join(dir_history, FILENAME_HISTORY)
+    with open(filepath, 'wb') as file_:
         pickle.dump(history, file_)
 
 
@@ -39,9 +39,9 @@ def load_model(dir_model: str, custom_objects: dict) -> Union[keras.models.Model
 
 
 def save_model(model: keras.models.Model, dir_model: str) -> None:
-    filepath = os.path.join(dir_model, FILENAME_MODEL)
-    if not os.path.exists(filepath):
+    if not os.path.exists(dir_model):
         os.makedirs(dir_model)
+    filepath = os.path.join(dir_model, FILENAME_MODEL)
     model.save(filepath, overwrite=True)
 
 
