@@ -5,8 +5,6 @@ import numpy as np
 import os
 from typing import List, Union
 
-import psutil
-
 from rsCNN import utils
 from rsCNN.networks import callbacks, history, losses
 
