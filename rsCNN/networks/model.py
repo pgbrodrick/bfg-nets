@@ -5,8 +5,6 @@ import numpy as np
 import os
 from typing import List, Union
 
-import psutil
-
 from rsCNN import utils
 from rsCNN.networks import callbacks, history, losses
 
@@ -33,11 +31,10 @@ class CNN(object):
         """
         self.network_config = network_config
 
-        path_base = os.path.join(self.network_config['model']['dir_out'], self.network_config['model']['model_name'])
-        if not os.path.exists(path_base):
-            os.makedirs(path_base)
+        if not os.path.exists(self.network_config['model']['dir_out']):
+            os.makedirs(self.network_config['model']['dir_out'])
 
-        self.history = history.load_history(path_base) or dict()
+        self.history = history.load_history(self.network_config['model']['dir_out']) or dict()
         # TODO:  this needs a reference to a loss function str, but it also needs the window information and others
         #  I'm just getting around this now by using the inshape and dividing it in half, and we'll address it later
         #  when Phil has the config fully fleshed out.
@@ -48,7 +45,8 @@ class CNN(object):
             weighted=False
         )
         if self.history:
-            self.model = history.load_model(path_base, custom_objects={'_cropped_loss': loss_function})
+            self.model = history.load_model(
+                self.network_config['model']['dir_out'], custom_objects={'_cropped_loss': loss_function})
             # TODO:  do we want to warn or raise or nothing if the network type doesn't match the model type?
             self._is_model_new = False
         else:
@@ -108,7 +106,7 @@ class CNN(object):
         # TODO:  Do we need the flexibility to set steps_per_epoch, validation_steps, or validation_freq, or are there
         #  obvious and reasonable defaults to just use? w.r.t. validation steps and freq, I can only think of
         #  reasons to change them based on computational resource budgets.
-        self.model.fit(
+        new_history = self.model.fit(
             train_features,
             train_responses,
             batch_size=self.network_config['training']['batch_size'],
@@ -123,6 +121,9 @@ class CNN(object):
             validation_steps=1,
             validation_freq=1
         )
+        self.history = history.combine_histories(self.history, new_history)
+        history.save_history(self.history, self.network_config['model']['dir_out'])
+        history.save_model(self.model, self.network_config['model']['dir_out'])
 
     def fit_generator(
             self,
@@ -145,19 +146,22 @@ class CNN(object):
         # TODO:  Same parameter questions as with fit()
         # TODO:  Check whether psutil.cpu_count gives the right answer on SLURM, i.e., the number of CPUs available to
         #  the job and not the total number on the instance.
-        self.model.fit_generator(
+        new_history = self.model.fit_generator(
             train_generator,
             steps_per_epoch=1,
             epochs=self.network_config['training']['max_epochs'],
             verbose=self.network_config['model']['verbosity'],
             callbacks=model_callbacks,
             validation_data=validation_generator,
-            max_queue_size=10,
-            workers=psutil.cpu_count(logical=True),
-            use_multiprocessing=True,
+            max_queue_size=2,
+            # workers=psutil.cpu_count(logical=True),
+            # use_multiprocessing=True,
             shuffle=False,
             initial_epoch=len(self.history.get('lr', list())),
         )
+        self.history = history.combine_histories(self.history, new_history.history)
+        history.save_history(self.history, self.network_config['model']['dir_out'])
+        history.save_model(self.model, self.network_config['model']['dir_out'])
 
     def predict(self, features: Union[np.ndarray, List[np.ndarray]]):
         if self.network_config['model']['assert_gpu']:
@@ -171,9 +175,9 @@ class CNN(object):
 
         return self.model.predict_generator(
             predict_sequence,
-            max_queue_size=10,
-            workers=psutil.cpu_count(logical=True),
-            use_multiprocessing=True,
+            max_queue_size=2,
+            # workers=psutil.cpu_count(logical=True),
+            # use_multiprocessing=True,
             verbose=0
         )
 
