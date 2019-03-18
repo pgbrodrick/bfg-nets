@@ -159,7 +159,7 @@ class CNN(object):
             shuffle=False,
             initial_epoch=len(self.history.get('lr', list())),
         )
-        self.history = history.combine_histories(self.history, new_history)
+        self.history = history.combine_histories(self.history, new_history.history)
         history.save_history(self.history, self.network_config['model']['dir_out'])
         history.save_model(self.model, self.network_config['model']['dir_out'])
 
