@@ -39,7 +39,14 @@ class CNN(object):
 
         self.history = history.load_history(path_base) or dict()
         # TODO:  this needs a reference to a loss function str, but it also needs the window information and others
-        loss_function = losses.cropped_loss()
+        #  I'm just getting around this now by using the inshape and dividing it in half, and we'll address it later
+        #  when Phil has the config fully fleshed out.
+        loss_function = losses.cropped_loss(
+            self.network_config['architecture']['loss_function'],
+            self.network_config['architecture']['inshape'][0],
+            int(self.network_config['architecture']['inshape'][0] / 2),
+            weighted=False
+        )
         if self.history:
             self.model = history.load_model(path_base, custom_objects={'_cropped_loss': loss_function})
             # TODO:  do we want to warn or raise or nothing if the network type doesn't match the model type?
