@@ -46,7 +46,7 @@ def create_network_config(
         loss_function: str,
         output_activation: str,
         **kwargs
-) -> configparser.ConfigParser:
+) -> dict:
     """
       Arguments:
       architecture - str
@@ -61,7 +61,7 @@ def create_network_config(
       n_classes - tuple/list
         Designates the output shape of targets to be fit by the network
     """
-    config = configparser.ConfigParser()
+    config = dict()
 
     config['model'] = {
         'model_name': model_name,
