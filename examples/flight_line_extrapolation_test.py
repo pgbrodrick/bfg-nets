@@ -2,6 +2,7 @@ import argparse
 import os
 import sys
 import gdal
+import numpy as np
 
 # TODO manage imports
 from rsCNN import networks
@@ -19,6 +20,9 @@ window_radius = 16
 year = '2015'
 feature_files = ['../global_cwc/dat/features/feat_subset.tif']
 response_files = ['../global_cwc/dat/responses/resp_subset.tif']
+
+# TODO:, grab from a config somewhere
+verification_fold = 0
 
 # could (and typically are) different, but using for now
 application_feature_files = feature_files
@@ -44,10 +48,9 @@ else:
 
 
 network_options = {
-    'batch_norm': False,
+    'use_batch_norm': False,
     'conv_depth': 16,
-    'conv_pattern': [3],
-    'n_layers': 10,
+    'block_structure': (1,1),
     'output_activation': 'softplus',
 
     'network_name': 'cwc_test_network',
@@ -56,17 +59,17 @@ network_options = {
     'max_epochs': 200,
     'n_noimprovement_repeats': 30,
     'output_directory': None,
-    'verification_fold': 0
 }
 
 loss_function = networks.losses.cropped_loss('mae', features.shape[1], data_config.internal_window_radius*2)
-network_config = networks.network_config.NetworkConfig('flat_regress_net',
-                               loss_function,
-                               features.shape[1:],
-                               n_classes=1,
-                               **network_options)
+network_config = networks.network_config.create_network_config('unet',
+                                                               'test_spatial_model',
+                                                               features.shape[1:],
+                                                               1,
+                                                               'mae',
+                                                               **network_options)
 
-cnn = networks.model.CNN(network_config, reinitialize=True)
+cnn = networks.model.CNN(network_config)
 
 
 # TODO add option for plotting training data previews
@@ -79,7 +82,8 @@ if (args.key == 'train' or args.key == 'all'):
         data_config.response_nodata_value, data_config.data_save_name + '_response_')
 
     print(np.mean(responses[responses[..., 0] != -9999, 0]))
-    train_set = fold_assignments == network_config.verification_fold
+    train_set = fold_assignments == verification_fold
+    test_set = np.logical_not(train_set)
     feature_scaler.fit(features[train_set, ...])
     response_scaler.fit(responses[train_set, ..., :-1])
 
@@ -87,7 +91,9 @@ if (args.key == 'train' or args.key == 'all'):
     responses[..., :-1] = response_scaler.transform(responses[..., :-1])
     print(np.mean(responses[responses[..., 0] != -9999, 0]))
 
-    cnn.fit(features, responses, fold_assignments, load_history=False)
+    cnn.fit(features[train_set,...], 
+            responses[train_set,...], 
+            validation_data=(features[test_set,...],responses[test_set,...]))
 
 
 if (args.key == 'apply' or args.key == 'all'):

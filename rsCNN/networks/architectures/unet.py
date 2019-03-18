@@ -42,6 +42,7 @@ def create_model(
 ) -> keras.models.Model:
     """ Construct a U-net style network with flexible shape
 
+    #TODO: update comments to be accurate
     Arguments:
     inshape - tuple/list
       Designates the input shape of an image to be passed to

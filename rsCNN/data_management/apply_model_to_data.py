@@ -1,11 +1,11 @@
 from rsCNN.utils.general import *
 import os
 import numpy as np
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import gdal
-import matplotlib as mpl
-mpl.use('Agg')
 
 
 def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, make_png=False, make_tif=True, feature_transformer=None, response_transformer=None):
