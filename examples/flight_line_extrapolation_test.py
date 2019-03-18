@@ -1,16 +1,18 @@
+import argparse
 import os
 import sys
 import gdal
 
 # TODO manage imports
-from rsCNN.utils.general import *
-from rsCNN.networks import CNN, NetworkConfig, losses
+from rsCNN import networks
 from rsCNN.data_management import DataConfig, training_data, transforms, apply_model_to_data
 
 
 # TODO script needs to be adapted yet
 
-key = sys.argv[1]
+parser = argparse.ArgumentParser(description='CNN example for spatial extrapolation from CAO flight lines')
+parser.add_argument('key')
+args = parser.parse_args()
 
 window_radius = 16
 
@@ -35,7 +37,7 @@ data_options = {
 data_config = DataConfig(window_radius, feature_files, response_files, **data_options)
 
 
-if (key == 'build' or key == 'all'):
+if (args.key == 'build' or args.key == 'all'):
     features, responses, fold_assignments = training_data.build_regression_training_data_ordered(data_config)
 else:
     data_config = None  # TODO: load data_config from disk
@@ -57,19 +59,19 @@ network_options = {
     'verification_fold': 0
 }
 
-loss_function = losses.cropped_loss('mae', features.shape[1], data_config.internal_window_radius*2)
-network_config = NetworkConfig('flat_regress_net',
+loss_function = networks.losses.cropped_loss('mae', features.shape[1], data_config.internal_window_radius*2)
+network_config = networks.network_config.NetworkConfig('flat_regress_net',
                                loss_function,
                                features.shape[1:],
                                n_classes=1,
                                **network_options)
 
-cnn = CNN(network_config, reinitialize=True)
+cnn = networks.model.CNN(network_config, reinitialize=True)
 
 
 # TODO add option for plotting training data previews
 
-if (key == 'train' or key == 'all'):
+if (args.key == 'train' or args.key == 'all'):
 
     feature_scaler = transforms.RobustTransformer(
         data_config.feature_nodata_value, data_config.data_save_name + '_feature_')
@@ -88,7 +90,7 @@ if (key == 'train' or key == 'all'):
     cnn.fit(features, responses, fold_assignments, load_history=False)
 
 
-if (key == 'apply' or key == 'all'):
+if (args.key == 'apply' or args.key == 'all'):
     for _f in range(len(application_feature_files)):
         apply_model_to_data.apply_model_to_raster(cnn,
                                                   data_config,
