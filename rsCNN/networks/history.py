@@ -1,5 +1,6 @@
 import os
 import pickle
+from typing import Union
 
 import keras
 import matplotlib.pyplot as plt
@@ -13,23 +14,35 @@ FILENAME_HISTORY = 'history.pkl'
 FILENAME_MODEL = 'model.h5'
 
 
-def load_history(dir_history: str) -> dict:
-    with open(os.path.join(dir_history, FILENAME_HISTORY), 'rb') as file_:
+def load_history(dir_history: str) -> Union[dict, None]:
+    filepath = os.path.join(dir_history, FILENAME_HISTORY)
+    if not os.path.exists(filepath):
+        return None
+    with open(filepath, 'rb') as file_:
         history = pickle.load(file_)
     return history
 
 
 def save_history(history: dict, dir_history: str) -> None:
+    filepath = os.path.join(dir_history, FILENAME_HISTORY)
+    if not os.path.exists(filepath):
+        os.makedirs(dir_history)
     with open(os.path.join(dir_history, FILENAME_HISTORY), 'wb') as file_:
         pickle.dump(history, file_)
 
 
-def load_model(dir_model: str, custom_objects: dict) -> keras.models.Model:
-    return keras.models.load_model(os.path.join(dir_model, FILENAME_MODEL), custom_objects=custom_objects)
+def load_model(dir_model: str, custom_objects: dict) -> Union[keras.models.Model, None]:
+    filepath = os.path.join(dir_model, FILENAME_MODEL)
+    if not os.path.exists(filepath):
+        return None
+    return keras.models.load_model(filepath, custom_objects=custom_objects)
 
 
 def save_model(model: keras.models.Model, dir_model: str) -> None:
-    model.save(os.path.join(dir_model, FILENAME_MODEL), overwrite=True)
+    filepath = os.path.join(dir_model, FILENAME_MODEL)
+    if not os.path.exists(filepath):
+        os.makedirs(dir_model)
+    model.save(filepath, overwrite=True)
 
 
 def plot_history(history, path_out=None):
