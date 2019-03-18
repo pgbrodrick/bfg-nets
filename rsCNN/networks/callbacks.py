@@ -50,9 +50,7 @@ class HistoryCheckpoint(keras.callbacks.Callback):
 
     def _save_history(self):
         _logger.debug('Save model history')
-        combined_history = self.existing_history.copy()
-        for key, value in self.model.history.history.items():
-            combined_history.setdefault(key, list()).extend(value)
+        combined_history = history.combine_histories(self.existing_history, self.model.history.history)
         history.save_history(combined_history, self.dir_out)
 
 

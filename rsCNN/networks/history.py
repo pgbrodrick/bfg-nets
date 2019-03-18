@@ -45,6 +45,13 @@ def save_model(model: keras.models.Model, dir_model: str) -> None:
     model.save(filepath, overwrite=True)
 
 
+def combine_histories(existing_history, new_history):
+    combined_history = existing_history.copy()
+    for key, value in new_history.items():
+        combined_history.setdefault(key, list()).extend(value)
+    return combined_history
+
+
 def plot_history(history, path_out=None):
     fig, axes = plt.subplots(figsize=(8, 8), nrows=2, ncols=2)
     # Epoch times and delays
