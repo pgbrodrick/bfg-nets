@@ -12,6 +12,7 @@ DEFAULT_MIN_CONV_WIDTH = 8
 DEFAULT_PADDING = 'same'
 DEFAULT_POOL_SIZE = (2, 2)
 DEFAULT_USE_GROWTH = False
+DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER = False
 
 
 def parse_architecture_options(**kwargs):
@@ -23,7 +24,10 @@ def parse_architecture_options(**kwargs):
         'padding': kwargs.get('padding', DEFAULT_PADDING),
         'pool_size': kwargs.get('pool_size', DEFAULT_POOL_SIZE),
         'use_batch_norm': kwargs.get('use_batch_norm', DEFAULT_USE_BATCH_NORM),
-        'use_growth': kwargs.get('use_growth', DEFAULT_USE_GROWTH)
+        'use_growth': kwargs.get('use_growth', DEFAULT_USE_GROWTH),
+        'use_initial_colorspace_transformation_layer':
+            kwargs.get('use_initial_colorspace_transformation_layer',
+                       DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER)
     }
 
 
@@ -39,6 +43,7 @@ def create_model(
         pool_size: Tuple[int, int] = DEFAULT_POOL_SIZE,
         use_batch_norm: bool = DEFAULT_USE_BATCH_NORM,
         use_growth: bool = False,
+        use_initial_colorspace_transformation_layer: bool = DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
 ) -> keras.models.Model:
 
     input_width = inshape[0]
@@ -56,6 +61,12 @@ def create_model(
     # Encodings
     input_layer = keras.layers.Input(shape=inshape)
     encoder = input_layer
+
+    if use_initial_colorspace_transformation_layer:
+        intermediate_color_depth = int(3 * inshape[-1])
+        encoder = Conv2D(filters=intermediate_color_depth, kernel_size=(1, 1), padding='same')(encoder)
+        encoder = Conv2D(filters=inshape[-1], kernel_size=(1, 1), padding='same')(encoder)
+
     # Each encoder block has a number of subblocks
     for num_subblocks in block_structure:
         for idx_sublayer in range(num_subblocks):
