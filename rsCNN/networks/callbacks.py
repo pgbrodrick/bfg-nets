@@ -107,9 +107,13 @@ def get_callbacks(network_config: configparser.ConfigParser, existing_history: d
             ),
         )
     if network_config['callbacks_tensorboard']['use_tensorboard']:
+        dir_out = os.path.join(
+            network_config['model']['dir_out'],
+            network_config['callbacks_tensorboard']['dirname_prefix_tensorboard']
+        )
         callbacks.append(
             keras.callbacks.TensorBoard(
-                network_config['callbacks_tensorboard']['dirname_prefix_tensorboard'],
+                dir_out,
                 histogram_freq=network_config['callbacks_tensorboard']['t_histogram_freq'],
                 write_graph=network_config['callbacks_tensorboard']['t_write_graph'],
                 write_grads=network_config['callbacks_tensorboard']['t_write_grads'],
