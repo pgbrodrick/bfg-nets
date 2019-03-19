@@ -252,4 +252,7 @@ def build_regression_training_data_ordered(config):
     config.response_shape = responses.shape
     config.feature_shape = features.shape
 
+    if (config.data_save_name is not None):
+        config.save_to_file()
+
     return features, responses, fold_assignments

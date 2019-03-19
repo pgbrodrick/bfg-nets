@@ -9,14 +9,6 @@ from rsCNN import utils
 from rsCNN.networks import callbacks, history, losses
 
 
-class TrainingHistory(object):
-    """ A wrapper class designed to hold all relevant configuration information obtained
-        during training/testing the model.
-    """
-    # TODO - Fabina, can you populate this with the useful info you want to retain from training?
-    # TODO - Phil:  let's punt until we know what we need and what everything else looks like?
-    pass
-
 
 class CNN(object):
     network_config = None
@@ -117,7 +109,7 @@ class CNN(object):
             steps_per_epoch=None,
             validation_steps=None
         )
-        self.history = history.combine_histories(self.history, new_history)
+        self.history = history.combine_histories(self.history, new_history.history)
         history.save_history(self.history, self.network_config['model']['dir_out'])
         history.save_model(self.model, self.network_config['model']['dir_out'])
 
