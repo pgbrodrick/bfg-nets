@@ -32,10 +32,7 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
         If not none, this transform is applied to model output response data before writing tif/png.
     """
 
-   # TODO: probably do some quick check to make sure the output location is accessible
-
-    if (os.path.dirname(destination_basename) == False):
-        print('Output directory does not exist')
+    assert os.path.dirname(destination_basename), 'Output directory does not exist'
 
     dataset = gdal.Open(feature_file, gdal.GA_ReadOnly)
 
@@ -52,7 +49,7 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
     if (feature_transformer is not None):
         feature = feature_transformer.transform(feature)
 
-    output = np.zeros((feature.shape[0], feature.shape[1], cnn.config.n_classes)) + data_config.response_nodata_value
+    output = np.zeros((feature.shape[0], feature.shape[1], cnn.network_config['architecture']['n_classes'])) + data_config.response_nodata_value
 
     cr = [0, feature.shape[1]]
     rr = [0, feature.shape[0]]
@@ -100,13 +97,13 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
     if (make_png):
         output[output == data_config.response_nodata_value] = np.nan
         feature[feature == data_config.response_nodata_value] = np.nan
-        gs1 = gridspec.GridSpec(1, cnn.config.n_classes+1)
-        for n in range(0, cnn.config.n_classes):
+        gs1 = gridspec.GridSpec(1, cnn.network_config['architecture']['n_classes']+1)
+        for n in range(0, cnn.network_config['architecture']['n_classes']):
             ax = plt.subplot(gs1[0, n])
             im = plt.imshow(output[:, :, n], vmin=0, vmax=1)
             plt.axis('off')
 
-        ax = plt.subplot(gs1[0, cnn.config.n_classes])
+        ax = plt.subplot(gs1[0, cnn.network_config['architecture']['n_classes']])
         im = plt.imshow(np.squeeze(feature[..., 0]))
         plt.axis('off')
         plt.savefig(destination_basename + '.png', dpi=png_dpi, bbox_inches='tight')
@@ -118,10 +115,10 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
         output[np.isnan(output)] = data_config.response_nodata_value
 
         outDataset = driver.Create(destination_basename + '.tif',
-                                   output.shape[1], output.shape[0], cnn.config.n_classes, gdal.GDT_Float32)
+                                   output.shape[1], output.shape[0], cnn.network_config['architecture']['n_classes'], gdal.GDT_Float32)
         outDataset.SetProjection(dataset.GetProjection())
         outDataset.SetGeoTransform(dataset.GetGeoTransform())
-        for n in range(0, cnn.config.n_classes):
+        for n in range(0, cnn.network_config['architecture']['n_classes']):
             outDataset.GetRasterBand(n+1).WriteArray(np.squeeze(output[:, :, n]), 0, 0)
         del outDataset
     del dataset

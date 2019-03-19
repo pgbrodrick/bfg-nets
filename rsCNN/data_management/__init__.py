@@ -1,5 +1,6 @@
 import os
 
+import pickle
 
 class DataConfig:
     """ A wrapper class designed to hold all relevant information about data sources,
@@ -77,12 +78,33 @@ class DataConfig:
         # Sampling type - options are 'ordered' and 'bootstrap'
         self.sample_type = kwargs.get('sample_type', 'ordered')
 
+        # stored values for the eventual feature and response shapes
+        self.response_shape = kwargs.get('response_shape', None)
+        self.feature_shape = kwargs.get('feature_shape', None)
+
         # if None, don't save the data name, otherwise, do save requisite components as npz files
         # based on this root extension
         self.data_save_name = kwargs.get('data_save_name', None)
         if (self.data_save_name is not None):
             assert os.path.isdir(os.path.dirname(self.data_save_name)), 'Invalid path for data_save_name'
 
-        # stored values for the eventual feature and response shapes
-        self.response_shape = kwargs.get('response_shape', None)
-        self.feature_shape = kwargs.get('feature_shape', None)
+    #TODO: safegaurd from overwrite?
+    def save_to_file(self):
+        print('saving data config')
+        with open(self.data_save_name + '_data_config', 'wb') as sf_:
+            pickle.dump(self.__dict__,sf_)
+
+
+def load_data_config_from_file(data_save_name):
+    try:
+        with open(data_save_name + '_data_config', 'rb') as sf_:
+            loaded_config = pickle.load(sf_)
+
+        return DataConfig(**loaded_config)
+    except:
+        print('Failed to load DataConfig from ' + data_save_name + '_data_config')
+
+
+
+
+
