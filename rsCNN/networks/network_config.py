@@ -1,4 +1,5 @@
 import ast
+import collections
 import configparser
 import os
 from typing import Tuple
@@ -15,8 +16,11 @@ def create_config_files_from_network_defaults():
             n_classes=0, loss_function=value_required, output_activation=value_required,
         )
         config['architecture'].pop('create_model')
+        writer = configparser.ConfigParser()
+        for section, section_items in config.items():
+            writer[section] = section_items
         with open(os.path.join(DIR_TEMPLATES, architecture + '.ini'), 'w') as file_:
-            config.write(file_)
+            writer.write(file_)
 
 
 def read_network_config_from_file(filepath):
@@ -46,7 +50,7 @@ def create_network_config(
         loss_function: str,
         output_activation: str,
         **kwargs
-) -> dict:
+) -> collections.OrderedDict:
     """
       Arguments:
       architecture - str
@@ -61,7 +65,7 @@ def create_network_config(
       n_classes - tuple/list
         Designates the output shape of targets to be fit by the network
     """
-    config = dict()
+    config = collections.OrderedDict()
 
     config['model'] = {
         'model_name': model_name,
@@ -89,7 +93,6 @@ def create_network_config(
         'optimizer': kwargs.get('optimizer', 'adam'),
     }
 
-    # TODO:  handle datetime addition to tensorboard directory name
     config['callbacks_general'] = {
         'checkpoint_periods': kwargs.get('checkpoint_periods', 5),
         'use_terminate_on_nan': kwargs.get('use_terminate_on_nan', True),
