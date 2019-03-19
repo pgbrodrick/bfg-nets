@@ -65,7 +65,7 @@ def create_model(
         output_layer = BatchNormalization()(output_layer)
     output_layer = Conv2D(
         filters=n_classes, kernel_size=(1, 1), padding='same', activation=output_activation)(output_layer)
-    return keras.models.Model(inputs=[input_layer], outputs=[output_layer])
+    return keras.models.Model(inputs=[inlayer], outputs=[output_layer])
 
 
 def _add_residual_shortcut(input_layer: keras.layers.Layer, residual_module: keras.layers.Layer):
