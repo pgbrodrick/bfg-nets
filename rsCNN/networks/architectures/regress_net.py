@@ -72,9 +72,10 @@ def create_model(
 
     conv = inlayer
     if use_initial_colorspace_transformation_layer:
-        intermediate_color_depth = int(3 * inshape[-1])
+        intermediate_color_depth = int(inshape[-1] ** 2)
         conv = Conv2D(filters=intermediate_color_depth, kernel_size=(1, 1), padding='same')(inlayer)
         conv = Conv2D(filters=inshape[-1], kernel_size=(1, 1), padding='same')(conv)
+        conv = BatchNormalization()(conv)
 
     for kernel_size in kernel_sizes:
         conv = Conv2D(filters=initial_filters, kernel_size=kernel_size, padding=padding)(conv)
