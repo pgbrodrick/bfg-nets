@@ -10,6 +10,7 @@ import rsCNN.data_management
 import rsCNN.data_management.training_data
 import rsCNN.data_management.transforms
 import rsCNN.data_management.apply_model_to_data
+import rsCNN.evaluation
 
 
 # TODO script needs to be adapted yet
@@ -108,3 +109,11 @@ if (args.key == 'apply' or args.key == 'all'):
                                                                      make_tif=True,
                                                                      feature_transformer=feature_scaler,
                                                                      response_transformer=response_scaler)
+
+
+if (args.key == 'model_eval' or args.key == 'all'):
+    feature_scaler.load()
+    response_scaler.load()
+
+    rsCNN.evaluation.generate_eval_report(cnn,'examples/output/test_model_eval.pdf')
+
