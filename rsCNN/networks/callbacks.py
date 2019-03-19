@@ -55,7 +55,6 @@ class HistoryCheckpoint(keras.callbacks.Callback):
 
 
 def get_callbacks(network_config: configparser.ConfigParser, existing_history: dict) -> List[keras.callbacks.Callback]:
-    # TODO:  remove the hacky implementation of modelcheckpoint filepath, needs to use datetime from history module
     callbacks = [
         HistoryCheckpoint(
             dir_out=network_config['model']['dir_out'],
