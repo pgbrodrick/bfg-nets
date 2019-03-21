@@ -3,6 +3,7 @@ mpl.use('Agg')
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+import matplotlib.patches as patches
 import os
 import numpy as np
 
@@ -58,6 +59,10 @@ def plot_model_summary_as_fig(model):
      plt.axis('off')
      plt.suptitle('CNN Summary')
 
+def get_mins_maxs(data):
+    data_mins = np.nanpercentile(data.reshape((-1,data.shape[-1])),0,axis=0)
+    data_maxs = np.nanpercentile(data.reshape((-1,data.shape[-1])),100,axis=0)
+    return data_mins, data_maxs
 
 def plot_input_examples_and_transforms(features, responses, feature_transform, response_transform, feature_nodata_value, response_nodata_value):
 
@@ -87,28 +92,19 @@ def plot_input_examples_and_transforms(features, responses, feature_transform, r
     _response_ind = 0
     _sample_ind = 0
 
-
-    feat_mins = np.nanpercentile(features.reshape((-1,features.shape[-1])),0,axis=0)
-    feat_maxs = np.nanpercentile(features.reshape((-1,features.shape[-1])),100,axis=0)
-
-    resp_mins = np.nanpercentile(responses.reshape((-1,responses.shape[-1])),0,axis=0)
-    resp_maxs = np.nanpercentile(responses.reshape((-1,responses.shape[-1])),100,axis=0)
-
-    trans_feat_mins = [-2 for x in range(len(feat_mins))]
-    trans_feat_maxs = [2 for x in range(len(feat_mins))]
-
-    trans_resp_mins = [-2 for x in range(len(feat_mins))]
-    trans_resp_maxs = [2 for x in range(len(feat_mins))]
+    feat_mins, feat_maxs = get_mins_maxs(features)
+    resp_mins, resp_maxs = get_mins_maxs(responses)
+    trans_feat_mins, trans_feat_maxs = get_mins_maxs(trans_features)
+    trans_resp_mins, trans_resp_maxs = get_mins_maxs(trans_responses)
 
     while _sample_ind < features.shape[0]:
       l_num_samp = min(max_samples_per_page, features.shape[0]-_sample_ind)
-      print('sample outer block ' + str(_sample_ind))
 
       while _feature_ind < features.shape[-1]:
         l_num_feat = min(max_features_per_page, features.shape[-1]-_feature_ind)
         l_num_resp = min(max_responses_per_page, responses.shape[-1]-_response_ind)
 
-        fig = plt.figure(figsize=((30*(max_features_per_page + max_responses_per_page)*2 + 1) / ((max_features_per_page + max_responses_per_page)*2 + 1 + max_samples_per_page),
+        fig = plt.figure(figsize=(30*((max_features_per_page + max_responses_per_page)*2 + 1) / ((max_features_per_page + max_responses_per_page)*2 + 1 + max_samples_per_page),
                                   30*max_samples_per_page/ ((max_features_per_page + max_responses_per_page)*2 + 1 + max_samples_per_page)))
         gs1 = gridspec.GridSpec(l_num_samp,l_num_feat*2+l_num_resp*2+1)
 
@@ -121,7 +117,6 @@ def plot_input_examples_and_transforms(features, responses, feature_transform, r
 
                 if (_f == _feature_ind):
                     plt.ylabel('Sample ' + str(_s))
-                    print((_s,np.min(features[_s,:,:,_f]),np.max(features[_s,:,:,_f])))
                 if (_s == _sample_ind):
                     plt.title('Feature ' + str(_f) + '\n' + str(round(feat_mins[_f],2)) + '\n' + str(round(feat_maxs[_f],2)) )
 
@@ -171,6 +166,127 @@ def plot_input_examples_and_transforms(features, responses, feature_transform, r
     return fig_list
 
 
+
+
+def plot_predictions(responses, pred_responses, response_transform, response_nodata_value, internal_window_radius):
+
+
+    responses[responses == response_nodata_value] = np.nan
+    pred_responses[pred_responses == response_nodata_value] = np.nan
+
+    trans_responses = response_transform.transform(responses)
+    invtrans_pred_responses = response_transform.inverse_transform(pred_responses)
+
+    weights = responses[...,-1]
+    responses = responses[...,:-1]
+
+
+    fig_list = []
+    # NOTE - this is not meant to be a universal config setup, which would be annoyingly hard.  
+    # This can always be exanded, but gives a reasonable amount of flexibility to start, 
+    # while showing the full range of things we should actually need to see.  
+    # Starting with the single response assumption.
+    max_responses_per_page = 1
+
+    max_samples_per_page = min(10,responses.shape[0])
+    max_pages = 8
+
+
+    _response_ind = 0
+    _sample_ind = 0
+
+    resp_mins, resp_maxs = get_mins_maxs(responses)
+    trans_resp_mins, trans_resp_maxs = get_mins_maxs(trans_responses)
+    pred_resp_mins, pred_resp_maxs = get_mins_maxs(pred_responses)
+    #invtrans_pred_resp_mins, invtrans_pred_resp_maxs = get_mins_maxs(invtrans_pred_responses)
+    invtrans_pred_resp_mins, invtrans_pred_resp_maxs = get_mins_maxs(responses)
+
+    while _sample_ind < responses.shape[0]:
+      l_num_samp = min(max_samples_per_page, responses.shape[0]-_sample_ind)
+
+      while _response_ind < responses.shape[-1]:
+        l_num_resp = min(max_responses_per_page, responses.shape[-1]-_response_ind)
+
+        fig = plt.figure(figsize=(30*(max_responses_per_page*4 + 1) / (max_responses_per_page*4 + 1 + max_samples_per_page),
+                                  30*max_samples_per_page/ (max_responses_per_page*4 + 1 + max_samples_per_page)))
+        gs1 = gridspec.GridSpec(l_num_samp,l_num_resp*4+1)
+
+        for _s in range(_sample_ind, _sample_ind + l_num_samp):
+            for _r in range(_response_ind, _response_ind + l_num_resp):
+                # Raw response
+                ax = plt.subplot(gs1[_s-_sample_ind,_r-_response_ind])
+                ax.imshow(np.squeeze(responses[_s,:,:,_r]),vmin=resp_mins[_r],vmax=resp_maxs[_r])
+                plt.xticks([])
+                plt.yticks([])
+
+                if (_r == _response_ind):
+                    plt.ylabel('Sample ' + str(_s))
+                if (_s == _sample_ind):
+                    plt.title('Response ' + str(_r) + '\n' + str(round(resp_mins[_r],2)) + '\n' + str(round(resp_maxs[_r],2)) )
+
+                # Transformed response
+                ax = plt.subplot(gs1[_s-_sample_ind,l_num_resp + _r-_response_ind])
+                ax.imshow(np.squeeze(trans_responses[_s,:,:,_r]),vmin=trans_resp_mins[_r],vmax=trans_resp_maxs[_r])
+                plt.xticks([])
+                plt.yticks([])
+
+                if (_s == _sample_ind):
+                    plt.title('Transformed\nResponse ' + str(_r) + '\n' + str(round(trans_resp_mins[_r],2)) + '\n' + str(round(trans_resp_maxs[_r],2)) )
+ 
+                # Prediction
+                ax = plt.subplot(gs1[_s-_sample_ind,2*l_num_resp + _r-_response_ind])
+                ax.imshow(np.squeeze(pred_responses[_s,:,:,_r]),vmin=pred_resp_mins[_r],vmax=pred_resp_maxs[_r])
+                plt.xticks([])
+                plt.yticks([])
+
+                if (internal_window_radius*2 != responses.shape[1]):
+                    buf = (responses.shape[1] - internal_window_radius*2)/2
+                    rect = patches.Rectangle((buf,buf),internal_window_radius*2,internal_window_radius*2,linewidth=1,edgecolor='r',facecolor='none')
+                    ax.add_patch(rect)
+
+                if (_s == _sample_ind):
+                    plt.title('Predicted\nResponse ' + str(_r) + '\n' + str(round(pred_resp_mins[_r],2)) + '\n' + str(round(pred_resp_maxs[_r],2)) )
+
+                # Transformed Prediction
+                ax = plt.subplot(gs1[_s-_sample_ind,3*l_num_resp + _r-_response_ind])
+                ax.imshow(np.squeeze(invtrans_pred_responses[_s,:,:,_r]),vmin=invtrans_pred_resp_mins[_r],vmax=invtrans_pred_resp_maxs[_r])
+                plt.xticks([])
+                plt.yticks([])
+
+                if (_s == _sample_ind):
+                    plt.title('Inverse transform\nPredicted\nResponse ' + str(_r) + '\n' + str(round(invtrans_pred_resp_mins[_r],2)) + '\n' + str(round(invtrans_pred_resp_maxs[_r],2)) )
+
+                if (internal_window_radius*2 != responses.shape[1]):
+                    buf = (responses.shape[1] - internal_window_radius*2)/2
+                    rect = patches.Rectangle((buf,buf),internal_window_radius*2,internal_window_radius*2,linewidth=1,edgecolor='r',facecolor='none')
+                    ax.add_patch(rect)
+
+
+
+            ax = plt.subplot(gs1[_s-_sample_ind,-1])
+            ax.imshow(np.squeeze(weights[_s,:,:]),vmin=0,vmax=1,cmap='Greys_r')
+            plt.xticks([])
+            plt.yticks([])
+
+            if (_s == _sample_ind):
+                plt.title('Weights')
+
+
+        fig_list.append(fig) 
+        _response_ind += max_responses_per_page
+
+        if (len(fig_list) > max_pages):
+          break
+      _sample_ind += max_samples_per_page
+      if (len(fig_list) > max_pages):
+        break
+
+    return fig_list
+
+
+
+
+
 def generate_eval_report(cnn, report_name, features, responses, feature_transform, response_transform, data_config):
 
     # this will get more formal later on, just plugged something in
@@ -190,7 +306,7 @@ def generate_eval_report(cnn, report_name, features, responses, feature_transfor
 
 
 
-
+    n_examples = 10
 
 
 
@@ -208,8 +324,8 @@ def generate_eval_report(cnn, report_name, features, responses, feature_transfor
         
         
         if (input_examples_and_transformation):
-            figs = plot_input_examples_and_transforms(features[:10,...],
-                                                     responses[:10,...],
+            figs = plot_input_examples_and_transforms(features[:n_examples,...],
+                                                     responses[:n_examples,...],
                                                      feature_transform,
                                                      response_transform,
                                                      data_config.feature_nodata_value,
@@ -221,6 +337,16 @@ def generate_eval_report(cnn, report_name, features, responses, feature_transfor
         if (training_history):
             fig = plot_history(cnn.history)
             pdf.savefig(fig)
+
+        if (example_predictions):
+            figs = plot_predictions(responses[:n_examples,...],
+                                    cnn.predict(feature_transform.transform(features[:n_examples,...])),
+                                    response_transform,
+                                    data_config.response_nodata_value,
+                                    data_config.internal_window_radius)
+            for fig in figs:
+                pdf.savefig(fig)
+
 
 
 
