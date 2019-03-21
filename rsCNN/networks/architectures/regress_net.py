@@ -11,6 +11,7 @@ DEFAULT_KERNEL_SIZE = (3, 3)
 DEFAULT_NUM_LAYERS = 8
 DEFAULT_PADDING = 'same'
 DEFAULT_USE_BATCH_NORM = True
+DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER = False
 
 
 def parse_architecture_options(**kwargs):
@@ -20,6 +21,9 @@ def parse_architecture_options(**kwargs):
         'num_layers': kwargs.get('num_layers', DEFAULT_NUM_LAYERS),
         'padding': kwargs.get('padding', DEFAULT_PADDING),
         'use_batch_norm': kwargs.get('use_batch_norm', DEFAULT_USE_BATCH_NORM),
+        'use_initial_colorspace_transformation_layer':
+            kwargs.get('use_initial_colorspace_transformation_layer',
+                       DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER)
     }
 
 
@@ -32,6 +36,7 @@ def create_model(
         num_layers: int = DEFAULT_NUM_LAYERS,
         padding: str = DEFAULT_PADDING,
         use_batch_norm: bool = DEFAULT_USE_BATCH_NORM,
+        use_initial_colorspace_transformation_layer: bool = DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
 ) -> keras.models.Model:
     """ Construct a flat style network with flexible shape
 
@@ -65,13 +70,19 @@ def create_model(
         assert len(kernel_size) == num_layers, 'If providing a list of kernel sizes, length must equal num_layers'
         kernel_sizes = kernel_size
 
-    b1 = inlayer
-    for kernel_size in kernel_sizes:
-        b1 = Conv2D(filters=initial_filters, kernel_size=kernel_size, padding=padding)(b1)
-        b1 = Conv2D(filters=initial_filters, kernel_size=kernel_size, padding=padding)(b1)
-        if use_batch_norm:
-            b1 = BatchNormalization()(b1)
+    conv = inlayer
+    if use_initial_colorspace_transformation_layer:
+        intermediate_color_depth = int(inshape[-1] ** 2)
+        conv = Conv2D(filters=intermediate_color_depth, kernel_size=(1, 1), padding='same')(inlayer)
+        conv = Conv2D(filters=inshape[-1], kernel_size=(1, 1), padding='same')(conv)
+        conv = BatchNormalization()(conv)
 
-    output_layer = Conv2D(n_classes, (1, 1), activation=output_activation, padding=padding)(b1)
+    for kernel_size in kernel_sizes:
+        conv = Conv2D(filters=initial_filters, kernel_size=kernel_size, padding=padding)(conv)
+        conv = Conv2D(filters=initial_filters, kernel_size=kernel_size, padding=padding)(conv)
+        if use_batch_norm:
+            conv = BatchNormalization()(conv)
+
+    output_layer = Conv2D(n_classes, (1, 1), activation=output_activation, padding=padding)(conv)
     model = keras.models.Model(inputs=inlayer, outputs=output_layer)
     return model
