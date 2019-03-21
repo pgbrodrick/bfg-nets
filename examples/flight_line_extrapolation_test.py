@@ -79,7 +79,14 @@ feature_scaler = rsCNN.data_management.transforms.RobustTransformer(
 response_scaler = rsCNN.data_management.transforms.StandardTransformer(
     data_config.response_nodata_value, data_config.data_save_name + '_response_')
 
+if (args.key == 'train' or 'model_eval'):
+    npzf = np.load(data_config.data_save_name + '.npz')
+    features = npzf['features']
+    responses = npzf['responses']
+    fold_assignments = npzf['fold_assignments']
+
 if (args.key == 'train' or args.key == 'all'):
+
 
     train_set = fold_assignments == verification_fold
     test_set = np.logical_not(train_set)
@@ -115,5 +122,10 @@ if (args.key == 'model_eval' or args.key == 'all'):
     feature_scaler.load()
     response_scaler.load()
 
-    rsCNN.evaluation.generate_eval_report(cnn,'examples/output/test_model_eval.pdf')
+    rsCNN.evaluation.generate_eval_report(cnn,'examples/output/test_model_eval.pdf',
+                                          features,
+                                          responses,
+                                          feature_scaler,
+                                          response_scaler,
+                                          data_config)
 
