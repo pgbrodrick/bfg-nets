@@ -42,7 +42,7 @@ config_options = {
 
     'use_batch_norm': False,
     'conv_depth': 16,
-    'block_structure': (1,1),
+    'block_structure': (1, 1),
     'output_activation': 'softplus',
 
     'network_name': 'cwc_test_network',
@@ -54,15 +54,16 @@ config_options = {
 }
 
 
-
 if (args.key == 'build' or args.key == 'all'):
     data_config = rsCNN.data_management.DataConfig(window_radius, feature_files, response_files, **config_options)
-    features, responses, fold_assignments = rsCNN.data_management.training_data.build_regression_training_data_ordered(data_config)
+    features, responses, fold_assignments = rsCNN.data_management.training_data.build_regression_training_data_ordered(
+        data_config)
 else:
     data_config = rsCNN.data_management.load_data_config_from_file(config_options['data_save_name'])
 
 
-loss_function = networks.losses.cropped_loss('mae', data_config.feature_shape[1], config_options['internal_window_radius']*2)
+loss_function = networks.losses.cropped_loss(
+    'mae', data_config.feature_shape[1], config_options['internal_window_radius']*2)
 network_config = networks.network_config.create_network_config('unet',
                                                                'test_spatial_model',
                                                                data_config.feature_shape[1:],
@@ -91,9 +92,9 @@ if (args.key == 'train' or args.key == 'all'):
     features = feature_scaler.transform(features)
     responses[..., :-1] = response_scaler.transform(responses[..., :-1])
 
-    cnn.fit(features[train_set,...], 
-            responses[train_set,...], 
-            validation_data=(features[test_set,...],responses[test_set,...]))
+    cnn.fit(features[train_set, ...],
+            responses[train_set, ...],
+            validation_data=(features[test_set, ...], responses[test_set, ...]))
 
 
 if (args.key == 'apply' or args.key == 'all'):
@@ -101,10 +102,10 @@ if (args.key == 'apply' or args.key == 'all'):
     response_scaler.load()
     for _f in range(len(application_feature_files)):
         rsCNN.data_management.apply_model_to_data.apply_model_to_raster(cnn,
-                                                                     data_config,
-                                                                     application_feature_files[_f],
-                                                                     application_output_basenames[_f],
-                                                                     make_png=False,
-                                                                     make_tif=True,
-                                                                     feature_transformer=feature_scaler,
-                                                                     response_transformer=response_scaler)
+                                                                        data_config,
+                                                                        application_feature_files[_f],
+                                                                        application_output_basenames[_f],
+                                                                        make_png=False,
+                                                                        make_tif=True,
+                                                                        feature_transformer=feature_scaler,
+                                                                        response_transformer=response_scaler)
