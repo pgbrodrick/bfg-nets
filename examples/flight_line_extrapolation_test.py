@@ -56,7 +56,7 @@ config_options = {
 
 
 
-if (args.key == 'build' or args.key == 'all'):
+if (args.key == 'data' or args.key == 'all'):
     data_config = rsCNN.data_management.DataConfig(window_radius, feature_files, response_files, **config_options)
     features, responses, fold_assignments = rsCNN.data_management.training_data.build_regression_training_data_ordered(data_config)
 else:
@@ -125,6 +125,7 @@ if (args.key == 'model_eval' or args.key == 'all'):
     rsCNN.evaluation.generate_eval_report(cnn,'examples/output/test_model_eval.pdf',
                                           features,
                                           responses,
+                                          fold_assignments,
                                           feature_scaler,
                                           response_scaler,
                                           data_config)

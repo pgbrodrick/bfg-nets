@@ -165,6 +165,15 @@ def plot_input_examples_and_transforms(features, responses, feature_transform, r
 
     return fig_list
 
+def plot_prediction_histograms(responses, pred_responses, fold_assignments, response_transform, response_nodata_value):
+    responses[responses == response_nodata_value] = np.nan
+    pred_responses[pred_responses == response_nodata_value] = np.nan
+
+    trans_responses = response_transform.transform(responses)
+    invtrans_pred_responses = response_transform.inverse_transform(pred_responses)
+
+
+    
 
 
 
@@ -285,9 +294,42 @@ def plot_predictions(responses, pred_responses, response_transform, response_nod
 
 
 
+def plot_prediction_histograms(responses, pred_responses, fold_assignments, response_transform, response_nodata_value):
 
 
-def generate_eval_report(cnn, report_name, features, responses, feature_transform, response_transform, data_config):
+    responses[responses == response_nodata_value] = np.nan
+    pred_responses[pred_responses == response_nodata_value] = np.nan
+
+    trans_responses = response_transform.transform(responses)
+    invtrans_pred_responses = response_transform.inverse_transform(pred_responses)
+
+    weights = responses[...,-1]
+    responses = responses[...,:-1]
+
+    responses[weights == 0,:] = np.nan
+    pred_responses[weights == 0,:] = np.nan
+    trans_responses[weights == 0,:] = np.nan
+    invtrans_pred_responses[weights == 0,:] = np.nan
+
+    responses = responses.reshape((-1,responses.shape[-1]))
+    pred_responses = pred_responses.reshape((-1,pred_responses.shape[-1]))
+    trans_responses = trans_responses.reshape((-1,trans_responses.shape[-1]))
+    invtrans_pred_responses = invtrans_pred_responses.reshape((-1,invtrans_pred_responses.shape[-1]))
+
+    fig = plt.figure(figsize=(10,8))
+    gs1 = gridspec.GridSpec(2,2)
+
+
+    # Training Raw Space
+    ax = fig.subplot(gs1[0,0])
+    plt.hist(responses[fold_assignments=cnn.verification_fold,c='black')
+    plt.hist(responses,c='black')
+
+
+
+
+
+def generate_eval_report(cnn, report_name, features, responses, fold_assignments, feature_transform, response_transform, data_config):
 
     # this will get more formal later on, just plugged something in
     # to break things out for now
@@ -349,9 +391,15 @@ def generate_eval_report(cnn, report_name, features, responses, feature_transfor
 
 
 
+        if (prediction_histogram_comp):
+            fig = plot_prediction_histograms(responses,
+                                             cnn.predict(feature_transform.transform(features[:n_examples,...])),
+                                             fold_assignments,
+                                             response_transform,
+                                             data_config.response_nodata_value)
+            pdf.savefig(fig)
 
-        #if (example_predictions):
-        #if (prediction_histogram_comp):
+
         #if (spatial_error_concentration):
         #if (visual_stitching_artifact_check):
         #if (quant_stitching_artificat_check):
