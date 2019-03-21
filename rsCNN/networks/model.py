@@ -9,7 +9,6 @@ from rsCNN import utils
 from rsCNN.networks import callbacks, history, losses
 
 
-
 class CNN(object):
     network_config = None
     _is_model_new = None
