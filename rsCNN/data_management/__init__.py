@@ -2,6 +2,7 @@ import os
 
 import pickle
 
+
 class DataConfig:
     """ A wrapper class designed to hold all relevant information about data sources,
         sample generation, and scaling.
@@ -88,11 +89,11 @@ class DataConfig:
         if (self.data_save_name is not None):
             assert os.path.isdir(os.path.dirname(self.data_save_name)), 'Invalid path for data_save_name'
 
-    #TODO: safegaurd from overwrite?
+    # TODO: safegaurd from overwrite?
     def save_to_file(self):
         print('saving data config')
         with open(self.data_save_name + '_data_config', 'wb') as sf_:
-            pickle.dump(self.__dict__,sf_)
+            pickle.dump(self.__dict__, sf_)
 
 
 def load_data_config_from_file(data_save_name):
@@ -103,8 +104,3 @@ def load_data_config_from_file(data_save_name):
         return DataConfig(**loaded_config)
     except:
         print('Failed to load DataConfig from ' + data_save_name + '_data_config')
-
-
-
-
-

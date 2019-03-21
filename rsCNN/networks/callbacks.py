@@ -55,7 +55,6 @@ class HistoryCheckpoint(keras.callbacks.Callback):
 
 
 def get_callbacks(network_config: configparser.ConfigParser, existing_history: dict) -> List[keras.callbacks.Callback]:
-    # TODO:  remove the hacky implementation of modelcheckpoint filepath, needs to use datetime from history module
     callbacks = [
         HistoryCheckpoint(
             dir_out=network_config['model']['dir_out'],
@@ -77,6 +76,26 @@ def get_callbacks(network_config: configparser.ConfigParser, existing_history: d
                 patience=network_config['callbacks_early_stopping']['es_patience']
             ),
         )
+    if network_config['callbacks_learning_rate_scheduler']['use_learning_rate_scheduler']:
+        use_linear = network_config['callbacks_learning_rate_scheduler']['lrs_use_linear']
+        use_decay = network_config['callbacks_learning_rate_scheduler']['lrs_use_decay']
+        assert use_linear != use_decay, \
+            'Learning rate scheduler parameters must either use linear (lrs_use_linear) or decay (lrs_use_decay), ' + \
+            'not both.'
+        lr_decrease = network_config['callbacks_learning_rate_scheduler']['lrs_rate_linear']
+        lr_decay = network_config['callbacks_learning_rate_scheduler']['lrs_rate_decay']
+        lr_minimum = network_config['callbacks_learning_rate_scheduler']['lrs_minimum']
+
+        def _schedule(idx_epoch, current_learning_rate):
+            if use_linear:
+                next_learning_rate = float(current_learning_rate - lr_decrease)
+            elif use_decay:
+                next_learning_rate = float(lr_decay * current_learning_rate)
+            return max(next_learning_rate, lr_minimum)
+
+        callbacks.append(
+            keras.callbacks.LearningRateScheduler(schedule=_schedule, verbose=network_config['model']['verbosity'])
+        )
     if network_config['callbacks_reduced_learning_rate']['use_reduced_learning_rate']:
         callbacks.append(
             keras.callbacks.ReduceLROnPlateau(
@@ -87,9 +106,13 @@ def get_callbacks(network_config: configparser.ConfigParser, existing_history: d
             ),
         )
     if network_config['callbacks_tensorboard']['use_tensorboard']:
+        dir_out = os.path.join(
+            network_config['model']['dir_out'],
+            network_config['callbacks_tensorboard']['dirname_prefix_tensorboard']
+        )
         callbacks.append(
             keras.callbacks.TensorBoard(
-                network_config['callbacks_tensorboard']['dirname_prefix_tensorboard'],
+                dir_out,
                 histogram_freq=network_config['callbacks_tensorboard']['t_histogram_freq'],
                 write_graph=network_config['callbacks_tensorboard']['t_write_graph'],
                 write_grads=network_config['callbacks_tensorboard']['t_write_grads'],
