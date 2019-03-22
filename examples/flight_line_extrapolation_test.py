@@ -41,16 +41,16 @@ config_options = {
     'response_max_value': 10000,
     'response_min_value': 0,
 
-    'use_batch_norm': False,
-    'conv_depth': 16,
+    'use_batch_norm': True,
+    'conv_depth': 'growth',
     'block_structure': (1, 1),
     'output_activation': 'softplus',
 
-    'network_name': 'cwc_test_network',
+    'network_name': 'cwc_test_network2',
     'optimzer': 'adam',
     'batch_size': 100,
-    'max_epochs': 10,
-    'n_noimprovement_repeats': 30,
+    'max_epochs': 100,
+    'n_noimprovement_repeats': 10,
     'output_directory': None
 }
 
@@ -66,7 +66,7 @@ else:
 loss_function = networks.losses.cropped_loss(
     'mae', data_config.feature_shape[1], config_options['internal_window_radius']*2)
 network_config = networks.network_config.create_network_config('unet',
-                                                               'test_spatial_model',
+                                                               config_options['network_name'],
                                                                data_config.feature_shape[1:],
                                                                data_config.response_shape[-1] - 1,
                                                                'mae',
@@ -100,9 +100,10 @@ if (args.key == 'train' or args.key == 'all'):
     features = feature_scaler.transform(features)
     responses[..., :-1] = response_scaler.transform(responses[..., :-1])
 
-    cnn.fit(features[train_set, ...],
-            responses[train_set, ...],
-            validation_data=(features[test_set, ...], responses[test_set, ...]))
+    cnn.fit(feature_scaler.transform(features[train_set, ...]),
+            response_scaler.transform(responses[train_set, ...]),
+            validation_data=(feature_scaler.transform(features[test_set, ...]), 
+            response_scaler.transform(responses[test_set, ...])))
 
 
 if (args.key == 'apply' or args.key == 'all'):
@@ -127,6 +128,7 @@ if (args.key == 'model_eval' or args.key == 'all'):
                                           features,
                                           responses,
                                           fold_assignments,
+                                          verification_fold,
                                           feature_scaler,
                                           response_scaler,
                                           data_config)
