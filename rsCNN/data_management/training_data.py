@@ -242,6 +242,12 @@ def build_regression_training_data_ordered(config):
     responses = responses.reshape((responses.shape[0], responses.shape[1], responses.shape[2], 1))
     responses = np.append(responses, np.ones(responses.shape), axis=-1)
     responses[responses[..., 0] == config.response_nodata_value, 1] = 0
+    if (config.internal_window_radius != config.window_radius):
+        buf = config.window_radius - config.internal_window_radius
+        responses[:,:buf,:,-1] = 0
+        responses[:,-buf:,:,-1] = 0
+        responses[:,:,:buf,-1] = 0
+        responses[:,:,-buf:,-1] = 0
 
     _logger.debug('Feature shape: {}'.format(features.shape))
     _logger.debug('Response shape: {}'.format(response.shape))

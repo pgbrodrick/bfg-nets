@@ -10,6 +10,7 @@ import rsCNN.data_management
 import rsCNN.data_management.training_data
 import rsCNN.data_management.transforms
 import rsCNN.data_management.apply_model_to_data
+import rsCNN.evaluation
 
 
 # TODO script needs to be adapted yet
@@ -40,21 +41,21 @@ config_options = {
     'response_max_value': 10000,
     'response_min_value': 0,
 
-    'use_batch_norm': False,
-    'conv_depth': 16,
+    'use_batch_norm': True,
+    'conv_depth': 'growth',
     'block_structure': (1, 1),
     'output_activation': 'softplus',
 
-    'network_name': 'cwc_test_network',
+    'network_name': 'cwc_test_network2',
     'optimzer': 'adam',
     'batch_size': 100,
-    'max_epochs': 10,
-    'n_noimprovement_repeats': 30,
+    'max_epochs': 100,
+    'n_noimprovement_repeats': 10,
     'output_directory': None
 }
 
 
-if (args.key == 'build' or args.key == 'all'):
+if (args.key == 'data' or args.key == 'all'):
     data_config = rsCNN.data_management.DataConfig(window_radius, feature_files, response_files, **config_options)
     features, responses, fold_assignments = rsCNN.data_management.training_data.build_regression_training_data_ordered(
         data_config)
@@ -65,7 +66,7 @@ else:
 loss_function = networks.losses.cropped_loss(
     'mae', data_config.feature_shape[1], config_options['internal_window_radius']*2)
 network_config = networks.network_config.create_network_config('unet',
-                                                               'test_spatial_model',
+                                                               config_options['network_name'],
                                                                data_config.feature_shape[1:],
                                                                data_config.response_shape[-1] - 1,
                                                                'mae',
@@ -79,7 +80,14 @@ feature_scaler = rsCNN.data_management.transforms.RobustTransformer(
 response_scaler = rsCNN.data_management.transforms.StandardTransformer(
     data_config.response_nodata_value, data_config.data_save_name + '_response_')
 
+if (args.key == 'train' or 'model_eval'):
+    npzf = np.load(data_config.data_save_name + '.npz')
+    features = npzf['features']
+    responses = npzf['responses']
+    fold_assignments = npzf['fold_assignments']
+
 if (args.key == 'train' or args.key == 'all'):
+
 
     train_set = fold_assignments == verification_fold
     test_set = np.logical_not(train_set)
@@ -92,9 +100,10 @@ if (args.key == 'train' or args.key == 'all'):
     features = feature_scaler.transform(features)
     responses[..., :-1] = response_scaler.transform(responses[..., :-1])
 
-    cnn.fit(features[train_set, ...],
-            responses[train_set, ...],
-            validation_data=(features[test_set, ...], responses[test_set, ...]))
+    cnn.fit(feature_scaler.transform(features[train_set, ...]),
+            response_scaler.transform(responses[train_set, ...]),
+            validation_data=(feature_scaler.transform(features[test_set, ...]), 
+            response_scaler.transform(responses[test_set, ...])))
 
 
 if (args.key == 'apply' or args.key == 'all'):
@@ -102,10 +111,25 @@ if (args.key == 'apply' or args.key == 'all'):
     response_scaler.load()
     for _f in range(len(application_feature_files)):
         rsCNN.data_management.apply_model_to_data.apply_model_to_raster(cnn,
-                                                                        data_config,
-                                                                        application_feature_files[_f],
-                                                                        application_output_basenames[_f],
-                                                                        make_png=False,
-                                                                        make_tif=True,
-                                                                        feature_transformer=feature_scaler,
-                                                                        response_transformer=response_scaler)
+                              data_config,
+                              application_feature_files[_f],
+                              application_output_basenames[_f],
+                              make_png=False,
+                              make_tif=True,
+                              feature_transformer=feature_scaler,
+                              response_transformer=response_scaler)
+
+
+if (args.key == 'model_eval' or args.key == 'all'):
+    feature_scaler.load()
+    response_scaler.load()
+
+    rsCNN.evaluation.generate_eval_report(cnn,'examples/output/test_model_eval.pdf',
+                                          features,
+                                          responses,
+                                          fold_assignments,
+                                          verification_fold,
+                                          feature_scaler,
+                                          response_scaler,
+                                          data_config)
+

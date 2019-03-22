@@ -79,7 +79,6 @@ class CNN(object):
             self,
             train_features: Union[np.ndarray, List[np.ndarray]],
             train_responses: Union[np.ndarray, List[np.ndarray]],
-            validation_split: float = None,
             validation_data: tuple = None,
             continue_training: bool = False
     ) -> None:
