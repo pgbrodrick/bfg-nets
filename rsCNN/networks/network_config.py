@@ -3,7 +3,7 @@ import configparser
 import os
 from typing import Iterable
 
-from rsCNN.networks import architectures
+from rsCNN.networks import architectures, losses
 
 
 def read_network_config_from_file(filepath):
@@ -26,14 +26,15 @@ class NetworkConfig(object):
 
     # TODO: maybe add the args to config template, which means we may just read in directly
     # TODO: typedef loss_function
-    def __init__(self, network_type: str, loss_function, inshape: Iterable[int], n_classes: Iterable[int], **kwargs):
+    def __init__(self, network_type: str, loss_metric: str, inshape: Iterable[int], n_classes: Iterable[int], internal_window_radius: int,  **kwargs):
         """
+        #TODO: update documentation
           Arguments:
           network_type - str
             Style of the network to use.  Options are:
               flex_unet
               flat_regress_net
-          loss_function - function
+          loss_metric - str
             Keras or tensor flow based loss function for the cnn.
           inshape - tuple/list
             Designates the input shape of an image to be passed to
@@ -42,9 +43,10 @@ class NetworkConfig(object):
             Designates the output shape of targets to be fit by the network
         """
         self.network_type = network_type
-        self.loss_function = loss_function
+        self.loss_metric = loss_metric
         self.inshape = inshape
         self.n_classes = n_classes
+        self.loss_function = losses.cropped_loss(loss_metric, inshape, internal_window_radius*2)
         architecture_creator = architectures.get_architecture_creator(self.network_type)
         self.create_model = architecture_creator.create_model
         self.architecture_options = architecture_creator.parse_architecture_options(**kwargs)
@@ -53,7 +55,6 @@ class NetworkConfig(object):
         self.batch_size = kwargs.get('batch_size', 1)
         self.max_epochs = kwargs.get('max_epochs', 100)
         self.n_noimprovement_repeats = kwargs.get('n_noimprovement_repeats', 10)
-        self.verification_fold = kwargs.get('verification_fold', None)
         self.optimizer = kwargs.get('optimizer', 'adam')
 
         # Optional arguments

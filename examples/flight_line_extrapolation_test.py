@@ -1,70 +1,67 @@
 import os
 import sys
-import gdal
 
 # TODO manage imports
 from rsCNN.utils.general import *
-from rsCNN.networks import CNN, NetworkConfig, losses
-from rsCNN.data_management import DataConfig, training_data, transforms, apply_model_to_data
+from rsCNN.networks import Experiment, NetworkConfig
+from rsCNN.data_management import DataConfig, training_data, transforms, apply_model_to_data, load_training_data
 
 
 # TODO script needs to be adapted yet
 
 key = sys.argv[1]
 
-window_radius = 16
 
-year = '2015'
-feature_files = ['../global_cwc/dat/features/feat_subset.tif']
-response_files = ['../global_cwc/dat/responses/resp_subset.tif']
+global_options = {
+    'raw_feature_file_list' : ['../global_cwc/dat/features/feat_subset.tif'],
+    'raw_response_file_list' : ['../global_cwc/dat/responses/resp_subset.tif'],
 
-# could (and typically are) different, but using for now
-application_feature_files = feature_files
-application_output_basenames = ['examples/output/' +
-                                os.path.basename(x).split('.')[0] + '_applied_cnn' for x in feature_files]
-
-# TODO: if we want to grab these from a config file, need to write a wrapper to read the transform in
-data_options = {
-    'data_save_name': 'examples/munged/cnn_munge_' + str(window_radius) + '_test',
+    'data_save_name': 'examples/munged/cwc_data_test',
     'max_samples': 30000,
-    'internal_window_radius': int(round(window_radius*0.5)),
+    'window_radius' : 16,
+    'internal_window_radius': 8,
     'response_max_value': 10000,
-    'response_min_value': 0
-}
+    'response_min_value': 0,
 
-data_config = DataConfig(window_radius, feature_files, response_files, **data_options)
-
-
-if (key == 'build' or key == 'all'):
-    features, responses, fold_assignments = training_data.build_regression_training_data_ordered(data_config)
-else:
-    data_config = None  # TODO: load data_config from disk
-
-
-network_options = {
+    'network_type': 'flat_regress_net',
     'batch_norm': False,
     'conv_depth': 16,
     'conv_pattern': [3],
     'n_layers': 10,
     'output_activation': 'softplus',
+    'n_classes': 1,
 
     'network_name': 'cwc_test_network',
-    'optimzer': 'adam',
+    'optimizer': 'adam',
     'batch_size': 100,
     'max_epochs': 200,
     'n_noimprovement_repeats': 30,
     'output_directory': None,
-    'verification_fold': 0
+    'verification_fold': 0,
+    'loss_metric': 'mae',
+
+    'application_feature_files' : ['../global_cwc/dat/features/feat_subset.tif'],
+    'application_output_basenames' : ['examples/output/feat_subset_applied_cnn.tif']
 }
 
-loss_function = losses.cropped_loss('mae', features.shape[1], data_config.internal_window_radius*2)
-network_config = NetworkConfig('flat_regress_net',
-                               loss_function,
-                               features.shape[1:],
-                               n_classes=1,
-                               **network_options)
 
-cnn = CNN(network_config, reinitialize=True)
+
+data_config = DataConfig( **global_options)
+
+if (key == 'build' or key == 'all'):
+    features, responses, weights, fold_assignments = training_data.build_regression_training_data_ordered(data_config)
+else:
+    data_management = load_training_data(data_config)
+
+
+network_config = NetworkConfig(inshape=data_config.feature_shape[1:],
+                               internal_window_radius=data_config.internal_window_radius,
+                               **global_options)
+
+
+
+
+cnn = Experiment(network_config, data_config, reinitialize=True)
 
 
 # TODO add option for plotting training data previews
