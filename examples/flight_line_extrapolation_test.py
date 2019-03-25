@@ -126,7 +126,8 @@ if (args.key == 'model_eval' or args.key == 'all'):
 
     rsCNN.evaluation.generate_eval_report(cnn,'examples/output/test_model_eval.pdf',
                                           features,
-                                          responses,
+                                          responses[...,:-1],
+                                          responses[...,-1],
                                           fold_assignments,
                                           verification_fold,
                                           feature_scaler,

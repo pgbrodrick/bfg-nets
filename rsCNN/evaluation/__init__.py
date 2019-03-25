@@ -61,15 +61,14 @@ def plot_model_summary_as_fig(model):
      plt.axis('off')
      plt.suptitle('CNN Summary')
 
+     return fig
+
 def get_mins_maxs(data):
     data_mins = np.nanpercentile(data.reshape((-1,data.shape[-1])),0,axis=0)
     data_maxs = np.nanpercentile(data.reshape((-1,data.shape[-1])),100,axis=0)
     return data_mins, data_maxs
 
-def plot_input_examples_and_transforms(features, responses, feature_transform, response_transform, feature_nodata_value, response_nodata_value):
-
-    weights = responses[...,-1]
-    responses = responses[...,:-1]
+def plot_input_examples_and_transforms(features, responses, weights, feature_transform, response_transform, feature_nodata_value, response_nodata_value):
 
     features[features == feature_nodata_value] = np.nan
     responses[responses == response_nodata_value] = np.nan
@@ -169,10 +168,7 @@ def plot_input_examples_and_transforms(features, responses, feature_transform, r
 
 
 
-def plot_predictions(responses, pred_responses, response_transform, response_nodata_value, internal_window_radius):
-
-    weights = responses[...,-1]
-    responses = responses[...,:-1]
+def plot_predictions(responses, weights, pred_responses, response_transform, response_nodata_value, internal_window_radius):
 
     responses[responses == response_nodata_value] = np.nan
     pred_responses[pred_responses == response_nodata_value] = np.nan
@@ -285,7 +281,7 @@ def plot_predictions(responses, pred_responses, response_transform, response_nod
 
 
 
-def plot_prediction_histograms(responses, pred_responses, fa, verification_fold, response_transform, response_nodata_value):
+def plot_prediction_histograms(responses, weights, pred_responses, fa, verification_fold, response_transform, response_nodata_value):
 
     fig_list = []
 
@@ -293,8 +289,6 @@ def plot_prediction_histograms(responses, pred_responses, fa, verification_fold,
     un_fa = np.unique(fa)
     for _n in range(len(un_fa)):
       fold_assignments[fa == un_fa[_n],...] = un_fa[_n]
-    weights = responses[...,-1]
-    responses = responses[...,:-1]
 
     responses[responses == response_nodata_value] = np.nan
     pred_responses[pred_responses == response_nodata_value] = np.nan
@@ -315,7 +309,6 @@ def plot_prediction_histograms(responses, pred_responses, fa, verification_fold,
 
 
     max_resp_per_page = min(8,responses.shape[-1])
-
     _response_ind = 0
 
     # Training Raw Space
@@ -362,9 +355,39 @@ def plot_prediction_histograms(responses, pred_responses, fa, verification_fold,
 
 
 
+def spatial_error(responses,pred_responses,weights,response_nodata_value):
+
+    #TODO: Consider handling weights
+    fig_list = []
+
+    responses[responses == response_nodata_value] = np.nan
+    pred_responses[responses == response_nodata_value] = np.nan
+
+    diff = np.abs(responses-pred_responses)
+
+    max_resp_per_page = min(8,responses.shape[-1])
 
 
-def generate_eval_report(cnn, report_name, features, responses, fold_assignments, verification_fold, feature_transform, response_transform, data_config):
+    _response_ind = 0
+    while (_response_ind < responses.shape[-1]):
+        fig = plt.figure(figsize=(25,8))
+        gs1 = gridspec.GridSpec(1,max_resp_per_page)
+        for _r in range(_response_ind, min(responses.shape[-1],_response_ind + max_resp_per_page) ):
+            ax = plt.subplot(gs1[0,_r - _response_ind])
+
+            vset = np.nanmean(diff[...,_r]*weights,axis=0)
+            ax.imshow(np.nanmean(diff[...,_r],axis=0),vmin=np.nanmin(vset[vset!=0]),vmax=np.nanmax(vset[vset!=0]))
+            plt.title('Response ' + str(_r))
+            plt.axis('off')
+
+        _response_ind += max_resp_per_page
+        plt.suptitle('Response Spatial Deviation ' + str((len(fig_list))))
+        fig_list.append(fig)
+
+    return fig_list
+
+
+def generate_eval_report(cnn, report_name, features, responses, weights, fold_assignments, verification_fold, feature_transform, response_transform, data_config):
 
     # this will get more formal later on, just plugged something in
     # to break things out for now
@@ -396,13 +419,14 @@ def generate_eval_report(cnn, report_name, features, responses, fold_assignments
 
         #TODO: find max allowable number of lines, and carry over to the next page if violated
         if (model_architecture):
-            plot_model_summary_as_fig(cnn.model)
-            pdf.savefig()
+            fig = plot_model_summary_as_fig(cnn.model)
+            pdf.savefig(fig)
         
         
         if (input_examples_and_transformation):
-            figs = plot_input_examples_and_transforms(features[:n_examples,...],
-                                                     responses[:n_examples,...],
+            figs = plot_input_examples_and_transforms(features[:n_examples,...].copy(),
+                                                     responses[:n_examples,...].copy(),
+                                                     weights.copy(),
                                                      feature_transform,
                                                      response_transform,
                                                      data_config.feature_nodata_value,
@@ -415,7 +439,8 @@ def generate_eval_report(cnn, report_name, features, responses, fold_assignments
             pdf.savefig(fig)
 
         if (example_predictions):
-            figs = plot_predictions(responses[:n_examples,...],
+            figs = plot_predictions(responses[:n_examples,...].copy(),
+                                    weights.copy(),
                                     cnn.predict(feature_transform.transform(features[:n_examples,...])),
                                     response_transform,
                                     data_config.response_nodata_value,
@@ -427,17 +452,24 @@ def generate_eval_report(cnn, report_name, features, responses, fold_assignments
 
         # TODO: convert to lined graphs (borrow code from watershed work)
         if (prediction_histogram_comp):
-            figs = plot_prediction_histograms(responses,
-                                             cnn.predict(feature_transform.transform(features)),
-                                             fold_assignments,
-                                             verification_fold,
-                                             response_transform,
-                                             data_config.response_nodata_value)
+            figs = plot_prediction_histograms(responses.copy(),
+                                              weights.copy(),
+                                              cnn.predict(feature_transform.transform(features)),
+                                              fold_assignments,
+                                              verification_fold,
+                                              response_transform,
+                                              data_config.response_nodata_value)
             for fig in figs:
                 pdf.savefig(fig)
 
 
-        #if (spatial_error_concentration):
+        if (spatial_error_concentration):
+            figs = spatial_error(responses.copy(),
+                                 response_transform.inverse_transform(cnn.predict(feature_transform.transform(features))),
+                                 weights.copy(),
+                                 data_config.response_nodata_value)
+            for fig in figs:
+                pdf.savefig(fig)
         #if (visual_stitching_artifact_check):
         #if (quant_stitching_artificat_check):
 
