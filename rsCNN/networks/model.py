@@ -68,17 +68,21 @@ class Experiment(object):
             self._is_model_new = True
 
     def build_or_load_data(self):
+        # TODO:  PHIL:  review the sequence and scalar changes I've made before refactoring this. Things are simple if
+        #  you just save the data to disk and keep this independent of other operations. You'll need to integrate
+        #  multiple methods and classes if you want to optimize things.
         # TODO:  Phil adds logic for parsing files
         # TODO:  Phil adds logi cfor loading data into features/responses, training munge style
         # TODO:  Phil wants to write logic to find system memory and how much is available to get size
-        # TODO:  be sure we return generators/sequences
+        # TODO:  be sure we return generators/sequences?
         # build data
         # load data
         # create scalers
         # create sequences/generators
         raise
         if True:
-            features, responses, weights, fold_assignments = training_data.build_regression_training_data_ordered(data_config)
+            features, responses, weights, fold_assignments = training_data.build_regression_training_data_ordered(
+                data_config)
         else:
             data_management = load_training_data(data_config)
         self.train_generator = None
@@ -112,6 +116,8 @@ class Experiment(object):
         return gbytes
 
     def evaluate_network(self):
+        # TODO:  sequences now have a get_transformed and get_untransformed method (check names) so that you can get
+        #  what you need directly. You might need to reorganize that code if youw ant to get both at the same time.
         features, responses = self.test_generator.__getitem__(0)
         evaluation.generate_eval_report(args)
 
@@ -125,7 +131,7 @@ class Experiment(object):
 
         model_callbacks = callbacks.get_callbacks(self.network_config, self.history)
 
-        #return self.feature_scaler.transform(features), \
+        # return self.feature_scaler.transform(features), \
         #       self.response_scaler.transform(responses)
 
         # TODO:  Same parameter questions as with fit()
@@ -167,6 +173,10 @@ class Experiment(object):
         )
 
     def prepare_sequences(self) -> None:
+        # TODO:  PHIL:  this takes no time at all, would you prefer these are only in fit or predict methods and that
+        #  we don't save references to the sequences? Note that it's useful to save if we want to play around with the
+        #  sequences / manually sample, but probably not if we want to keep the object clean of as many attrs or methods
+        #  as possible
         batch_size = self.network_config['training']['batch_size']
         apply_random = self.network_config['training']['apply_random_transformations']
         self.train_sequence = sequences.Sequence(batch_size, self.feature_scaler, self.response_scaler, apply_random)

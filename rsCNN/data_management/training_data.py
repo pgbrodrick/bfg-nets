@@ -246,11 +246,10 @@ def build_regression_training_data_ordered(config):
 
     if (config.internal_window_radius != config.window_radius):
         buf = config.window_radius - config.internal_window_radius
-        weights[:,:buf,:,-1] = 0
-        weights[:,-buf:,:,-1] = 0
-        weights[:,:,:buf,-1] = 0
-        weights[:,,-buf:,-1] = 0
-
+        weights[:, :buf, :, -1] = 0
+        weights[:, -buf:, :, -1] = 0
+        weights[:, :, :buf, -1] = 0
+        weights[:, , -buf:, -1] = 0
 
     _logger.debug('Feature shape: {}'.format(features.shape))
     _logger.debug('Response shape: {}'.format(response.shape))
