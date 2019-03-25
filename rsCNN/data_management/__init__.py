@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import pickle
 
 
 class DataConfig:
@@ -91,6 +92,12 @@ class DataConfig:
         self.response_shape = None
         self.feature_shape = None
 
+    # TODO: safegaurd from overwrite?
+    def save_to_file(self):
+        print('saving data config')
+        with open(self.data_save_name + '_data_config', 'wb') as sf_:
+            pickle.dump(self.__dict__, sf_)
+
 
 def load_training_data(config : DataConfig):
     """
@@ -108,4 +115,11 @@ def load_training_data(config : DataConfig):
     return npzf['features'], npzf['responses'], npzf['weights', npzf['fold_assignments']
 
 
+def load_data_config_from_file(data_save_name):
+    try:
+        with open(data_save_name + '_data_config', 'rb') as sf_:
+            loaded_config = pickle.load(sf_)
 
+        return DataConfig(**loaded_config)
+    except:
+        print('Failed to load DataConfig from ' + data_save_name + '_data_config')

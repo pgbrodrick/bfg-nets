@@ -24,7 +24,7 @@ class BaseGlobalTransformer(object):
     def __init__(self, nodata_value=None, savename_base=None):
         self.nodata_value = nodata_value
         if (savename_base is not None):
-            self.savename = os.path.join(savename_base, self.scaler_name)
+            self.savename = savename_base + self.scaler_name
         self.is_fitted = False
 
     def fit(self, image_array):

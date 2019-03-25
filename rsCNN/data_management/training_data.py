@@ -244,6 +244,14 @@ def build_regression_training_data_ordered(config):
     weights = np.ones(responses.shape)
     weights[responses[..., 0] == config.response_nodata_value, 1] = 0
 
+    if (config.internal_window_radius != config.window_radius):
+        buf = config.window_radius - config.internal_window_radius
+        weights[:,:buf,:,-1] = 0
+        weights[:,-buf:,:,-1] = 0
+        weights[:,:,:buf,-1] = 0
+        weights[:,,-buf:,-1] = 0
+
+
     _logger.debug('Feature shape: {}'.format(features.shape))
     _logger.debug('Response shape: {}'.format(response.shape))
 
@@ -254,3 +262,7 @@ def build_regression_training_data_ordered(config):
     config.feature_shape = features.shape
 
     return features, responses, weights, fold_assignments
+    if (config.data_save_name is not None):
+        config.save_to_file()
+
+    return features, responses, fold_assignments
