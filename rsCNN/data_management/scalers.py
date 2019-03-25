@@ -1,4 +1,4 @@
-import os
+import sys
 
 import numpy as np
 from sklearn.externals import joblib
@@ -10,12 +10,16 @@ from rsCNN.utils import logger
 _logger = logger.get_child_logger(__name__)
 
 
-class BaseGlobalTransformer(object):
+def get_scaler(scaler_name, scaler_options):
+    return getattr(sys.modules[__name__], scaler_name)(**scaler_options)
+
+
+class BaseGlobalScaler(object):
     """
-    Transformers handle the process of transforming data prior to fitting or predicting using the neural network, as
+    Scalers handle the process of transforming data prior to fitting or predicting using the neural network, as
     well as inverse transforming the data for applications or review afterwards. In this case, we use readily available
     scalers from the scikit-learn package to handle the nitty-gritty of the transform and inverse transform, and we use
-    the Transformer class to handle the nitty-gritty of reshaping and otherwise handling the image arrays.
+    the Scaler class to handle the nitty-gritty of reshaping and otherwise handling the image arrays.
     """
     nodata_value = None
     savename = None
@@ -28,7 +32,7 @@ class BaseGlobalTransformer(object):
         self.is_fitted = False
 
     def fit(self, image_array):
-        assert self.is_fitted is False, 'Transformer has already been fit to data'
+        assert self.is_fitted is False, 'Scaler has already been fit to data'
         # Reshape to (num_samples, num_features)
         image_array = self._reshape_image_array(image_array)
         image_array[image_array == self.nodata_value] = np.nan
@@ -96,7 +100,7 @@ class BaseGlobalTransformer(object):
         raise NotImplementedError
 
 
-class BaseSklearnTransformer(BaseGlobalTransformer):
+class BaseSklearnScaler(BaseGlobalScaler):
     scaler = None
 
     def __init__(self, nodata_value, savename_base):
@@ -119,11 +123,11 @@ class BaseSklearnTransformer(BaseGlobalTransformer):
         self.scaler = joblib.load(self.savename)
 
 
-class ConstantTransformer(BaseGlobalTransformer):
+class ConstantScaler(BaseGlobalScaler):
     constant_scaler = None
     constant_offset = None
 
-    def __init__(self, nodata_value, savename_base, constant_scaler, constant_offset=None):
+    def __init__(self, nodata_value, savename_base, constant_scaler=None, constant_offset=None):
         self.constant_scaler = constant_scaler
         self.constant_offset = constant_offset
 
@@ -152,36 +156,36 @@ class ConstantTransformer(BaseGlobalTransformer):
         self.constant_offset = npzf['constant_offset']
 
 
-class StandardTransformer(BaseSklearnTransformer):
+class StandardScaler(BaseSklearnScaler):
 
     def __init__(self, nodata_value, savename_base):
         self.scaler = sklearn.preprocessing.StandardScaler(copy=True)
         super().__init__(nodata_value, savename_base)
 
 
-class MinMaxTransformer(BaseSklearnTransformer):
+class MinMaxScaler(BaseSklearnScaler):
 
     def __init__(self, nodata_value, savename_base, feature_range=(-1, 1)):
         self.scaler = sklearn.preprocessing.MinMaxScaler(feature_range=feature_range, copy=True)
         super().__init__(nodata_value, savename_base)
 
 
-class RobustTransformer(BaseSklearnTransformer):
+class RobustScaler(BaseSklearnScaler):
 
     def __init__(self, nodata_value, savename_base, quantile_range=(10.0, 90.0)):
         self.scaler = sklearn.preprocessing.RobustScaler(quantile_range=quantile_range, copy=True)
         super().__init__(nodata_value, savename_base)
 
 
-class PowerTransformer(BaseSklearnTransformer):
+class PowerScaler(BaseSklearnScaler):
 
     def __init__(self, nodata_value, savename_base, method='box-cox'):
-        self.scaler = sklearn.preprocessing.PowerTransformer(method=method, copy=True)
+        self.scaler = sklearn.preprocessing.PowerScaler(method=method, copy=True)
         super().__init__(nodata_value, savename_base)
 
 
-class QuantileUniformTransformer(BaseSklearnTransformer):
+class QuantileUniformScaler(BaseSklearnScaler):
 
     def __init__(self, nodata_value, savename_base, output_distribution='uniform'):
-        self.scaler = sklearn.preprocessing.QuantileTransformer(output_distribution=output_distribution, copy=True)
+        self.scaler = sklearn.preprocessing.QuantileScaler(output_distribution=output_distribution, copy=True)
         super().__init__(nodata_value, savename_base)
