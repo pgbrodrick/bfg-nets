@@ -11,7 +11,7 @@ class DataConfig:
     def __init__(self, window_radius, raw_feature_file_list, raw_response_file_list, **kwargs):
         """
           Arguments:
-          window_radius - determines the subset image size, which results as 2*window_radius  
+          window_radius - determines the subset image size, which results as 2*window_radius
           feature_file_list - file list of the feature rasters
           response_file_list - file list of the response rasters
         """
@@ -103,7 +103,7 @@ class DataConfig:
             pickle.dump(self.__dict__, sf_)
 
 
-def load_training_data(config : DataConfig):
+def load_training_data(config: DataConfig):
     """
         Loads and returns training data from disk based on the config savename
         Arguments:
@@ -122,7 +122,7 @@ def load_training_data(config : DataConfig):
 def load_data_config_from_file(data_save_name):
     try:
         with open(data_save_name + '_data_config', 'rb') as sf_:
-            loaded_config = pickle.load(sf_)
+            loaded_config= pickle.load(sf_)
 
         return DataConfig(**loaded_config)
     except:
