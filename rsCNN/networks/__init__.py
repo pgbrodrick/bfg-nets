@@ -5,6 +5,8 @@ import os
 from rsCNN.networks import callbacks, history, network_config
 from rsCNN.utils import assert_gpu_available
 
+from networks.network_config import NetworkConfig
+from data_management import DataConfig
 
 class TrainingHistory(object):
     """ A wrapper class designed to hold all relevant configuration information obtained
@@ -15,9 +17,9 @@ class TrainingHistory(object):
     pass
 
 
-class CNN(object):
+class Experiment(object):
 
-    def __init__(self, network_config: network_config.NetworkConfig, reinitialize=False):
+    def __init__(self, network_config: network_config.NetworkConfig, data_config: DataConfig, reinitialize=False):
         """ Initializes the appropriate network
 
         Arguments:
@@ -30,18 +32,19 @@ class CNN(object):
         load_history - bool
           Flag directing whether the model should load it's training history.
         """
-        self.config = network_config
+        self.network_config = network_config
+        self.data_config = data_config
 
         if (load_history and not reinitialize):
             warning.warn('Warning: loading model history and re-initializing the model')
 
-        if (reinitialize == False and os.path.isfile(self.config.filepath_model_out)):
-            self.model = keras.models.load_model(self.config.filepath_model)
+        if (reinitialize == False and os.path.isfile(self.network_config.filepath_model_out)):
+            self.model = keras.models.load_model(self.network_config.filepath_model)
         else:
-            self.model = self.config.create_architecture(
-                self.config.inshape, self.config.n_classes, **self.config.architecture_options)
+            self.model = self.network_config.create_architecture(
+                self.network_config.inshape, self.network_config.n_classes, **self.network_config.architecture_options)
 
-        self.model.compile(loss=self.config.loss_function, optimizer=self.config.optimizer)
+        self.model.compile(loss=self.network_config.loss_function, optimizer=self.network_config.optimizer)
 
         self.history = dict()
         self.training = None
@@ -74,20 +77,20 @@ class CNN(object):
         return gbytes
 
     def fit(self, features, responses, fold_assignments, load_history=True):
-        if self.config.assert_gpu:
+        if self.network_config.assert_gpu:
             assert_gpu_available()
 
-        if (load_history and os.path.isfile(self.config.filepath_history)):
-            history.load_history(self.config.filepath_history)
+        if (load_history and os.path.isfile(self.network_config.filepath_history)):
+            history.load_history(self.network_config.filepath_history)
             self.initial_epoch = len(self.history['lr'])
 
             # TODO: check into if this is legit, I think it probably is the right call
             K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
 
-        model_callbacks = callbacks.get_callbacks(self.config)
+        model_callbacks = callbacks.get_callbacks(self.network_config)
 
-        if (self.config.verification_fold is not None):
-            train_subset = fold_assignments == self.config.verification_fold
+        if (self.data_config.verification_fold is not None):
+            train_subset = fold_assignments == self.data_config.verification_fold
             test_subset = np.logical_not(train_subset)
             train_features = features[train_subset, ...]
             train_responses = responses[train_subset]
@@ -100,9 +103,9 @@ class CNN(object):
         self.model.fit(train_features,
                        train_responses,
                        validation_data=validation_data,
-                       epochs=self.config.max_epochs,
-                       batch_size=self.config.batch_size,
-                       verbose=self.config.verbosity,
+                       epochs=self.network_config.max_epochs,
+                       batch_size=self.network_config.batch_size,
+                       verbose=self.network_config.verbosity,
                        shuffle=False,
                        initial_epoch=self.intial_epoch,
                        callbacks=model_callbacks)
@@ -114,7 +117,7 @@ class CNN(object):
     def predict(self, features):
         # TODO: Fabina, the verbosity below could be a config parameter, but you basically always want this off (it's either super
         # fast or we're running some structured read/write that has an external reporting setup)
-        return self.model.predict(features, batch_size=self.config.batch_size, verbose=False)
+        return self.model.predict(features, batch_size=self.network_config.batch_size, verbose=False)
 
     def predict_sequence(self, predict_sequence):
         # TODO:  reimplement if/when we need generators, ignore for now

@@ -1,3 +1,4 @@
+import numpy as np
 import os
 
 
@@ -6,7 +7,7 @@ class DataConfig:
         sample generation, and scaling.
     """
 
-    def __init__(self, window_radius, feature_file_list, response_file_list, **kwargs):
+    def __init__(self, window_radius, raw_feature_file_list, raw_response_file_list, **kwargs):
         """
           Arguments:
           window_radius - determines the subset image size, which results as 2*window_radius  
@@ -18,10 +19,10 @@ class DataConfig:
         self.window_radius = window_radius
 
         # file list of the feature rasters
-        self.feature_file_list = feature_file_list
+        self.raw_feature_file_list = raw_feature_file_list
 
         # file list of the response rasters
-        self.response_file_list = response_file_list
+        self.raw_response_file_list = raw_response_file_list
 
         # Optional arguments
 
@@ -56,6 +57,9 @@ class DataConfig:
         # The number of folds to set up for data training.
         self.n_folds = kwargs.get('n_folds', 10)
 
+        # The fold to use for verification in model training
+        self.verification_fold = kwargs.get('verification_fold', None)
+
         # Either an integer (used for all sites) or a list of integers (one per site)
         # that designates the maximum number of samples to be pulled
         # from that location.  If the number of responses is less than the samples
@@ -83,6 +87,25 @@ class DataConfig:
         if (self.data_save_name is not None):
             assert os.path.isdir(os.path.dirname(self.data_save_name)), 'Invalid path for data_save_name'
 
-        # stored values for the eventual feature and response shapes
-        self.response_shape = kwargs.get('response_shape', None)
-        self.feature_shape = kwargs.get('feature_shape', None)
+        # These get set on the call to build (TODO: or load) training data
+        self.response_shape = None
+        self.feature_shape = None
+
+
+def load_training_data(config : DataConfig):
+    """
+        Loads and returns training data from disk based on the config savename
+        Arguments:
+            config - data config from which to reference data
+        Returns:
+            features - feature data
+            responses - response data
+            fold_assignments - per-sample fold assignments specified during data generation
+    """
+
+    assert os.path.isfile(config.data_save_name + '.npz'), 'Data file ' + config.data_save_name + '.npz not found.'
+    npzf = np.load(config.data_save_name + '.npz')
+    return npzf['features'], npzf['responses'], npzf['weights', npzf['fold_assignments']
+
+
+
