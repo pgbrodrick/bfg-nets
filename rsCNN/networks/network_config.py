@@ -77,12 +77,6 @@ def create_network_config(
 
     architecture_creator = architectures.get_architecture_creator(architecture)
 
-        # Training arguments
-        self.batch_size = kwargs.get('batch_size', 1)
-        self.max_epochs = kwargs.get('max_epochs', 100)
-        self.n_noimprovement_repeats = kwargs.get('n_noimprovement_repeats', 10)
-        self.optimizer = kwargs.get('optimizer', 'adam')
-
     config['architecture'] = {
         'architecture': architecture,
         'inshape': inshape,
@@ -96,6 +90,7 @@ def create_network_config(
     config['architecture_options']['output_activation'] = output_activation
 
     config['training'] = {
+        'apply_random_transformations': kwargs.get('apply_random_transformations', False),
         'batch_size': kwargs.get('batch_size', 1),
         'max_epochs': kwargs.get('max_epochs', 100),
         'optimizer': kwargs.get('optimizer', 'adam'),

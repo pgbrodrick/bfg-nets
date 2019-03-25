@@ -92,6 +92,10 @@ class DataConfig:
         self.response_shape = None
         self.feature_shape = None
 
+        # Scalers
+        self.feature_scaler_name = kwargs.get('feature_scaler_name', None)
+        self.response_scaler_name = kwargs.get('response_scaler_name', None)
+
     # TODO: safegaurd from overwrite?
     def save_to_file(self):
         print('saving data config')

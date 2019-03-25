@@ -1,13 +1,14 @@
 import configparser
-import keras
-import keras.backend as K
-import numpy as np
 import os
 from typing import List, Union
 
+import keras
+import keras.backend as K
+import numpy as np
+
 from rsCNN import utils
 from rsCNN.networks import callbacks, history, losses
-from data_management import DataConfig
+from rsCNN.data_management import DataConfig, scalers, sequences
 
 
 class Experiment(object):
@@ -26,6 +27,18 @@ class Experiment(object):
         load_history - bool
           Flag directing whether the model should load it's training history.
         """
+        # TODO:  move continue_training here, do all overwrite checks here and reduce all of
+        #  the filename/dir settings so that we have one for experiment, only overwrite any objects
+        #  if we continue here, change continue_training to new name? below docstring
+        """
+        assert not (continue_training is False and self._is_model_new is False), \
+            'The parameter continue_training must be true to continue training an existing model'
+
+        if continue_training:
+            if 'lr' in self.history:
+                K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
+        """
+
         self.network_config = network_config
         self.data_config = data_config
 
@@ -54,6 +67,24 @@ class Experiment(object):
             self.model.compile(loss=loss_function, optimizer=self.network_config['training']['optimizer'])
             self._is_model_new = True
 
+    def build_or_load_data(self):
+        # TODO:  Phil adds logic for parsing files
+        # TODO:  Phil adds logi cfor loading data into features/responses, training munge style
+        # TODO:  Phil wants to write logic to find system memory and how much is available to get size
+        # TODO:  be sure we return generators/sequences
+        # build data
+        # load data
+        # create scalers
+        # create sequences/generators
+        raise
+        if True:
+            features, responses, weights, fold_assignments = training_data.build_regression_training_data_ordered(data_config)
+        else:
+            data_management = load_training_data(data_config)
+        self.train_generator = None
+        self.validation_generator = None
+        self.test_generator = None
+
     def calculate_training_memory_usage(self, batch_size: int) -> float:
         # Shamelessly copied from
         # https://stackoverflow.com/questions/43137288/how-to-determine-needed-memory-of-keras-model
@@ -80,70 +111,33 @@ class Experiment(object):
         gbytes = np.round(total_memory / (1024.0 ** 3), 3)
         return gbytes
 
-    def fit(
-            self,
-            train_features: Union[np.ndarray, List[np.ndarray]],
-            train_responses: Union[np.ndarray, List[np.ndarray]],
-            validation_data: tuple = None,
-            continue_training: bool = False
-    ) -> None:
+    def evaluate_network(self):
+        features, responses = self.test_generator.__getitem__(0)
+        evaluation.generate_eval_report(args)
+
+    def fit_network(self) -> None:
+        # TODO:  something to think about:  features and responses may not make sense for some architectures, like
+        #  those architectures where the inputs and targets of the algorithm are something like inputs = [x]
+        #  and targets = [x, y]... that is, where we're trying to reconstruct x while also predicting y. Do we stick
+        #  with these names?
         if self.network_config['model']['assert_gpu']:
             utils.assert_gpu_available()
 
-        assert not (continue_training is False and self._is_model_new is False), \
-            'The parameter continue_training must be true to continue training an existing model'
-
-        if continue_training:
-            if 'lr' in self.history:
-                K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
-
         model_callbacks = callbacks.get_callbacks(self.network_config, self.history)
 
-        new_history = self.model.fit(
-            train_features,
-            train_responses,
-            batch_size=self.network_config['training']['batch_size'],
-            epochs=self.network_config['training']['max_epochs'],
-            verbose=self.network_config['model']['verbosity'],
-            callbacks=model_callbacks,
-            validation_data=validation_data,
-            shuffle=False,
-            initial_epoch=len(self.history.get('lr', list())),
-            steps_per_epoch=None,
-            validation_steps=None
-        )
-        self.history = history.combine_histories(self.history, new_history.history)
-        history.save_history(self.history, self.network_config['model']['dir_out'])
-        history.save_model(self.model, self.network_config['model']['dir_out'])
-
-    def fit_generator(
-            self,
-            train_generator: keras.utils.Sequence,
-            validation_generator: keras.utils.Sequence = None,
-            continue_training: bool = False
-    ) -> None:
-        if self.network_config['model']['assert_gpu']:
-            utils.assert_gpu_available()
-
-        assert not (continue_training is False and self._is_model_new is False), \
-            'The parameter continue_training must be true to continue training an existing model'
-
-        if continue_training:
-            if 'lr' in self.history:
-                K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
-
-        model_callbacks = callbacks.get_callbacks(self.network_config, self.history)
+        #return self.feature_scaler.transform(features), \
+        #       self.response_scaler.transform(responses)
 
         # TODO:  Same parameter questions as with fit()
         # TODO:  Check whether psutil.cpu_count gives the right answer on SLURM, i.e., the number of CPUs available to
         #  the job and not the total number on the instance.
         new_history = self.model.fit_generator(
-            train_generator,
+            self.train_generator,
             steps_per_epoch=1,
             epochs=self.network_config['training']['max_epochs'],
             verbose=self.network_config['model']['verbosity'],
             callbacks=model_callbacks,
-            validation_data=validation_generator,
+            validation_data=self.validation_generator,
             max_queue_size=2,
             # workers=psutil.cpu_count(logical=True),
             # use_multiprocessing=True,
@@ -172,5 +166,30 @@ class Experiment(object):
             verbose=0
         )
 
+    def prepare_sequences(self) -> None:
+        batch_size = self.network_config['training']['batch_size']
+        apply_random = self.network_config['training']['apply_random_transformations']
+        self.train_sequence = sequences.Sequence(batch_size, self.feature_scaler, self.response_scaler, apply_random)
+        self.validate_sequence = sequences.Sequence(batch_size, self.feature_scaler, self.response_scaler, apply_random)
+        self.test_sequence = sequences.Sequence(batch_size, self.feature_scaler, self.response_scaler)
+
     def plot_history(self, path_out=None):
         history.plot_history(self.history, path_out)
+
+    def fit_data_scalers(self) -> None:
+        # TODO:  incorporate scaler options in data config, might be worth the time to make it similar to how
+        #   architectures handle options, since we want to generate templates automatically, but we might need to
+        #   have subtemplates for general config, architectures, scalers, and other, since there would be too many
+        #   pairwise combinations to have all possibilities pre-generated
+        self.feature_scaler = scalers.get_scaler(
+            self.data_config.feature_scaler_name, self.data_config.feature_scaler_options)
+        self.response_scaler = scalers.get_scaler(
+            self.data_config.response_scaler_name, self.data_config.response_scaler_options)
+        # TODO:  PHIL:  please figure out how you want to step through the training data files to fit the data scalers,
+        #  based on our conversation about needing sufficient numbers of samples to confirm that the transformation is
+        #  adequate, or figure out how you want to keep data in memory from building and somehow still fit the
+        #  transformers
+        self.feature_scaler.fit('TODO')
+        self.response_scaler.fit('TODO')
+        self.feature_scaler.save()
+        self.response_scaler.save()
