@@ -120,7 +120,9 @@ class BaseSklearnScaler(BaseGlobalScaler):
         joblib.dump(self.scaler, self.savename)
 
     def load(self):
-        self.scaler = joblib.load(self.savename)
+        if (os.path.isfile(self.savename)):
+            self.scaler = joblib.load(self.savename)
+            self.is_fitted = True
 
 
 class ConstantScaler(BaseGlobalScaler):
@@ -151,9 +153,11 @@ class ConstantScaler(BaseGlobalScaler):
         np.savez(self.savename + '.npz', constant_scaler=self.constant_scaler, constant_offset=self.constant_offset)
 
     def load(self):
-        npzf = np.load(self.savename + '.npz')
-        self.constant_scaler = npzf['constant_scaler']
-        self.constant_offset = npzf['constant_offset']
+        if (os.path.isfile(self.savename + '.npz')):
+            npzf = np.load(self.savename + '.npz')
+            self.constant_scaler = npzf['constant_scaler']
+            self.constant_offset = npzf['constant_offset']
+            self.is_fitted = True
 
 
 class StandardScaler(BaseSklearnScaler):

@@ -8,14 +8,15 @@ import numpy as np
 
 from rsCNN import utils
 from rsCNN.networks import callbacks, history, losses
-from rsCNN.data_management import DataConfig, scalers, sequences
+from rsCNN.data_management import DataConfig, scalers, sequences, training_data, load_data_config_from_file, load_training_data
+from rsCNN import evaluation
 
 
 class Experiment(object):
     network_config = None
     _is_model_new = None
 
-    def __init__(self, network_config: configparser.ConfigParser, data_config: DataConfig) -> None:
+    def __init__(self, network_config: configparser.ConfigParser, data_config: DataConfig, resume=False) -> None:
         """ Initializes the appropriate network
 
         Arguments:
@@ -45,8 +46,28 @@ class Experiment(object):
         if not os.path.exists(self.network_config['model']['dir_out']):
             os.makedirs(self.network_config['model']['dir_out'])
 
-        self.history = history.load_history(self.network_config['model']['dir_out']) or dict()
+        # FABINA: Adding in this master 'resume' key for the experiment.  Thinking through behavior,
+        #         we're either going to want to load an experiment up, and then call specific actions,
+        #         or we're going to want to be able to say 'just keep going' - e.g., the preemption
+        #         case.  So if this master resume switch for the experiment is set, all other behavior
+        #         should follow as if the model is being picked right back up.  We may need additional
+        #         more specific flags to allow for other behavior, but since the most common cases will
+        #         be: 1) new experiment, 2) resume experiment, 3) load experiment and look at it,
+        #         those should be easiest.
 
+        self.resume = resume
+
+        # Load up info that already exists from the data config if we're resuming operations
+        if (self.resume):
+            self.data_config = load_data_config_from_file(self.data_config.data_save_name)
+
+        self.train_sequence = None
+        self.validation_sequence = None
+        self.test_sequence = None
+
+
+        # TODO: Let's wrap all of this up into a 'build_or_load_model' function for consistency
+        self.history = history.load_history(self.network_config['model']['dir_out']) or dict()
         loss_function = losses.cropped_loss(
             self.network_config['architecture']['loss_metric'],
             self.data_config.window_radius*2,
@@ -67,27 +88,73 @@ class Experiment(object):
             self.model.compile(loss=loss_function, optimizer=self.network_config['training']['optimizer'])
             self._is_model_new = True
 
-    def build_or_load_data(self):
-        # TODO:  PHIL:  review the sequence and scalar changes I've made before refactoring this. Things are simple if
-        #  you just save the data to disk and keep this independent of other operations. You'll need to integrate
-        #  multiple methods and classes if you want to optimize things.
-        # TODO:  Phil adds logic for parsing files
-        # TODO:  Phil adds logi cfor loading data into features/responses, training munge style
-        # TODO:  Phil wants to write logic to find system memory and how much is available to get size
-        # TODO:  be sure we return generators/sequences?
-        # build data
-        # load data
-        # create scalers
-        # create sequences/generators
-        raise
-        if True:
-            features, responses, weights, fold_assignments = training_data.build_regression_training_data_ordered(
-                data_config)
-        else:
-            data_management = load_training_data(data_config)
-        self.train_generator = None
-        self.validation_generator = None
-        self.test_generator = None
+    def build_or_load_data(self, rebuild=False):
+        """
+            This function does the following, considering the rebuild parameter at each step:
+                1) load/build training data
+                2) load/initialize/fit scalers
+                3) initiate train/validation/test sequences as components of Experiment
+        """
+        if (rebuild == False):
+            features, responses, weights, read_success = load_training_data(self.data_config)
+
+        if (read_success == False or rebuild == True):
+            if (self.data_config.data_build_category == 'ordered_continuous'):
+                features, responses, weights, fold_assignments = training_data.build_training_data_ordered(self.data_config)
+            else:
+                raise NotImplementedError('Unknown data_build_category')
+
+
+        # TODO:  incorporate scaler options in data config, might be worth the time to make it similar to how
+        #   architectures handle options, since we want to generate templates automatically, but we might need to
+        #   have subtemplates for general config, architectures, scalers, and other, since there would be too many
+        #   pairwise combinations to have all possibilities pre-generated
+        self.feature_scaler = scalers.get_scaler(
+            self.data_config.feature_scaler_name, self.data_config.feature_scaler_options)
+        self.response_scaler = scalers.get_scaler(
+            self.data_config.response_scaler_name, self.data_config.response_scaler_options)
+
+        self.feature_scaler.load()
+        self.response_scaler.load()
+
+        train_folds = [x for x in np.arange(self.data_config.n_folds) if x is not self.data_config.verification_fold]
+
+        if (self.feature_scaler.is_fitted == False or rebuild == True):
+            #TODO: do better
+            self.feature_scaler.fit(features[train_folds[0]])
+            self.feature_scaler.save()
+        if (self.response_scaler.is_fitted == False or rebuild == True):
+            # TODO: do better
+            self.response_scaler.fit(responses[train_folds[0]])
+            self.response_scaler.save()
+
+        batch_size = self.network_config['training']['batch_size']
+        apply_random = self.network_config['training']['apply_random_transformations']
+        self.train_sequence = sequences.Sequence([features[_f] for _f in train_folds],
+                                                 [responses[_r] for _r in train_folds],
+                                                 [weights[_w] for _w in train_folds],
+                                                 batch_size,
+                                                 self.feature_scaler,
+                                                 self.response_scaler,
+                                                 apply_random)
+        if (self.data_config.validation_fold is not None):
+            self.validate_sequence = sequences.Sequence([features[self.data_config.validation_fold]],
+                                                        [responses[self.data_config.validation_fold]],
+                                                        [weights[self.data_config.validation_fold]],
+                                                        batch_size,
+                                                        self.feature_scaler,
+                                                        self.response_scaler,
+                                                        apply_random)
+        if (self.data_config.test_fold is not None):
+            self.test_sequence = sequences.Sequence([features[self.data_config.test_fold]],
+                                                    [responses[self.data_config.test_fold]],
+                                                    [weights[self.data_config.test_fold]],
+                                                    batch_size,
+                                                    self.feature_scaler,
+                                                    self.response_scaler,
+                                                    apply_random)
+
+
 
     def calculate_training_memory_usage(self, batch_size: int) -> float:
         # Shamelessly copied from
@@ -116,34 +183,25 @@ class Experiment(object):
         return gbytes
 
     def evaluate_network(self):
-        # TODO:  sequences now have a get_transformed and get_untransformed method (check names) so that you can get
-        #  what you need directly. You might need to reorganize that code if youw ant to get both at the same time.
-        features, responses = self.test_generator.__getitem__(0)
+        # TODO: modify to accept sequences
         evaluation.generate_eval_report(args)
 
     def fit_network(self) -> None:
-        # TODO:  something to think about:  features and responses may not make sense for some architectures, like
-        #  those architectures where the inputs and targets of the algorithm are something like inputs = [x]
-        #  and targets = [x, y]... that is, where we're trying to reconstruct x while also predicting y. Do we stick
-        #  with these names?
         if self.network_config['model']['assert_gpu']:
             utils.assert_gpu_available()
 
         model_callbacks = callbacks.get_callbacks(self.network_config, self.history)
 
-        # return self.feature_scaler.transform(features), \
-        #       self.response_scaler.transform(responses)
-
         # TODO:  Same parameter questions as with fit()
         # TODO:  Check whether psutil.cpu_count gives the right answer on SLURM, i.e., the number of CPUs available to
         #  the job and not the total number on the instance.
         new_history = self.model.fit_generator(
-            self.train_generator,
+            self.train_sequence,
             steps_per_epoch=1,
             epochs=self.network_config['training']['max_epochs'],
             verbose=self.network_config['model']['verbosity'],
             callbacks=model_callbacks,
-            validation_data=self.validation_generator,
+            validation_data=self.validation_sequence,
             max_queue_size=2,
             # workers=psutil.cpu_count(logical=True),
             # use_multiprocessing=True,
@@ -171,35 +229,3 @@ class Experiment(object):
             # use_multiprocessing=True,
             verbose=0
         )
-
-    def prepare_sequences(self) -> None:
-        # TODO:  PHIL:  this takes no time at all, would you prefer these are only in fit or predict methods and that
-        #  we don't save references to the sequences? Note that it's useful to save if we want to play around with the
-        #  sequences / manually sample, but probably not if we want to keep the object clean of as many attrs or methods
-        #  as possible
-        batch_size = self.network_config['training']['batch_size']
-        apply_random = self.network_config['training']['apply_random_transformations']
-        self.train_sequence = sequences.Sequence(batch_size, self.feature_scaler, self.response_scaler, apply_random)
-        self.validate_sequence = sequences.Sequence(batch_size, self.feature_scaler, self.response_scaler, apply_random)
-        self.test_sequence = sequences.Sequence(batch_size, self.feature_scaler, self.response_scaler)
-
-    def plot_history(self, path_out=None):
-        history.plot_history(self.history, path_out)
-
-    def fit_data_scalers(self) -> None:
-        # TODO:  incorporate scaler options in data config, might be worth the time to make it similar to how
-        #   architectures handle options, since we want to generate templates automatically, but we might need to
-        #   have subtemplates for general config, architectures, scalers, and other, since there would be too many
-        #   pairwise combinations to have all possibilities pre-generated
-        self.feature_scaler = scalers.get_scaler(
-            self.data_config.feature_scaler_name, self.data_config.feature_scaler_options)
-        self.response_scaler = scalers.get_scaler(
-            self.data_config.response_scaler_name, self.data_config.response_scaler_options)
-        # TODO:  PHIL:  please figure out how you want to step through the training data files to fit the data scalers,
-        #  based on our conversation about needing sufficient numbers of samples to confirm that the transformation is
-        #  adequate, or figure out how you want to keep data in memory from building and somehow still fit the
-        #  transformers
-        self.feature_scaler.fit('TODO')
-        self.response_scaler.fit('TODO')
-        self.feature_scaler.save()
-        self.response_scaler.save()

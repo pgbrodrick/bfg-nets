@@ -1,4 +1,5 @@
 import gdal
+from pathlib import Path
 import numpy as np
 import re
 from tqdm import tqdm
@@ -109,7 +110,7 @@ def check_data_matches(set_a, set_b, set_b_is_vector=False, set_c=[], set_c_is_v
                     raise Exception(('extent mismatch between', set_a[n], 'and', set_c[n]))
 
 
-def build_regression_training_data_ordered(config):
+def build_training_data_ordered(config):
     """ Builds a set of training data based on the configuration input
         Arguments:
         config - object of type Data_Config with the requisite values for preparing training data (see __init__.py)
@@ -145,6 +146,7 @@ def build_regression_training_data_ordered(config):
     repeat_index = []
 
     n_features = np.nan
+
 
     for _i in range(0, len(config.feature_file_list)):
         # TODO: external update through loggers
@@ -254,14 +256,17 @@ def build_regression_training_data_ordered(config):
     _logger.debug('Feature shape: {}'.format(features.shape))
     _logger.debug('Response shape: {}'.format(response.shape))
 
-    if (config.data_save_name is not None):
-        np.savez(config.data_save_name, features=features, responses=responses, fold_assignments=fold_assignments)
-
     config.response_shape = responses.shape
     config.feature_shape = features.shape
 
-    return features, responses, weights, fold_assignments
     if (config.data_save_name is not None):
+        for fold in range(len(config.n_folds)):
+            np.save(config.feature_files[fold], features[fold_assignments == fold, ...])
+            np.save(config.response_files[fold], responses[fold_assignments == fold, ...])
+            np.save(config.weight_files[fold], weights[fold_assignments == fold, ...])
+        config.saved_data = True
         config.save_to_file()
 
+
     return features, responses, fold_assignments
+
