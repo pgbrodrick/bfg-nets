@@ -16,6 +16,9 @@ class DataConfig:
           response_file_list - file list of the response rasters
         """
 
+        # TODO: these should actually be optional so Fabina can just pass in a .npz.  need to get
+        #       window_radius if this is the case
+
         # determines the subset image size, which results as 2*window_radius
         self.window_radius = window_radius
 
@@ -26,6 +29,10 @@ class DataConfig:
         self.raw_response_file_list = raw_response_file_list
 
         # Optional arguments
+
+        # A string that tells us how to build the training data set.  Current options are:
+        # ordered_continuous
+        self.data_build_category = kwargs.get('data_build_category', 'ordered_continuous')
 
         # TODO: perhaps clean how these are all set? there's got to be a common way of handling large configs
         # A boolean indication of whether the response type is a vector or a raster (True for vector).
@@ -58,8 +65,11 @@ class DataConfig:
         # The number of folds to set up for data training.
         self.n_folds = kwargs.get('n_folds', 10)
 
-        # The fold to use for verification in model training
-        self.verification_fold = kwargs.get('verification_fold', None)
+        # The fold to use for validation in model training
+        self.validation_fold = kwargs.get('validation_fold', None)
+
+        # The fold to use for testing
+        self.test_fold = kwargs.get('test_fold', None)
 
         # Either an integer (used for all sites) or a list of integers (one per site)
         # that designates the maximum number of samples to be pulled
@@ -87,6 +97,11 @@ class DataConfig:
         self.data_save_name = kwargs.get('data_save_name', None)
         if (self.data_save_name is not None):
             assert os.path.isdir(os.path.dirname(self.data_save_name)), 'Invalid path for data_save_name'
+            self.response_files = [self.data_save_name + '_responses_' + str(fold) + '.npy' for fold in range(self.n_folds)]
+            self.feature_files = [self.data_save_name + '_features_' + str(fold) + '.npy' for fold in range(self.n_folds)]
+            self.weight_files = [self.data_save_name + '_weights_' + str(fold) + '.npy' for fold in range(self.n_folds)]
+            self.data_config_file = self.data_save_name + '_data_config.pkl'
+            self.saved_data = False
 
         # These get set on the call to build (TODO: or load) training data
         self.response_shape = None
@@ -99,7 +114,7 @@ class DataConfig:
     # TODO: safegaurd from overwrite?
     def save_to_file(self):
         print('saving data config')
-        with open(self.data_save_name + '_data_config', 'wb') as sf_:
+        with open(self.data_config_file, 'wb') as sf_:
             pickle.dump(self.__dict__, sf_)
 
 
@@ -114,9 +129,34 @@ def load_training_data(config: DataConfig):
             fold_assignments - per-sample fold assignments specified during data generation
     """
 
-    assert os.path.isfile(config.data_save_name + '.npz'), 'Data file ' + config.data_save_name + '.npz not found.'
-    npzf = np.load(config.data_save_name + '.npz')
-    return npzf['features'], npzf['responses'], npzf['weights', npzf['fold_assignments']
+    success = True
+    if (not config.saved_data):
+        success = False
+
+    features = []
+    responses = []
+    weights = []
+    for fold in range(len(config.n_folds)):
+        if (os.path.isfile(config.feature_files[fold])):
+            features.append(np.load(config.feature_files[fold], mmap_mode='r'))
+        else:
+            success = False
+            break
+        if (os.path.isfile(config.response_files[fold])):
+            responses.append(np.load(config.response_files[fold], mmap_mode='r'))
+        else:
+            success = False
+            break
+        if (os.path.isfile(config.weight_files[fold])):
+            weights.append(np.load(config.weight_files[fold], mmap_mode='r'))
+        else:
+            success = False
+            break
+
+    if (success):
+        return features, responses, weights, fold_assignments, True
+    else:
+        return None, None, None, None, False
 
 
 def load_data_config_from_file(data_save_name):
@@ -126,4 +166,4 @@ def load_data_config_from_file(data_save_name):
 
         return DataConfig(**loaded_config)
     except:
-        print('Failed to load DataConfig from ' + data_save_name + '_data_config')
+        print('Failed to load DataConfig from ' + data_save_name + '_data_config.pkl')

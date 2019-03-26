@@ -51,39 +51,3 @@ def combine_histories(existing_history, new_history):
         combined_history.setdefault(key, list()).extend(value)
     return combined_history
 
-
-def plot_history(history, path_out=None):
-    fig, axes = plt.subplots(figsize=(8, 8), nrows=2, ncols=2)
-    # Epoch times and delays
-    ax = axes.ravel()[0]
-    epoch_time = [(finish - start).seconds for start, finish in zip(history['epoch_start'], history['epoch_finish'])]
-    epoch_delay = [(start - finish).seconds for start, finish
-                   in zip(history['epoch_start'][1:], history['epoch_finish'][:-1])]
-    ax.plot(epoch_time, c='black', label='Epoch time')
-    ax.plot(epoch_delay, '--', c='blue', label='Epoch delay')
-    ax.set_xlabel('Epoch')
-    ax.set_ylabel('Seconds')
-    ax.legend()
-    # Epoch times different view
-    ax = axes.ravel()[1]
-    dts = [epoch.strftime('%d %H:%M') for epoch in history['epoch_finish']]
-    ax.hist(dts)
-    ax.xaxis.set_tick_params(rotation=45)
-    ax.set_ylabel('Epochs completed')
-    # Loss
-    ax = axes.ravel()[2]
-    ax.plot(history['loss'][-160:], c='black', label='Training loss')
-    if 'val_loss' in history:
-        ax.plot(history['val_loss'][-160:], '--', c='blue', label='Validation loss')
-    ax.set_xlabel('Epoch')
-    ax.set_ylabel('Loss')
-    ax.legend()
-    # Learning rate
-    ax = axes.ravel()[3]
-    ax.plot(history['lr'][-160:], c='black')
-    ax.set_xlabel('Epoch')
-    ax.set_ylabel('Learning rate')
-    if path_out:
-        fig.savefig(path_out)
-    else:
-        fig.show()

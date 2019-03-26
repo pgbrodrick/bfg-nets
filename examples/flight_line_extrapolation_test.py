@@ -25,6 +25,7 @@ global_options = {
     'raw_response_file_list': ['../global_cwc/dat/responses/resp_subset.tif'],
 
     'data_save_name': 'examples/munged/cwc_data_test',
+    'data_build_category': 'ordered_continuous',
     'max_samples': 30000,
     'window_radius': 16,
     'internal_window_radius': 8,
@@ -38,6 +39,7 @@ global_options = {
     'n_layers': 10,
     'output_activation': 'softplus',
     'n_classes': 1,
+    'continue_training': False,
 
     'network_name': 'cwc_test_network',
     'optimizer': 'adam',
@@ -62,21 +64,19 @@ network_config = NetworkConfig(inshape=data_config.feature_shape[1:],
 
 experiment = Experiment(network_config, data_config)
 experiment.build_or_load_data()
-experiment.fit_data_scalers()
-experiment.prepare_sequences()
 experiment.fit_network()
-experiment.evaluate_network()
+#experiment.evaluate_network()
 
 
-if (args.key == 'apply' or args.key == 'all'):
-    feature_scaler.load()
-    response_scaler.load()
-    for _f in range(len(application_feature_files)):
-        rsCNN.data_management.apply_model_to_data.apply_model_to_raster(experiment,
-                                                                        data_config,
-                                                                        application_feature_files[_f],
-                                                                        application_output_basenames[_f],
-                                                                        make_png=False,
-                                                                        make_tif=True,
-                                                                        feature_transformer=feature_scaler,
-                                                                        response_transformer=response_scaler)
+#if (args.key == 'apply' or args.key == 'all'):
+#    feature_scaler.load()
+#    response_scaler.load()
+#    for _f in range(len(application_feature_files)):
+#        rsCNN.data_management.apply_model_to_data.apply_model_to_raster(experiment,
+#                                                                        data_config,
+#                                                                        application_feature_files[_f],
+#                                                                        application_output_basenames[_f],
+#                                                                        make_png=False,
+#                                                                        make_tif=True,
+#                                                                        feature_transformer=feature_scaler,
+#                                                                        response_transformer=response_scaler)
