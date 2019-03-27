@@ -16,7 +16,7 @@ class Experiment(object):
     network_config = None
     _is_model_new = None
 
-    def __init__(self, network_config: configparser.ConfigParser, data_config: DataConfig, resume=False) -> None:
+    def __init__(self, network_config: configparser.ConfigParser, data_config: DataConfig, resume=True) -> None:
         """ Initializes the appropriate network
 
         Arguments:
@@ -59,7 +59,9 @@ class Experiment(object):
 
         # Load up info that already exists from the data config if we're resuming operations
         if (self.resume):
-            self.data_config = load_data_config_from_file(self.data_config.data_save_name)
+            ldc = load_data_config_from_file(self.data_config.data_save_name)
+            if ldc is not None:
+                self.data_config = ldc
 
         self.train_sequence = None
         self.validation_sequence = None
@@ -95,12 +97,16 @@ class Experiment(object):
                 2) load/initialize/fit scalers
                 3) initiate train/validation/test sequences as components of Experiment
         """
+
+        #TODO: start off by checking to make sure that we have all requisite info via assert
+
+
         if (rebuild == False):
             features, responses, weights, read_success = load_training_data(self.data_config)
 
         if (read_success == False or rebuild == True):
             if (self.data_config.data_build_category == 'ordered_continuous'):
-                features, responses, weights, fold_assignments = training_data.build_training_data_ordered(self.data_config)
+                features, responses, weights = training_data.build_training_data_ordered(self.data_config)
             else:
                 raise NotImplementedError('Unknown data_build_category')
 
@@ -109,15 +115,19 @@ class Experiment(object):
         #   architectures handle options, since we want to generate templates automatically, but we might need to
         #   have subtemplates for general config, architectures, scalers, and other, since there would be too many
         #   pairwise combinations to have all possibilities pre-generated
-        self.feature_scaler = scalers.get_scaler(
-            self.data_config.feature_scaler_name, self.data_config.feature_scaler_options)
-        self.response_scaler = scalers.get_scaler(
-            self.data_config.response_scaler_name, self.data_config.response_scaler_options)
+        feat_scaler_atr = {'nodata_value' : self.data_config.feature_nodata_value, 
+                           'savename_base': self.data_config.data_save_name + '_feature_scaler'}
+        self.feature_scaler = scalers.get_scaler(self.data_config.feature_scaler_name, 
+                                                 feat_scaler_atr)
 
+        resp_scaler_atr = {'nodata_value' : self.data_config.response_nodata_value, 
+                           'savename_base': self.data_config.data_save_name + '_response_scaler'}
+        self.response_scaler = scalers.get_scaler(self.data_config.response_scaler_name, 
+                                                  resp_scaler_atr)
         self.feature_scaler.load()
         self.response_scaler.load()
 
-        train_folds = [x for x in np.arange(self.data_config.n_folds) if x is not self.data_config.verification_fold]
+        train_folds = [x for x in np.arange(self.data_config.n_folds) if x is not self.data_config.validation_fold and x is not self.data_config.test_fold]
 
         if (self.feature_scaler.is_fitted == False or rebuild == True):
             #TODO: do better
@@ -138,13 +148,13 @@ class Experiment(object):
                                                  self.response_scaler,
                                                  apply_random)
         if (self.data_config.validation_fold is not None):
-            self.validate_sequence = sequences.Sequence([features[self.data_config.validation_fold]],
-                                                        [responses[self.data_config.validation_fold]],
-                                                        [weights[self.data_config.validation_fold]],
-                                                        batch_size,
-                                                        self.feature_scaler,
-                                                        self.response_scaler,
-                                                        apply_random)
+            self.validation_sequence = sequences.Sequence([features[self.data_config.validation_fold]],
+                                                          [responses[self.data_config.validation_fold]],
+                                                          [weights[self.data_config.validation_fold]],
+                                                          batch_size,
+                                                          self.feature_scaler,
+                                                          self.response_scaler,
+                                                          apply_random)
         if (self.data_config.test_fold is not None):
             self.test_sequence = sequences.Sequence([features[self.data_config.test_fold]],
                                                     [responses[self.data_config.test_fold]],
@@ -197,7 +207,6 @@ class Experiment(object):
         #  the job and not the total number on the instance.
         new_history = self.model.fit_generator(
             self.train_sequence,
-            steps_per_epoch=1,
             epochs=self.network_config['training']['max_epochs'],
             verbose=self.network_config['model']['verbosity'],
             callbacks=model_callbacks,

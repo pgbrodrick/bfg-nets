@@ -115,7 +115,7 @@ class DataConfig:
     def save_to_file(self):
         print('saving data config')
         with open(self.data_config_file, 'wb') as sf_:
-            pickle.dump(self.__dict__, sf_)
+            pickle.dump(self, sf_)
 
 
 def load_training_data(config: DataConfig):
@@ -131,39 +131,44 @@ def load_training_data(config: DataConfig):
 
     success = True
     if (not config.saved_data):
+        print('no saved data')
         success = False
 
     features = []
     responses = []
     weights = []
-    for fold in range(len(config.n_folds)):
+    for fold in range(config.n_folds):
         if (os.path.isfile(config.feature_files[fold])):
             features.append(np.load(config.feature_files[fold], mmap_mode='r'))
         else:
             success = False
+            print('feailed read at ' + config.feature_files[fold])
             break
         if (os.path.isfile(config.response_files[fold])):
             responses.append(np.load(config.response_files[fold], mmap_mode='r'))
         else:
+            print('feailed read at ' + config.response_files[fold])
             success = False
             break
         if (os.path.isfile(config.weight_files[fold])):
             weights.append(np.load(config.weight_files[fold], mmap_mode='r'))
         else:
+            print('feailed read at ' + config.weight_files[fold])
             success = False
             break
 
     if (success):
-        return features, responses, weights, fold_assignments, True
+        return features, responses, weights, True
     else:
-        return None, None, None, None, False
+        return None, None, None, False
 
 
 def load_data_config_from_file(data_save_name):
     try:
-        with open(data_save_name + '_data_config', 'rb') as sf_:
+        with open(data_save_name + '_data_config.pkl', 'rb') as sf_:
+            print('loading config file ' + data_save_name + '_data_config.pkl')
             loaded_config= pickle.load(sf_)
 
-        return DataConfig(**loaded_config)
+        return loaded_config
     except:
         print('Failed to load DataConfig from ' + data_save_name + '_data_config.pkl')

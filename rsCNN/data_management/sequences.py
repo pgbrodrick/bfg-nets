@@ -16,10 +16,10 @@ class Sequence(keras.utils.Sequence):
 
     def __init__(
             self,
-            batch_size: int,
             features,
             responses,
             weights,
+            batch_size: int,
             feature_scaler: Type[BaseGlobalScaler],
             response_scaler: Type[BaseGlobalScaler],
             apply_random_transformations: bool = False
@@ -31,44 +31,48 @@ class Sequence(keras.utils.Sequence):
         self.feature_scaler = feature_scaler
         self.response_scaler = response_scaler
         self.apply_random_transformations = apply_random_transformations
-        self.current_fold = 0
 
-        self.total_samples = 0
-        self.sample_index = 0
-        for fold in range(len(features)):
-            self.total_samples += features[fold].shape[0]
+        self.cum_samples_per_fold = np.zeros(len(features)+1).astype(int)
+        for fold in range(1,len(features)+1):
+            self.cum_samples_per_fold[fold] = features[fold-1].shape[0] + self.cum_samples_per_fold[fold-1]
+            print((('cum_', fold, self.cum_samples_per_fold[fold])))
 
     def __len__(self):
         # Method is required for Keras functionality, a.k.a. steps_per_epoch in fit_generator
-        return int(np.ceil(self.total_samples / self.batch_size))
+        return int(np.ceil(self.cum_samples_per_fold[-1] / self.batch_size))
 
-    def __getitem__(self, item: int, apply_transforms: bool = True) -> Tuple[np.array, np.array]:
-        # TODO:  I think this should work because apply_transforms is a kwarg
+    def __getitem__(self, index: int, apply_transforms: bool = True) -> Tuple[np.array, np.array]:
         # Method is required for Keras functionality
-        _logger.debug('Get batch {} with {} items via sequence'.format(item, self.batch_size))
+        _logger.debug('Get batch {} with {} items via sequence'.format(index, self.batch_size))
 
-        batch_features = (self.features[self.current_fold])[self.sample_index:self.batch_size, ...]
-        batch_responses = (self.responses[self.current_fold])[self.sample_index:self.batch_size, ...]
-        batch_weights = (self.weights[self.current_fold])[self.sample_index:self.batch_size, ...]
+        current_fold = 0
+        while current_fold < len(self.cum_samples_per_fold) - 1: 
+            if ((index * self.batch_size >= self.cum_samples_per_fold[current_fold] and \
+                index * self.batch_size <  self.cum_samples_per_fold[current_fold+1])):
+                break
+            current_fold += 1
+            q = 1
+
+        sample_index = int(index * self.batch_size - self.cum_samples_per_fold[current_fold])
+
+        batch_features = (self.features[current_fold])[sample_index:sample_index+self.batch_size, ...].copy()
+        batch_responses = (self.responses[current_fold])[sample_index:sample_index+self.batch_size, ...].copy()
+        batch_weights = (self.weights[current_fold])[sample_index:sample_index+self.batch_size, ...].copy()
 
         breakout = False
-        while (batch_features.shape[0] != self.batch_size):
-            self.sample_index = 0
-            self.current_fold += 1
+        while (batch_features.shape[0] < self.batch_size):
+            sample_index = 0
+            current_fold += 1
 
-            if (self.current_fold == len(self.features)):
-                breakout = True
+            if (current_fold == len(self.features)):
                 break
 
-            batch_features = np.append(batch_features,(self.features[self.current_fold])[self.sample_index:self.batch_size, ...], axis=0)
-            batch_responses = np.append(batch_responses,(self.responses[self.current_fold])[self.sample_index:self.batch_size, ...], axis=0)
-            batch_weights = np.append(batch_weights,(self.weights[self.current_fold])[self.sample_index:self.batch_size, ...], axis=0)
+            stop_ind = self.batch_size - batch_features.shape[0]
+            batch_features = np.append(batch_features,(self.features[current_fold])[sample_index:stop_ind, ...], axis=0)
+            batch_responses = np.append(batch_responses,(self.responses[current_fold])[sample_index:stop_ind, ...], axis=0)
+            batch_weights = np.append(batch_weights,(self.weights[current_fold])[sample_index:stop_ind, ...], axis=0)
 
-        if (breakout):
-            self.current_fold = 0
-            self.sample_index = 0
-        else:
-            self.sample_index += self.batch_size
+
 
         batch_features, batch_responses = self._transform_features_and_responses(batch_features, batch_responses)
         batch_responses = np.append(batch_responses,batch_weights,axis=-1)
