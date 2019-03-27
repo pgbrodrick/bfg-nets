@@ -67,7 +67,6 @@ class Experiment(object):
         self.validation_sequence = None
         self.test_sequence = None
 
-
         # TODO: Let's wrap all of this up into a 'build_or_load_model' function for consistency
         self.history = history.load_history(self.network_config['model']['dir_out']) or dict()
         loss_function = losses.cropped_loss(
@@ -98,8 +97,7 @@ class Experiment(object):
                 3) initiate train/validation/test sequences as components of Experiment
         """
 
-        #TODO: start off by checking to make sure that we have all requisite info via assert
-
+        # TODO: start off by checking to make sure that we have all requisite info via assert
 
         if (rebuild == False):
             features, responses, weights, read_success = load_training_data(self.data_config)
@@ -110,27 +108,27 @@ class Experiment(object):
             else:
                 raise NotImplementedError('Unknown data_build_category')
 
-
         # TODO:  incorporate scaler options in data config, might be worth the time to make it similar to how
         #   architectures handle options, since we want to generate templates automatically, but we might need to
         #   have subtemplates for general config, architectures, scalers, and other, since there would be too many
         #   pairwise combinations to have all possibilities pre-generated
-        feat_scaler_atr = {'nodata_value' : self.data_config.feature_nodata_value, 
+        feat_scaler_atr = {'nodata_value': self.data_config.feature_nodata_value,
                            'savename_base': self.data_config.data_save_name + '_feature_scaler'}
-        self.feature_scaler = scalers.get_scaler(self.data_config.feature_scaler_name, 
+        self.feature_scaler = scalers.get_scaler(self.data_config.feature_scaler_name,
                                                  feat_scaler_atr)
 
-        resp_scaler_atr = {'nodata_value' : self.data_config.response_nodata_value, 
+        resp_scaler_atr = {'nodata_value': self.data_config.response_nodata_value,
                            'savename_base': self.data_config.data_save_name + '_response_scaler'}
-        self.response_scaler = scalers.get_scaler(self.data_config.response_scaler_name, 
+        self.response_scaler = scalers.get_scaler(self.data_config.response_scaler_name,
                                                   resp_scaler_atr)
         self.feature_scaler.load()
         self.response_scaler.load()
 
-        train_folds = [x for x in np.arange(self.data_config.n_folds) if x is not self.data_config.validation_fold and x is not self.data_config.test_fold]
+        train_folds = [x for x in np.arange(
+            self.data_config.n_folds) if x is not self.data_config.validation_fold and x is not self.data_config.test_fold]
 
         if (self.feature_scaler.is_fitted == False or rebuild == True):
-            #TODO: do better
+            # TODO: do better
             self.feature_scaler.fit(features[train_folds[0]])
             self.feature_scaler.save()
         if (self.response_scaler.is_fitted == False or rebuild == True):
@@ -163,8 +161,6 @@ class Experiment(object):
                                                     self.feature_scaler,
                                                     self.response_scaler,
                                                     apply_random)
-
-
 
     def calculate_training_memory_usage(self, batch_size: int) -> float:
         # Shamelessly copied from

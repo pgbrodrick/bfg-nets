@@ -97,8 +97,10 @@ class DataConfig:
         self.data_save_name = kwargs.get('data_save_name', None)
         if (self.data_save_name is not None):
             assert os.path.isdir(os.path.dirname(self.data_save_name)), 'Invalid path for data_save_name'
-            self.response_files = [self.data_save_name + '_responses_' + str(fold) + '.npy' for fold in range(self.n_folds)]
-            self.feature_files = [self.data_save_name + '_features_' + str(fold) + '.npy' for fold in range(self.n_folds)]
+            self.response_files = [self.data_save_name + '_responses_' +
+                                   str(fold) + '.npy' for fold in range(self.n_folds)]
+            self.feature_files = [self.data_save_name + '_features_' +
+                                  str(fold) + '.npy' for fold in range(self.n_folds)]
             self.weight_files = [self.data_save_name + '_weights_' + str(fold) + '.npy' for fold in range(self.n_folds)]
             self.data_config_file = self.data_save_name + '_data_config.pkl'
             self.saved_data = False
@@ -167,7 +169,7 @@ def load_data_config_from_file(data_save_name):
     try:
         with open(data_save_name + '_data_config.pkl', 'rb') as sf_:
             print('loading config file ' + data_save_name + '_data_config.pkl')
-            loaded_config= pickle.load(sf_)
+            loaded_config = pickle.load(sf_)
 
         return loaded_config
     except:
