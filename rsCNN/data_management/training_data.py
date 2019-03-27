@@ -1,4 +1,5 @@
 import gdal
+from pathlib import Path
 import numpy as np
 import re
 from tqdm import tqdm
@@ -109,7 +110,7 @@ def check_data_matches(set_a, set_b, set_b_is_vector=False, set_c=[], set_c_is_v
                     raise Exception(('extent mismatch between', set_a[n], 'and', set_c[n]))
 
 
-def build_regression_training_data_ordered(config):
+def build_training_data_ordered(config):
     """ Builds a set of training data based on the configuration input
         Arguments:
         config - object of type Data_Config with the requisite values for preparing training data (see __init__.py)
@@ -133,11 +134,11 @@ def build_regression_training_data_ordered(config):
         np.random.seed(config.random_seed)
 
     # TODO: relax reading style to not force all of these conditions (e.g., flex extents, though proj and px size should match for now)
-    check_data_matches(config.feature_file_list, config.response_file_list, False,
+    check_data_matches(config.raw_feature_file_list, config.raw_response_file_list, False,
                        config.boundary_file_list, config.boundary_as_vectors, config.ignore_projections)
 
     if (isinstance(config.max_samples, list)):
-        if (len(config.max_samples) != len(config.feature_file_list)):
+        if (len(config.max_samples) != len(config.raw_feature_file_list)):
             raise Exception('max_samples must equal feature_file_list length, or be an integer.')
 
     features = []
@@ -146,18 +147,19 @@ def build_regression_training_data_ordered(config):
 
     n_features = np.nan
 
-    for _i in range(0, len(config.feature_file_list)):
+
+    for _i in range(0, len(config.raw_feature_file_list)):
         # TODO: external update through loggers
 
         # open requisite datasets
-        dataset = gdal.Open(config.feature_file_list[_i], gdal.GA_ReadOnly)
+        dataset = gdal.Open(config.raw_feature_file_list[_i], gdal.GA_ReadOnly)
         if (np.isnan(n_features)):
             n_features = dataset.RasterCount
         feature = np.zeros((dataset.RasterYSize, dataset.RasterXSize, dataset.RasterCount))
         for n in range(0, dataset.RasterCount):
             feature[:, :, n] = dataset.GetRasterBand(n+1).ReadAsArray()
 
-        response = gdal.Open(config.response_file_list[_i]).ReadAsArray().astype(float)
+        response = gdal.Open(config.raw_response_file_list[_i]).ReadAsArray().astype(float)
         if (config.response_min_value is not None):
             response[response < config.response_min_value] = config.response_nodata_value
         if (config.response_max_value is not None):
@@ -240,25 +242,34 @@ def build_regression_training_data_ordered(config):
     # reshape images for the CNN
     features = features.reshape((features.shape[0], features.shape[1], features.shape[2], n_features))
     responses = responses.reshape((responses.shape[0], responses.shape[1], responses.shape[2], 1))
-    responses = np.append(responses, np.ones(responses.shape), axis=-1)
-    responses[responses[..., 0] == config.response_nodata_value, 1] = 0
+
+    weights = np.ones((responses.shape[0],responses.shape[1],responses.shape[2],1))
+    weights[responses[..., 0] == config.response_nodata_value] = 0
+
     if (config.internal_window_radius != config.window_radius):
         buf = config.window_radius - config.internal_window_radius
-        responses[:,:buf,:,-1] = 0
-        responses[:,-buf:,:,-1] = 0
-        responses[:,:,:buf,-1] = 0
-        responses[:,:,-buf:,-1] = 0
+        weights[:, :buf, :, -1] = 0
+        weights[:, -buf:, :, -1] = 0
+        weights[:, :, :buf, -1] = 0
+        weights[:, :, -buf:, -1] = 0
 
     _logger.debug('Feature shape: {}'.format(features.shape))
     _logger.debug('Response shape: {}'.format(response.shape))
-
-    if (config.data_save_name is not None):
-        np.savez(config.data_save_name, features=features, responses=responses, fold_assignments=fold_assignments)
 
     config.response_shape = responses.shape
     config.feature_shape = features.shape
 
     if (config.data_save_name is not None):
+        for fold in range(config.n_folds):
+            np.save(config.feature_files[fold], features[fold_assignments == fold, ...])
+            np.save(config.response_files[fold], responses[fold_assignments == fold, ...])
+            np.save(config.weight_files[fold], weights[fold_assignments == fold, ...])
+        config.saved_data = True
         config.save_to_file()
 
-    return features, responses, fold_assignments
+    features = [features[fold_assignments == fold, ...] for fold in range(config.n_folds)]
+    responses = [responses[fold_assignments == fold, ...] for fold in range(config.n_folds)]
+    weights = [weights[fold_assignments == fold, ...] for fold in range(config.n_folds)]
+
+    return features, responses, weights
+

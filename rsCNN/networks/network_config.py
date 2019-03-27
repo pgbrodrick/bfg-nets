@@ -4,6 +4,7 @@ import configparser
 import os
 from typing import Tuple
 
+from rsCNN.networks import architectures, losses
 from rsCNN.networks import architectures
 from rsCNN.utils import DIR_TEMPLATES
 
@@ -13,7 +14,7 @@ def create_config_files_from_network_defaults():
     for architecture in ('regress_net', 'residual_net', 'residual_unet', 'unet'):
         config = create_network_config(
             architecture=architecture, model_name=value_required, inshape=(0, 0, 0),
-            n_classes=0, loss_function=value_required, output_activation=value_required,
+            n_classes=0, loss_metric=value_required, output_activation=value_required,
         )
         config['architecture'].pop('create_model')
         writer = configparser.ConfigParser()
@@ -47,7 +48,7 @@ def create_network_config(
         model_name: str,
         inshape: Tuple[int, int, int],
         n_classes: int,
-        loss_function: str,
+        loss_metric: str,
         output_activation: str,
         **kwargs
 ) -> collections.OrderedDict:
@@ -57,8 +58,8 @@ def create_network_config(
         Style of the network to use.  Options are:
           flex_unet
           flat_regress_net
-      loss_function - function
-        Keras or tensor flow based loss function for the cnn.
+      loss_metric - str
+        Style of loss function to implement.
       inshape - tuple/list
         Designates the input shape of an image to be passed to
         the network.
@@ -80,14 +81,16 @@ def create_network_config(
         'architecture': architecture,
         'inshape': inshape,
         'n_classes': n_classes,
-        'loss_function': loss_function,
+        'loss_metric': loss_metric,
         'create_model': architecture_creator.create_model,
+        'weighted': kwargs.get('weighted', False),
     }
 
     config['architecture_options'] = architecture_creator.parse_architecture_options(**kwargs)
     config['architecture_options']['output_activation'] = output_activation
 
     config['training'] = {
+        'apply_random_transformations': kwargs.get('apply_random_transformations', False),
         'batch_size': kwargs.get('batch_size', 1),
         'max_epochs': kwargs.get('max_epochs', 100),
         'optimizer': kwargs.get('optimizer', 'adam'),
