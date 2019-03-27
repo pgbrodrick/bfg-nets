@@ -147,7 +147,6 @@ def build_training_data_ordered(config):
 
     n_features = np.nan
 
-
     for _i in range(0, len(config.raw_feature_file_list)):
         # TODO: external update through loggers
 
@@ -243,7 +242,7 @@ def build_training_data_ordered(config):
     features = features.reshape((features.shape[0], features.shape[1], features.shape[2], n_features))
     responses = responses.reshape((responses.shape[0], responses.shape[1], responses.shape[2], 1))
 
-    weights = np.ones((responses.shape[0],responses.shape[1],responses.shape[2],1))
+    weights = np.ones((responses.shape[0], responses.shape[1], responses.shape[2], 1))
     weights[responses[..., 0] == config.response_nodata_value] = 0
 
     if (config.internal_window_radius != config.window_radius):
@@ -272,4 +271,3 @@ def build_training_data_ordered(config):
     weights = [weights[fold_assignments == fold, ...] for fold in range(config.n_folds)]
 
     return features, responses, weights
-

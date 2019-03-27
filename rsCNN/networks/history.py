@@ -50,4 +50,3 @@ def combine_histories(existing_history, new_history):
     for key, value in new_history.items():
         combined_history.setdefault(key, list()).extend(value)
     return combined_history
-

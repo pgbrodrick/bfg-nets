@@ -14,7 +14,7 @@ import rsCNN.data_management.apply_model_to_data
 # TODO script needs to be adapted yet
 
 #parser = argparse.ArgumentParser(description='CNN example for spatial extrapolation from CAO flight lines')
-#parser.add_argument('key')
+# parser.add_argument('key')
 #args = parser.parse_args()
 #
 
@@ -57,8 +57,8 @@ global_options = {
 
 data_config = rsCNN.data_management.DataConfig(**global_options)
 
-#TODO: punting on the inshape for now, but needs to be rectified
-inshape = (data_config.window_radius*2,data_config.window_radius*2,3)
+# TODO: punting on the inshape for now, but needs to be rectified
+inshape = (data_config.window_radius*2, data_config.window_radius*2, 3)
 network_config = network_config.create_network_config(inshape=inshape,
                                                       **global_options)
 
@@ -66,10 +66,10 @@ network_config = network_config.create_network_config(inshape=inshape,
 experiment = Experiment(network_config, data_config)
 experiment.build_or_load_data()
 experiment.fit_network()
-#experiment.evaluate_network()
+# experiment.evaluate_network()
 
 
-#if (args.key == 'apply' or args.key == 'all'):
+# if (args.key == 'apply' or args.key == 'all'):
 #    feature_scaler.load()
 #    response_scaler.load()
 #    for _f in range(len(application_feature_files)):
