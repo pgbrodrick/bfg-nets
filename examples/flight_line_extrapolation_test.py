@@ -7,18 +7,16 @@ import numpy as np
 # TODO manage imports
 from rsCNN.networks.model import Experiment
 import rsCNN.data_management
-from rsCNN.data_management import training_data
-import rsCNN.data_management.transforms
+from rsCNN.networks import network_config
 import rsCNN.data_management.apply_model_to_data
-import rsCNN.evaluation
 
 
 # TODO script needs to be adapted yet
 
-parser = argparse.ArgumentParser(description='CNN example for spatial extrapolation from CAO flight lines')
-parser.add_argument('key')
-args = parser.parse_args()
-
+#parser = argparse.ArgumentParser(description='CNN example for spatial extrapolation from CAO flight lines')
+#parser.add_argument('key')
+#args = parser.parse_args()
+#
 
 global_options = {
     'raw_feature_file_list': ['../global_cwc/dat/features/feat_subset.tif'],
@@ -31,8 +29,10 @@ global_options = {
     'internal_window_radius': 8,
     'response_max_value': 10000,
     'response_min_value': 0,
+    'feature_scaler_name': 'StandardScaler',
+    'response_scaler_name': 'StandardScaler',
 
-    'network_type': 'flat_regress_net',
+    'architecture': 'unet',
     'use_batch_norm': True,
     'conv_depth': 'growth',
     'block_structure': (1, 1),
@@ -41,13 +41,13 @@ global_options = {
     'n_classes': 1,
     'continue_training': False,
 
-    'network_name': 'cwc_test_network',
+    'model_name': 'config_overhaul_test',
     'optimizer': 'adam',
     'batch_size': 100,
     'max_epochs': 100,
     'n_noimprovement_repeats': 10,
     'output_directory': None,
-    'verification_fold': 0,
+    'validation_fold': 0,
     'loss_metric': 'mae',
 
     'application_feature_files': ['../global_cwc/dat/features/feat_subset.tif'],
@@ -55,11 +55,12 @@ global_options = {
 }
 
 
-data_config = DataConfig(**global_options)
+data_config = rsCNN.data_management.DataConfig(**global_options)
 
-network_config = NetworkConfig(inshape=data_config.feature_shape[1:],
-                               internal_window_radius=data_config.internal_window_radius,
-                               **global_options)
+#TODO: punting on the inshape for now, but needs to be rectified
+inshape = (data_config.window_radius*2,data_config.window_radius*2,3)
+network_config = network_config.create_network_config(inshape=inshape,
+                                                      **global_options)
 
 
 experiment = Experiment(network_config, data_config)

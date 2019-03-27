@@ -1,6 +1,7 @@
 import sys
 
 import numpy as np
+import os
 from sklearn.externals import joblib
 import sklearn.preprocessing
 
@@ -10,6 +11,7 @@ from rsCNN.utils import logger
 _logger = logger.get_child_logger(__name__)
 
 
+#TODO: Implement a 'nonetype' scaler, that has all functions but does nothing
 def get_scaler(scaler_name, scaler_options):
     return getattr(sys.modules[__name__], scaler_name)(**scaler_options)
 
