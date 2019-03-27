@@ -1,5 +1,5 @@
+import numpy as np
 import os
-
 import pickle
 
 
@@ -8,24 +8,31 @@ class DataConfig:
         sample generation, and scaling.
     """
 
-    def __init__(self, window_radius, feature_file_list, response_file_list, **kwargs):
+    def __init__(self, window_radius, raw_feature_file_list, raw_response_file_list, **kwargs):
         """
           Arguments:
-          window_radius - determines the subset image size, which results as 2*window_radius  
+          window_radius - determines the subset image size, which results as 2*window_radius
           feature_file_list - file list of the feature rasters
           response_file_list - file list of the response rasters
         """
+
+        # TODO: these should actually be optional so Fabina can just pass in a .npz.  need to get
+        #       window_radius if this is the case
 
         # determines the subset image size, which results as 2*window_radius
         self.window_radius = window_radius
 
         # file list of the feature rasters
-        self.feature_file_list = feature_file_list
+        self.raw_feature_file_list = raw_feature_file_list
 
         # file list of the response rasters
-        self.response_file_list = response_file_list
+        self.raw_response_file_list = raw_response_file_list
 
         # Optional arguments
+
+        # A string that tells us how to build the training data set.  Current options are:
+        # ordered_continuous
+        self.data_build_category = kwargs.get('data_build_category', 'ordered_continuous')
 
         # TODO: perhaps clean how these are all set? there's got to be a common way of handling large configs
         # A boolean indication of whether the response type is a vector or a raster (True for vector).
@@ -58,6 +65,12 @@ class DataConfig:
         # The number of folds to set up for data training.
         self.n_folds = kwargs.get('n_folds', 10)
 
+        # The fold to use for validation in model training
+        self.validation_fold = kwargs.get('validation_fold', None)
+
+        # The fold to use for testing
+        self.test_fold = kwargs.get('test_fold', None)
+
         # Either an integer (used for all sites) or a list of integers (one per site)
         # that designates the maximum number of samples to be pulled
         # from that location.  If the number of responses is less than the samples
@@ -79,28 +92,83 @@ class DataConfig:
         # Sampling type - options are 'ordered' and 'bootstrap'
         self.sample_type = kwargs.get('sample_type', 'ordered')
 
-        # stored values for the eventual feature and response shapes
-        self.response_shape = kwargs.get('response_shape', None)
-        self.feature_shape = kwargs.get('feature_shape', None)
-
         # if None, don't save the data name, otherwise, do save requisite components as npz files
         # based on this root extension
         self.data_save_name = kwargs.get('data_save_name', None)
         if (self.data_save_name is not None):
             assert os.path.isdir(os.path.dirname(self.data_save_name)), 'Invalid path for data_save_name'
+            self.response_files = [self.data_save_name + '_responses_' + str(fold) + '.npy' for fold in range(self.n_folds)]
+            self.feature_files = [self.data_save_name + '_features_' + str(fold) + '.npy' for fold in range(self.n_folds)]
+            self.weight_files = [self.data_save_name + '_weights_' + str(fold) + '.npy' for fold in range(self.n_folds)]
+            self.data_config_file = self.data_save_name + '_data_config.pkl'
+            self.saved_data = False
+
+        # These get set on the call to build (TODO: or load) training data
+        self.response_shape = None
+        self.feature_shape = None
+
+        # Scalers
+        self.feature_scaler_name = kwargs.get('feature_scaler_name', None)
+        self.response_scaler_name = kwargs.get('response_scaler_name', None)
 
     # TODO: safegaurd from overwrite?
     def save_to_file(self):
         print('saving data config')
-        with open(self.data_save_name + '_data_config', 'wb') as sf_:
-            pickle.dump(self.__dict__, sf_)
+        with open(self.data_config_file, 'wb') as sf_:
+            pickle.dump(self, sf_)
+
+
+def load_training_data(config: DataConfig):
+    """
+        Loads and returns training data from disk based on the config savename
+        Arguments:
+            config - data config from which to reference data
+        Returns:
+            features - feature data
+            responses - response data
+            fold_assignments - per-sample fold assignments specified during data generation
+    """
+
+    success = True
+    if (not config.saved_data):
+        print('no saved data')
+        success = False
+
+    features = []
+    responses = []
+    weights = []
+    for fold in range(config.n_folds):
+        if (os.path.isfile(config.feature_files[fold])):
+            features.append(np.load(config.feature_files[fold], mmap_mode='r'))
+        else:
+            success = False
+            print('feailed read at ' + config.feature_files[fold])
+            break
+        if (os.path.isfile(config.response_files[fold])):
+            responses.append(np.load(config.response_files[fold], mmap_mode='r'))
+        else:
+            print('feailed read at ' + config.response_files[fold])
+            success = False
+            break
+        if (os.path.isfile(config.weight_files[fold])):
+            weights.append(np.load(config.weight_files[fold], mmap_mode='r'))
+        else:
+            print('feailed read at ' + config.weight_files[fold])
+            success = False
+            break
+
+    if (success):
+        return features, responses, weights, True
+    else:
+        return None, None, None, False
 
 
 def load_data_config_from_file(data_save_name):
     try:
-        with open(data_save_name + '_data_config', 'rb') as sf_:
-            loaded_config = pickle.load(sf_)
+        with open(data_save_name + '_data_config.pkl', 'rb') as sf_:
+            print('loading config file ' + data_save_name + '_data_config.pkl')
+            loaded_config= pickle.load(sf_)
 
-        return DataConfig(**loaded_config)
+        return loaded_config
     except:
-        print('Failed to load DataConfig from ' + data_save_name + '_data_config')
+        print('Failed to load DataConfig from ' + data_save_name + '_data_config.pkl')
