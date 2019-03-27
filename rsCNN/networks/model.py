@@ -13,81 +13,40 @@ from rsCNN import evaluation
 
 
 class Experiment(object):
+    data_config = None
     network_config = None
-    _is_model_new = None
+    model = None
+    history = None
+    train_sequence = None
+    validation_sequence = None
+    test_sequence = None
+    resume = None
 
-    def __init__(self, network_config: configparser.ConfigParser, data_config: DataConfig, resume=True) -> None:
-        """ Initializes the appropriate network
-
-        Arguments:
-        network_config -
-          Configuration parameter object for the network.
-        Keyword Arguments:
-        reinitialize - bool
-          Flag directing whether the model should be re-initialized from scratch (no weights).
-        load_history - bool
-          Flag directing whether the model should load it's training history.
-        """
-        # TODO:  move continue_training here, do all overwrite checks here and reduce all of
-        #  the filename/dir settings so that we have one for experiment, only overwrite any objects
-        #  if we continue here, change continue_training to new name? below docstring
-        """
-        assert not (continue_training is False and self._is_model_new is False), \
-            'The parameter continue_training must be true to continue training an existing model'
-
-        if continue_training:
-            if 'lr' in self.history:
-                K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
-        """
-
-        self.network_config = network_config
+    def __init__(self, network_config: configparser.ConfigParser, data_config: DataConfig, resume=False) -> None:
         self.data_config = data_config
-
-        if not os.path.exists(self.network_config['model']['dir_out']):
-            os.makedirs(self.network_config['model']['dir_out'])
-
-        # FABINA: Adding in this master 'resume' key for the experiment.  Thinking through behavior,
-        #         we're either going to want to load an experiment up, and then call specific actions,
-        #         or we're going to want to be able to say 'just keep going' - e.g., the preemption
-        #         case.  So if this master resume switch for the experiment is set, all other behavior
-        #         should follow as if the model is being picked right back up.  We may need additional
-        #         more specific flags to allow for other behavior, but since the most common cases will
-        #         be: 1) new experiment, 2) resume experiment, 3) load experiment and look at it,
-        #         those should be easiest.
-
+        self.network_config = network_config
         self.resume = resume
 
+        if os.path.exists(self.network_config['model']['dir_out']):
+            if history.load_history(self.network_config['model']['dir_out']):
+                assert self.resume, 'Resume must be true to continue training an existing model'
+        else:
+            os.makedirs(self.network_config['model']['dir_out'])
+
+        # TODO:  Phil:  this doens't pass the sniff test. The user provides a data_config to __init__ and then we just
+        #  overwrite that data_config? 1) Nothing about the __init__ method or the data_config suggests that this
+        #  behavior would ever occur, 2) why would the user have a data config that points to a directory where another
+        #  data config is located?, 3) this triggers every time someone has resume set to True, which means that it'll
+        #  trigger even when a model is running for the first time and a user just wants to be sure it restarts on
+        #  preemption. I feel like we should remove this code completely or modify/relocate it if there's a real use
+        #  case here.
+        """
         # Load up info that already exists from the data config if we're resuming operations
         if (self.resume):
             ldc = load_data_config_from_file(self.data_config.data_save_name)
             if ldc is not None:
                 self.data_config = ldc
-
-        self.train_sequence = None
-        self.validation_sequence = None
-        self.test_sequence = None
-
-        # TODO: Let's wrap all of this up into a 'build_or_load_model' function for consistency
-        self.history = history.load_history(self.network_config['model']['dir_out']) or dict()
-        loss_function = losses.cropped_loss(
-            self.network_config['architecture']['loss_metric'],
-            self.data_config.window_radius*2,
-            self.data_config.internal_window_radius*2,
-            weighted=self.network_config['architecture']['weighted']
-        )
-        if self.history:
-            self.model = history.load_model(
-                self.network_config['model']['dir_out'], custom_objects={'_cropped_loss': loss_function})
-            # TODO:  do we want to warn or raise or nothing if the network type doesn't match the model type?
-            self._is_model_new = False
-        else:
-            self.model = self.network_config['architecture']['create_model'](
-                self.network_config['architecture']['inshape'],
-                self.network_config['architecture']['n_classes'],
-                **self.network_config['architecture_options']
-            )
-            self.model.compile(loss=loss_function, optimizer=self.network_config['training']['optimizer'])
-            self._is_model_new = True
+        """
 
     def build_or_load_data(self, rebuild=False):
         """
@@ -96,13 +55,14 @@ class Experiment(object):
                 2) load/initialize/fit scalers
                 3) initiate train/validation/test sequences as components of Experiment
         """
-
+        # TODO:  Phil:  thinking about this more, data_config is only used in two places, this method and the
+        #  architecture
         # TODO: start off by checking to make sure that we have all requisite info via assert
 
-        if (rebuild == False):
+        if (rebuild is False):
             features, responses, weights, read_success = load_training_data(self.data_config)
 
-        if (read_success == False or rebuild == True):
+        if (read_success is False or rebuild is True):
             if (self.data_config.data_build_category == 'ordered_continuous'):
                 features, responses, weights = training_data.build_training_data_ordered(self.data_config)
             else:
@@ -127,11 +87,11 @@ class Experiment(object):
         train_folds = [x for x in np.arange(
             self.data_config.n_folds) if x is not self.data_config.validation_fold and x is not self.data_config.test_fold]
 
-        if (self.feature_scaler.is_fitted == False or rebuild == True):
+        if (self.feature_scaler.is_fitted is False or rebuild is True):
             # TODO: do better
             self.feature_scaler.fit(features[train_folds[0]])
             self.feature_scaler.save()
-        if (self.response_scaler.is_fitted == False or rebuild == True):
+        if (self.response_scaler.is_fitted is False or rebuild is True):
             # TODO: do better
             self.response_scaler.fit(responses[train_folds[0]])
             self.response_scaler.save()
@@ -162,6 +122,29 @@ class Experiment(object):
                                                     self.response_scaler,
                                                     apply_random)
 
+    def build_or_load_model(self):
+        self.history = history.load_history(self.network_config['model']['dir_out']) or dict()
+        loss_function = losses.cropped_loss(
+            self.network_config['architecture']['loss_metric'],
+            self.data_config.window_radius*2,
+            self.data_config.internal_window_radius*2,
+            weighted=self.network_config['architecture']['weighted']
+        )
+        if self.history:
+            self.model = history.load_model(
+                self.network_config['model']['dir_out'], custom_objects={'_cropped_loss': loss_function})
+            # TODO:  do we want to warn or raise or nothing if the network type doesn't match the model type?
+        else:
+            self.model = self.network_config['architecture']['create_model'](
+                self.network_config['architecture']['inshape'],
+                self.network_config['architecture']['n_classes'],
+                **self.network_config['architecture_options']
+            )
+            self.model.compile(loss=loss_function, optimizer=self.network_config['training']['optimizer'])
+
+        if self.resume and 'lr' in self.history:
+            K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
+
     def calculate_training_memory_usage(self, batch_size: int) -> float:
         # Shamelessly copied from
         # https://stackoverflow.com/questions/43137288/how-to-determine-needed-memory-of-keras-model
@@ -190,7 +173,7 @@ class Experiment(object):
 
     def evaluate_network(self):
         # TODO: modify to accept sequences
-        evaluation.generate_eval_report(args)
+        evaluation.generate_eval_report()
 
     def fit_network(self) -> None:
         if self.network_config['model']['assert_gpu']:
@@ -198,7 +181,6 @@ class Experiment(object):
 
         model_callbacks = callbacks.get_callbacks(self.network_config, self.history)
 
-        # TODO:  Same parameter questions as with fit()
         # TODO:  Check whether psutil.cpu_count gives the right answer on SLURM, i.e., the number of CPUs available to
         #  the job and not the total number on the instance.
         new_history = self.model.fit_generator(
