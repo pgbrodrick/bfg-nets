@@ -4,14 +4,13 @@ import configparser
 import os
 from typing import Tuple
 
-from rsCNN.networks import architectures, losses
 from rsCNN.networks import architectures
 from rsCNN.utils import DIR_TEMPLATES
 
 
 def create_config_files_from_network_defaults():
     value_required = 'REQUIRED'
-    for architecture in ('regress_net', 'residual_net', 'residual_unet', 'unet'):
+    for architecture in ('change_detection', 'regress_net', 'residual_net', 'residual_unet', 'unet'):
         config = create_network_config(
             architecture=architecture, model_name=value_required, inshape=(0, 0, 0),
             n_classes=0, loss_metric=value_required, output_activation=value_required,
