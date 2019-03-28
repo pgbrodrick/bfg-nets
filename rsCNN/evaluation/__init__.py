@@ -31,7 +31,7 @@ class ExperimentReport(object):
             # Model history
             pdf.savefig(networks.plot_history(self.experiment.history))
             # Input examples and their scaled representations
-            for fig in rs_data.plot_raw_and_scaled_input_examples(self.test_sequence)
+            for fig in rs_data.plot_raw_and_scaled_input_examples(self.test_sequence):
                 pdf.savefig(fig)
             # Output examples and their scaled representations
             for fig in results.plot_predictions(self.test_sequence, self.experiment):
