@@ -128,5 +128,10 @@ class MemmappedSequence(BaseSequence):
         batch_features = self._scale_features(batch_features)
         batch_responses = self._scale_responses(batch_responses)
         batch_responses = np.append(batch_responses, batch_weights, axis=-1)
-
-        return batch_features, batch_responses
+        # TODO:  Phil:  sorry if this breaks something. Keras allows inputs and targets (to the fit or predict methods)
+        #  to be either a single array (if you have a single input or target) or a list (if you have multiple inputs
+        #  or targets). Note that you can pass lists of length one if you have a single array and it still works. The
+        #  reason why this matters is that we should probably use the list format because the reporting functions will
+        #  use batch outputs from the sequences. We'd need to manually check what the sequence is returning for every
+        #  downstream function, or we can just always use a list.
+        return [batch_features], [batch_responses]
