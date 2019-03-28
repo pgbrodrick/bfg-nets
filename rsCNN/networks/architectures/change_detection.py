@@ -30,6 +30,7 @@ def parse_architecture_options(**kwargs):
 def create_model(
         inshape: Tuple[int, int, int],
         n_classes: int,
+        output_activation: str,
         block_structure: Tuple[int, ...] = DEFAULT_BLOCK_STRUCTURE,
         initial_filters: int = DEFAULT_INITIAL_FILTERS,
         kernel_size: Tuple[int, int] = DEFAULT_KERNEL_SIZE,
@@ -41,6 +42,8 @@ def create_model(
 ) -> keras.models.Model:
     model = ImageChangeDetection(
         inshape=inshape,
+        n_classes=n_classes,
+        output_activation=output_activation,
         block_structure=block_structure,
         initial_filters=initial_filters,
         kernel_size=kernel_size,
@@ -62,6 +65,8 @@ class ImageChangeDetection(object):
     def __init__(
             self,
             inshape: Tuple[int, int, int],
+            n_classes: int,
+            output_activation: str,
             block_structure: Tuple[int, ...] = DEFAULT_BLOCK_STRUCTURE,
             initial_filters: int = DEFAULT_INITIAL_FILTERS,
             kernel_size: Tuple[int, int] = DEFAULT_KERNEL_SIZE,
@@ -81,6 +86,8 @@ class ImageChangeDetection(object):
             'the value of min_conv_width.'
         # Parameters
         self.inshape = inshape
+        self.n_classes = n_classes
+        self.output_activation = output_activation
         self.block_structure = block_structure
         self.initial_filters = initial_filters
         self.kernel_size = kernel_size
@@ -170,5 +177,4 @@ class ImageChangeDetection(object):
             filters=self._current_filters, kernel_size=self.kernel_size, padding=self.padding)(classifier)
         if self.use_batch_norm:
             classifier = BatchNormalization()(classifier)
-        classifier = Conv2D(2, kernel_size=(1, 1), padding='same', activation='softmax')(classifier)
-        return classifier
+        return Conv2D(self.n_classes, kernel_size=(1, 1), padding='same', activation=self.output_activation)(classifier)
