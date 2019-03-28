@@ -9,7 +9,22 @@ plt.switch_backend('Agg')  # Needed for remote server plotting
 
 
 def plot_raw_and_scaled_input_examples(data_sequence: BaseSequence):
+    # TODO: Phil: You make the note about a universal config setup and I agree. Maybe we need to have a discussion about
+    #   what inputs/targets we can reasonably expect and how to support those. I already have the use case for two input
+    #   arrays for change detection, where the input arrays are BG bands, and a target array of two dimensions for two
+    #   classes. I'm sure we can come up with a general way to handle these things.
+    #  Getting ahead of myself, what are the input images we may have? RGB, one band, two bands, and 4+ bands? We could
+    #   use RGB directly and then have little plugins for how to convert one and two bands to three bands, and then punt
+    #   on a general way for 4+?
+    #  What are the types of outputs we'll have? Binary, categorical, continuous? Can we pretty reliably predict which
+    #   type is in an array and then plot it? Do we still want the converters for continuous bands here?
+    #  We could figure out how many inputs and targets are reasonable to plot on a page. Like, it might be reasonable to
+    #   have 2-3 inputs or targets for each sample, and we don't care beyond that?
+    #  I'm hard-coding grabbing the first feature and response in this function and others right now, and we can modify
+    #   this when we've got a good answer.
     features, responses = data_sequence.__getitem__(0)
+    features = features[0]
+    responses = responses[0]
     responses, weights = responses[..., :-1], responses[..., -1]
 
     features[features == data_sequence.feature_scaler.nodata_value] = np.nan
