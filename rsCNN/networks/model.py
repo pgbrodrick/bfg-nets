@@ -21,6 +21,9 @@ class Experiment(object):
     model = None
     history = None
     resume = None
+    train_sequence = None
+    validation_sequence = None
+    test_sequence = None
 
     def __init__(self, network_config: configparser.ConfigParser, data_config, resume=False) -> None:
         self.data_config = data_config
