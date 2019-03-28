@@ -11,7 +11,7 @@ from rsCNN.utils import logger
 _logger = logger.get_child_logger(__name__)
 
 
-class Sequence(keras.utils.Sequence):
+class BaseSequence(keras.utils.Sequence):
     batches_per_epoch = None
     feature_scaler = None
     response_scaler = None
@@ -64,7 +64,7 @@ class Sequence(keras.utils.Sequence):
         return features, responses
 
 
-class MemmappedSequence(Sequence):
+class MemmappedSequence(BaseSequence):
     batches_per_epoch = None
 
     def __init__(
