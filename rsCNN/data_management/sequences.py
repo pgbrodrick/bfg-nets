@@ -1,5 +1,5 @@
 import random
-from typing import Tuple, Type
+from typing import Tuple
 
 import keras
 import numpy as np
@@ -20,8 +20,8 @@ class Sequence(keras.utils.Sequence):
             responses,
             weights,
             batch_size: int,
-            feature_scaler: Type[BaseGlobalScaler],
-            response_scaler: Type[BaseGlobalScaler],
+            feature_scaler: BaseGlobalScaler,
+            response_scaler: BaseGlobalScaler,
             apply_random_transformations: bool = False
     ) -> None:
         self.features = features
