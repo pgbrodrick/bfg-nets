@@ -127,6 +127,28 @@ class BaseSklearnScaler(BaseGlobalScaler):
             self.is_fitted = True
 
 
+class NullScaler(BaseGlobalScaler):
+
+    def __init__(self, nodata_value, savename_base):
+        self.scaler_name = 'NullScaler'
+        super().__init__(nodata_value, savename_base)
+
+    def _fit(self, image_array):
+        return image_array
+
+    def _inverse_transform(self, image_array):
+        return image_array
+
+    def _transform(self, image_array):
+        return image_array
+
+    def save(self):
+        pass
+
+    def load(self):
+        self.is_fitted = True
+
+
 class ConstantScaler(BaseGlobalScaler):
     constant_scaler = None
     constant_offset = None
