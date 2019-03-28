@@ -92,28 +92,28 @@ class Experiment(object):
         batch_size = self.network_config['training']['batch_size']
         apply_random = self.network_config['training']['apply_random_transformations']
         self.train_sequence = sequences.MemmappedSequence([features[_f] for _f in train_folds],
-                                                 [responses[_r] for _r in train_folds],
-                                                 [weights[_w] for _w in train_folds],
-                                                 batch_size,
-                                                 self.feature_scaler,
-                                                 self.response_scaler,
-                                                 apply_random)
-        if (self.data_config.validation_fold is not None):
-            self.validation_sequence = sequences.MemmappedSequence([features[self.data_config.validation_fold]],
-                                                          [responses[self.data_config.validation_fold]],
-                                                          [weights[self.data_config.validation_fold]],
+                                                          [responses[_r] for _r in train_folds],
+                                                          [weights[_w] for _w in train_folds],
                                                           batch_size,
                                                           self.feature_scaler,
                                                           self.response_scaler,
                                                           apply_random)
+        if (self.data_config.validation_fold is not None):
+            self.validation_sequence = sequences.MemmappedSequence([features[self.data_config.validation_fold]],
+                                                                   [responses[self.data_config.validation_fold]],
+                                                                   [weights[self.data_config.validation_fold]],
+                                                                   batch_size,
+                                                                   self.feature_scaler,
+                                                                   self.response_scaler,
+                                                                   apply_random)
         if (self.data_config.test_fold is not None):
             self.test_sequence = sequences.MemmappedSequence([features[self.data_config.test_fold]],
-                                                    [responses[self.data_config.test_fold]],
-                                                    [weights[self.data_config.test_fold]],
-                                                    batch_size,
-                                                    self.feature_scaler,
-                                                    self.response_scaler,
-                                                    apply_random)
+                                                             [responses[self.data_config.test_fold]],
+                                                             [weights[self.data_config.test_fold]],
+                                                             batch_size,
+                                                             self.feature_scaler,
+                                                             self.response_scaler,
+                                                             apply_random)
 
     def build_or_load_model(self):
         _logger.info('Building or loading model')
