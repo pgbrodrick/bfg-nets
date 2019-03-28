@@ -10,6 +10,8 @@ from rsCNN.networks.experiment import Experiment
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
 
+# TODO:  add page with printed warnings and errors from log file
+
 class ExperimentReport(object):
     experiment = None
 
