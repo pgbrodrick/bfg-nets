@@ -6,9 +6,9 @@ import keras
 import keras.backend as K
 import numpy as np
 
-from rsCNN import evaluation, utils
+from rsCNN import utils
 from rsCNN.data_management import scalers, sequences, training_data, load_data_config_from_file, load_training_data
-from rsCNN.networks import callbacks, history, losses
+from rsCNN.networks import callbacks, io, losses
 from rsCNN.utils import logger
 
 
@@ -31,7 +31,7 @@ class Experiment(object):
         self.resume = resume
 
         if os.path.exists(self.network_config['model']['dir_out']):
-            if history.load_history(self.network_config['model']['dir_out']):
+            if io.load_history(self.network_config['model']['dir_out']):
                 assert self.resume, 'Resume must be true to continue training an existing model'
         else:
             os.makedirs(self.network_config['model']['dir_out'])
@@ -91,7 +91,7 @@ class Experiment(object):
 
         batch_size = self.network_config['training']['batch_size']
         apply_random = self.network_config['training']['apply_random_transformations']
-        self.train_sequence = sequences.Sequence([features[_f] for _f in train_folds],
+        self.train_sequence = sequences.MemmappedSequence([features[_f] for _f in train_folds],
                                                  [responses[_r] for _r in train_folds],
                                                  [weights[_w] for _w in train_folds],
                                                  batch_size,
@@ -99,7 +99,7 @@ class Experiment(object):
                                                  self.response_scaler,
                                                  apply_random)
         if (self.data_config.validation_fold is not None):
-            self.validation_sequence = sequences.Sequence([features[self.data_config.validation_fold]],
+            self.validation_sequence = sequences.MemmappedSequence([features[self.data_config.validation_fold]],
                                                           [responses[self.data_config.validation_fold]],
                                                           [weights[self.data_config.validation_fold]],
                                                           batch_size,
@@ -107,7 +107,7 @@ class Experiment(object):
                                                           self.response_scaler,
                                                           apply_random)
         if (self.data_config.test_fold is not None):
-            self.test_sequence = sequences.Sequence([features[self.data_config.test_fold]],
+            self.test_sequence = sequences.MemmappedSequence([features[self.data_config.test_fold]],
                                                     [responses[self.data_config.test_fold]],
                                                     [weights[self.data_config.test_fold]],
                                                     batch_size,
@@ -123,10 +123,10 @@ class Experiment(object):
             self.data_config.internal_window_radius*2,
             weighted=self.network_config['architecture']['weighted']
         )
-        self.history = history.load_history(self.network_config['model']['dir_out']) or dict()
+        self.history = io.load_history(self.network_config['model']['dir_out']) or dict()
         if self.history:
             _logger.debug('History exists in out directory, loading model from same location')
-            self.model = history.load_model(
+            self.model = io.load_model(
                 self.network_config['model']['dir_out'], custom_objects={'_cropped_loss': loss_function})
             # TODO:  do we want to warn or raise or nothing if the network type doesn't match the model type?
         else:
@@ -167,10 +167,6 @@ class Experiment(object):
         gbytes = np.round(total_memory / (1024.0 ** 3), 3)
         return gbytes
 
-    def evaluate_network(self):
-        # TODO: modify to accept sequences
-        evaluation.generate_eval_report()
-
     def fit_network(
             self,
             train_sequence: keras.utils.Sequence,
@@ -207,9 +203,9 @@ class Experiment(object):
             shuffle=False,
             initial_epoch=len(self.history.get('lr', list())),
         )
-        self.history = history.combine_histories(self.history, new_history.history)
-        history.save_history(self.history, self.network_config['model']['dir_out'])
-        history.save_model(self.model, self.network_config['model']['dir_out'])
+        self.history = io.combine_histories(self.history, new_history.history)
+        io.save_history(self.history, self.network_config['model']['dir_out'])
+        io.save_model(self.model, self.network_config['model']['dir_out'])
 
     def predict(self, features: Union[np.ndarray, List[np.ndarray]]):
         if self.network_config['model']['assert_gpu']:

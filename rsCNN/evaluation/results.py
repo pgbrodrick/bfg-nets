@@ -3,14 +3,14 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
 
-from rsCNN.data_management import sequences
-from rsCNN.networks import model
+from rsCNN.data_management.sequences import BaseSequence
+from rsCNN.networks.experiment import Experiment
 
 
 # TODO:  I don't know everything this function does, but we can probably make it more specific. We have
 #  plot_raw_and_scaled_input_examples for input data... is this something like plot_raw_and_scaled_result_examples?
 
-def plot_predictions(data_sequence: sequences.BaseSequence, experiment: model.Experiment):
+def plot_predictions(data_sequence: BaseSequence, experiment: Experiment):
     features, responses = data_sequence.__getitem__(0)
     responses, weights = responses[..., :-1], responses[..., -1]
     predictions = experiment.predict(features)
@@ -142,7 +142,7 @@ def plot_predictions(data_sequence: sequences.BaseSequence, experiment: model.Ex
 
 class ResultsReport(object):
 
-    def __init__(self, data_sequence: sequences.BaseSequence, experiment: model.Experiment):
+    def __init__(self, data_sequence: BaseSequence, experiment: Experiment):
         self.data_sequence = data_sequence
         self.experiment = experiment
         self.features, tmp_responses = self.data_sequence.__getitem__(0)

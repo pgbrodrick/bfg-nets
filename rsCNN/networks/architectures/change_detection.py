@@ -3,8 +3,6 @@ from typing import Tuple
 import keras
 from keras.layers import BatchNormalization, Concatenate, Conv2D, MaxPooling2D, UpSampling2D
 
-from rsCNN.networks import losses
-
 
 DEFAULT_BLOCK_STRUCTURE = (1, 1, 1, 1)
 DEFAULT_USE_BATCH_NORM = True

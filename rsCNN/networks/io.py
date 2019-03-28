@@ -3,7 +3,6 @@ import pickle
 from typing import Union
 
 import keras
-import matplotlib.pyplot as plt
 
 
 # TODO:  this script needs to be renamed to io.py or something similar, it's responsible for saving and loading

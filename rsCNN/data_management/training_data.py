@@ -1,6 +1,4 @@
 import gdal
-from pathlib import Path
-import numpy as np
 import re
 from tqdm import tqdm
 
