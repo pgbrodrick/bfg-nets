@@ -25,14 +25,14 @@ def cropped_loss(loss_type, outer_width, inner_width, weighted=True):
     """
 
     def _cropped_loss(y_true, y_pred):
-        if weighted:
-            weights = y_true[..., -1]
-            y_true = y_true[..., :-1]
-
-        if (outer_width != inner_width):
+        if outer_width != inner_width:
             buffer = int(round((outer_width-inner_width) / 2))
             y_true = y_true[:, buffer:-buffer, buffer:-buffer, :]
             y_pred = y_pred[:, buffer:-buffer, buffer:-buffer, :]
+
+        if weighted:
+            weights = y_true[..., -1]
+            y_true = y_true[..., :-1]
 
         if (loss_type == 'cc' or loss_type == 'categorical_crossentropy'):
             loss = keras.backend.categorical_crossentropy(y_true, y_pred)
