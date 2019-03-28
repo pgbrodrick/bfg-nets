@@ -5,7 +5,7 @@ from typing import List
 
 import keras
 
-from rsCNN.networks import history
+from rsCNN.networks import io
 from rsCNN.utils import logger
 
 
@@ -50,8 +50,8 @@ class HistoryCheckpoint(keras.callbacks.Callback):
 
     def _save_history(self):
         _logger.debug('Save model history')
-        combined_history = history.combine_histories(self.existing_history, self.model.history.history)
-        history.save_history(combined_history, self.dir_out)
+        combined_history = io.combine_histories(self.existing_history, self.model.history.history)
+        io.save_history(combined_history, self.dir_out)
 
 
 def get_callbacks(network_config: configparser.ConfigParser, existing_history: dict) -> List[keras.callbacks.Callback]:
@@ -75,26 +75,6 @@ def get_callbacks(network_config: configparser.ConfigParser, existing_history: d
                 min_delta=network_config['callbacks_early_stopping']['es_min_delta'],
                 patience=network_config['callbacks_early_stopping']['es_patience']
             ),
-        )
-    if network_config['callbacks_learning_rate_scheduler']['use_learning_rate_scheduler']:
-        use_linear = network_config['callbacks_learning_rate_scheduler']['lrs_use_linear']
-        use_decay = network_config['callbacks_learning_rate_scheduler']['lrs_use_decay']
-        assert use_linear != use_decay, \
-            'Learning rate scheduler parameters must either use linear (lrs_use_linear) or decay (lrs_use_decay), ' + \
-            'not both.'
-        lr_decrease = network_config['callbacks_learning_rate_scheduler']['lrs_rate_linear']
-        lr_decay = network_config['callbacks_learning_rate_scheduler']['lrs_rate_decay']
-        lr_minimum = network_config['callbacks_learning_rate_scheduler']['lrs_minimum']
-
-        def _schedule(idx_epoch, current_learning_rate):
-            if use_linear:
-                next_learning_rate = float(current_learning_rate - lr_decrease)
-            elif use_decay:
-                next_learning_rate = float(lr_decay * current_learning_rate)
-            return max(next_learning_rate, lr_minimum)
-
-        callbacks.append(
-            keras.callbacks.LearningRateScheduler(schedule=_schedule, verbose=network_config['model']['verbosity'])
         )
     if network_config['callbacks_reduced_learning_rate']['use_reduced_learning_rate']:
         callbacks.append(

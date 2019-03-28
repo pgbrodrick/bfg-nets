@@ -2,13 +2,13 @@ import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
 
-from rsCNN.data_management import sequences
+from rsCNN.data_management.sequences import BaseSequence
 
 
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
 
-def plot_raw_and_scaled_input_examples(data_sequence: sequences.BaseSequence):
+def plot_raw_and_scaled_input_examples(data_sequence: BaseSequence):
     features, responses = data_sequence.__getitem__(0)
     responses, weights = responses[..., :-1], responses[..., -1]
 

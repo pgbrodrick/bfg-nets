@@ -1,11 +1,13 @@
+import os
+
 import gdal
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+
 from rsCNN.utils.general import *
-import os
-import numpy as np
-import matplotlib as mpl
-mpl.use('Agg')
+
+
+plt.switch_backend('Agg')  # Needed for remote server plotting
 
 
 def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, make_png=False, make_tif=True, feature_transformer=None, response_transformer=None):

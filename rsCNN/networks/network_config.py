@@ -116,15 +116,6 @@ def create_network_config(
         'es_patience': kwargs.get('es_patience', 50),
     }
 
-    config['callbacks_learning_rate_scheduler'] = {
-        'use_learning_rate_scheduler': kwargs.get('use_learning_rate_scheduler', False),
-        'lrs_use_linear': kwargs.get('lrs_use_linear', True),
-        'lrs_use_decay': kwargs.get('lrs_use_decay', False),
-        'lrs_rate_linear': kwargs.get('lrs_rate_linear', 0.0001),
-        'lrs_rate_decay': kwargs.get('lrs_rate_decay', 0.99),
-        'lrs_minimum': kwargs.get('lrs_minimum', 0.0000001),
-    }
-
     config['callbacks_reduced_learning_rate'] = {
         'use_reduced_learning_rate': kwargs.get('use_reduced_learning_rate', True),
         'rlr_factor': kwargs.get('rlr_factor', 0.5),
