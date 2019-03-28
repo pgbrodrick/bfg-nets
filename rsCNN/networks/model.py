@@ -6,10 +6,13 @@ import keras
 import keras.backend as K
 import numpy as np
 
-from rsCNN import utils
+from rsCNN import evaluation, utils
+from rsCNN.data_management import scalers, sequences, training_data, load_data_config_from_file, load_training_data
 from rsCNN.networks import callbacks, history, losses
-from rsCNN.data_management import DataConfig, scalers, sequences, training_data, load_data_config_from_file, load_training_data
-from rsCNN import evaluation
+from rsCNN.utils import logger
+
+
+_logger = logger.get_child_logger(__name__)
 
 
 class Experiment(object):
@@ -17,12 +20,9 @@ class Experiment(object):
     network_config = None
     model = None
     history = None
-    train_sequence = None
-    validation_sequence = None
-    test_sequence = None
     resume = None
 
-    def __init__(self, network_config: configparser.ConfigParser, data_config: DataConfig, resume=False) -> None:
+    def __init__(self, network_config: configparser.ConfigParser, data_config, resume=False) -> None:
         self.data_config = data_config
         self.network_config = network_config
         self.resume = resume
@@ -32,21 +32,6 @@ class Experiment(object):
                 assert self.resume, 'Resume must be true to continue training an existing model'
         else:
             os.makedirs(self.network_config['model']['dir_out'])
-
-        # TODO:  Phil:  this doens't pass the sniff test. The user provides a data_config to __init__ and then we just
-        #  overwrite that data_config? 1) Nothing about the __init__ method or the data_config suggests that this
-        #  behavior would ever occur, 2) why would the user have a data config that points to a directory where another
-        #  data config is located?, 3) this triggers every time someone has resume set to True, which means that it'll
-        #  trigger even when a model is running for the first time and a user just wants to be sure it restarts on
-        #  preemption. I feel like we should remove this code completely or modify/relocate it if there's a real use
-        #  case here.
-        """
-        # Load up info that already exists from the data config if we're resuming operations
-        if (self.resume):
-            ldc = load_data_config_from_file(self.data_config.data_save_name)
-            if ldc is not None:
-                self.data_config = ldc
-        """
 
     def build_or_load_data(self, rebuild=False):
         """
@@ -58,6 +43,11 @@ class Experiment(object):
         # TODO:  Phil:  thinking about this more, data_config is only used in two places, this method and the
         #  architecture
         # TODO: start off by checking to make sure that we have all requisite info via assert
+        # Load up info that already exists from the data config if we're resuming operations
+        if (self.resume):
+            ldc = load_data_config_from_file(self.data_config.data_save_name)
+            if ldc is not None:
+                self.data_config = ldc
 
         if (rebuild is False):
             features, responses, weights, read_success = load_training_data(self.data_config)
@@ -123,27 +113,30 @@ class Experiment(object):
                                                     apply_random)
 
     def build_or_load_model(self):
-        self.history = history.load_history(self.network_config['model']['dir_out']) or dict()
+        _logger.info('Building or loading model')
         loss_function = losses.cropped_loss(
             self.network_config['architecture']['loss_metric'],
             self.data_config.window_radius*2,
             self.data_config.internal_window_radius*2,
             weighted=self.network_config['architecture']['weighted']
         )
+        self.history = history.load_history(self.network_config['model']['dir_out']) or dict()
         if self.history:
+            _logger.debug('History exists in out directory, loading model from same location')
             self.model = history.load_model(
                 self.network_config['model']['dir_out'], custom_objects={'_cropped_loss': loss_function})
             # TODO:  do we want to warn or raise or nothing if the network type doesn't match the model type?
         else:
+            _logger.debug('History does not exists in out directory, creating new model')
             self.model = self.network_config['architecture']['create_model'](
                 self.network_config['architecture']['inshape'],
                 self.network_config['architecture']['n_classes'],
                 **self.network_config['architecture_options']
             )
             self.model.compile(loss=loss_function, optimizer=self.network_config['training']['optimizer'])
-
-        if self.resume and 'lr' in self.history:
-            K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
+            if 'lr' in self.history:
+                _logger.debug('Setting learning rate to value from last training epoch')
+                K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
 
     def calculate_training_memory_usage(self, batch_size: int) -> float:
         # Shamelessly copied from
@@ -175,7 +168,23 @@ class Experiment(object):
         # TODO: modify to accept sequences
         evaluation.generate_eval_report()
 
-    def fit_network(self) -> None:
+    def fit_network(
+            self,
+            train_sequence: keras.utils.Sequence,
+            validation_sequence: keras.utils.Sequence = None
+    ) -> None:
+        # TODO:  Phil, I know we're thinking about breaking up the data and network components. I think part of that
+        #   might be simplifying this section by just passing in training and validation sequences because there's no
+        #   reason for the experiment object to hold onto those, right? If we're just creating a method that sets those
+        #   attributes, why not just pass them to the fit or predict method when needed? It's not like experiment will
+        #   be doing anything more than just passing to fit and predict, right? In the meantime, I'm leaving the setting
+        #   of those attributes here because I don't want to break the combined data/network methods. We'll want to
+        #   remove the following lines and then fit directly from the arguments.
+        if train_sequence is not None:
+            self.train_sequence = train_sequence
+        if validation_sequence is not None:
+            self.validation_sequence = validation_sequence
+
         if self.network_config['model']['assert_gpu']:
             utils.assert_gpu_available()
 
