@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 from rsCNN.evaluation import networks, rs_data, results
-from rsCNN.networks import experiment
+from rsCNN.networks.experiment import Experiment
 
 
 plt.switch_backend('Agg')  # Needed for remote server plotting
@@ -13,7 +13,7 @@ plt.switch_backend('Agg')  # Needed for remote server plotting
 class ExperimentReport(object):
     experiment = None
 
-    def __init__(self, experiment: experiment.Experiment):
+    def __init__(self, experiment: Experiment):
         self.experiment = experiment
 
     def create_report(self):
