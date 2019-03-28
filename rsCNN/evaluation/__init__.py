@@ -1,11 +1,24 @@
-import numpy as np
 import os
+
+import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.gridspec as gridspec
-import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
-import matplotlib as mpl
-mpl.use('Agg')
+import numpy as np
+
+# TODO:  Phil:  this should work for the import ordering now, but there's another solution if this doesn't. I'm putting
+#  the other solution in a docstring and we can delete after confirming that the simple way works first.
+plt.switch_backend('Agg')  # Needed for remote server plotting
+"""
+Alternative if the above line doesn't work:
+rsCNN/evaluation/matplotlib.py:
+import matplotlib
+matplotlib.use('Agg')
+
+here:
+import rsCNN.evaluation.matplotlib
+other imports
+"""
 
 
 def plot_history(history):
