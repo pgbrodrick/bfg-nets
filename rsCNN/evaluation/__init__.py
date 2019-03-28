@@ -3,6 +3,7 @@ import os
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
+from rsCNN.data_management.sequences import BaseSequence
 from rsCNN.evaluation import networks, rs_data, results
 from rsCNN.networks.experiment import Experiment
 
@@ -15,8 +16,9 @@ plt.switch_backend('Agg')  # Needed for remote server plotting
 class ExperimentReport(object):
     experiment = None
 
-    def __init__(self, experiment: Experiment):
+    def __init__(self, experiment: Experiment, test_sequence: BaseSequence):
         self.experiment = experiment
+        self.test_sequence = test_sequence
 
     def create_report(self):
         filepath_report = os.path.join(
@@ -29,10 +31,10 @@ class ExperimentReport(object):
             # Model history
             pdf.savefig(networks.plot_history(self.experiment.history))
             # Input examples and their scaled representations
-            for fig in rs_data.plot_raw_and_scaled_input_examples(self.experiment.test_sequence):
+            for fig in rs_data.plot_raw_and_scaled_input_examples(self.test_sequence)
                 pdf.savefig(fig)
             # Output examples and their scaled representations
-            for fig in results.plot_predictions(self.experiment.test_sequence, self.experiment):
+            for fig in results.plot_predictions(self.test_sequence, self.experiment):
                 pdf.savefig(fig)
             # TODO:  migrate the last reporting functions here
 
