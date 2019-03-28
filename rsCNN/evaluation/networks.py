@@ -1,0 +1,61 @@
+import matplotlib.gridspec as gridspec
+import matplotlib.pyplot as plt
+
+
+plt.switch_backend('Agg')  # Needed for remote server plotting
+
+
+def plot_history(history):
+
+    fig = plt.figure(figsize=(13, 10))
+    gs1 = gridspec.GridSpec(2, 2)
+
+    # Epoch times and delays
+    ax = plt.subplot(gs1[0, 0])
+    epoch_time = [(finish - start).seconds for start, finish in zip(history['epoch_start'], history['epoch_finish'])]
+    epoch_delay = [(start - finish).seconds for start, finish
+                   in zip(history['epoch_start'][1:], history['epoch_finish'][:-1])]
+    ax.plot(epoch_time, c='black', label='Epoch time')
+    ax.plot(epoch_delay, '--', c='blue', label='Epoch delay')
+    ax.set_xlabel('Epoch')
+    ax.set_ylabel('Seconds')
+    ax.legend()
+
+    # Epoch times different view
+    ax = plt.subplot(gs1[0, 1])
+    dts = [epoch.strftime('%d %H:%M') for epoch in history['epoch_finish']]
+    ax.hist(dts)
+    ax.xaxis.set_tick_params(rotation=45)
+    ax.set_ylabel('Epochs completed')
+
+    # Loss
+    ax = plt.subplot(gs1[1, 0])
+    ax.plot(history['loss'][-160:], c='black', label='Training loss')
+    if 'val_loss' in history:
+        ax.plot(history['val_loss'][-160:], '--', c='blue', label='Validation loss')
+    ax.set_xlabel('Epoch')
+    ax.set_ylabel('Loss')
+    ax.legend()
+
+    # Learning rate
+    ax = plt.subplot(gs1[1, 1])
+    ax.plot(history['lr'][-160:], c='black')
+    ax.set_xlabel('Epoch')
+    ax.set_ylabel('Learning rate')
+
+    # Add figure title
+    plt.suptitle('Training History')
+    return fig
+
+
+def print_model_summary(model):
+    stringlist = []
+    model.summary(print_fn=lambda x: stringlist.append(x))
+    model_summary_string = "\n".join(stringlist)
+
+    fig, axes = plt.subplots(figsize=(8.5, 11), nrows=1, ncols=1)
+    plt.text(0, 0, model_summary_string, **{'fontsize': 8, 'fontfamily': 'monospace'})
+    plt.axis('off')
+    plt.suptitle('CNN Summary')
+
+    return fig
