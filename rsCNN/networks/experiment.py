@@ -206,21 +206,3 @@ class Experiment(object):
         self.history = io.combine_histories(self.history, new_history.history)
         io.save_history(self.history, self.network_config['model']['dir_out'])
         io.save_model(self.model, self.network_config['model']['dir_out'])
-
-    def predict(self, features: Union[np.ndarray, List[np.ndarray]]):
-        if self.network_config['model']['assert_gpu']:
-            utils.assert_gpu_available()
-
-        return self.model.predict(features, batch_size=self.network_config['training']['batch_size'], verbose=0)
-
-    def predict_sequence(self, predict_sequence: keras.utils.Sequence):
-        if self.network_config['model']['assert_gpu']:
-            utils.assert_gpu_available()
-
-        return self.model.predict_generator(
-            predict_sequence,
-            max_queue_size=2,
-            # workers=psutil.cpu_count(logical=True),
-            # use_multiprocessing=True,
-            verbose=0
-        )

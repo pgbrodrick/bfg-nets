@@ -88,6 +88,8 @@ def create_network_config(
     config['architecture_options'] = architecture_creator.parse_architecture_options(**kwargs)
     config['architecture_options']['output_activation'] = output_activation
 
+    # TODO:  can we remove batch_size given that we have sequences now?
+
     config['training'] = {
         'apply_random_transformations': kwargs.get('apply_random_transformations', False),
         'batch_size': kwargs.get('batch_size', 1),
