@@ -84,7 +84,6 @@ class MemmappedSequence(BaseSequence):
         self.cum_samples_per_fold = np.zeros(len(features)+1).astype(int)
         for fold in range(1, len(features)+1):
             self.cum_samples_per_fold[fold] = features[fold-1].shape[0] + self.cum_samples_per_fold[fold-1]
-            print((('cum_', fold, self.cum_samples_per_fold[fold])))
 
     def __len__(self):
         # Method is required for Keras functionality, a.k.a. steps_per_epoch in fit_generator
@@ -127,12 +126,6 @@ class MemmappedSequence(BaseSequence):
         batch_responses = self._scale_responses(batch_responses)
         batch_responses = np.append(batch_responses, batch_weights, axis=-1)
         if (apply_transforms is True):
-            _apply_random_transformations(batch_features, batch_responses)
+            self._apply_random_transformations(batch_features, batch_responses)
             
-        # TODO:  Phil:  sorry if this breaks something. Keras allows inputs and targets (to the fit or predict methods)
-        #  to be either a single array (if you have a single input or target) or a list (if you have multiple inputs
-        #  or targets). Note that you can pass lists of length one if you have a single array and it still works. The
-        #  reason why this matters is that we should probably use the list format because the reporting functions will
-        #  use batch outputs from the sequences. We'd need to manually check what the sequence is returning for every
-        #  downstream function, or we can just always use a list.
         return [batch_features], [batch_responses]
