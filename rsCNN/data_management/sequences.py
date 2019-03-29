@@ -45,10 +45,6 @@ class BaseSequence(keras.utils.Sequence):
         return self.response_scaler.transform(responses)
 
     def _apply_random_transformations(self, features: np.array, responses: np.array) -> Tuple[np.array, np.array]:
-        # TODO:  Are random transformations generally useful? How can we incorporate these in a more general way
-        #  without adding additional configuration options? Do we have a training and a testing sequence, and training
-        #  sequences apply these types of transformations by default? Do we have a single config option to introduce
-        #  randomness into the training dataset? Other? This is not currently hooked up.
         # Flip top to bottom
         if random.random() > 0.5:
             features = np.flip(features, axis=0)
@@ -75,18 +71,19 @@ class MemmappedSequence(BaseSequence):
             feature_scaler: BaseGlobalScaler,
             response_scaler: BaseGlobalScaler,
             batch_size: int,
+            apply_transforms: bool,
     ) -> None:
         self.features = features
         self.responses = responses
         self.weights = weights
-        self.batch_size = batch_size
         self.feature_scaler = feature_scaler
         self.response_scaler = response_scaler
+        self.batch_size = batch_size
+        self.apply_transforms = apply_transforms
 
         self.cum_samples_per_fold = np.zeros(len(features)+1).astype(int)
         for fold in range(1, len(features)+1):
             self.cum_samples_per_fold[fold] = features[fold-1].shape[0] + self.cum_samples_per_fold[fold-1]
-            print((('cum_', fold, self.cum_samples_per_fold[fold])))
 
     def __len__(self):
         # Method is required for Keras functionality, a.k.a. steps_per_epoch in fit_generator
@@ -128,10 +125,7 @@ class MemmappedSequence(BaseSequence):
         batch_features = self._scale_features(batch_features)
         batch_responses = self._scale_responses(batch_responses)
         batch_responses = np.append(batch_responses, batch_weights, axis=-1)
-        # TODO:  Phil:  sorry if this breaks something. Keras allows inputs and targets (to the fit or predict methods)
-        #  to be either a single array (if you have a single input or target) or a list (if you have multiple inputs
-        #  or targets). Note that you can pass lists of length one if you have a single array and it still works. The
-        #  reason why this matters is that we should probably use the list format because the reporting functions will
-        #  use batch outputs from the sequences. We'd need to manually check what the sequence is returning for every
-        #  downstream function, or we can just always use a list.
+        if (apply_transforms is True):
+            self._apply_random_transformations(batch_features, batch_responses)
+            
         return [batch_features], [batch_responses]

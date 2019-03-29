@@ -5,10 +5,11 @@ import gdal
 import numpy as np
 
 # TODO manage imports
-from rsCNN.networks.model import Experiment
+from rsCNN.networks.experiment import Experiment
 import rsCNN.data_management
 from rsCNN.networks import network_config
 import rsCNN.data_management.apply_model_to_data
+import rsCNN.evaluation
 
 
 # TODO script needs to be adapted yet
@@ -63,10 +64,13 @@ network_config = network_config.create_network_config(inshape=inshape,
                                                       **global_options)
 
 
-experiment = Experiment(network_config, data_config)
+experiment = Experiment(network_config, data_config, resume = True)
+experiment.build_or_load_model()
 experiment.build_or_load_data()
-experiment.fit_network()
-# experiment.evaluate_network()
+#experiment.fit_network()
+#experiment.evaluate_network()
+report = rsCNN.evaluation.ExperimentReport(experiment,experiment.validation_sequence)
+report.create_report()
 
 
 # if (args.key == 'apply' or args.key == 'all'):
