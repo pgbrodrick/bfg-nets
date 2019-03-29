@@ -11,7 +11,8 @@ from rsCNN.networks.experiment import Experiment
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
 
-# TODO:  add page with printed warnings and errors from log file
+# TODO:  add page with printed warnings and errors from log file, especially following line from NanTermination:
+#  Batch 0: Invalid loss, terminating training
 
 class ExperimentReport(object):
     experiment = None
