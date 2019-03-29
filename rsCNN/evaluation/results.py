@@ -12,7 +12,7 @@ from rsCNN.networks.experiment import Experiment
 
 def plot_predictions(data_sequence: BaseSequence, experiment: Experiment):
     features, responses = data_sequence.__getitem__(0)
-    predictions = experiment.predict(features)
+    predictions = experiment.model.predict(features)
     features = features[0]
     responses = responses[0]
     responses, weights = responses[..., :-1], responses[..., -1]
