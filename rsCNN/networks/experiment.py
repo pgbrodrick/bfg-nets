@@ -169,7 +169,7 @@ class Experiment(object):
 
     def fit_network(
             self,
-            train_sequence: keras.utils.Sequence,
+            train_sequence: keras.utils.Sequence = None,
             validation_sequence: keras.utils.Sequence = None
     ) -> None:
         # TODO:  Phil, I know we're thinking about breaking up the data and network components. I think part of that
