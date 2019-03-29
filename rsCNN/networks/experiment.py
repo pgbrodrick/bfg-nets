@@ -94,25 +94,25 @@ class Experiment(object):
         self.train_sequence = sequences.MemmappedSequence([features[_f] for _f in train_folds],
                                                           [responses[_r] for _r in train_folds],
                                                           [weights[_w] for _w in train_folds],
-                                                          batch_size,
                                                           self.feature_scaler,
                                                           self.response_scaler,
+                                                          batch_size,
                                                           apply_random)
         if (self.data_config.validation_fold is not None):
             self.validation_sequence = sequences.MemmappedSequence([features[self.data_config.validation_fold]],
                                                                    [responses[self.data_config.validation_fold]],
                                                                    [weights[self.data_config.validation_fold]],
-                                                                   batch_size,
                                                                    self.feature_scaler,
                                                                    self.response_scaler,
+                                                                   batch_size,
                                                                    apply_random)
         if (self.data_config.test_fold is not None):
             self.test_sequence = sequences.MemmappedSequence([features[self.data_config.test_fold]],
                                                              [responses[self.data_config.test_fold]],
                                                              [weights[self.data_config.test_fold]],
-                                                             batch_size,
                                                              self.feature_scaler,
                                                              self.response_scaler,
+                                                             batch_size,
                                                              apply_random)
 
     def build_or_load_model(self):
@@ -169,7 +169,7 @@ class Experiment(object):
 
     def fit_network(
             self,
-            train_sequence: keras.utils.Sequence,
+            train_sequence: keras.utils.Sequence = None,
             validation_sequence: keras.utils.Sequence = None
     ) -> None:
         # TODO:  Phil, I know we're thinking about breaking up the data and network components. I think part of that
