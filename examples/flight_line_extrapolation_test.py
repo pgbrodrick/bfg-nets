@@ -5,7 +5,7 @@ import gdal
 import numpy as np
 
 # TODO manage imports
-from rsCNN.networks.model import Experiment
+from rsCNN.networks.experiment import Experiment
 import rsCNN.data_management
 from rsCNN.networks import network_config
 import rsCNN.data_management.apply_model_to_data
