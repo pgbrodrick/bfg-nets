@@ -9,6 +9,14 @@ from rsCNN.utils.general import *
 _logger = logger.get_child_logger(__name__)
 
 
+# TODO: Phil:  I imagine there are several useful operations in this script that can be generalized, but I don't think
+#  I can use it as it stands. I have a single raster that I'd like to divide into gridded tiles, but I don't have a
+#  "feature" and "response" raster, just a feature raster that has temporal slices. However, I'm pretty sure you have
+#  gridding code in here and I'd be able to leverage that if we had a "get_grid(raster, grid_size)" function that would
+#  return a grid from a single raster. Just one example of how we could make some of these operations more general and
+#  use them more broadly. I might be wrong though.
+
+
 def get_proj(fname, is_vector):
     """ Get the projection of a raster/vector dataset.
     Arguments:
