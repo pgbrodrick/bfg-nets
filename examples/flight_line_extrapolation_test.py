@@ -64,12 +64,12 @@ network_config = network_config.create_network_config(inshape=inshape,
                                                       **global_options)
 
 
-experiment = Experiment(network_config, data_config, resume = True)
+experiment = Experiment(network_config, data_config, resume=True)
 experiment.build_or_load_model()
 experiment.build_or_load_data()
-#experiment.fit_network()
-#experiment.evaluate_network()
-report = rsCNN.evaluation.ExperimentReport(experiment,experiment.validation_sequence)
+# experiment.fit_network()
+# experiment.evaluate_network()
+report = rsCNN.evaluation.ExperimentReport(experiment, experiment.validation_sequence)
 report.create_report()
 
 
