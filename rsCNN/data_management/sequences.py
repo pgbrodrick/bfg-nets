@@ -16,13 +16,36 @@ class BaseSequence(keras.utils.Sequence):
     feature_scaler = None
     response_scaler = None
 
+    def __init__(self, feature_scaler: BaseGlobalScaler, response_scaler: BaseGlobalScaler):
+        self.feature_scaler = feature_scaler
+        self.response_scaler = response_scaler
+
     def __len__(self):
         # Method is required for Keras functionality, a.k.a. steps_per_epoch in fit_generator
         raise NotImplementedError
 
+    # TODO:  Phil:  can we rename apply_transforms to apply_random_transforms for clarity?
     def __getitem__(self, index: int, apply_transforms: bool = True) -> Tuple[np.array, np.array]:
         # Method is required for Keras functionality
-        raise NotImplementedError
+        # TODO:  Phil:  I'm trying to make it so we can build our own sequences more easily, even so we can extend the
+        #  memmapped sequence to do things like add noise or other modifications. This is a first-pass at that. I think
+        #  this general strategy makes it possible because we can more flexibly implement submethods when necessary
+        # rather than rewriting __getitem__ every time. Let me know what you think.
+        _logger.debug('Get batch {} with {} items via sequence'.format(index, self.batch_size))
+        _logger.debug('Get features, responses, and weights')
+        features, responses, weights = self._get_features_responses_weights(index)
+        _logger.debug('Modify features, responses, and weights prior to scaling')
+        features, responses, weights = self._modify_features_responses_weights_before_scaling(
+            features, responses, weights)
+        _logger.debug('Scale features')
+        features = self._scale_features(features)
+        _logger.debug('Scale responses')
+        responses = self._scale_responses(responses)
+        _logger.debug('Append weights to responses for loss functions')
+        responses_with_weights = np.append(responses, weights, axis=-1)
+        if apply_transforms is True:
+            _logger.debug('Apply random transformations to features and responses')
+            self._apply_random_transformations(features, responses)
 
     def get_transformed_batch(self, idx_batch: int):
         # Method is used for visualizations
@@ -32,11 +55,16 @@ class BaseSequence(keras.utils.Sequence):
         # Method is used for visualizations
         return self.__getitem__(idx_batch, apply_transforms=False)
 
-    def set_feature_scaler(self, feature_scaler: BaseGlobalScaler):
-        self.feature_scaler = feature_scaler
+    def _get_features_responses_weights(self, index: int) -> Tuple[np.array, np.array, np.array]:
+        raise NotImplementedError
 
-    def set_response_scaler(self, response_scaler: BaseGlobalScaler):
-        self.response_scaler = response_scaler
+    def _modify_features_responses_weights_before_scaling(
+            self,
+            features: np.array,
+            responses: np.array,
+            weights: np.array
+    ) -> Tuple[np.array, np.array, np.array]:
+        return features, responses, weights
 
     def _scale_features(self, features: np.array) -> np.array:
         return self.feature_scaler.transform(features)
@@ -81,6 +109,7 @@ class MemmappedSequence(BaseSequence):
         self.batch_size = batch_size
         self.apply_transforms = apply_transforms
 
+        # TODO: Phil:  what does this do exactly?
         self.cum_samples_per_fold = np.zeros(len(features)+1).astype(int)
         for fold in range(1, len(features)+1):
             self.cum_samples_per_fold[fold] = features[fold-1].shape[0] + self.cum_samples_per_fold[fold-1]
@@ -89,10 +118,8 @@ class MemmappedSequence(BaseSequence):
         # Method is required for Keras functionality, a.k.a. steps_per_epoch in fit_generator
         return int(np.ceil(self.cum_samples_per_fold[-1] / self.batch_size))
 
-    def __getitem__(self, index: int, apply_transforms: bool = True) -> Tuple[np.array, np.array]:
-        # Method is required for Keras functionality
-        _logger.debug('Get batch {} with {} items via sequence'.format(index, self.batch_size))
-
+    def _get_features_responses_weights(self, index: int) -> Tuple[np.array, np.array, np.array]:
+        # TODO:  Phil:  could you comment so it's easier to see what's going on here?
         current_fold = 0
         while current_fold < len(self.cum_samples_per_fold) - 1:
             if ((index * self.batch_size >= self.cum_samples_per_fold[current_fold] and
@@ -107,7 +134,6 @@ class MemmappedSequence(BaseSequence):
         batch_responses = (self.responses[current_fold])[sample_index:sample_index+self.batch_size, ...].copy()
         batch_weights = (self.weights[current_fold])[sample_index:sample_index+self.batch_size, ...].copy()
 
-        breakout = False
         while (batch_features.shape[0] < self.batch_size):
             sample_index = 0
             current_fold += 1
@@ -121,11 +147,4 @@ class MemmappedSequence(BaseSequence):
             batch_responses = np.append(batch_responses, (self.responses[current_fold])[
                                         sample_index:stop_ind, ...], axis=0)
             batch_weights = np.append(batch_weights, (self.weights[current_fold])[sample_index:stop_ind, ...], axis=0)
-
-        batch_features = self._scale_features(batch_features)
-        batch_responses = self._scale_responses(batch_responses)
-        batch_responses = np.append(batch_responses, batch_weights, axis=-1)
-        if (apply_transforms is True):
-            self._apply_random_transformations(batch_features, batch_responses)
-            
-        return [batch_features], [batch_responses]
+        return batch_features, batch_responses, batch_weights
