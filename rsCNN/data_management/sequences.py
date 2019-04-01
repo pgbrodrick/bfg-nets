@@ -105,9 +105,9 @@ class MemmappedSequence(BaseSequence):
             batch_size: int,
             apply_transforms: bool,
     ) -> None:
-        self.features = features # a list of numpy arrays, each of which is (n,y,x,f)
-        self.responses = responses # a list of numpy arrays, each of which is (n,y,x,r)
-        self.weights = weights # a list of numpy arrays, each of which is (n,y,x,1)
+        self.features = features  # a list of numpy arrays, each of which is (n,y,x,f)
+        self.responses = responses  # a list of numpy arrays, each of which is (n,y,x,r)
+        self.weights = weights  # a list of numpy arrays, each of which is (n,y,x,1)
         self.feature_scaler = feature_scaler
         self.response_scaler = response_scaler
         self.batch_size = batch_size
@@ -128,7 +128,6 @@ class MemmappedSequence(BaseSequence):
     def _get_features_responses_weights(self, index: int) -> Tuple[np.array, np.array, np.array]:
         # TODO:  Phil:  could you comment so it's easier to see what's going on here?
 
-        
         # start by finding which array we're starting in, based on the input index, batch size,
         # and the number of samples per array
         current_array = 0
