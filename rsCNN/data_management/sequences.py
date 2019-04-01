@@ -115,11 +115,11 @@ class MemmappedSequence(BaseSequence):
 
         # TODO: Phil:  what does this do exactly?
 
-        # Determine the cumulative number of total samples across folds - we're going to use
+        # Determine the cumulative number of total samples across arrays - we're going to use
         # it to roll between files when exctracting samples
         self.cum_samples_per_array = np.zeros(len(features)+1).astype(int)
-        for fold in range(1, len(features)+1):
-            self.cum_samples_per_array[fold] = features[fold-1].shape[0] + self.cum_samples_per_array[fold-1]
+        for _array in range(1, len(features)+1):
+            self.cum_samples_per_array[_array] = features[_array-1].shape[0] + self.cum_samples_per_array[_array-1]
 
     def __len__(self):
         # Method is required for Keras functionality, a.k.a. steps_per_epoch in fit_generator
