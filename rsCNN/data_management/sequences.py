@@ -116,7 +116,7 @@ class MemmappedSequence(BaseSequence):
         # Method is required for Keras functionality, a.k.a. steps_per_epoch in fit_generator
         return int(np.ceil(self.cum_samples_per_array[-1] / self.batch_size))
 
-    def _get_features_responses_weights(self, index: int) -> Tuple[np.array, np.array, np.array]:
+    def _get_features_responses_weights(self, index: int) -> Tuple[List[np.array], List[np.array], List[np.array]]:
         # start by finding which array we're starting in, based on the input index, batch size,
         # and the number of samples per array
         current_array = 0
