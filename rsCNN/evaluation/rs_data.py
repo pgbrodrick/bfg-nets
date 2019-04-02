@@ -9,7 +9,7 @@ plt.switch_backend('Agg')  # Needed for remote server plotting
 
 
 def plot_raw_and_scaled_input_examples(data_sequence: BaseSequence):
-    features, responses = data_sequence.__getitem__(0)
+    features, responses, weights = data_sequence.__getitem__(0)
     features = features[0]
     responses = responses[0]
     responses, weights = responses[..., :-1], responses[..., -1]
