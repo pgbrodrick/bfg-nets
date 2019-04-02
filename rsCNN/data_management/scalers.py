@@ -207,12 +207,12 @@ class RobustScaler(BaseSklearnScaler):
 class PowerScaler(BaseSklearnScaler):
 
     def __init__(self, nodata_value, savename_base, method='box-cox'):
-        self.scaler = sklearn.preprocessing.PowerScaler(method=method, copy=True)
+        self.scaler = sklearn.preprocessing.PowerTransformer(method=method, copy=True)
         super().__init__(nodata_value, savename_base)
 
 
 class QuantileUniformScaler(BaseSklearnScaler):
 
     def __init__(self, nodata_value, savename_base, output_distribution='uniform'):
-        self.scaler = sklearn.preprocessing.QuantileScaler(output_distribution=output_distribution, copy=True)
+        self.scaler = sklearn.preprocessing.QuantileTransformer(output_distribution=output_distribution, copy=True)
         super().__init__(nodata_value, savename_base)
