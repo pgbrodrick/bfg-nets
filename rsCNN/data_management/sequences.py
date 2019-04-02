@@ -1,5 +1,5 @@
 import random
-from typing import Tuple
+from typing import List, Tuple
 
 import keras
 import numpy as np
@@ -32,7 +32,7 @@ class BaseSequence(keras.utils.Sequence):
         # Method is required for Keras functionality, a.k.a. steps_per_epoch in fit_generator
         raise NotImplementedError
 
-    def __getitem__(self, index: int) -> Tuple[np.array, np.array]:
+    def __getitem__(self, index: int) -> Tuple[List[np.array], List[np.array]]:
         # Method is required for Keras functionality
         _logger.debug('Get batch {} with {} items via sequence'.format(index, self.batch_size))
         _logger.debug('Get features, responses, and weights')
@@ -45,30 +45,34 @@ class BaseSequence(keras.utils.Sequence):
         _logger.debug('Scale responses')
         responses = self._scale_responses(responses)
         _logger.debug('Append weights to responses for loss functions')
-        responses_with_weights = np.append(responses, weights, axis=-1)
+        responses_with_weights = [np.append(response, weight, axis=-1) for response, weight in zip(responses, weights)]
         if self.apply_random_transforms is True:
             _logger.debug('Apply random transformations to features and responses')
             self._apply_random_transformations(features, responses)
         return features, responses_with_weights
 
-    def _get_features_responses_weights(self, index: int) -> Tuple[np.array, np.array, np.array]:
+    def _get_features_responses_weights(self, index: int) -> Tuple[List[np.array], List[np.array], List[np.array]]:
         raise NotImplementedError
 
     def _modify_features_responses_weights_before_scaling(
             self,
-            features: np.array,
-            responses: np.array,
-            weights: np.array
-    ) -> Tuple[np.array, np.array, np.array]:
+            features: List[np.array],
+            responses: List[np.array],
+            weights: List[np.array]
+    ) -> Tuple[List[np.array], List[np.array], List[np.array]]:
         return features, responses, weights
 
-    def _scale_features(self, features: np.array) -> np.array:
-        return self.feature_scaler.transform(features)
+    def _scale_features(self, features: List[np.array]) -> List[np.array]:
+        return [self.feature_scaler.transform(feature) for feature in features]
 
-    def _scale_responses(self, responses: np.array) -> np.array:
-        return self.response_scaler.transform(responses)
+    def _scale_responses(self, responses: List[np.array]) -> List[np.array]:
+        return [self.response_scaler.transform(response) for response in responses]
 
-    def _apply_random_transformations(self, features: np.array, responses: np.array) -> Tuple[np.array, np.array]:
+    def _apply_random_transformations(
+            self,
+            features: List[np.array],
+            responses: [np.array]
+    ) -> Tuple[np.array, np.array]:
         # Flip top to bottom
         if random.random() > 0.5:
             features = np.flip(features, axis=0)
