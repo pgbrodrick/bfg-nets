@@ -37,6 +37,12 @@ class ExperimentReport(object):
             # Output examples and their scaled representations
             for fig in results.plot_predictions(self.test_sequence, self.experiment):
                 pdf.savefig(fig)
+            # Compact network visualization
+            for fig in networks.visualize_feature_progression(self.test_sequence, self.experiment.model):
+                pdf.savefig(fig,bbox_inches='tight')
+            # Expanded network visualization
+            for fig in networks.visualize_feature_progression(self.test_sequence, self.experiment.model, full_vertical=True):
+                pdf.savefig(fig,bbox_inches='tight')
             # TODO:  migrate the last reporting functions here
 
 

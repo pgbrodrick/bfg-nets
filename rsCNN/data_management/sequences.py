@@ -50,6 +50,7 @@ class BaseSequence(keras.utils.Sequence):
         if apply_transforms is True:
             _logger.debug('Apply random transformations to features and responses')
             self._apply_random_transformations(features, responses)
+        return features, responses, weights
 
     def get_transformed_batch(self, idx_batch: int):
         # Method is used for visualizations
