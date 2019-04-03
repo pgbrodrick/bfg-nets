@@ -17,11 +17,11 @@ plt.switch_backend('Agg')  # Needed for remote server plotting
 class ExperimentReport(object):
     experiment = None
 
-    #TODO: Fabina, I'm trying to get a better handle on your intention with the test_sequence.  Right now, train and validation
-    #sequences are already attached to experiment, as of fit.  So is this intended to be a true test sequence (which has never been
-    #attached)?  If so, I can adapt these below functions, and they'll make more sense, since right now I'm only doing applicaitons
-    #based on the test_sequence, which is screwy.  It should be happening for all three.  Relatively easy change to make, but I didn't
-    #realize this was the intent till I was all the way through, and want to make this change when I'm more fresh.
+    # TODO: Fabina, I'm trying to get a better handle on your intention with the test_sequence.  Right now, train and validation
+    # sequences are already attached to experiment, as of fit.  So is this intended to be a true test sequence (which has never been
+    # attached)?  If so, I can adapt these below functions, and they'll make more sense, since right now I'm only doing applicaitons
+    # based on the test_sequence, which is screwy.  It should be happening for all three.  Relatively easy change to make, but I didn't
+    # realize this was the intent till I was all the way through, and want to make this change when I'm more fresh.
     def __init__(self, experiment: Experiment, test_sequence: BaseSequence):
         self.experiment = experiment
         self.test_sequence = test_sequence
@@ -43,13 +43,13 @@ class ExperimentReport(object):
             for fig in results.plot_raw_and_scaled_result_examples(self.test_sequence, self.experiment):
                 pdf.savefig(fig, bbox_inches='tight')
             # Compact network visualization
-            for fig in networks.visualize_feature_progression(self.test_sequence, self.experiment.model, compact = True):
+            for fig in networks.visualize_feature_progression(self.test_sequence, self.experiment.model, compact=True):
                 pdf.savefig(fig, bbox_inches='tight')
             # Expanded network visualization
             for fig in networks.visualize_feature_progression(self.test_sequence, self.experiment.model):
                 pdf.savefig(fig, bbox_inches='tight')
 
-            #TODO: Fabina, going through it more and I'd prefer not to have a separate ResultsReport class.  The only inherrent
+            # TODO: Fabina, going through it more and I'd prefer not to have a separate ResultsReport class.  The only inherrent
             # benefit is not re-performing predictions.  That function is currently cheap, and even if it weren't we could just
             # do it here and pass it in, eliminating the need for a single-use class with one asset
 
@@ -57,7 +57,7 @@ class ExperimentReport(object):
             for fig in results.spatial_error(self.test_sequence, self.experiment):
                 pdf.savefig(fig, bbox_inches='tight')
 
-            #TODO: Fabina, I'm not happy with the way these sequences are called at all (see note above).
+            # TODO: Fabina, I'm not happy with the way these sequences are called at all (see note above).
             # Plot Training Sequence
             for fig in results.single_sequence_prediction_histogram(self.experiment.train_sequence, self.experiment, 'Training'):
                 pdf.savefig(fig, bbox_inches='tight')
@@ -66,6 +66,6 @@ class ExperimentReport(object):
                 pdf.savefig(fig, bbox_inches='tight')
 
             # TODO
-            #weight_visualization
-            #visual_stitching_artifact_check
-            #quant_stitching_artificat_check
+            # weight_visualization
+            # visual_stitching_artifact_check
+            # quant_stitching_artificat_check
