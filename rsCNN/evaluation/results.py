@@ -7,10 +7,7 @@ from rsCNN.data_management.sequences import BaseSequence
 from rsCNN.networks.experiment import Experiment
 
 
-# TODO:  I don't know everything this function does, but we can probably make it more specific. We have
-#  plot_raw_and_scaled_input_examples for input data... is this something like plot_raw_and_scaled_result_examples?
-
-def plot_predictions(data_sequence: BaseSequence, experiment: Experiment):
+def plot_raw_and_scaled_result_examples(data_sequence: BaseSequence, experiment: Experiment):
     features, responses = data_sequence.__getitem__(0)
     predictions = experiment.model.predict(features)
     features = features[0]
@@ -41,7 +38,6 @@ def plot_predictions(data_sequence: BaseSequence, experiment: Experiment):
     resp_mins, resp_maxs = _get_mins_maxs(raw_responses)
     trans_resp_mins, trans_resp_maxs = _get_mins_maxs(responses)
     pred_resp_mins, pred_resp_maxs = _get_mins_maxs(predictions)
-    #invtrans_pred_resp_mins, invtrans_pred_resp_maxs = _get_mins_maxs(raw_predictions)
     invtrans_pred_resp_mins, invtrans_pred_resp_maxs = _get_mins_maxs(raw_responses)
 
     while _sample_ind < raw_responses.shape[0]:
@@ -134,13 +130,13 @@ def plot_predictions(data_sequence: BaseSequence, experiment: Experiment):
     return fig_list
 
 
-# TODO:  update name, histograms is a bit unclear as to what this actually plots
 # TODO:  I started refactoring this, but I don't quite know what fa is and whether we need fa or verification_fold. I'm
 #  guessing that we can get both fa and verification_fold from the experiment object, as in the plotting function above,
 #  or that we can simply use the verification sequence. Taking a step back, it seems like it might be useful to make a
 #  class that looks like the following, and then the plotting functions are methods on this object that have access to
 #  the features, responses, and predictions without recreating those objects and without passing a shitton of variables
 #  around.
+
 
 class ResultsReport(object):
 
@@ -160,83 +156,99 @@ class ResultsReport(object):
     # TODO:  move plotting functions to methods on this object
 
 
-def plot_prediction_histograms(responses, weights, pred_responses, fa, verification_fold, response_transform, response_nodata_value):
+def _get_lhist(data,bins=10):
+  hist, edge = np.histogram(data,bins=bins,range=(np.nanmin(data),np.nanmax(data)))
+  hist = hist.tolist()
+  edge = edge.tolist()
+  phist = [0]
+  pedge = [edge[0]]
+  for _e in range(0,len(edge)-1):
+    phist.append(hist[_e])
+    phist.append(hist[_e])
+  
+    pedge.append(edge[_e])
+    pedge.append(edge[_e+1])
+  
+  phist.append(0)
+  pedge.append(edge[-1])
+  phist = np.array(phist)
+  pedge = np.array(pedge)
+  return phist,pedge
 
-    fig_list = []
 
-    fold_assignments = np.zeros((responses.shape[0], responses.shape[1], responses.shape[2], 1))
-    un_fa = np.unique(fa)
-    for _n in range(len(un_fa)):
-        fold_assignments[fa == un_fa[_n], ...] = un_fa[_n]
+def single_sequence_prediction_histogram(data_sequence: BaseSequence, experiment: Experiment, seq_str: str =''):
 
-    responses[responses == response_nodata_value] = np.nan
-    pred_responses[pred_responses == response_nodata_value] = np.nan
+    #TODO: deal with more than one batch....
+    features, responses = data_sequence.__getitem__(0)
+    pred_responses = experiment.model.predict(features)
+    features = features[0]
+    responses = responses[0]
+    responses, weights = responses[..., :-1], responses[..., -1]
 
-    trans_responses = response_transform.transform(responses)
-    invtrans_pred_responses = response_transform.inverse_transform(pred_responses)
-
+    responses[responses == experiment.data_config.response_nodata_value] = np.nan
+    pred_responses[pred_responses == experiment.data_config.response_nodata_value] = np.nan
     responses[weights == 0, :] = np.nan
     pred_responses[weights == 0, :] = np.nan
-    trans_responses[weights == 0, :] = np.nan
-    invtrans_pred_responses[weights == 0, :] = np.nan
+
+    invtrans_responses = data_sequence.response_scaler.inverse_transform(responses)
+    invtrans_pred_responses = data_sequence.response_scaler.inverse_transform(pred_responses)
 
     responses = responses.reshape((-1, responses.shape[-1]))
     pred_responses = pred_responses.reshape((-1, pred_responses.shape[-1]))
-    trans_responses = trans_responses.reshape((-1, trans_responses.shape[-1]))
+    invtrans_responses = invtrans_responses.reshape((-1, invtrans_responses.shape[-1]))
     invtrans_pred_responses = invtrans_pred_responses.reshape((-1, invtrans_pred_responses.shape[-1]))
-    fold_assignments = np.squeeze(fold_assignments.reshape((-1, fold_assignments.shape[-1])))
 
     max_resp_per_page = min(8, responses.shape[-1])
     _response_ind = 0
 
     # Training Raw Space
+    fig_list = []
     while _response_ind < responses.shape[-1]:
 
-        fig = plt.figure(figsize=(30 * max_resp_per_page / (4 + max_resp_per_page), 30 * 4 / (4 + max_resp_per_page)))
+        fig = plt.figure(figsize=(6 * max_resp_per_page , 10))
         gs1 = gridspec.GridSpec(4, max_resp_per_page)
         for _r in range(_response_ind, min(_response_ind+max_resp_per_page, responses.shape[-1])):
             ax = plt.subplot(gs1[0, _r])
-            plt.hist(responses[fold_assignments != verification_fold, _r], color='black')
-            plt.hist(invtrans_pred_responses[fold_assignments != verification_fold, _r], color='green')
+            b,h = _get_lhist(responses[..., _r])
+            plt.plot(h,b,color='black')
+            b,h = _get_lhist(pred_responses[..., _r])
+            plt.plot(h,b,color='green')
 
             if (_r == _response_ind):
-                plt.ylabel('Training\nRaw')
+                plt.ylabel('Raw')
             plt.title('Response ' + str(_r))
 
             ax = plt.subplot(gs1[1, _r])
-            plt.hist(responses[fold_assignments == verification_fold, _r], color='black')
-            plt.hist(invtrans_pred_responses[fold_assignments == verification_fold, _r], color='green')
+
+            b,h = _get_lhist(invtrans_responses[..., _r])
+            plt.plot(h,b,color='black')
+            b,h = _get_lhist(invtrans_pred_responses[..., _r])
+            plt.plot(h,b,color='green')
 
             if (_r == _response_ind):
-                plt.ylabel('Testing\nRaw')
-
-            ax = plt.subplot(gs1[2, _r])
-            plt.hist(trans_responses[fold_assignments != verification_fold, _r], color='black')
-            plt.hist(pred_responses[fold_assignments != verification_fold, _r], color='green')
-
-            if (_r == _response_ind):
-                plt.ylabel('Training\nTransform')
-
-            ax = plt.subplot(gs1[3, _r])
-            plt.hist(trans_responses[fold_assignments == verification_fold, _r], color='black')
-            plt.hist(pred_responses[fold_assignments == verification_fold, _r], color='green')
-
-            if (_r == _response_ind):
-                plt.ylabel('Testing\nRaw')
+                plt.ylabel('Transformed')
 
         _response_ind += max_resp_per_page
-        plt.suptitle('Response Histogram Page ' + str((len(fig_list))))
+        plt.suptitle(seq_str + ' Response Histogram Page ' + str((len(fig_list))))
         fig_list.append(fig)
     return fig_list
 
 
-def spatial_error(responses, pred_responses, weights, response_nodata_value):
+
+def spatial_error(data_sequence: BaseSequence, experiment: Experiment):
 
     # TODO: Consider handling weights
     fig_list = []
 
-    responses[responses == response_nodata_value] = np.nan
-    pred_responses[responses == response_nodata_value] = np.nan
+    #TODO: deal with more than one batch....
+    features, responses = data_sequence.__getitem__(0)
+    pred_responses = experiment.model.predict(features)
+    features = features[0]
+    responses = responses[0]
+    responses, weights = responses[..., :-1], responses[..., -1]
+
+    responses[responses == experiment.data_config.response_nodata_value] = np.nan
+    pred_responses[responses == experiment.data_config.response_nodata_value] = np.nan
 
     diff = np.abs(responses-pred_responses)
 

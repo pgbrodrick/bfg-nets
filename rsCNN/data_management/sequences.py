@@ -150,4 +150,4 @@ class MemmappedSequence(BaseSequence):
             batch_responses = np.append(batch_responses, (self.responses[current_array])[
                                         sample_index:stop_ind, ...], axis=0)
             batch_weights = np.append(batch_weights, (self.weights[current_array])[sample_index:stop_ind, ...], axis=0)
-        return batch_features, batch_responses, batch_weights
+        return [batch_features], [batch_responses], [batch_weights]

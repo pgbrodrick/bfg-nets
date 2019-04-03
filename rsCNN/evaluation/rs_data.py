@@ -17,7 +17,7 @@ def plot_raw_and_scaled_input_examples(data_sequence: BaseSequence):
     features[features == data_sequence.feature_scaler.nodata_value] = np.nan
     responses[responses == data_sequence.response_scaler.nodata_value] = np.nan
 
-    trans_features = data_sequence.feature_scaler.transform(features)
+    invtrans_features = data_sequence.feature_scaler.inverse_transform(features)
     trans_responses = data_sequence.response_scaler.transform(responses)
 
     fig_list = []
@@ -37,7 +37,7 @@ def plot_raw_and_scaled_input_examples(data_sequence: BaseSequence):
 
     feat_mins, feat_maxs = _get_mins_maxs(features)
     resp_mins, resp_maxs = _get_mins_maxs(responses)
-    trans_feat_mins, trans_feat_maxs = _get_mins_maxs(trans_features)
+    invtrans_feat_mins, invtrans_feat_maxs = _get_mins_maxs(invtrans_features)
     trans_resp_mins, trans_resp_maxs = _get_mins_maxs(trans_responses)
 
     while _sample_ind < features.shape[0]:
@@ -54,7 +54,7 @@ def plot_raw_and_scaled_input_examples(data_sequence: BaseSequence):
             for _s in range(_sample_ind, _sample_ind + l_num_samp):
                 for _f in range(_feature_ind, _feature_ind + l_num_feat):
                     ax = plt.subplot(gs1[_s-_sample_ind, _f-_feature_ind])
-                    ax.imshow(np.squeeze(features[_s, :, :, _f]), vmin=feat_mins[_f], vmax=feat_maxs[_f])
+                    ax.imshow(np.squeeze(invtrans_features[_s, :, :, _f]), vmin=invtrans_feat_mins[_f], vmax=invtrans_feat_maxs[_f])
                     plt.xticks([])
                     plt.yticks([])
 
@@ -62,17 +62,17 @@ def plot_raw_and_scaled_input_examples(data_sequence: BaseSequence):
                         plt.ylabel('Sample ' + str(_s))
                     if (_s == _sample_ind):
                         plt.title('Feature ' + str(_f) + '\n' +
-                                  str(round(feat_mins[_f], 2)) + '\n' + str(round(feat_maxs[_f], 2)))
+                                  str(round(invtrans_feat_mins[_f], 2)) + '\n' + str(round(invtrans_feat_maxs[_f], 2)))
 
                     ax = plt.subplot(gs1[_s-_sample_ind, l_num_feat + _f-_feature_ind])
-                    ax.imshow(np.squeeze(trans_features[_s, :, :, _f]),
-                              vmin=trans_feat_mins[_f], vmax=trans_feat_maxs[_f])
+                    ax.imshow(np.squeeze(features[_s, :, :, _f]),
+                              vmin=feat_mins[_f], vmax=feat_maxs[_f])
                     plt.xticks([])
                     plt.yticks([])
 
                     if (_s == _sample_ind):
                         plt.title('Transformed\nFeature ' + str(_f) + '\n' +
-                                  str(round(trans_feat_mins[_f], 2)) + '\n' + str(round(trans_feat_maxs[_f], 2)))
+                                  str(round(feat_mins[_f], 2)) + '\n' + str(round(feat_maxs[_f], 2)))
 
                 for _r in range(_response_ind, _response_ind + l_num_resp):
                     ax = plt.subplot(gs1[_s-_sample_ind, 2*l_num_feat + _r-_response_ind])

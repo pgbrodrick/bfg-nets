@@ -89,7 +89,11 @@ class Experiment(object):
             self.response_scaler.fit(responses[train_folds[0]])
             self.response_scaler.save()
 
-        batch_size = self.network_config['training']['batch_size']
+        #TODO: Fabina, can't see where you're loading this in from now, presumably,
+        #it's in a config somewhere?
+        #batch_size = self.network_config['training']['batch_size']
+        #batch_size = self.network_config['training']['batch_size']
+        batch_size = 100
         apply_random = self.network_config['training']['apply_random_transformations']
         self.train_sequence = sequences.MemmappedSequence([features[_f] for _f in train_folds],
                                                           [responses[_r] for _r in train_folds],
