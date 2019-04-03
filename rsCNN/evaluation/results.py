@@ -159,29 +159,29 @@ class ResultsReport(object):
     # TODO:  move plotting functions to methods on this object
 
 
-def _get_lhist(data,bins=10):
-  hist, edge = np.histogram(data,bins=bins,range=(np.nanmin(data),np.nanmax(data)))
-  hist = hist.tolist()
-  edge = edge.tolist()
-  phist = [0]
-  pedge = [edge[0]]
-  for _e in range(0,len(edge)-1):
-    phist.append(hist[_e])
-    phist.append(hist[_e])
-  
-    pedge.append(edge[_e])
-    pedge.append(edge[_e+1])
-  
-  phist.append(0)
-  pedge.append(edge[-1])
-  phist = np.array(phist)
-  pedge = np.array(pedge)
-  return phist,pedge
+def _get_lhist(data, bins=10):
+    hist, edge = np.histogram(data, bins=bins, range=(np.nanmin(data), np.nanmax(data)))
+    hist = hist.tolist()
+    edge = edge.tolist()
+    phist = [0]
+    pedge = [edge[0]]
+    for _e in range(0, len(edge)-1):
+        phist.append(hist[_e])
+        phist.append(hist[_e])
+
+        pedge.append(edge[_e])
+        pedge.append(edge[_e+1])
+
+    phist.append(0)
+    pedge.append(edge[-1])
+    phist = np.array(phist)
+    pedge = np.array(pedge)
+    return phist, pedge
 
 
-def single_sequence_prediction_histogram(data_sequence: BaseSequence, experiment: Experiment, seq_str: str =''):
+def single_sequence_prediction_histogram(data_sequence: BaseSequence, experiment: Experiment, seq_str: str = ''):
 
-    #TODO: deal with more than one batch....
+        # TODO: deal with more than one batch....
     features, responses = data_sequence.__getitem__(0)
     pred_responses = experiment.model.predict(features)
     features = features[0]
@@ -208,14 +208,14 @@ def single_sequence_prediction_histogram(data_sequence: BaseSequence, experiment
     fig_list = []
     while _response_ind < responses.shape[-1]:
 
-        fig = plt.figure(figsize=(6 * max_resp_per_page , 10))
+        fig = plt.figure(figsize=(6 * max_resp_per_page, 10))
         gs1 = gridspec.GridSpec(4, max_resp_per_page)
         for _r in range(_response_ind, min(_response_ind+max_resp_per_page, responses.shape[-1])):
             ax = plt.subplot(gs1[0, _r])
-            b,h = _get_lhist(responses[..., _r])
-            plt.plot(h,b,color='black')
-            b,h = _get_lhist(pred_responses[..., _r])
-            plt.plot(h,b,color='green')
+            b, h = _get_lhist(responses[..., _r])
+            plt.plot(h, b, color='black')
+            b, h = _get_lhist(pred_responses[..., _r])
+            plt.plot(h, b, color='green')
 
             if (_r == _response_ind):
                 plt.ylabel('Raw')
@@ -223,10 +223,10 @@ def single_sequence_prediction_histogram(data_sequence: BaseSequence, experiment
 
             ax = plt.subplot(gs1[1, _r])
 
-            b,h = _get_lhist(invtrans_responses[..., _r])
-            plt.plot(h,b,color='black')
-            b,h = _get_lhist(invtrans_pred_responses[..., _r])
-            plt.plot(h,b,color='green')
+            b, h = _get_lhist(invtrans_responses[..., _r])
+            plt.plot(h, b, color='black')
+            b, h = _get_lhist(invtrans_pred_responses[..., _r])
+            plt.plot(h, b, color='green')
 
             if (_r == _response_ind):
                 plt.ylabel('Transformed')
@@ -237,13 +237,12 @@ def single_sequence_prediction_histogram(data_sequence: BaseSequence, experiment
     return fig_list
 
 
-
 def spatial_error(data_sequence: BaseSequence, experiment: Experiment):
 
     # TODO: Consider handling weights
     fig_list = []
 
-    #TODO: deal with more than one batch....
+    # TODO: deal with more than one batch....
     features, responses = data_sequence.__getitem__(0)
     pred_responses = experiment.model.predict(features)
     features = features[0]
