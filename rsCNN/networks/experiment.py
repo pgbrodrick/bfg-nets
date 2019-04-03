@@ -89,8 +89,8 @@ class Experiment(object):
             self.response_scaler.fit(responses[train_folds[0]])
             self.response_scaler.save()
 
-        #TODO: Fabina, can't see where you're loading this in from now, presumably,
-        #it's in a config somewhere?
+        # TODO: Fabina, can't see where you're loading this in from now, presumably,
+        # it's in a config somewhere?
         #batch_size = self.network_config['training']['batch_size']
         #batch_size = self.network_config['training']['batch_size']
         batch_size = 100

@@ -54,7 +54,8 @@ def plot_raw_and_scaled_input_examples(data_sequence: BaseSequence):
             for _s in range(_sample_ind, _sample_ind + l_num_samp):
                 for _f in range(_feature_ind, _feature_ind + l_num_feat):
                     ax = plt.subplot(gs1[_s-_sample_ind, _f-_feature_ind])
-                    ax.imshow(np.squeeze(invtrans_features[_s, :, :, _f]), vmin=invtrans_feat_mins[_f], vmax=invtrans_feat_maxs[_f])
+                    ax.imshow(np.squeeze(invtrans_features[_s, :, :, _f]),
+                              vmin=invtrans_feat_mins[_f], vmax=invtrans_feat_maxs[_f])
                     plt.xticks([])
                     plt.yticks([])
 
