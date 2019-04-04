@@ -56,8 +56,11 @@ class Experiment(object):
             features, responses, weights, read_success = load_training_data(self.data_config)
 
         if (read_success is False or rebuild is True):
-            if (self.data_config.data_build_category == 'ordered_continuous'):
+            if (self.data_config.data_build_category in ['ordered_continuous','ordered_categorical'] ):
                 features, responses, weights = training_data.build_training_data_ordered(self.data_config)
+                if (self.data_config.data_build_category == 'ordered_categorical'):
+                    weights = training_data.calculate_categorical_weights(responses, weights, self.data_config)
+                    #TODO: optionally update to categorical weighting
             else:
                 raise NotImplementedError('Unknown data_build_category')
 
@@ -93,7 +96,7 @@ class Experiment(object):
         # it's in a config somewhere?
         #batch_size = self.network_config['training']['batch_size']
         #batch_size = self.network_config['training']['batch_size']
-        batch_size = 100
+        batch_size = 10
         apply_random = self.network_config['training']['apply_random_transformations']
         self.train_sequence = sequences.MemmappedSequence([features[_f] for _f in train_folds],
                                                           [responses[_r] for _r in train_folds],
@@ -144,6 +147,11 @@ class Experiment(object):
             if 'lr' in self.history:
                 _logger.debug('Setting learning rate to value from last training epoch')
                 K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
+        n_gpu_avail = utils.num_gpu_available()
+        print('There are ' + str(n_gpu_avail) + ' gpus available')
+        if (n_gpu_avail > 1):
+            self.model = keras.utils.multi_gpu_model(self.model, gpus=n_gpu_avail, cpu_relocation=True)
+            self.model.compile(loss=loss_function, optimizer=self.network_config['training']['optimizer'])
 
     def calculate_training_memory_usage(self, batch_size: int) -> float:
         # Shamelessly copied from

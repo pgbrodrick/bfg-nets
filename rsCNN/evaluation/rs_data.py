@@ -13,6 +13,7 @@ def plot_raw_and_scaled_input_examples(data_sequence: BaseSequence):
     features = features[0]
     responses = responses[0]
     responses, weights = responses[..., :-1], responses[..., -1]
+    weights = weights.reshape((weights.shape[0],weights.shape[1],weights.shape[2],1))
 
     features[features == data_sequence.feature_scaler.nodata_value] = np.nan
     responses[responses == data_sequence.response_scaler.nodata_value] = np.nan
@@ -39,6 +40,11 @@ def plot_raw_and_scaled_input_examples(data_sequence: BaseSequence):
     resp_mins, resp_maxs = _get_mins_maxs(responses)
     invtrans_feat_mins, invtrans_feat_maxs = _get_mins_maxs(invtrans_features)
     trans_resp_mins, trans_resp_maxs = _get_mins_maxs(trans_responses)
+    print(weights.shape)
+    print(responses.shape)
+    weight_mins, weight_maxs = _get_mins_maxs(weights)
+    print(weight_mins)
+    print(weight_maxs)
 
     while _sample_ind < features.shape[0]:
         l_num_samp = min(max_samples_per_page, features.shape[0]-_sample_ind)
@@ -95,12 +101,13 @@ def plot_raw_and_scaled_input_examples(data_sequence: BaseSequence):
                         plt.title('Transformed\nResponse ' + str(_r) + '\n' +
                                   str(round(trans_resp_mins[_r], 2)) + '\n' + str(round(trans_resp_maxs[_r], 2)))
                 ax = plt.subplot(gs1[_s-_sample_ind, -1])
-                ax.imshow(np.squeeze(weights[_s, :, :]), vmin=0, vmax=1, cmap='Greys_r')
+                ax.imshow(np.squeeze(weights[_s, :, :]), vmin=weight_mins[0], vmax=weight_maxs[0], cmap='Greys_r')
                 plt.xticks([])
                 plt.yticks([])
 
                 if (_s == _sample_ind):
-                    plt.title('Weights')
+                    plt.title('Weights = \n' + 
+                              str(round(weight_mins[0], 2)) + '\n' + str(round(weight_maxs[0], 2)))
 
             plt.suptitle('Input Example Plots Page ' + str((len(fig_list))))
             fig_list.append(fig)
