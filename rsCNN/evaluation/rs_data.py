@@ -40,11 +40,7 @@ def plot_raw_and_scaled_input_examples(data_sequence: BaseSequence):
     resp_mins, resp_maxs = _get_mins_maxs(responses)
     invtrans_feat_mins, invtrans_feat_maxs = _get_mins_maxs(invtrans_features)
     trans_resp_mins, trans_resp_maxs = _get_mins_maxs(trans_responses)
-    print(weights.shape)
-    print(responses.shape)
     weight_mins, weight_maxs = _get_mins_maxs(weights)
-    print(weight_mins)
-    print(weight_maxs)
 
     while _sample_ind < features.shape[0]:
         l_num_samp = min(max_samples_per_page, features.shape[0]-_sample_ind)

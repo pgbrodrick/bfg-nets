@@ -113,6 +113,7 @@ class DataConfig:
         # Scalers
         self.feature_scaler_name = kwargs.get('feature_scaler_name', 'NullScaler')
         self.response_scaler_name = kwargs.get('response_scaler_name', 'NullScaler')
+        self.feature_mean_centering = kwargs.get('feature_mean_centering',False)
 
     # TODO: safegaurd from overwrite?
     def save_to_file(self):

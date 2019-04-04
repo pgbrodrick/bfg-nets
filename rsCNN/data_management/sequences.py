@@ -68,6 +68,9 @@ class BaseSequence(keras.utils.Sequence):
     def _scale_responses(self, responses: List[np.array]) -> List[np.array]:
         return [self.response_scaler.transform(response) for response in responses]
 
+    def _mean_center(self, data: List[np.array]) -> List[np.array]:
+        return data - np.mean(data,axis=(1,2))[:,np.newaxis,np.newaxis,:]
+
     def _apply_random_transformations(
             self,
             features: List[np.array],
@@ -99,6 +102,7 @@ class MemmappedSequence(BaseSequence):
             response_scaler: BaseGlobalScaler,
             batch_size: int,
             apply_random_transforms: bool,
+            feature_mean_centering: False,
     ) -> None:
         self.features = features  # a list of numpy arrays, each of which is (n,y,x,f)
         self.responses = responses  # a list of numpy arrays, each of which is (n,y,x,r)
@@ -111,6 +115,8 @@ class MemmappedSequence(BaseSequence):
         self.cum_samples_per_array = np.zeros(len(features)+1).astype(int)
         for _array in range(1, len(features)+1):
             self.cum_samples_per_array[_array] = features[_array-1].shape[0] + self.cum_samples_per_array[_array-1]
+
+        self.feature_mean_centering = feature_mean_centering
 
     def __len__(self):
         # Method is required for Keras functionality, a.k.a. steps_per_epoch in fit_generator
@@ -150,4 +156,6 @@ class MemmappedSequence(BaseSequence):
             batch_responses = np.append(batch_responses, (self.responses[current_array])[
                                         sample_index:stop_ind, ...], axis=0)
             batch_weights = np.append(batch_weights, (self.weights[current_array])[sample_index:stop_ind, ...], axis=0)
+        if (self.feature_mean_centering is True):
+            batch_features = self._mean_center(batch_features) 
         return [batch_features], [batch_responses], [batch_weights]
