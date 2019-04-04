@@ -98,13 +98,15 @@ class Experiment(object):
         #batch_size = self.network_config['training']['batch_size']
         batch_size = 10
         apply_random = self.network_config['training']['apply_random_transformations']
+        mean_centering = self.data_config.feature_mean_centering
         self.train_sequence = sequences.MemmappedSequence([features[_f] for _f in train_folds],
                                                           [responses[_r] for _r in train_folds],
                                                           [weights[_w] for _w in train_folds],
                                                           self.feature_scaler,
                                                           self.response_scaler,
                                                           batch_size,
-                                                          apply_random)
+                                                          apply_random_transforms = apply_random,
+                                                          feature_mean_centering = mean_centering)
         if (self.data_config.validation_fold is not None):
             self.validation_sequence = sequences.MemmappedSequence([features[self.data_config.validation_fold]],
                                                                    [responses[self.data_config.validation_fold]],
@@ -112,7 +114,8 @@ class Experiment(object):
                                                                    self.feature_scaler,
                                                                    self.response_scaler,
                                                                    batch_size,
-                                                                   apply_random)
+                                                                   apply_random_transforms = apply_random,
+                                                                   feature_mean_centering = mean_centering)
         if (self.data_config.test_fold is not None):
             self.test_sequence = sequences.MemmappedSequence([features[self.data_config.test_fold]],
                                                              [responses[self.data_config.test_fold]],
@@ -120,7 +123,8 @@ class Experiment(object):
                                                              self.feature_scaler,
                                                              self.response_scaler,
                                                              batch_size,
-                                                             apply_random)
+                                                             apply_random_transforms = apply_random,
+                                                             feature_mean_centering = mean_centering)
 
     def build_or_load_model(self):
         _logger.info('Building or loading model')
@@ -144,14 +148,18 @@ class Experiment(object):
                 **self.network_config['architecture_options']
             )
             self.model.compile(loss=loss_function, optimizer=self.network_config['training']['optimizer'])
+            self.model.summary()
             if 'lr' in self.history:
                 _logger.debug('Setting learning rate to value from last training epoch')
                 K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
         n_gpu_avail = utils.num_gpu_available()
+        self.parallel_model = self.model
         print('There are ' + str(n_gpu_avail) + ' gpus available')
         if (n_gpu_avail > 1):
-            self.model = keras.utils.multi_gpu_model(self.model, gpus=n_gpu_avail, cpu_relocation=True)
-            self.model.compile(loss=loss_function, optimizer=self.network_config['training']['optimizer'])
+            self.parallel_model = keras.utils.multi_gpu_model(self.model, gpus=n_gpu_avail, cpu_relocation=True)
+            self.parallel_model.compile(loss=loss_function, optimizer=self.network_config['training']['optimizer'])
+        self.model.summary()
+        self.parallel_model.summary()
 
     def calculate_training_memory_usage(self, batch_size: int) -> float:
         # Shamelessly copied from
@@ -203,7 +211,8 @@ class Experiment(object):
 
         # TODO:  Check whether psutil.cpu_count gives the right answer on SLURM, i.e., the number of CPUs available to
         #  the job and not the total number on the instance.
-        new_history = self.model.fit_generator(
+
+        new_history = self.parallel_model.fit_generator(
             self.train_sequence,
             epochs=self.network_config['training']['max_epochs'],
             verbose=self.network_config['model']['verbosity'],
