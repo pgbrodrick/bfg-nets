@@ -8,6 +8,11 @@ DIR_TEMPLATES = os.path.join(DIR_PROJECT_ROOT, 'templates')
 
 _GPU_TYPES = ['GPU', 'XLA_GPU']
 
+def num_gpu_available():
+    session = tensorflow.Session(config=tensorflow.ConfigProto(log_device_placement=True))
+    device_types = [device.device_type for device in session.list_devices()]
+    return len([type_ for type_ in device_types if type_ in _GPU_TYPES])
+
 
 def assert_gpu_available():
     session = tensorflow.Session(config=tensorflow.ConfigProto(log_device_placement=True))

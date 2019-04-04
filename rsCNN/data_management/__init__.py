@@ -111,8 +111,8 @@ class DataConfig:
         self.feature_shape = None
 
         # Scalers
-        self.feature_scaler_name = kwargs.get('feature_scaler_name', None)
-        self.response_scaler_name = kwargs.get('response_scaler_name', None)
+        self.feature_scaler_name = kwargs.get('feature_scaler_name', 'NullScaler')
+        self.response_scaler_name = kwargs.get('response_scaler_name', 'NullScaler')
 
     # TODO: safegaurd from overwrite?
     def save_to_file(self):
@@ -145,7 +145,7 @@ def load_training_data(config: DataConfig):
             features.append(np.load(config.feature_files[fold], mmap_mode='r'))
         else:
             success = False
-            print('feailed read at ' + config.feature_files[fold])
+            print('failed read at ' + config.feature_files[fold])
             break
         if (os.path.isfile(config.response_files[fold])):
             responses.append(np.load(config.response_files[fold], mmap_mode='r'))

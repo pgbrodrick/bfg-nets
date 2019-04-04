@@ -134,7 +134,7 @@ def visualize_feature_progression(data_sequence, model, compact=False, max_filte
             # Plot!
             ax = fig.add_axes([ip[0], ip[1], image_size, image_size], zorder=max_filters+1-_iii)
             top = max(top, ip[1]+image_size)
-            plt.imshow(tp, vmin=np.nanpercentile(tp, 5), vmax=np.nanpercentile(tp, 95))
+            plt.imshow(tp, vmin=np.nanpercentile(tp, 0), vmax=np.nanpercentile(tp, 100))
             adjust_axis(ax)
             if (_iii == 0):
                 plt.xlabel(layer_names[_l])

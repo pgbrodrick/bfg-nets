@@ -115,6 +115,82 @@ def check_data_matches(set_a, set_b, set_b_is_vector=False, set_c=[], set_c_is_v
                 if (dataset_a.RasterXSize != dataset_c.RasterXSize or dataset_a.RasterYSize != dataset_c.RasterYSize):
                     raise Exception(('extent mismatch between', set_a[n], 'and', set_c[n]))
 
+# Calculates categorical weights for a single response
+def calculate_categorical_weights(responses, weights, config, resp_ind=0, batch_size=100):
+
+    # find upper and lower boud
+    lb = config.window_radius - config.internal_window_radius
+    if (lb == 0):
+        ub = responses[0].shape[1]
+    else:
+        ub = -lb
+    
+    # get unique responses (batch-wise)
+    un_responses = []
+    for _array in range(len(responses)):
+        if (_array is not config.validation_fold and _array is not config.test_fold):
+            for ind in range(0, responses[_array].shape[0],batch_size):
+                l_un_resp = np.unique(responses[_array][ind:ind+batch_size,lb:ub,lb:ub,resp_ind])
+                l_un_resp = [x for x in l_un_resp if x not in un_responses]
+                un_responses.extend(l_un_resp)
+
+    # get response/total counts (batch-wise)
+    response_counts = np.zeros(len(un_responses))
+    total_valid_count = 0
+    for _array in range(len(responses)):
+        if (_array is not config.validation_fold and _array is not config.test_fold):
+            for ind in range(0, responses[_array].shape[0],batch_size):
+                lr = (responses[_array])[ind:ind+batch_size,lb:ub,lb:ub,resp_ind]
+                lr[lr == config.response_nodata_value] = np.nan
+                total_valid_count += np.sum(np.isfinite(lr))
+                for n in range(0,len(un_responses)):
+                    response_counts[n] += np.nansum(lr == un_responses[n])
+
+
+    # assign_weights
+    for _array in range(len(responses)):
+        for ind in range(0, responses[_array].shape[0],batch_size):
+
+            lr = (responses[_array])[ind:ind+batch_size,:,:,resp_ind]
+            lw = np.zeros(lr.shape)
+            for n in range(0,len(un_responses)):
+                lw[lr == un_responses[n]] = total_valid_count / response_counts[n]
+
+            lw[:, :lb, :] = 0
+            lw[:, ub:, :] = 0
+            lw[:, :, :lb] = 0
+            lw[:, :, ub:] = 0
+
+            weights[_array][ind:ind+batch_size,:,:,0] = lw
+
+    if (config.data_save_name is not None):
+        config.saved_data = False
+        config.save_to_file()
+        for _w in range(len(weights)):
+            np.save(config.weight_files[_w], weights[_w])
+        config.saved_data = True
+        config.save_to_file()
+
+    return weights
+
+
+def get_data_section(ds,x,y,x_size,y_size):
+    dat = np.zeros((x_size,y_size,ds.RasterCount))
+    for _b in range(ds.RasterCount):
+        dat[...,_b] = ds.GetRasterBand(_b+1).ReadAsArray(x,y,x_size,y_size)
+    return dat
+
+def get_response_data_section(ds,x,y,x_size,y_size,config):
+    dat = get_data_section(ds,x,y,x_size,y_size)
+    dat = np.squeeze(dat)
+    if (config.response_min_value is not None):
+        dat[dat < config.response_min_value] = config.response_nodata_value
+    if (config.response_max_value is not None):
+        dat[dat > config.response_max_value] = config.response_nodata_value
+    return dat
+
+
+
 
 def build_training_data_ordered(config):
     """ Builds a set of training data based on the configuration input
