@@ -1,15 +1,12 @@
-import configparser
 import os
-from typing import List, Union
 
 import keras
 import keras.backend as K
 import numpy as np
 
-from rsCNN import utils
 from rsCNN.data_management import scalers, sequences, training_data, load_data_config_from_file, load_training_data
-from rsCNN.networks import callbacks, io, losses
-from rsCNN.utils import logger
+from rsCNN.networks import callbacks, histories, losses, models, network_configs
+from rsCNN.utils import gpus, logger
 
 
 _logger = logger.get_child_logger(__name__)
@@ -25,16 +22,17 @@ class Experiment(object):
     validation_sequence = None
     test_sequence = None
 
-    def __init__(self, network_config: configparser.ConfigParser, data_config, resume=False) -> None:
+    def __init__(self, network_config: dict, data_config, resume: bool = False) -> None:
         self.data_config = data_config
         self.network_config = network_config
         self.resume = resume
 
         if os.path.exists(self.network_config['model']['dir_out']):
-            if io.load_history(self.network_config['model']['dir_out']):
+            if histories.load_history(self.network_config['model']['dir_out']):
                 assert self.resume, 'Resume must be true to continue training an existing model'
         else:
             os.makedirs(self.network_config['model']['dir_out'])
+            network_configs.save_network_config(network_config, self.network_config['model']['dir_out'])
 
     def build_or_load_data(self, rebuild=False):
         """
@@ -126,10 +124,10 @@ class Experiment(object):
             self.data_config.internal_window_radius*2,
             weighted=self.network_config['architecture']['weighted']
         )
-        self.history = io.load_history(self.network_config['model']['dir_out']) or dict()
+        self.history = histories.load_history(self.network_config['model']['dir_out']) or dict()
         if self.history:
             _logger.debug('History exists in out directory, loading model from same location')
-            self.model = io.load_model(
+            self.model = models.load_model(
                 self.network_config['model']['dir_out'], custom_objects={'_cropped_loss': loss_function})
             # TODO:  do we want to warn or raise or nothing if the network type doesn't match the model type?
         else:
@@ -143,13 +141,19 @@ class Experiment(object):
             if 'lr' in self.history:
                 _logger.debug('Setting learning rate to value from last training epoch')
                 K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
-        n_gpu_avail = utils.num_gpu_available()
-        print('There are ' + str(n_gpu_avail) + ' gpus available')
-        # if (n_gpu_avail > 1):
-        #    self.parallel_model = keras.utils.multi_gpu_model(self.model, gpus=n_gpu_avail, cpu_relocation=True)
-        #    self.parallel_model.compile(loss=loss_function, optimizer=self.network_config['training']['optimizer'])
-        # else:
-        #    self.parallel_model = self.model
+        n_gpu_avail = gpus.get_count_available_gpus()
+        _logger.debug('Using multiple GPUs with {} available'.format(n_gpu_avail))
+        if (n_gpu_avail > 1):
+            self._original_model = self.model
+            self.model = keras.utils.multi_gpu_model(self._original_model, gpus=n_gpu_avail, cpu_relocation=True)
+            if self._original_model is self.model:
+                raise AssertionError('The above two lines do not work because the second assignment to self.model ' +
+                                     'overwrites self._original_model\'s reference. Tell Nick to change names')
+            else:
+                raise AssertionError('The above two lines work! Find this line in the codebase and remove the ' +
+                                     'surrounding if/else statement. Nick just wanted to be sure it was correct')
+            self.model.callback_model = self._original_model
+            self.model.compile(loss=loss_function, optimizer=self.network_config['training']['optimizer'])
 
     def calculate_training_memory_usage(self, batch_size: int) -> float:
         # Shamelessly copied from
@@ -195,7 +199,7 @@ class Experiment(object):
             self.validation_sequence = validation_sequence
 
         if self.network_config['model']['assert_gpu']:
-            utils.assert_gpu_available()
+            gpus.assert_gpu_available()
 
         model_callbacks = callbacks.get_callbacks(self.network_config, self.history)
 
@@ -215,6 +219,6 @@ class Experiment(object):
             shuffle=False,
             initial_epoch=len(self.history.get('lr', list())),
         )
-        self.history = io.combine_histories(self.history, new_history.history)
-        io.save_history(self.history, self.network_config['model']['dir_out'])
-        io.save_model(self.model, self.network_config['model']['dir_out'])
+        self.history = histories.combine_histories(self.history, new_history.history)
+        histories.save_history(self.history, self.network_config['model']['dir_out'])
+        models.save_model(self.model, self.network_config['model']['dir_out'])
