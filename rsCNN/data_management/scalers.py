@@ -27,6 +27,9 @@ class BaseGlobalScaler(object):
     scaler_name = None
 
     def __init__(self, nodata_value=None, savename_base=None):
+        """
+        :param savename_base: the directory and optionally filename prefix for saving data
+        """
         self.nodata_value = nodata_value
         if (savename_base is not None):
             self.savename = savename_base + self.scaler_name
