@@ -58,9 +58,6 @@ class Experiment(object):
         if (read_success is False or rebuild is True):
             if (self.data_config.data_build_category in ['ordered_continuous','ordered_categorical'] ):
                 features, responses, weights = training_data.build_training_data_ordered(self.data_config)
-                if (self.data_config.data_build_category == 'ordered_categorical'):
-                    weights = training_data.calculate_categorical_weights(responses, weights, self.data_config)
-                    #TODO: optionally update to categorical weighting
             else:
                 raise NotImplementedError('Unknown data_build_category')
 
@@ -148,18 +145,17 @@ class Experiment(object):
                 **self.network_config['architecture_options']
             )
             self.model.compile(loss=loss_function, optimizer=self.network_config['training']['optimizer'])
-            self.model.summary()
             if 'lr' in self.history:
                 _logger.debug('Setting learning rate to value from last training epoch')
                 K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
         n_gpu_avail = utils.num_gpu_available()
-        self.parallel_model = self.model
         print('There are ' + str(n_gpu_avail) + ' gpus available')
-        if (n_gpu_avail > 1):
-            self.parallel_model = keras.utils.multi_gpu_model(self.model, gpus=n_gpu_avail, cpu_relocation=True)
-            self.parallel_model.compile(loss=loss_function, optimizer=self.network_config['training']['optimizer'])
-        self.model.summary()
-        self.parallel_model.summary()
+        #if (n_gpu_avail > 1):
+        #    self.parallel_model = keras.utils.multi_gpu_model(self.model, gpus=n_gpu_avail, cpu_relocation=True)
+        #    self.parallel_model.compile(loss=loss_function, optimizer=self.network_config['training']['optimizer'])
+        #else:
+        #    self.parallel_model = self.model
+
 
     def calculate_training_memory_usage(self, batch_size: int) -> float:
         # Shamelessly copied from
@@ -212,7 +208,8 @@ class Experiment(object):
         # TODO:  Check whether psutil.cpu_count gives the right answer on SLURM, i.e., the number of CPUs available to
         #  the job and not the total number on the instance.
 
-        new_history = self.parallel_model.fit_generator(
+        #new_history = self.parallel_model.fit_generator(
+        new_history = self.model.fit_generator(
             self.train_sequence,
             epochs=self.network_config['training']['max_epochs'],
             verbose=self.network_config['model']['verbosity'],

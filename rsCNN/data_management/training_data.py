@@ -116,7 +116,7 @@ def check_data_matches(set_a, set_b, set_b_is_vector=False, set_c=[], set_c_is_v
                     raise Exception(('extent mismatch between', set_a[n], 'and', set_c[n]))
 
 # Calculates categorical weights for a single response
-def calculate_categorical_weights(responses, weights, config, resp_ind=0, batch_size=100):
+def calculate_categorical_weights(responses, weights, config, batch_size=100):
 
     # find upper and lower boud
     lb = config.window_radius - config.internal_window_radius
@@ -125,36 +125,26 @@ def calculate_categorical_weights(responses, weights, config, resp_ind=0, batch_
     else:
         ub = -lb
     
-    # get unique responses (batch-wise)
-    un_responses = []
-    for _array in range(len(responses)):
-        if (_array is not config.validation_fold and _array is not config.test_fold):
-            for ind in range(0, responses[_array].shape[0],batch_size):
-                l_un_resp = np.unique(responses[_array][ind:ind+batch_size,lb:ub,lb:ub,resp_ind])
-                l_un_resp = [x for x in l_un_resp if x not in un_responses]
-                un_responses.extend(l_un_resp)
-
     # get response/total counts (batch-wise)
-    response_counts = np.zeros(len(un_responses))
+    response_counts = np.zeros(responses[0].shape[-1])
     total_valid_count = 0
     for _array in range(len(responses)):
         if (_array is not config.validation_fold and _array is not config.test_fold):
             for ind in range(0, responses[_array].shape[0],batch_size):
-                lr = (responses[_array])[ind:ind+batch_size,lb:ub,lb:ub,resp_ind]
+                lr = (responses[_array])[ind:ind+batch_size,lb:ub,lb:ub,:]
                 lr[lr == config.response_nodata_value] = np.nan
                 total_valid_count += np.sum(np.isfinite(lr))
-                for n in range(0,len(un_responses)):
-                    response_counts[n] += np.nansum(lr == un_responses[n])
-
+                for _r in range(0,len(response_counts)):
+                    response_counts[_r] += np.nansum(lr[...,_r] == 1)
 
     # assign_weights
     for _array in range(len(responses)):
         for ind in range(0, responses[_array].shape[0],batch_size):
 
-            lr = (responses[_array])[ind:ind+batch_size,:,:,resp_ind]
-            lw = np.zeros(lr.shape)
-            for n in range(0,len(un_responses)):
-                lw[lr == un_responses[n]] = total_valid_count / response_counts[n]
+            lr = (responses[_array])[ind:ind+batch_size,...]
+            lw = np.zeros((lr.shape[0],lr.shape[1],lr.shape[2]))
+            for _r in range(0,len(response_counts)):
+                lw[lr[...,_r] == 1] = total_valid_count / response_counts[_r]
 
             lw[:, :lb, :] = 0
             lw[:, ub:, :] = 0
@@ -172,6 +162,7 @@ def calculate_categorical_weights(responses, weights, config, resp_ind=0, batch_
         config.save_to_file()
 
     return weights
+
 
 
 def get_data_section(ds,x,y,x_size,y_size):
@@ -340,16 +331,43 @@ def build_training_data_ordered(config):
     config.response_shape = responses.shape
     config.feature_shape = features.shape
 
-    if (config.data_save_name is not None):
-        for fold in range(config.n_folds):
-            np.save(config.feature_files[fold], features[fold_assignments == fold, ...])
-            np.save(config.response_files[fold], responses[fold_assignments == fold, ...])
-            np.save(config.weight_files[fold], weights[fold_assignments == fold, ...])
-        config.saved_data = True
-        config.save_to_file()
+    if (config.data_build_category == 'ordered_categorical'):
+        # Lists are a hack so that the calculate_categorical_weights can be written for external
+        # use cases
+        un_resp = np.unique(responses)
+        un_resp = un_resp[un_resp != config.response_nodata_value]
+        cat_responses = np.zeros((responses.shape[0],responses.shape[1],responses.shape[2],len(un_resp)))
+        for _r in range(len(un_resp)):
+            cat_responses[...,_r] = np.squeeze(responses == un_resp[_r])
+        responses = cat_responses
 
     features = [features[fold_assignments == fold, ...] for fold in range(config.n_folds)]
     responses = [responses[fold_assignments == fold, ...] for fold in range(config.n_folds)]
     weights = [weights[fold_assignments == fold, ...] for fold in range(config.n_folds)]
+    if (config.data_build_category == 'ordered_categorical'):
+        weights = calculate_categorical_weights(responses, weights, config)
+
+    if (config.data_save_name is not None):
+        for fold in range(config.n_folds):
+            np.save(config.feature_files[fold], features[fold])
+            np.save(config.response_files[fold], responses[fold])
+            np.save(config.weight_files[fold], weights[fold])
+        config.saved_data = True
+        config.save_to_file()
 
     return features, responses, weights
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

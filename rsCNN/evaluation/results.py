@@ -266,9 +266,11 @@ def spatial_error(data_sequence: BaseSequence, experiment: Experiment):
         for _r in range(_response_ind, min(responses.shape[-1], _response_ind + max_resp_per_page)):
             ax = plt.subplot(gs1[0, _r - _response_ind])
 
-            vset = np.nanmean(diff[..., _r]*weights, axis=0)
+            vset = diff.copy()
+            vset[weights == 0] = np.nan
+            vset = np.nanmean(vset, axis=0)
             ax.imshow(np.nanmean(diff[..., _r], axis=0), vmin=np.nanmin(
-                vset[vset != 0]), vmax=np.nanmax(vset[vset != 0]))
+                vset), vmax=np.nanmax(vset))
             plt.title('Response ' + str(_r))
             plt.axis('off')
 
