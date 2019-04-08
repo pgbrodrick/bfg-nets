@@ -1,6 +1,4 @@
-import configparser
 import os
-from typing import List, Union
 
 import keras
 import keras.backend as K
@@ -25,7 +23,7 @@ class Experiment(object):
     validation_sequence = None
     test_sequence = None
 
-    def __init__(self, network_config: configparser.ConfigParser, data_config, resume=False) -> None:
+    def __init__(self, network_config: dict, data_config, resume: bool = False) -> None:
         self.data_config = data_config
         self.network_config = network_config
         self.resume = resume
@@ -35,6 +33,7 @@ class Experiment(object):
                 assert self.resume, 'Resume must be true to continue training an existing model'
         else:
             os.makedirs(self.network_config['model']['dir_out'])
+            io.save_network_config(network_config, self.network_config['model']['dir_out'])
 
     def build_or_load_data(self, rebuild=False):
         """
