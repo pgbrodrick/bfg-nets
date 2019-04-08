@@ -34,8 +34,6 @@ class BaseGlobalScaler(object):
 
     def fit(self, image_array):
         assert self.is_fitted is False, 'Scaler has already been fit to data'
-        # Reshape to (num_samples, num_features)
-        image_array = self._reshape_image_array(image_array)
         image_array[image_array == self.nodata_value] = np.nan
         self._fit(image_array)
         self.is_fitted = True
@@ -44,17 +42,11 @@ class BaseGlobalScaler(object):
         raise NotImplementedError
 
     def inverse_transform(self, image_array):
-        shape = image_array.shape
-
         # User can overwrite image_array values with nodata_value if input data is missing
         bad_dat = image_array == self.nodata_value
         image_array[bad_dat] = np.nan
 
-        # Reshape to (num_samples, num_features)
-        image_array = self._reshape_image_array(image_array)
-
         image_array = self._inverse_transform(image_array)
-        image_array = image_array.reshape(shape)
         image_array[bad_dat] = self.nodata_value
 
         return image_array
@@ -63,10 +55,6 @@ class BaseGlobalScaler(object):
         raise NotImplementedError
 
     def transform(self, image_array):
-        shape = image_array.shape
-        # Reshape to (num_samples, num_features)
-        image_array = self._reshape_image_array(image_array)
-
         # convert nodata values to nans temporarily
         bad_dat = image_array == self.nodata_value
         image_array[bad_dat] = np.nan
@@ -79,7 +67,7 @@ class BaseGlobalScaler(object):
 
         # Revert nans to nodata values
         image_array[bad_dat] = self.nodata_value
-        return image_array.reshape(shape)
+        return image_array
 
     def _transform(self, image_array):
         raise NotImplementedError
@@ -88,11 +76,6 @@ class BaseGlobalScaler(object):
         self.fit(image_array)
         self.transform(image_array)
         return image_array
-
-    def _reshape_image_array(self, image_array):
-        # The second dimension is image_array.shape[-1] which is the num_channels, so the first dimension is
-        # image width x image height
-        return image_array.reshape(-1, image_array.shape[-1])
 
     def save(self):
         raise NotImplementedError
@@ -109,13 +92,28 @@ class BaseSklearnScaler(BaseGlobalScaler):
         super().__init__(nodata_value, savename_base)
 
     def _fit(self, image_array):
+        # Reshape to (num_samples, num_features)
+        image_array = self._reshape_image_array(image_array)
         self.scaler.fit(image_array)
 
     def _inverse_transform(self, image_array):
-        return self.scaler.inverse_transform(image_array)
+        # Reshape to (num_samples, num_features) for sklearn
+        shape = image_array.shape
+        image_array = self._reshape_image_array(image_array)
+        image_array = self.scaler.inverse_transform(image_array)
+        return image_array.reshape(shape)
 
     def _transform(self, image_array):
-        return self.scaler.transform(image_array)
+        # Reshape to (num_samples, num_features) for sklearn
+        shape = image_array.shape
+        image_array = self._reshape_image_array(image_array)
+        image_array = self.scaler.transform(image_array)
+        return image_array.reshape(shape)
+
+    def _reshape_image_array(self, image_array):
+        # The second dimension is image_array.shape[-1] which is the num_channels, so the first dimension is
+        # image width x image height
+        return image_array.reshape(-1, image_array.shape[-1])
 
     def save(self):
         joblib.dump(self.scaler, self.savename)
