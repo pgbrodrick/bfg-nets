@@ -1,56 +1,13 @@
 import ast
-import collections
+from collections import OrderedDict
 import configparser
 import os
-import pickle
-from typing import Tuple, Union
-
-import keras
+from typing import Tuple
 
 from rsCNN.networks import architectures
 
 
-FILENAME_HISTORY = 'history.pkl'
-FILENAME_MODEL = 'model.h5'
 FILENAME_NETWORK_CONFIG = 'network_config.ini'
-
-
-def load_history(dir_history: str) -> Union[dict, None]:
-    filepath = os.path.join(dir_history, FILENAME_HISTORY)
-    if not os.path.exists(filepath):
-        return None
-    with open(filepath, 'rb') as file_:
-        history = pickle.load(file_)
-    return history
-
-
-def save_history(history: dict, dir_history: str) -> None:
-    if not os.path.exists(dir_history):
-        os.makedirs(dir_history)
-    filepath = os.path.join(dir_history, FILENAME_HISTORY)
-    with open(filepath, 'wb') as file_:
-        pickle.dump(history, file_)
-
-
-def combine_histories(existing_history, new_history):
-    combined_history = existing_history.copy()
-    for key, value in new_history.items():
-        combined_history.setdefault(key, list()).extend(value)
-    return combined_history
-
-
-def load_model(dir_model: str, custom_objects: dict) -> Union[keras.models.Model, None]:
-    filepath = os.path.join(dir_model, FILENAME_MODEL)
-    if not os.path.exists(filepath):
-        return None
-    return keras.models.load_model(filepath, custom_objects=custom_objects)
-
-
-def save_model(model: keras.models.Model, dir_model: str) -> None:
-    if not os.path.exists(dir_model):
-        os.makedirs(dir_model)
-    filepath = os.path.join(dir_model, FILENAME_MODEL)
-    model.save(filepath, overwrite=True)
 
 
 def load_network_config(filepath):
@@ -93,7 +50,7 @@ def create_network_config(
         loss_metric: str,
         output_activation: str,
         **kwargs
-) -> collections.OrderedDict:
+) -> OrderedDict:
     """
       Arguments:
       architecture - str
@@ -108,7 +65,7 @@ def create_network_config(
       n_classes - tuple/list
         Designates the output shape of targets to be fit by the network
     """
-    config = collections.OrderedDict()
+    config = OrderedDict()
 
     config['model'] = {
         'model_name': model_name,

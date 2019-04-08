@@ -5,7 +5,7 @@ from typing import List
 
 import keras
 
-from rsCNN.networks import io
+from rsCNN.networks import histories
 from rsCNN.utils import logger
 
 
@@ -60,8 +60,8 @@ class HistoryCheckpoint(keras.callbacks.Callback):
 
     def _save_history(self):
         _logger.debug('Save model history')
-        combined_history = io.combine_histories(self.existing_history, self.model.history.history)
-        io.save_history(combined_history, self.dir_out)
+        combined_history = histories.combine_histories(self.existing_history, self.model.history.history)
+        histories.save_history(combined_history, self.dir_out)
 
 
 def get_callbacks(network_config: configparser.ConfigParser, existing_history: dict) -> List[keras.callbacks.Callback]:
