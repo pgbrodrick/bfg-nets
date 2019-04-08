@@ -11,16 +11,12 @@ from rsCNN.utils import DIR_TEMPLATES
 def create_config_files_from_network_defaults():
     value_required = 'REQUIRED'
     for architecture in ('change_detection', 'regress_net', 'residual_net', 'residual_unet', 'unet'):
-        config = create_network_config(
+        network_config = create_network_config(
             architecture=architecture, model_name=value_required, inshape=(0, 0, 0),
             n_classes=0, loss_metric=value_required, output_activation=value_required,
         )
-        config['architecture'].pop('create_model')
-        writer = configparser.ConfigParser()
-        for section, section_items in config.items():
-            writer[section] = section_items
-        with open(os.path.join(DIR_TEMPLATES, architecture + '.ini'), 'w') as file_:
-            writer.write(file_)
+        filepath = os.path.join(DIR_TEMPLATES, architecture + '.ini')
+        write_network_config_to_file(network_config, filepath)
 
 
 def read_network_config_from_file(filepath):
@@ -40,6 +36,17 @@ def read_network_config_from_file(filepath):
                 value = str(value)
             kwargs[key] = value
     return create_network_config(**kwargs)
+
+
+def write_network_config_to_file(network_config, filepath):
+    config_copy = network_config.copy()  # Need to copy because it's mutable and user may want to keep 'create_model'
+    if 'architecture' in config_copy:
+        config_copy['architecture'].pop('create_model')
+    writer = configparser.ConfigParser()
+    for section, section_items in config_copy.items():
+        writer[section] = section_items
+    with open(filepath, 'w') as file_:
+        writer.write(file_)
 
 
 def create_network_config(
