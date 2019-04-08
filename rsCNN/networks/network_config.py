@@ -92,6 +92,8 @@ def create_network_config(
         'apply_random_transformations': kwargs.get('apply_random_transformations', False),
         'max_epochs': kwargs.get('max_epochs', 100),
         'optimizer': kwargs.get('optimizer', 'adam'),
+        'batch_size': kwargs.get('batch_size', 100),
+        'modelfit_nan_value': kwargs.get('modelfit_nan_value', -100),
     }
 
     config['callbacks_general'] = {
