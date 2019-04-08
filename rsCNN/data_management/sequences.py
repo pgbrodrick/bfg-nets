@@ -69,7 +69,7 @@ class BaseSequence(keras.utils.Sequence):
         return [self.response_scaler.transform(response) for response in responses]
 
     def _mean_center(self, data: List[np.array]) -> List[np.array]:
-        return data - np.mean(data,axis=(1,2))[:,np.newaxis,np.newaxis,:]
+        return data - np.mean(data, axis=(1, 2))[:, np.newaxis, np.newaxis, :]
 
     def _apply_random_transformations(
             self,
@@ -157,5 +157,5 @@ class MemmappedSequence(BaseSequence):
                                         sample_index:stop_ind, ...], axis=0)
             batch_weights = np.append(batch_weights, (self.weights[current_array])[sample_index:stop_ind, ...], axis=0)
         if (self.feature_mean_centering is True):
-            batch_features = self._mean_center(batch_features) 
+            batch_features = self._mean_center(batch_features)
         return [batch_features], [batch_responses], [batch_weights]

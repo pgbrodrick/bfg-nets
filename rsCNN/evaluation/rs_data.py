@@ -13,7 +13,7 @@ def plot_raw_and_scaled_input_examples(data_sequence: BaseSequence):
     features = features[0]
     responses = responses[0]
     responses, weights = responses[..., :-1], responses[..., -1]
-    weights = weights.reshape((weights.shape[0],weights.shape[1],weights.shape[2],1))
+    weights = weights.reshape((weights.shape[0], weights.shape[1], weights.shape[2], 1))
 
     features[features == data_sequence.feature_scaler.nodata_value] = np.nan
     responses[responses == data_sequence.response_scaler.nodata_value] = np.nan
@@ -102,7 +102,7 @@ def plot_raw_and_scaled_input_examples(data_sequence: BaseSequence):
                 plt.yticks([])
 
                 if (_s == _sample_ind):
-                    plt.title('Weights = \n' + 
+                    plt.title('Weights = \n' +
                               str(round(weight_mins[0], 2)) + '\n' + str(round(weight_maxs[0], 2)))
 
             plt.suptitle('Input Example Plots Page ' + str((len(fig_list))))

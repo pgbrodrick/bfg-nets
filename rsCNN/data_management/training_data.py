@@ -116,6 +116,8 @@ def check_data_matches(set_a, set_b, set_b_is_vector=False, set_c=[], set_c_is_v
                     raise Exception(('extent mismatch between', set_a[n], 'and', set_c[n]))
 
 # Calculates categorical weights for a single response
+
+
 def calculate_categorical_weights(responses, weights, config, batch_size=100):
 
     # find upper and lower boud
@@ -124,34 +126,34 @@ def calculate_categorical_weights(responses, weights, config, batch_size=100):
         ub = responses[0].shape[1]
     else:
         ub = -lb
-    
+
     # get response/total counts (batch-wise)
     response_counts = np.zeros(responses[0].shape[-1])
     total_valid_count = 0
     for _array in range(len(responses)):
         if (_array is not config.validation_fold and _array is not config.test_fold):
-            for ind in range(0, responses[_array].shape[0],batch_size):
-                lr = (responses[_array])[ind:ind+batch_size,lb:ub,lb:ub,:]
+            for ind in range(0, responses[_array].shape[0], batch_size):
+                lr = (responses[_array])[ind:ind+batch_size, lb:ub, lb:ub, :]
                 lr[lr == config.response_nodata_value] = np.nan
                 total_valid_count += np.sum(np.isfinite(lr))
-                for _r in range(0,len(response_counts)):
-                    response_counts[_r] += np.nansum(lr[...,_r] == 1)
+                for _r in range(0, len(response_counts)):
+                    response_counts[_r] += np.nansum(lr[..., _r] == 1)
 
     # assign_weights
     for _array in range(len(responses)):
-        for ind in range(0, responses[_array].shape[0],batch_size):
+        for ind in range(0, responses[_array].shape[0], batch_size):
 
-            lr = (responses[_array])[ind:ind+batch_size,...]
-            lw = np.zeros((lr.shape[0],lr.shape[1],lr.shape[2]))
-            for _r in range(0,len(response_counts)):
-                lw[lr[...,_r] == 1] = total_valid_count / response_counts[_r]
+            lr = (responses[_array])[ind:ind+batch_size, ...]
+            lw = np.zeros((lr.shape[0], lr.shape[1], lr.shape[2]))
+            for _r in range(0, len(response_counts)):
+                lw[lr[..., _r] == 1] = total_valid_count / response_counts[_r]
 
             lw[:, :lb, :] = 0
             lw[:, ub:, :] = 0
             lw[:, :, :lb] = 0
             lw[:, :, ub:] = 0
 
-            weights[_array][ind:ind+batch_size,:,:,0] = lw
+            weights[_array][ind:ind+batch_size, :, :, 0] = lw
 
     if (config.data_save_name is not None):
         config.saved_data = False
@@ -164,23 +166,21 @@ def calculate_categorical_weights(responses, weights, config, batch_size=100):
     return weights
 
 
-
-def get_data_section(ds,x,y,x_size,y_size):
-    dat = np.zeros((x_size,y_size,ds.RasterCount))
+def get_data_section(ds, x, y, x_size, y_size):
+    dat = np.zeros((x_size, y_size, ds.RasterCount))
     for _b in range(ds.RasterCount):
-        dat[...,_b] = ds.GetRasterBand(_b+1).ReadAsArray(x,y,x_size,y_size)
+        dat[..., _b] = ds.GetRasterBand(_b+1).ReadAsArray(x, y, x_size, y_size)
     return dat
 
-def get_response_data_section(ds,x,y,x_size,y_size,config):
-    dat = get_data_section(ds,x,y,x_size,y_size)
+
+def get_response_data_section(ds, x, y, x_size, y_size, config):
+    dat = get_data_section(ds, x, y, x_size, y_size)
     dat = np.squeeze(dat)
     if (config.response_min_value is not None):
         dat[dat < config.response_min_value] = config.response_nodata_value
     if (config.response_max_value is not None):
         dat[dat > config.response_max_value] = config.response_nodata_value
     return dat
-
-
 
 
 def build_training_data_ordered(config):
@@ -336,9 +336,9 @@ def build_training_data_ordered(config):
         # use cases
         un_resp = np.unique(responses)
         un_resp = un_resp[un_resp != config.response_nodata_value]
-        cat_responses = np.zeros((responses.shape[0],responses.shape[1],responses.shape[2],len(un_resp)))
+        cat_responses = np.zeros((responses.shape[0], responses.shape[1], responses.shape[2], len(un_resp)))
         for _r in range(len(un_resp)):
-            cat_responses[...,_r] = np.squeeze(responses == un_resp[_r])
+            cat_responses[..., _r] = np.squeeze(responses == un_resp[_r])
         responses = cat_responses
 
     features = [features[fold_assignments == fold, ...] for fold in range(config.n_folds)]
@@ -356,18 +356,3 @@ def build_training_data_ordered(config):
         config.save_to_file()
 
     return features, responses, weights
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
