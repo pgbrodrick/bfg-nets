@@ -7,16 +7,13 @@ from rsCNN.data_management.sequences import BaseSequence
 from rsCNN.networks.experiment import Experiment
 
 
-    
-    
-
 def plot_raw_and_scaled_result_examples(data_sequence: BaseSequence, experiment: Experiment):
     features, responses = data_sequence.__getitem__(0)
     predictions = experiment.model.predict(features)
     features = features[0]
     responses = responses[0]
     responses, weights = responses[..., :-1], responses[..., -1]
-    weights = weights.reshape((weights.shape[0],weights.shape[1],weights.shape[2],1))
+    weights = weights.reshape((weights.shape[0], weights.shape[1], weights.shape[2], 1))
 
     features[features == data_sequence.feature_scaler.nodata_value] = np.nan
     responses[responses == data_sequence.response_scaler.nodata_value] = np.nan
@@ -120,7 +117,7 @@ def plot_raw_and_scaled_result_examples(data_sequence: BaseSequence, experiment:
                 plt.yticks([])
 
                 if (_s == _sample_ind):
-                    plt.title('Weights = \n' + 
+                    plt.title('Weights = \n' +
                               str(round(weight_mins[0], 2)) + '\n' + str(round(weight_maxs[0], 2)))
 
             plt.suptitle('Prediction Plots Page ' + str((len(fig_list))))
