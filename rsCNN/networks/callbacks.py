@@ -13,6 +13,7 @@ _logger = logger.get_child_logger(__name__)
 
 
 class HistoryCheckpoint(keras.callbacks.Callback):
+    # TODO:  review logged logs from the below methods to determine what should be logged
 
     def __init__(self, dir_out, existing_history=None, period=1, verbose=0):
         super().__init__()
@@ -26,17 +27,25 @@ class HistoryCheckpoint(keras.callbacks.Callback):
         self.epoch_begin = None
 
     def on_train_begin(self, logs=None):
+        _logger.debug('Beginning network training')
+        _logger.debug('on_training_begin logs: {}'.format(logs))
         for key in ('epoch_start', 'epoch_finish'):
             self.existing_history.setdefault(key, list())
         super().on_train_begin(logs)
 
     def on_train_end(self, logs=None):
+        _logger.debug('Ending network training')
+        _logger.debug('on_training_end logs: {}'.format(logs))
         self._save_history()
 
     def on_epoch_begin(self, epoch, logs=None):
+        _logger.debug('Beginning new epoch')
+        _logger.debug('on_epoch_begin logs: {}'.format(logs))
         self.epoch_begin = datetime.datetime.now()
 
     def on_epoch_end(self, epoch, logs=None):
+        _logger.debug('Ending epoch')
+        _logger.debug('on_epoch_end logs: {}'.format(logs))
         # Update times
         epoch_end = datetime.datetime.now()
         self.existing_history['epoch_start'].append(self.epoch_begin)
@@ -45,6 +54,7 @@ class HistoryCheckpoint(keras.callbacks.Callback):
         # Save if necessary
         self.epochs_since_last_save += 1
         if self.epochs_since_last_save >= self.period:
+            _logger.debug('Checkpointing')
             self._save_history()
             self.epochs_since_last_save = 0
 
