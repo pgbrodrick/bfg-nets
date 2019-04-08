@@ -56,7 +56,7 @@ class Experiment(object):
             features, responses, weights, read_success = load_training_data(self.data_config)
 
         if (read_success is False or rebuild is True):
-            if (self.data_config.data_build_category in ['ordered_continuous','ordered_categorical'] ):
+            if (self.data_config.data_build_category in ['ordered_continuous', 'ordered_categorical']):
                 features, responses, weights = training_data.build_training_data_ordered(self.data_config)
             else:
                 raise NotImplementedError('Unknown data_build_category')
@@ -102,8 +102,8 @@ class Experiment(object):
                                                           self.feature_scaler,
                                                           self.response_scaler,
                                                           batch_size,
-                                                          apply_random_transforms = apply_random,
-                                                          feature_mean_centering = mean_centering)
+                                                          apply_random_transforms=apply_random,
+                                                          feature_mean_centering=mean_centering)
         if (self.data_config.validation_fold is not None):
             self.validation_sequence = sequences.MemmappedSequence([features[self.data_config.validation_fold]],
                                                                    [responses[self.data_config.validation_fold]],
@@ -111,8 +111,8 @@ class Experiment(object):
                                                                    self.feature_scaler,
                                                                    self.response_scaler,
                                                                    batch_size,
-                                                                   apply_random_transforms = apply_random,
-                                                                   feature_mean_centering = mean_centering)
+                                                                   apply_random_transforms=apply_random,
+                                                                   feature_mean_centering=mean_centering)
         if (self.data_config.test_fold is not None):
             self.test_sequence = sequences.MemmappedSequence([features[self.data_config.test_fold]],
                                                              [responses[self.data_config.test_fold]],
@@ -120,8 +120,8 @@ class Experiment(object):
                                                              self.feature_scaler,
                                                              self.response_scaler,
                                                              batch_size,
-                                                             apply_random_transforms = apply_random,
-                                                             feature_mean_centering = mean_centering)
+                                                             apply_random_transforms=apply_random,
+                                                             feature_mean_centering=mean_centering)
 
     def build_or_load_model(self):
         _logger.info('Building or loading model')
@@ -161,7 +161,6 @@ class Experiment(object):
                                      'surrounding if/else statement. Nick just wanted to be sure it was correct')
             self.model.callback_model = self._original_model
             self.model.compile(loss=loss_function, optimizer=self.network_config['training']['optimizer'])
-
 
     def calculate_training_memory_usage(self, batch_size: int) -> float:
         # Shamelessly copied from
@@ -214,7 +213,7 @@ class Experiment(object):
         # TODO:  Check whether psutil.cpu_count gives the right answer on SLURM, i.e., the number of CPUs available to
         #  the job and not the total number on the instance.
 
-        #new_history = self.parallel_model.fit_generator(
+        # new_history = self.parallel_model.fit_generator(
         new_history = self.model.fit_generator(
             self.train_sequence,
             epochs=self.network_config['training']['max_epochs'],
