@@ -1,29 +1,16 @@
 import ast
-import collections
+from collections import OrderedDict
 import configparser
 import os
 from typing import Tuple
 
 from rsCNN.networks import architectures
-from rsCNN.utils import DIR_TEMPLATES
 
 
-def create_config_files_from_network_defaults():
-    value_required = 'REQUIRED'
-    for architecture in ('change_detection', 'regress_net', 'residual_net', 'residual_unet', 'unet'):
-        config = create_network_config(
-            architecture=architecture, model_name=value_required, inshape=(0, 0, 0),
-            n_classes=0, loss_metric=value_required, output_activation=value_required,
-        )
-        config['architecture'].pop('create_model')
-        writer = configparser.ConfigParser()
-        for section, section_items in config.items():
-            writer[section] = section_items
-        with open(os.path.join(DIR_TEMPLATES, architecture + '.ini'), 'w') as file_:
-            writer.write(file_)
+FILENAME_NETWORK_CONFIG = 'network_config.ini'
 
 
-def read_network_config_from_file(filepath):
+def load_network_config(filepath):
     config = configparser.ConfigParser()
     config.read(filepath)
     kwargs = dict()
@@ -42,6 +29,19 @@ def read_network_config_from_file(filepath):
     return create_network_config(**kwargs)
 
 
+def save_network_config(network_config: dict, dir_config: str, filename: str = None) -> None:
+    if not filename:
+        filename = FILENAME_NETWORK_CONFIG
+    config_copy = network_config.copy()  # Need to copy because it's mutable and user may want to keep 'create_model'
+    if 'architecture' in config_copy:
+        config_copy['architecture'].pop('create_model')
+    writer = configparser.ConfigParser()
+    for section, section_items in config_copy.items():
+        writer[section] = section_items
+    with open(os.path.join(dir_config, filename), 'w') as file_:
+        writer.write(file_)
+
+
 def create_network_config(
         architecture: str,
         model_name: str,
@@ -50,7 +50,7 @@ def create_network_config(
         loss_metric: str,
         output_activation: str,
         **kwargs
-) -> collections.OrderedDict:
+) -> OrderedDict:
     """
       Arguments:
       architecture - str
@@ -65,7 +65,7 @@ def create_network_config(
       n_classes - tuple/list
         Designates the output shape of targets to be fit by the network
     """
-    config = collections.OrderedDict()
+    config = OrderedDict()
 
     config['model'] = {
         'model_name': model_name,
