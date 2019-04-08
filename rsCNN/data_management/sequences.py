@@ -21,12 +21,14 @@ class BaseSequence(keras.utils.Sequence):
             feature_scaler: BaseGlobalScaler,
             response_scaler: BaseGlobalScaler,
             batch_size: int,
-            apply_random_transforms: bool = False
+            apply_random_transforms: bool = False,
+            nan_conversion_value: float = None
     ) -> None:
         self.feature_scaler = feature_scaler
         self.response_scaler = response_scaler
         self.batch_size = batch_size
         self.apply_random_transforms = apply_random_transforms
+        self.nan_conversion_value = nan_conversion_value
 
     def __len__(self) -> int:
         # Method is required for Keras functionality, a.k.a. steps_per_epoch in fit_generator
@@ -37,18 +39,24 @@ class BaseSequence(keras.utils.Sequence):
         _logger.debug('Get batch {} with {} items via sequence'.format(index, self.batch_size))
         _logger.debug('Get features, responses, and weights')
         features, responses, weights = self._get_features_responses_weights(index)
+
         _logger.debug('Modify features, responses, and weights prior to scaling')
         features, responses, weights = self._modify_features_responses_weights_before_scaling(
             features, responses, weights)
+
         _logger.debug('Scale features')
         features = self._scale_features(features)
+
         _logger.debug('Scale responses')
         responses = self._scale_responses(responses)
+
         _logger.debug('Append weights to responses for loss functions')
         responses_with_weights = [np.append(response, weight, axis=-1) for response, weight in zip(responses, weights)]
+
         if self.apply_random_transforms is True:
             _logger.debug('Apply random transformations to features and responses')
             self._apply_random_transformations(features, responses)
+
         return features, responses_with_weights
 
     def _get_features_responses_weights(self, index: int) -> Tuple[List[np.array], List[np.array], List[np.array]]:

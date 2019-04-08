@@ -89,11 +89,6 @@ class Experiment(object):
             self.response_scaler.fit(responses[train_folds[0]])
             self.response_scaler.save()
 
-        # TODO: Fabina, can't see where you're loading this in from now, presumably,
-        # it's in a config somewhere?
-        #batch_size = self.network_config['training']['batch_size']
-        #batch_size = self.network_config['training']['batch_size']
-        batch_size = 10
         apply_random = self.network_config['training']['apply_random_transformations']
         mean_centering = self.data_config.feature_mean_centering
         self.train_sequence = sequences.MemmappedSequence([features[_f] for _f in train_folds],
@@ -101,7 +96,7 @@ class Experiment(object):
                                                           [weights[_w] for _w in train_folds],
                                                           self.feature_scaler,
                                                           self.response_scaler,
-                                                          batch_size,
+                                                          self.network_config['training']['batch_size'],
                                                           apply_random_transforms=apply_random,
                                                           feature_mean_centering=mean_centering)
         if (self.data_config.validation_fold is not None):
@@ -110,7 +105,7 @@ class Experiment(object):
                                                                    [weights[self.data_config.validation_fold]],
                                                                    self.feature_scaler,
                                                                    self.response_scaler,
-                                                                   batch_size,
+                                                                   self.network_config['training']['batch_size'],
                                                                    apply_random_transforms=apply_random,
                                                                    feature_mean_centering=mean_centering)
         if (self.data_config.test_fold is not None):
@@ -119,7 +114,7 @@ class Experiment(object):
                                                              [weights[self.data_config.test_fold]],
                                                              self.feature_scaler,
                                                              self.response_scaler,
-                                                             batch_size,
+                                                             self.network_config['training']['batch_size'],
                                                              apply_random_transforms=apply_random,
                                                              feature_mean_centering=mean_centering)
 
