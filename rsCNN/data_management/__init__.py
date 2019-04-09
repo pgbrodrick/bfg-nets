@@ -35,7 +35,6 @@ class DataConfig:
         # ordered_continuous
         self.data_build_category = kwargs.get('data_build_category', 'ordered_continuous')
 
-        # TODO: perhaps clean how these are all set? there's got to be a common way of handling large configs
         # A boolean indication of whether the response type is a vector or a raster (True for vector).
         self.response_as_vectors = kwargs.get('response_as_vectors', False)
 
@@ -57,6 +56,7 @@ class DataConfig:
 
         # The maximum fraction of nodata_values to allow in each training sample.
         self.nodata_maximum_fraction = kwargs.get('nodata_maximum_fraction', 0)
+
         # A flag to fill in missing data with a nearest neighbor interpolation.
         self.fill_in_feature_data = kwargs.get('fill_in_feature_data', False)
 
@@ -86,7 +86,7 @@ class DataConfig:
         self.feature_nodata_value = kwargs.get('feature_nodata_value', -9999)
         self.response_nodata_value = kwargs.get('response_nodata_value', -9999)
 
-        # The minimum and maximum values for the resopnse dataset
+        # The minimum and maximum values for the response dataset
         self.response_min_value = kwargs.get('response_min_value', None)
         self.response_max_value = kwargs.get('response_max_value', None)
 
@@ -96,6 +96,8 @@ class DataConfig:
         # if None, don't save the data name, otherwise, do save requisite components as npz files
         # based on this root extension
         self.data_save_name = kwargs.get('data_save_name', None)
+
+        assert self.data_save_name is not None, 'current workflow requires a data save name'
         if (self.data_save_name is not None):
             assert os.path.isdir(os.path.dirname(self.data_save_name)), 'Invalid path for data_save_name'
             self.response_files = [self.data_save_name + '_responses_' +
@@ -103,23 +105,13 @@ class DataConfig:
             self.feature_files = [self.data_save_name + '_features_' +
                                   str(fold) + '.npy' for fold in range(self.n_folds)]
             self.weight_files = [self.data_save_name + '_weights_' + str(fold) + '.npy' for fold in range(self.n_folds)]
-            self.data_config_file = self.data_save_name + '_data_config.pkl'
-            self.saved_data = False
 
-        # These get set on the call to build (TODO: or load) training data
-        self.response_shape = None
-        self.feature_shape = None
+            self.successful_data_save_file = self.data_save_name + '_success'
 
         # Scalers
         self.feature_scaler_name = kwargs.get('feature_scaler_name', 'NullScaler')
         self.response_scaler_name = kwargs.get('response_scaler_name', 'NullScaler')
         self.feature_mean_centering = kwargs.get('feature_mean_centering', False)
-
-    # TODO: safegaurd from overwrite?
-    def save_to_file(self):
-        print('saving data config')
-        with open(self.data_config_file, 'wb') as sf_:
-            pickle.dump(self, sf_)
 
 
 def load_training_data(config: DataConfig):
@@ -166,13 +158,3 @@ def load_training_data(config: DataConfig):
     else:
         return None, None, None, False
 
-
-def load_data_config_from_file(data_save_name):
-    try:
-        with open(data_save_name + '_data_config.pkl', 'rb') as sf_:
-            print('loading config file ' + data_save_name + '_data_config.pkl')
-            loaded_config = pickle.load(sf_)
-
-        return loaded_config
-    except:
-        print('Failed to load DataConfig from ' + data_save_name + '_data_config.pkl')

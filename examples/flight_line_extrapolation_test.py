@@ -56,13 +56,12 @@ global_options = yaml.load(open(args.settings_file,'r'))
 raw_feature_file_list = ['../global_cwc/dat/features/feat_subset.tif']
 raw_response_file_list = ['../global_cwc/dat/responses/resp_subset.tif']
 
-#data_config = rsCNN.data_management.DataConfig(**global_options)
 
-# TODO: punting on the inshape for now, but needs to be rectified
 
-if (key == 'data' or key == 'all')
-    build_data_if_needed() #saves a sequence of numpy arrrays
-    load_and_train_scaler_if_needed #saves a sequence of numpy arrays, specific to data (but multiple per data possible)
+if (args.key == 'data' or args.key == 'all'):
+    data_config = rsCNN.data_management.DataConfig(**global_options)
+    build_data_if_needed(data_config) #saves a sequence of numpy arrrays
+    load_and_train_scaler_if_needed(data_config) #saves a sequence of numpy arrays, specific to data (but multiple per data possible)
 
 training_sequence = # nosave
 validation_sequence =  #nosave
@@ -73,15 +72,15 @@ network_config = network_config.create_network_config(**global_options)
 
 experiment = Experiment(training_sequence, validation_sequence, network_config, resume=True)
 
-if (key == 'train' or key == 'all'):
+if (args.key == 'train' or args.key == 'all'):
     experiment.fit_network()
 
-if (key == 'report' or key == 'all'):
+if (args.key == 'report' or args.key == 'all'):
     report = rsCNN.evaluation.ExperimentReport(experiment, experiment.validation_sequence)
     report.create_report()
 
 
-if (key == 'application'):
+if (args.key == 'application'):
     application_feature_files = ['../global_cwc/dat/features/feat_subset.tif']
     application_output_basenames = ['examples/output/feat_subset_applied_cnn.tif']
 # if (args.key == 'apply' or args.key == 'all'):
