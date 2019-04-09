@@ -4,7 +4,7 @@ import matplotlib.patches as patches
 import numpy as np
 
 from rsCNN.data_management.sequences import BaseSequence
-from rsCNN.networks.experiment import Experiment
+from rsCNN.networks.experiments import Experiment
 
 
 def plot_raw_and_scaled_result_examples(data_sequence: BaseSequence, experiment: Experiment):

@@ -1,4 +1,4 @@
-data_save_name : 'examples/munged/cwc_data_test'
+data_save_name : 'examples/munged/cwc_data_ob_test'
 data_build_category : 'ordered_continuous'
 max_samples : 30000
 window_radius : 16
@@ -17,7 +17,7 @@ output_activation : 'softplus'
 n_classes : 1
 continue_training : False
 
-model_name : 'config_overhaul_test'
+model_name : 'data_overhaul_test'
 optimizer : 'adam'
 batch_size : 100
 max_epochs : 100

@@ -68,7 +68,7 @@ def load_training_data(config):
     """
 
     success = True
-    if (os.path.isfile(config.successfull_data_save_file) is not True):
+    if (os.path.isfile(config.successful_data_save_file) is not True):
         _logger.debug('no saved data')
         success = False
 
@@ -290,6 +290,9 @@ def build_training_data_ordered(config):
           An array indicating which sample belongs to which data fold, from 0 to n_folds-1.
     """
 
+    assert config.raw_feature_file_list is not [], 'feature files to pull data from are required'
+    assert config.raw_response_file_list is not [], 'response files to pull data from are required'
+
     if (config.random_seed is not None):
         np.random.seed(config.random_seed)
 
@@ -439,6 +442,7 @@ def build_training_data_ordered(config):
             np.save(config.feature_files[fold], features[fold])
             np.save(config.response_files[fold], responses[fold])
             np.save(config.weight_files[fold], weights[fold])
+        #TODO: remove below and touch data_save_file
         config.saved_data = True
         config.save_to_file()
 
