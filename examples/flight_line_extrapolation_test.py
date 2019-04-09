@@ -1,8 +1,7 @@
 import argparse
 import os
 import sys
-import gdal
-import numpy as np
+import yaml
 
 # TODO manage imports
 from rsCNN.networks.experiment import Experiment
@@ -19,60 +18,72 @@ import rsCNN.evaluation
 #args = parser.parse_args()
 #
 
-global_options = {
-    'raw_feature_file_list': ['../global_cwc/dat/features/feat_subset.tif'],
-    'raw_response_file_list': ['../global_cwc/dat/responses/resp_subset.tif'],
 
-    'data_save_name': 'examples/munged/cwc_data_test',
-    'data_build_category': 'ordered_continuous',
-    'max_samples': 30000,
-    'window_radius': 16,
-    'internal_window_radius': 8,
-    'response_max_value': 10000,
-    'response_min_value': 0,
-    'feature_scaler_name': 'StandardScaler',
-    'response_scaler_name': 'StandardScaler',
+    # Initialize in one of three modes:
+    #   1) config file / settings if we want to
+    #   2) reloading from previous initialization
+    #   3) Sequence attachment + (i.e., other things needed)
 
-    'architecture': 'unet',
-    'use_batch_norm': True,
-    'conv_depth': 'growth',
-    'block_structure': (1, 1),
-    'n_layers': 10,
-    'output_activation': 'softplus',
-    'n_classes': 1,
-    'continue_training': False,
-
-    'model_name': 'config_overhaul_test',
-    'optimizer': 'adam',
-    'batch_size': 100,
-    'max_epochs': 100,
-    'n_noimprovement_repeats': 10,
-    'output_directory': None,
-    'validation_fold': 0,
-    'loss_metric': 'mae',
-
-    'application_feature_files': ['../global_cwc/dat/features/feat_subset.tif'],
-    'application_output_basenames': ['examples/output/feat_subset_applied_cnn.tif']
-}
+    #   sequence of numpy files
 
 
-data_config = rsCNN.data_management.DataConfig(**global_options)
+    # Data build from raw files
+    #   1) 'Ordered crawl' - block-wise run through the image (out of core)
+    #   2) 'Response-centric crawl' - get our response, but keep our sample size reasonable
+    #   3) 'Feature-centric crawl' - think through making sure this is still enabled
+    #   4) 'Out of core bootstrap' - only grab images on the fly (randomly) --- table for now
+
+    # Partly a function of the above,
+    #   1) For CC, you need to convert response data inputs in CC format
+    #   2) Build weights as necessary
+
+    # Initialize scalers
+
+    # Construct (or attache pre-existing) sequences
+
+    # Grab some basic info from the first sequence elements (AKA, find inshape)
+
+
+
+parser = argparse.ArgumentParser(description='Example spatial extrapolation application')
+parser.add_argument('settings_file')
+parser.add_argument('key')
+args = parser.parse_args()
+
+assert os.path.isfile(args.settings_file), 'Settings file: ' + args.settings_file + ' does not exist'
+global_options = yaml.load(open(args.settings_file,'r'))
+
+raw_feature_file_list = ['../global_cwc/dat/features/feat_subset.tif']
+raw_response_file_list = ['../global_cwc/dat/responses/resp_subset.tif']
+
+#data_config = rsCNN.data_management.DataConfig(**global_options)
 
 # TODO: punting on the inshape for now, but needs to be rectified
-inshape = (data_config.window_radius*2, data_config.window_radius*2, 3)
-network_config = network_config.create_network_config(inshape=inshape,
-                                                      **global_options)
+
+if (key == 'data' or key == 'all')
+    build_data_if_needed() #saves a sequence of numpy arrrays
+    load_and_train_scaler_if_needed #saves a sequence of numpy arrays, specific to data (but multiple per data possible)
+
+training_sequence = # nosave
+validation_sequence =  #nosave
+build_memmapped_sequence()
 
 
-experiment = Experiment(network_config, data_config, resume=True)
-experiment.build_or_load_model()
-experiment.build_or_load_data()
-# experiment.fit_network()
-# experiment.evaluate_network()
-report = rsCNN.evaluation.ExperimentReport(experiment, experiment.validation_sequence)
-report.create_report()
+network_config = network_config.create_network_config(**global_options)
+
+experiment = Experiment(training_sequence, validation_sequence, network_config, resume=True)
+
+if (key == 'train' or key == 'all'):
+    experiment.fit_network()
+
+if (key == 'report' or key == 'all'):
+    report = rsCNN.evaluation.ExperimentReport(experiment, experiment.validation_sequence)
+    report.create_report()
 
 
+if (key == 'application'):
+    application_feature_files = ['../global_cwc/dat/features/feat_subset.tif']
+    application_output_basenames = ['examples/output/feat_subset_applied_cnn.tif']
 # if (args.key == 'apply' or args.key == 'all'):
 #    feature_scaler.load()
 #    response_scaler.load()
