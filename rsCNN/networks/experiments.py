@@ -4,7 +4,7 @@ import keras
 import keras.backend as K
 import numpy as np
 
-from rsCNN.data_management import scalers, sequences, training_data, load_data_config_from_file, load_training_data
+from rsCNN.data_management import scalers, sequences, load_data_config_from_file, load_training_data
 from rsCNN.networks import callbacks, histories, losses, models, network_configs
 from rsCNN.utils import gpus, logger
 
@@ -41,23 +41,6 @@ class Experiment(object):
                 2) load/initialize/fit scalers
                 3) initiate train/validation/test sequences as components of Experiment
         """
-        # TODO:  Phil:  thinking about this more, data_config is only used in two places, this method and the
-        #  architecture
-        # TODO: start off by checking to make sure that we have all requisite info via assert
-        # Load up info that already exists from the data config if we're resuming operations
-        if (self.resume):
-            ldc = load_data_config_from_file(self.data_config.data_save_name)
-            if ldc is not None:
-                self.data_config = ldc
-
-        if (rebuild is False):
-            features, responses, weights, read_success = load_training_data(self.data_config)
-
-        if (read_success is False or rebuild is True):
-            if (self.data_config.data_build_category in ['ordered_continuous', 'ordered_categorical']):
-                features, responses, weights = training_data.build_training_data_ordered(self.data_config)
-            else:
-                raise NotImplementedError('Unknown data_build_category')
 
         # TODO:  incorporate scaler options in data config, might be worth the time to make it similar to how
         #   architectures handle options, since we want to generate templates automatically, but we might need to

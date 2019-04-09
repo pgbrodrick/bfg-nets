@@ -1,4 +1,5 @@
 import gdal
+import os
 import re
 from tqdm import tqdm
 
@@ -9,12 +10,63 @@ from rsCNN.utils.general import *
 _logger = logger.get_child_logger(__name__)
 
 
-# TODO: Phil:  I imagine there are several useful operations in this script that can be generalized, but I don't think
-#  I can use it as it stands. I have a single raster that I'd like to divide into gridded tiles, but I don't have a
-#  "feature" and "response" raster, just a feature raster that has temporal slices. However, I'm pretty sure you have
-#  gridding code in here and I'd be able to leverage that if we had a "get_grid(raster, grid_size)" function that would
-#  return a grid from a single raster. Just one example of how we could make some of these operations more general and
-#  use them more broadly. I might be wrong though.
+def build_or_get_data(config, rebuild=False):
+
+    if (rebuild is False):
+        features, responses, weights, read_success = load_training_data(config)
+
+    if (read_success is False or rebuild is True):
+        if (config.data_build_category in ['ordered_continuous', 'ordered_categorical']):
+            features, responses, weights = build_training_data_ordered(config)
+        else:
+            raise NotImplementedError('Unknown data_build_category')
+
+    return features, responses, weights
+
+
+def load_training_data(config):
+    """
+        Loads and returns training data from disk based on the config savename
+        Arguments:
+            config - data config from which to reference data
+        Returns:
+            features - feature data
+            responses - response data
+            fold_assignments - per-sample fold assignments specified during data generation
+    """
+
+    success = True
+    if (os.path.isfile(config.successfull_data_save_file) is not True):
+        _logger.debug('no saved data')
+        success = False
+
+    features = []
+    responses = []
+    weights = []
+    for fold in range(config.n_folds):
+        if (os.path.isfile(config.feature_files[fold])):
+            features.append(np.load(config.feature_files[fold], mmap_mode='r'))
+        else:
+            success = False
+            _logger.debug('failed read at {}'.format(config.feature_files[fold]))
+            break
+        if (os.path.isfile(config.response_files[fold])):
+            responses.append(np.load(config.response_files[fold], mmap_mode='r'))
+        else:
+            _logger.debug('failed read at {}'.format(config.response_files[fold]))
+            success = False
+            break
+        if (os.path.isfile(config.weight_files[fold])):
+            weights.append(np.load(config.weight_files[fold], mmap_mode='r'))
+        else:
+            _logger.debug('failed read at {}'.format(config.weight_files[fold]))
+            success = False
+            break
+
+    if (success):
+        return features, responses, weights, True
+    else:
+        return None, None, None, False
 
 
 def get_proj(fname, is_vector):
@@ -181,6 +233,9 @@ def get_response_data_section(ds, x, y, x_size, y_size, config):
     if (config.response_max_value is not None):
         dat[dat > config.response_max_value] = config.response_nodata_value
     return dat
+
+
+#TODO: break into more usable pieces
 
 
 def build_training_data_ordered(config):

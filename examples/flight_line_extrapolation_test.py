@@ -9,9 +9,8 @@ import rsCNN.data_management
 from rsCNN.networks import network_config
 import rsCNN.data_management.apply_model_to_data
 import rsCNN.evaluation
+from rsCNN.data_management import training_data
 
-
-# TODO script needs to be adapted yet
 
 #parser = argparse.ArgumentParser(description='CNN example for spatial extrapolation from CAO flight lines')
 # parser.add_argument('key')
@@ -60,9 +59,9 @@ raw_response_file_list = ['../global_cwc/dat/responses/resp_subset.tif']
 
 if (args.key == 'data' or args.key == 'all'):
     data_config = rsCNN.data_management.DataConfig(**global_options)
-    build_data_if_needed(data_config) #saves a sequence of numpy arrrays
-    load_and_train_scaler_if_needed(data_config) #saves a sequence of numpy arrays, specific to data (but multiple per data possible)
+    features, responses, weights = training_data.build_or_get_data(data_config)
 
+load_and_train_scaler_if_needed(data_config) #saves a sequence of numpy arrays, specific to data (but multiple per data possible)
 training_sequence = # nosave
 validation_sequence =  #nosave
 build_memmapped_sequence()
