@@ -38,8 +38,8 @@ class Experiment(object):
         _logger.info('Building or loading model')
         loss_function = losses.cropped_loss(
             self.network_config['architecture']['loss_metric'],
-            self.data_config.window_radius*2,
-            self.data_config.internal_window_radius*2,
+            self.network_config['architecture']['inshape'][0],
+            self.network_config['architecture']['internal_window_radius']*2,
             weighted=self.network_config['architecture']['weighted']
         )
         self.history = histories.load_history(self.network_config['model']['dir_out']) or dict()
@@ -64,12 +64,6 @@ class Experiment(object):
         if (n_gpu_avail > 1):
             self._original_model = self.model
             self.model = keras.utils.multi_gpu_model(self._original_model, gpus=n_gpu_avail, cpu_relocation=True)
-            if self._original_model is self.model:
-                raise AssertionError('The above two lines do not work because the second assignment to self.model ' +
-                                     'overwrites self._original_model\'s reference. Tell Nick to change names')
-            else:
-                raise AssertionError('The above two lines work! Find this line in the codebase and remove the ' +
-                                     'surrounding if/else statement. Nick just wanted to be sure it was correct')
             self.model.callback_model = self._original_model
             self.model.compile(loss=loss_function, optimizer=self.network_config['training']['optimizer'])
 
@@ -113,7 +107,6 @@ class Experiment(object):
         # TODO:  Check whether psutil.cpu_count gives the right answer on SLURM, i.e., the number of CPUs available to
         #  the job and not the total number on the instance.
 
-        # new_history = self.parallel_model.fit_generator(
         new_history = self.model.fit_generator(
             train_sequence,
             epochs=self.network_config['training']['max_epochs'],
