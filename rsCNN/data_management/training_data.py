@@ -5,12 +5,42 @@ from tqdm import tqdm
 
 from rsCNN.utils import logger
 from rsCNN.utils.general import *
+from rsCNN.data_management import scalers
 
 
 _logger = logger.get_child_logger(__name__)
 
 
-def build_or_get_data(config, rebuild=False):
+def build_or_load_scalers(data_config, rebuild=False):
+        feat_scaler_atr = {'nodata_value': data_config.feature_nodata_value,
+                           'savename_base': data_config.data_save_name + '_feature_scaler'}
+        feature_scaler = scalers.get_scaler(data_config.feature_scaler_name,
+                                                 feat_scaler_atr)
+
+        resp_scaler_atr = {'nodata_value': data_config.response_nodata_value,
+                           'savename_base': data_config.data_save_name + '_response_scaler'}
+        response_scaler = scalers.get_scaler(data_config.response_scaler_name,
+                                                  resp_scaler_atr)
+        feature_scaler.load()
+        response_scaler.load()
+
+        train_folds = [x for x in np.arange(
+            data_config.n_folds) if x is not data_config.validation_fold and x is not data_config.test_fold]
+
+        if (feature_scaler.is_fitted is False or rebuild is True):
+            # TODO: do better
+            feature_scaler.fit(data_config.features[train_folds[0]])
+            feature_scaler.save()
+        if (response_scaler.is_fitted is False or rebuild is True):
+            # TODO: do better
+            response_scaler.fit(data_config.responses[train_folds[0]])
+            response_scaler.save()
+
+        data_config.feature_scaler = feature_scaler
+        data_config.response_scaler = feature_scaler
+
+
+def build_or_load_data(config, rebuild=False):
 
     if (rebuild is False):
         features, responses, weights, read_success = load_training_data(config)
@@ -21,7 +51,9 @@ def build_or_get_data(config, rebuild=False):
         else:
             raise NotImplementedError('Unknown data_build_category')
 
-    return features, responses, weights
+    config.features = features
+    config.responses = responses
+    config.weights = weights
 
 
 def load_training_data(config):

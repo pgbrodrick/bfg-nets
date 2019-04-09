@@ -9,7 +9,7 @@ import rsCNN.data_management
 from rsCNN.networks import network_config
 import rsCNN.data_management.apply_model_to_data
 import rsCNN.evaluation
-from rsCNN.data_management import training_data
+from rsCNN.data_management import training_data, sequences
 
 
 #parser = argparse.ArgumentParser(description='CNN example for spatial extrapolation from CAO flight lines')
@@ -57,14 +57,15 @@ raw_response_file_list = ['../global_cwc/dat/responses/resp_subset.tif']
 
 
 
-if (args.key == 'data' or args.key == 'all'):
-    data_config = rsCNN.data_management.DataConfig(**global_options)
-    features, responses, weights = training_data.build_or_get_data(data_config)
+data_config = rsCNN.data_management.DataConfig(**global_options)
+training_data.build_or_load_data(data_config)
+training_data.build_or_load_scalers(data_config)
 
-load_and_train_scaler_if_needed(data_config) #saves a sequence of numpy arrays, specific to data (but multiple per data possible)
-training_sequence = # nosave
-validation_sequence =  #nosave
-build_memmapped_sequence()
+train_folds = [x for x in np.arange(
+    data_config.n_folds) if x is not data_config.validation_fold and x is not data_config.test_fold]
+
+training_sequence = sequences.build_memmaped_sequence(data_config, train_folds, batch_size=100)
+validation_sequence = sequences.build_memmaped_sequence(data_config, data_config.validation_fold, batch_size=100)
 
 
 network_config = network_config.create_network_config(**global_options)
@@ -94,3 +95,5 @@ if (args.key == 'application'):
 #                                                                        make_tif=True,
 #                                                                        feature_transformer=feature_scaler,
 #                                                                        response_transformer=response_scaler)
+
+

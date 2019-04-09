@@ -108,3 +108,13 @@ class DataConfig:
         self.response_scaler_name = kwargs.get('response_scaler_name', 'NullScaler')
         self.feature_mean_centering = kwargs.get('feature_mean_centering', False)
 
+        self.apply_random_transformations = kwargs.get('apply_random_transformations', False)
+
+        self.features = None
+        self.responses = None
+        self.weights = None
+
+        self.feature_scaler = None
+        self.response_scaler = None
+
+

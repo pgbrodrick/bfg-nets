@@ -4,7 +4,7 @@ import keras
 import keras.backend as K
 import numpy as np
 
-from rsCNN.data_management import scalers, sequences, load_data_config_from_file, load_training_data
+from rsCNN.data_management import sequences
 from rsCNN.networks import callbacks, histories, losses, models, network_configs
 from rsCNN.utils import gpus, logger
 
@@ -33,71 +33,6 @@ class Experiment(object):
         else:
             os.makedirs(self.network_config['model']['dir_out'])
             network_configs.save_network_config(network_config, self.network_config['model']['dir_out'])
-
-    def build_or_load_data(self, rebuild=False):
-        """
-            This function does the following, considering the rebuild parameter at each step:
-                1) load/build training data
-                2) load/initialize/fit scalers
-                3) initiate train/validation/test sequences as components of Experiment
-        """
-
-        # TODO:  incorporate scaler options in data config, might be worth the time to make it similar to how
-        #   architectures handle options, since we want to generate templates automatically, but we might need to
-        #   have subtemplates for general config, architectures, scalers, and other, since there would be too many
-        #   pairwise combinations to have all possibilities pre-generated
-        feat_scaler_atr = {'nodata_value': self.data_config.feature_nodata_value,
-                           'savename_base': self.data_config.data_save_name + '_feature_scaler'}
-        self.feature_scaler = scalers.get_scaler(self.data_config.feature_scaler_name,
-                                                 feat_scaler_atr)
-
-        resp_scaler_atr = {'nodata_value': self.data_config.response_nodata_value,
-                           'savename_base': self.data_config.data_save_name + '_response_scaler'}
-        self.response_scaler = scalers.get_scaler(self.data_config.response_scaler_name,
-                                                  resp_scaler_atr)
-        self.feature_scaler.load()
-        self.response_scaler.load()
-
-        train_folds = [x for x in np.arange(
-            self.data_config.n_folds) if x is not self.data_config.validation_fold and x is not self.data_config.test_fold]
-
-        if (self.feature_scaler.is_fitted is False or rebuild is True):
-            # TODO: do better
-            self.feature_scaler.fit(features[train_folds[0]])
-            self.feature_scaler.save()
-        if (self.response_scaler.is_fitted is False or rebuild is True):
-            # TODO: do better
-            self.response_scaler.fit(responses[train_folds[0]])
-            self.response_scaler.save()
-
-        apply_random = self.network_config['training']['apply_random_transformations']
-        mean_centering = self.data_config.feature_mean_centering
-        self.train_sequence = sequences.MemmappedSequence([features[_f] for _f in train_folds],
-                                                          [responses[_r] for _r in train_folds],
-                                                          [weights[_w] for _w in train_folds],
-                                                          self.feature_scaler,
-                                                          self.response_scaler,
-                                                          self.network_config['training']['batch_size'],
-                                                          apply_random_transforms=apply_random,
-                                                          feature_mean_centering=mean_centering)
-        if (self.data_config.validation_fold is not None):
-            self.validation_sequence = sequences.MemmappedSequence([features[self.data_config.validation_fold]],
-                                                                   [responses[self.data_config.validation_fold]],
-                                                                   [weights[self.data_config.validation_fold]],
-                                                                   self.feature_scaler,
-                                                                   self.response_scaler,
-                                                                   self.network_config['training']['batch_size'],
-                                                                   apply_random_transforms=apply_random,
-                                                                   feature_mean_centering=mean_centering)
-        if (self.data_config.test_fold is not None):
-            self.test_sequence = sequences.MemmappedSequence([features[self.data_config.test_fold]],
-                                                             [responses[self.data_config.test_fold]],
-                                                             [weights[self.data_config.test_fold]],
-                                                             self.feature_scaler,
-                                                             self.response_scaler,
-                                                             self.network_config['training']['batch_size'],
-                                                             apply_random_transforms=apply_random,
-                                                             feature_mean_centering=mean_centering)
 
     def build_or_load_model(self):
         _logger.info('Building or loading model')
