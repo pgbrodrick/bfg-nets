@@ -10,9 +10,9 @@ from rsCNN.networks import architectures
 FILENAME_NETWORK_CONFIG = 'network_config.ini'
 
 
-def load_network_config(filepath):
+def load_network_config(dir_config):
     config = configparser.ConfigParser()
-    config.read(filepath)
+    config.read(os.path.join(dir_config, FILENAME_NETWORK_CONFIG))
     kwargs = dict()
     for section in config.sections():
         for key, value in config[section].items():
@@ -124,3 +124,18 @@ def create_network_config(
         'rlr_patience': kwargs.get('rlr_patience', 10),
     }
     return config
+
+
+def compare_network_configs_get_differing_items(config_a, config_b):
+    differing_items = list()
+    all_sections = set(list(config_a.keys()) + list(config_b.keys()))
+    for section in all_sections:
+        section_a = config_a.get(section, dict())
+        section_b = config_b.get(section, dict())
+        all_keys = set(list(section_a.keys()) + list(section_b.keys()))
+        for key in all_keys:
+            value_a = section_a.get(key, None)
+            value_b = section_b.get(key, None)
+            if value_a != value_b:
+                differing_items.append((section, key, value_a, value_b))
+    return differing_items
