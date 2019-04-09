@@ -1,0 +1,27 @@
+data_save_name : 'examples/munged/cwc_data_test'
+data_build_category : 'ordered_continuous'
+max_samples : 30000
+window_radius : 16
+internal_window_radius : 8
+response_max_value : 10000
+response_min_value : 0
+feature_scaler_name : 'StandardScaler'
+response_scaler_name : 'StandardScaler'
+
+architecture : 'unet'
+use_batch_norm : True
+conv_depth : 'growth'
+block_structure : (1 1)
+n_layers : 10
+output_activation : 'softplus'
+n_classes : 1
+continue_training : False
+
+model_name : 'config_overhaul_test'
+optimizer : 'adam'
+batch_size : 100
+max_epochs : 100
+n_noimprovement_repeats : 10
+output_directory : None
+validation_fold : 0
+loss_metric : 'mae'
