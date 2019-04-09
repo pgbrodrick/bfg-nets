@@ -64,6 +64,7 @@ def create_model(
     Returns:
       A U-net style network keras network.
     """
+
     input_width = inshape[0]
     minimum_width = input_width / 2 ** len(block_structure)
     assert minimum_width >= min_conv_width, \

@@ -79,6 +79,7 @@ def create_network_config(
     config['architecture'] = {
         'architecture': architecture,
         'inshape': inshape,
+        'internal_window_radius': kwargs.get('internal_window_radius',int(inshape[0]/2.)),
         'n_classes': n_classes,
         'loss_metric': loss_metric,
         'create_model': architecture_creator.create_model,

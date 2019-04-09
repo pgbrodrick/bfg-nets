@@ -1,5 +1,6 @@
 import gdal
 import os
+from pathlib import Path
 import re
 from tqdm import tqdm
 
@@ -442,8 +443,7 @@ def build_training_data_ordered(config):
             np.save(config.feature_files[fold], features[fold])
             np.save(config.response_files[fold], responses[fold])
             np.save(config.weight_files[fold], weights[fold])
-        #TODO: remove below and touch data_save_file
-        config.saved_data = True
-        config.save_to_file()
+
+        Path(config.successful_data_save_file).touch()
 
     return features, responses, weights

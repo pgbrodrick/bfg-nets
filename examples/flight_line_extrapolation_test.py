@@ -11,6 +11,8 @@ import rsCNN.data_management.apply_model_to_data
 import rsCNN.evaluation
 from rsCNN.data_management import training_data, sequences
 
+import logging
+logging.getLogger('debug_out.out')
 
 # Initialize in one of three modes:
 #   1) config file / settings if we want to
@@ -58,12 +60,13 @@ train_folds = [x for x in range(
     data_config.n_folds) if x is not data_config.validation_fold and x is not data_config.test_fold]
 
 training_sequence = sequences.build_memmaped_sequence(data_config, train_folds, batch_size=100)
-validation_sequence = sequences.build_memmaped_sequence(data_config, data_config.validation_fold, batch_size=100)
+validation_sequence = sequences.build_memmaped_sequence(data_config, [data_config.validation_fold], batch_size=100)
 
 
-network_config = create_network_config(**global_options)
+network_config = create_network_config(inshape=(data_config.window_radius*2,data_config.window_radius*2,3),**global_options)
 
 experiment = Experiment(network_config, resume=True)
+experiment.build_or_load_model()
 
 if (args.key == 'train' or args.key == 'all'):
     experiment.fit_network(training_sequence, validation_sequence)
