@@ -27,8 +27,7 @@ def build_memmaped_sequence(data_config, fold_indices, batch_size = 100, rebuild
         assert data_config.feature_scaler is not None, 'Feature scaler must be defined'
         assert data_config.response_scaler is not None, 'Response scaler must be defined'
 
-
-        apply_random = data_config['training']['apply_random_transformations']
+        apply_random = data_config.apply_random_transformations
         mean_centering = data_config.feature_mean_centering
         data_sequence = sequences.MemmappedSequence([data_config.features[_f] for _f in fold_indices],
                                                     [data_config.responses[_r] for _r in fold_indices],

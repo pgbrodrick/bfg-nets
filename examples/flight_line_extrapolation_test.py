@@ -12,35 +12,29 @@ import rsCNN.evaluation
 from rsCNN.data_management import training_data, sequences
 
 
-#parser = argparse.ArgumentParser(description='CNN example for spatial extrapolation from CAO flight lines')
-# parser.add_argument('key')
-#args = parser.parse_args()
-#
+# Initialize in one of three modes:
+#   1) config file / settings if we want to
+#   2) reloading from previous initialization
+#   3) Sequence attachment + (i.e., other things needed)
+
+#   sequence of numpy files
 
 
-    # Initialize in one of three modes:
-    #   1) config file / settings if we want to
-    #   2) reloading from previous initialization
-    #   3) Sequence attachment + (i.e., other things needed)
+# Data build from raw files
+#   1) 'Ordered crawl' - block-wise run through the image (out of core)
+#   2) 'Response-centric crawl' - get our response, but keep our sample size reasonable
+#   3) 'Feature-centric crawl' - think through making sure this is still enabled
+#   4) 'Out of core bootstrap' - only grab images on the fly (randomly) --- table for now
 
-    #   sequence of numpy files
+# Partly a function of the above,
+#   1) For CC, you need to convert response data inputs in CC format
+#   2) Build weights as necessary
 
+# Initialize scalers
 
-    # Data build from raw files
-    #   1) 'Ordered crawl' - block-wise run through the image (out of core)
-    #   2) 'Response-centric crawl' - get our response, but keep our sample size reasonable
-    #   3) 'Feature-centric crawl' - think through making sure this is still enabled
-    #   4) 'Out of core bootstrap' - only grab images on the fly (randomly) --- table for now
+# Construct (or attache pre-existing) sequences
 
-    # Partly a function of the above,
-    #   1) For CC, you need to convert response data inputs in CC format
-    #   2) Build weights as necessary
-
-    # Initialize scalers
-
-    # Construct (or attache pre-existing) sequences
-
-    # Grab some basic info from the first sequence elements (AKA, find inshape)
+# Grab some basic info from the first sequence elements (AKA, find inshape)
 
 
 
@@ -56,12 +50,11 @@ raw_feature_file_list = ['../global_cwc/dat/features/feat_subset.tif']
 raw_response_file_list = ['../global_cwc/dat/responses/resp_subset.tif']
 
 
-
 data_config = rsCNN.data_management.DataConfig(**global_options)
 training_data.build_or_load_data(data_config)
 training_data.build_or_load_scalers(data_config)
 
-train_folds = [x for x in np.arange(
+train_folds = [x for x in range(
     data_config.n_folds) if x is not data_config.validation_fold and x is not data_config.test_fold]
 
 training_sequence = sequences.build_memmaped_sequence(data_config, train_folds, batch_size=100)
@@ -70,13 +63,15 @@ validation_sequence = sequences.build_memmaped_sequence(data_config, data_config
 
 network_config = network_config.create_network_config(**global_options)
 
-experiment = Experiment(training_sequence, validation_sequence, network_config, resume=True)
+experiment = Experiment(network_config, resume=True)
 
 if (args.key == 'train' or args.key == 'all'):
-    experiment.fit_network()
+    experiment.fit_network(training_sequence, validation_sequence)
 
 if (args.key == 'report' or args.key == 'all'):
-    report = rsCNN.evaluation.ExperimentReport(experiment, experiment.validation_sequence)
+    report = rsCNN.evaluation.ExperimentReport(experiment,
+                                               training_sequence,
+                                               validation_sequence)
     report.create_report()
 
 

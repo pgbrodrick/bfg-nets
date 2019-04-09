@@ -5,6 +5,7 @@ import keras.backend as K
 import numpy as np
 
 from rsCNN.data_management import sequences
+from rsCNN.data_management.sequences import BaseSequence
 from rsCNN.networks import callbacks, histories, losses, models, network_configs
 from rsCNN.utils import gpus, logger
 
@@ -22,8 +23,7 @@ class Experiment(object):
     validation_sequence = None
     test_sequence = None
 
-    def __init__(self, network_config: dict, data_config, resume: bool = False) -> None:
-        self.data_config = data_config
+    def __init__(self, network_config: dict, resume: bool = False) -> None:
         self.network_config = network_config
         self.resume = resume
 
@@ -101,20 +101,9 @@ class Experiment(object):
 
     def fit_network(
             self,
-            train_sequence: keras.utils.Sequence = None,
-            validation_sequence: keras.utils.Sequence = None
+            train_sequence: BaseSequence,
+            validation_sequence: BaseSequence = None
     ) -> None:
-        # TODO:  Phil, I know we're thinking about breaking up the data and network components. I think part of that
-        #   might be simplifying this section by just passing in training and validation sequences because there's no
-        #   reason for the experiment object to hold onto those, right? If we're just creating a method that sets those
-        #   attributes, why not just pass them to the fit or predict method when needed? It's not like experiment will
-        #   be doing anything more than just passing to fit and predict, right? In the meantime, I'm leaving the setting
-        #   of those attributes here because I don't want to break the combined data/network methods. We'll want to
-        #   remove the following lines and then fit directly from the arguments.
-        if train_sequence is not None:
-            self.train_sequence = train_sequence
-        if validation_sequence is not None:
-            self.validation_sequence = validation_sequence
 
         if self.network_config['model']['assert_gpu']:
             gpus.assert_gpu_available()
@@ -126,11 +115,11 @@ class Experiment(object):
 
         # new_history = self.parallel_model.fit_generator(
         new_history = self.model.fit_generator(
-            self.train_sequence,
+            train_sequence,
             epochs=self.network_config['training']['max_epochs'],
             verbose=self.network_config['model']['verbosity'],
             callbacks=model_callbacks,
-            validation_data=self.validation_sequence,
+            validation_data=validation_sequence,
             max_queue_size=2,
             # workers=psutil.cpu_count(logical=True),
             # use_multiprocessing=True,
