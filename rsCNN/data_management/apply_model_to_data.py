@@ -3,6 +3,7 @@ import os
 import gdal
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+from tqdm import tqdm
 
 from rsCNN.utils.general import *
 
@@ -48,11 +49,9 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
     feature[np.isnan(feature)] = data_config.feature_nodata_value
     feature[np.isinf(feature)] = data_config.feature_nodata_value
 
-    if (feature_transformer is not None):
-        feature = feature_transformer.transform(feature)
+    n_classes = cnn.predict((np.zeros((1,data_config.window_radius*2,data_config.window_radius*2,feature.shape[-1])))).shape[-1]
 
-    output = np.zeros((feature.shape[0], feature.shape[1], cnn.network_config['architecture']
-                       ['n_classes'])) + data_config.response_nodata_value
+    output = np.zeros((feature.shape[0], feature.shape[1], n_classes)) + data_config.response_nodata_value
 
     cr = [0, feature.shape[1]]
     rr = [0, feature.shape[0]]
@@ -64,19 +63,27 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
                                 data_config.window_radius, data_config.internal_window_radius*2)]
     rowlist.append(rr[1]-data_config.window_radius)
 
-    for col in collist:
+    for _c in tqdm(range(len(collist)), ncols=80):
+        col = collist[_c]
         images = []
         for n in rowlist:
             d = feature[n-data_config.window_radius:n+data_config.window_radius,
                         col-data_config.window_radius:col+data_config.window_radius].copy()
-            if(d.shape[0] == data_config.window_radius*2 and d.shape[1] == data_config.window_radius*2):
-                # TODO: implement local scaling if necessary
-
+            if(d.shape[0] == data_config.window_radius*2 and d.shape[1] == data_config.window_radius*2): 
                 # TODO: consider having this as an option
                 # d = fill_nearest_neighbor(d)
                 images.append(d)
         images = np.stack(images)
         images = images.reshape((images.shape[0], images.shape[1], images.shape[2], dataset.RasterCount))
+
+
+        if (data_config.feature_mean_centering is True):
+            images[images == data_config.feature_nodata_value] = np.nan
+            images -= np.nanmean(images,axis=(1,2))[:,np.newaxis,np.newaxis,:]
+            images[np.isnan(images)] = data_config.feature_nodata_value
+
+        if (feature_transformer is not None):
+            images = feature_transformer.transform(images)
 
         pred_y = cnn.predict(images)
 
@@ -100,13 +107,13 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
     if (make_png):
         output[output == data_config.response_nodata_value] = np.nan
         feature[feature == data_config.response_nodata_value] = np.nan
-        gs1 = gridspec.GridSpec(1, cnn.network_config['architecture']['n_classes']+1)
-        for n in range(0, cnn.network_config['architecture']['n_classes']):
+        gs1 = gridspec.GridSpec(1, n_classes+1)
+        for n in range(0, n_classes):
             ax = plt.subplot(gs1[0, n])
             im = plt.imshow(output[:, :, n], vmin=0, vmax=1)
             plt.axis('off')
 
-        ax = plt.subplot(gs1[0, cnn.network_config['architecture']['n_classes']])
+        ax = plt.subplot(gs1[0, n_classes])
         im = plt.imshow(np.squeeze(feature[..., 0]))
         plt.axis('off')
         plt.savefig(destination_basename + '.png', dpi=png_dpi, bbox_inches='tight')
@@ -118,10 +125,10 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
         output[np.isnan(output)] = data_config.response_nodata_value
 
         outDataset = driver.Create(destination_basename + '.tif',
-                                   output.shape[1], output.shape[0], cnn.network_config['architecture']['n_classes'], gdal.GDT_Float32)
+                                   output.shape[1], output.shape[0], n_classes, gdal.GDT_Float32)
         outDataset.SetProjection(dataset.GetProjection())
         outDataset.SetGeoTransform(dataset.GetGeoTransform())
-        for n in range(0, cnn.network_config['architecture']['n_classes']):
+        for n in range(0, n_classes):
             outDataset.GetRasterBand(n+1).WriteArray(np.squeeze(output[:, :, n]), 0, 0)
         del outDataset
     del dataset

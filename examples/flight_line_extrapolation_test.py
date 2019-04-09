@@ -4,9 +4,9 @@ import sys
 import yaml
 
 # TODO manage imports
-from rsCNN.networks.experiment import Experiment
+from rsCNN.networks.experiments import Experiment
 import rsCNN.data_management
-from rsCNN.networks import network_config
+from rsCNN.networks.network_configs import create_network_config
 import rsCNN.data_management.apply_model_to_data
 import rsCNN.evaluation
 from rsCNN.data_management import training_data, sequences
@@ -46,8 +46,8 @@ args = parser.parse_args()
 assert os.path.isfile(args.settings_file), 'Settings file: ' + args.settings_file + ' does not exist'
 global_options = yaml.load(open(args.settings_file,'r'))
 
-raw_feature_file_list = ['../global_cwc/dat/features/feat_subset.tif']
-raw_response_file_list = ['../global_cwc/dat/responses/resp_subset.tif']
+global_options['raw_feature_file_list'] = ['../global_cwc/dat/features/feat_subset.tif']
+global_options['raw_response_file_list'] = ['../global_cwc/dat/responses/resp_subset.tif']
 
 
 data_config = rsCNN.data_management.DataConfig(**global_options)
@@ -61,7 +61,7 @@ training_sequence = sequences.build_memmaped_sequence(data_config, train_folds, 
 validation_sequence = sequences.build_memmaped_sequence(data_config, data_config.validation_fold, batch_size=100)
 
 
-network_config = network_config.create_network_config(**global_options)
+network_config = create_network_config(**global_options)
 
 experiment = Experiment(network_config, resume=True)
 

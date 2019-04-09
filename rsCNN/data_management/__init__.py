@@ -9,7 +9,10 @@ class DataConfig:
         sample generation, and scaling.
     """
 
-    def __init__(self, window_radius, raw_feature_file_list, raw_response_file_list, **kwargs):
+    def __init__(self, **kwargs):
+
+
+        #TODO: put appropriate asserts for the below values in build_training_data
         """
           Arguments:
           window_radius - determines the subset image size, which results as 2*window_radius
@@ -18,13 +21,13 @@ class DataConfig:
         """
 
         # determines the subset image size, which results as 2*window_radius
-        self.window_radius = window_radius
+        self.window_radius = kwargs.get('window_radius', None)
 
         # file list of the feature rasters
-        self.raw_feature_file_list = raw_feature_file_list
+        self.raw_feature_file_list = kwargs.get('raw_feature_file_list', [])
 
         # file list of the response rasters
-        self.raw_response_file_list = raw_response_file_list
+        self.raw_response_file_list = kwargs.get('raw_response_file_list', [])
 
         # A string that tells us how to build the training data set.  Current options are:
         # ordered_continuous
@@ -44,7 +47,7 @@ class DataConfig:
 
         # An inner image subset used to score the algorithm, and within which a response must lie to
         # be included in training data
-        self.internal_window_radius = kwargs.get('internal_window_radius', window_radius)
+        self.internal_window_radius = kwargs.get('internal_window_radius', self.window_radius)
 
         # The fraction to randomly shuffle data from around response center.
         self.center_random_offset_fraction = kwargs.get('center_random_offset_fraction', 0)
