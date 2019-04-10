@@ -32,12 +32,14 @@ def load_network_config(dir_config):
 def save_network_config(network_config: dict, dir_config: str, filename: str = None) -> None:
     if not filename:
         filename = FILENAME_NETWORK_CONFIG
-    config_copy = network_config.copy()  # Need to copy because it's mutable and user may want to keep 'create_model'
-    if 'architecture' in config_copy:
-        config_copy['architecture'].pop('create_model')
     writer = configparser.ConfigParser()
-    for section, section_items in config_copy.items():
-        writer[section] = section_items
+    for section, section_items in network_config.items():
+        writer[section] = {}
+        for key, value in section_items.items():
+            if (key == 'create_model'):
+                continue
+            writer[section][key] = str(value)
+        #writer[section] = section_items
     with open(os.path.join(dir_config, filename), 'w') as file_:
         writer.write(file_)
 
@@ -75,7 +77,6 @@ def create_network_config(
     }
 
     architecture_creator = architectures.get_architecture_creator(architecture)
-
     config['architecture'] = {
         'architecture': architecture,
         'inshape': inshape,
