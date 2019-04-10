@@ -79,6 +79,10 @@ class BaseSequence(keras.utils.Sequence):
         return [self.response_scaler.transform(response) for response in responses]
 
     def _mean_center(self, data: List[np.array]) -> List[np.array]:
+        # TODO:  Phil:  it seems weird to have this in the base class when it's only used by one child class. Is that
+        #  the case? Should we put this in the child class as a one liner? Also, I'm pretty sure this will cause an
+        #  error as written. The method expects a list of numpy arrays and returns a list of numpy arrays, but you can't
+        #  subtract lists.
         return data - np.mean(data, axis=(1, 2))[:, np.newaxis, np.newaxis, :]
 
     def _apply_random_transformations(
