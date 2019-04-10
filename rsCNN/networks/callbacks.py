@@ -82,12 +82,12 @@ class HistoryCheckpoint(keras.callbacks.Callback):
 
 def get_callbacks(network_config: configparser.ConfigParser, existing_history: dict) -> List[keras.callbacks.Callback]:
     callbacks = [
-        HistoryCheckpoint(
-            dir_out=network_config['model']['dir_out'],
-            existing_history=existing_history,
-            period=network_config['callbacks_general']['checkpoint_periods'],
-            verbose=network_config['model']['verbosity']
-        ),
+        #HistoryCheckpoint(
+        #    dir_out=network_config['model']['dir_out'],
+        #    existing_history=existing_history,
+        #    period=network_config['callbacks_general']['checkpoint_periods'],
+        #    verbose=network_config['model']['verbosity']
+        #),
         keras.callbacks.ModelCheckpoint(
             os.path.join(network_config['model']['dir_out'], 'model.h5'),
             period=network_config['callbacks_general']['checkpoint_periods'],

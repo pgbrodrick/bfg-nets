@@ -66,11 +66,11 @@ class Experiment(object):
                 _logger.debug('Setting learning rate to value from last training epoch')
                 K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
         n_gpu_avail = gpus.get_count_available_gpus()
-        n_gpu_avail = 1
         _logger.debug('Using multiple GPUs with {} available'.format(n_gpu_avail))
         if (n_gpu_avail > 1):
             self._original_model = self.model
             self.model = keras.utils.multi_gpu_model(self._original_model, gpus=n_gpu_avail, cpu_relocation=True)
+            self.model.callback_model = self._original_model
             self.model.compile(loss=loss_function, optimizer=self.network_config['training']['optimizer'])
 
     def calculate_training_memory_usage(self, batch_size: int) -> float:
