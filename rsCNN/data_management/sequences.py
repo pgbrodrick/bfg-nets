@@ -59,8 +59,7 @@ class BaseSequence(keras.utils.Sequence):
         self.nan_conversion_value = nan_conversion_value
 
     def __len__(self) -> int:
-        # Method is required for Keras functionality, a.k.a. steps_per_epoch in fit_generator
-        raise NotImplementedError
+        raise NotImplementedError('Method is required for Keras functionality. Should return steps_per_epoch.')
 
     def __getitem__(self, index: int) -> Tuple[List[np.array], List[np.array]]:
         # Method is required for Keras functionality
@@ -88,7 +87,10 @@ class BaseSequence(keras.utils.Sequence):
         return features, responses_with_weights
 
     def _get_features_responses_weights(self, index: int) -> Tuple[List[np.array], List[np.array], List[np.array]]:
-        raise NotImplementedError
+        raise NotImplementedError(
+            'Custom Sequences must implement _get_features_responses_weights for training and reporting to work. ' +
+            'See method header for expected arguments and returned objects.'
+        )
 
     def _modify_features_responses_weights_before_scaling(
             self,
@@ -105,6 +107,10 @@ class BaseSequence(keras.utils.Sequence):
         return [self.response_scaler.transform(response) for response in responses]
 
     def _mean_center(self, data: List[np.array]) -> List[np.array]:
+        # TODO:  Phil:  it seems weird to have this in the base class when it's only used by one child class. Is that
+        #  the case? Should we put this in the child class as a one liner? Also, I'm pretty sure this will cause an
+        #  error as written. The method expects a list of numpy arrays and returns a list of numpy arrays, but you can't
+        #  subtract lists.
         return data - np.mean(data, axis=(1, 2))[:, np.newaxis, np.newaxis, :]
 
     def _apply_random_transformations(
