@@ -21,7 +21,7 @@ def plot_raw_and_scaled_result_examples(data_sequence: BaseSequence, experiment:
     raw_responses = data_sequence.response_scaler.inverse_transform(responses)
     raw_predictions = data_sequence.response_scaler.inverse_transform(predictions)
 
-    internal_window_radius = experiment.data_config.internal_window_radius
+    internal_window_radius = experiment.network_config['architecture']['internal_window_radius']
 
     fig_list = []
     # NOTE - this is not meant to be a universal config setup, which would be annoyingly hard.
@@ -188,8 +188,6 @@ def single_sequence_prediction_histogram(data_sequence: BaseSequence, experiment
     responses = responses[0]
     responses, weights = responses[..., :-1], responses[..., -1]
 
-    responses[responses == experiment.data_config.response_nodata_value] = np.nan
-    pred_responses[pred_responses == experiment.data_config.response_nodata_value] = np.nan
     responses[weights == 0, :] = np.nan
     pred_responses[weights == 0, :] = np.nan
 
@@ -248,9 +246,6 @@ def spatial_error(data_sequence: BaseSequence, experiment: Experiment):
     features = features[0]
     responses = responses[0]
     responses, weights = responses[..., :-1], responses[..., -1]
-
-    responses[responses == experiment.data_config.response_nodata_value] = np.nan
-    pred_responses[responses == experiment.data_config.response_nodata_value] = np.nan
 
     diff = np.abs(responses-pred_responses)
 

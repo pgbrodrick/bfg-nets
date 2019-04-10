@@ -17,10 +17,10 @@ output_activation : 'softplus'
 n_classes : 1
 continue_training : False
 
-model_name : 'data_overhaul_test'
+dir_out : 'data_overhaul_test'
 optimizer : 'adam'
 batch_size : 100
-max_epochs : 100
+max_epochs : 20
 n_noimprovement_repeats : 10
 output_directory : None
 validation_fold : 0
