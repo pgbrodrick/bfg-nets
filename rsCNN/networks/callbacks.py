@@ -60,7 +60,13 @@ class HistoryCheckpoint(keras.callbacks.Callback):
 
     def _save_history(self):
         _logger.debug('Save model history')
-        combined_history = histories.combine_histories(self.existing_history, self.model.history.history)
+        if hasattr(self.model, 'history'):
+            new_history = self.model.history.history
+        elif hasattr(self.model, 'model'):
+            assert hasattr(self.model.model, 'history'), \
+                'Parallel models are doing something unusual with histories. Tell Nick and let\'s debug.'
+            new_history = self.model.model.history
+        combined_history = histories.combine_histories(self.existing_history, new_history)
         histories.save_history(combined_history, self.dir_out)
 
 
