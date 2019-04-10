@@ -31,8 +31,7 @@ class BaseSequence(keras.utils.Sequence):
         self.nan_conversion_value = nan_conversion_value
 
     def __len__(self) -> int:
-        # Method is required for Keras functionality, a.k.a. steps_per_epoch in fit_generator
-        raise NotImplementedError
+        raise NotImplementedError('Method is required for Keras functionality. Should return steps_per_epoch.')
 
     def __getitem__(self, index: int) -> Tuple[List[np.array], List[np.array]]:
         # Method is required for Keras functionality
@@ -60,7 +59,10 @@ class BaseSequence(keras.utils.Sequence):
         return features, responses_with_weights
 
     def _get_features_responses_weights(self, index: int) -> Tuple[List[np.array], List[np.array], List[np.array]]:
-        raise NotImplementedError
+        raise NotImplementedError(
+            'Custom Sequences must implement _get_features_responses_weights for training and reporting to work. ' +
+            'See method header for expected arguments and returned objects.'
+        )
 
     def _modify_features_responses_weights_before_scaling(
             self,
