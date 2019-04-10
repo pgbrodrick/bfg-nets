@@ -17,6 +17,11 @@ class HistoryCheckpoint(keras.callbacks.Callback):
 
     def __init__(self, dir_out, existing_history=None, period=1, verbose=0):
         super().__init__()
+        # TODO:  remove this log line
+        if hasattr(self, 'model'):
+            _logger.debug('model attributes and methods:  {}'.format(dir(self.model)))
+            if hasattr(self.model, 'model'):
+                _logger.debug('model.model attributes and methods:  {}'.format(dir(self.model.model)))
         self.dir_out = dir_out
         if existing_history is None:
             existing_history = dict()
@@ -27,6 +32,11 @@ class HistoryCheckpoint(keras.callbacks.Callback):
         self.epoch_begin = None
 
     def on_train_begin(self, logs=None):
+        # TODO:  remove this log line
+        if hasattr(self, 'model'):
+            _logger.debug('model attributes and methods:  {}'.format(dir(self.model)))
+            if hasattr(self.model, 'model'):
+                _logger.debug('model.model attributes and methods:  {}'.format(dir(self.model.model)))
         _logger.debug('Beginning network training')
         _logger.debug('on_training_begin logs: {}'.format(logs))
         for key in ('epoch_start', 'epoch_finish'):
@@ -60,7 +70,13 @@ class HistoryCheckpoint(keras.callbacks.Callback):
 
     def _save_history(self):
         _logger.debug('Save model history')
-        combined_history = histories.combine_histories(self.existing_history, self.model.history.history)
+        if hasattr(self.model, 'history'):
+            new_history = self.model.history.history
+        elif hasattr(self.model, 'model'):
+            assert hasattr(self.model.model, 'history'), \
+                'Parallel models are doing something unusual with histories. Tell Nick and let\'s debug.'
+            new_history = self.model.model.history
+        combined_history = histories.combine_histories(self.existing_history, new_history)
         histories.save_history(combined_history, self.dir_out)
 
 

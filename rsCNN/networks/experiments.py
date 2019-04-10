@@ -30,6 +30,12 @@ class Experiment(object):
         if os.path.exists(self.network_config['model']['dir_out']):
             if histories.load_history(self.network_config['model']['dir_out']):
                 assert self.resume, 'Resume must be true to continue training an existing model'
+            original_config = network_configs.load_network_config(self.network_config['model']['dir_out'])
+            differing_items = network_configs.compare_network_configs_get_differing_items(
+                original_config, self.network_config)
+            assert len(differing_items) == 0, \
+                'Provided network config differs from network config for existing, trained model:  {}'.format(
+                    differing_items)
         else:
             os.makedirs(self.network_config['model']['dir_out'])
             network_configs.save_network_config(network_config, self.network_config['model']['dir_out'])
@@ -64,7 +70,6 @@ class Experiment(object):
         if (n_gpu_avail > 1):
             self._original_model = self.model
             self.model = keras.utils.multi_gpu_model(self._original_model, gpus=n_gpu_avail, cpu_relocation=True)
-            self.model.callback_model = self._original_model
             self.model.compile(loss=loss_function, optimizer=self.network_config['training']['optimizer'])
 
     def calculate_training_memory_usage(self, batch_size: int) -> float:
