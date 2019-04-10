@@ -11,8 +11,8 @@ import rsCNN.data_management.apply_model_to_data
 import rsCNN.evaluation
 from rsCNN.data_management import training_data, sequences
 
-import logging
-logging.getLogger('debug_out.out')
+from gdcs.utils import logging
+logging.get_root_logger('debug_out.out')
 
 # Initialize in one of three modes:
 #   1) config file / settings if we want to
@@ -64,6 +64,7 @@ validation_sequence = sequences.build_memmaped_sequence(data_config, [data_confi
 
 
 #Move the inshape intot he build_or_load_model
+print(global_options)
 network_config = create_network_config(inshape=(data_config.window_radius*2,data_config.window_radius*2,3),**global_options)
 
 experiment = Experiment(network_config, resume=True)
@@ -74,8 +75,8 @@ if (args.key == 'train' or args.key == 'all'):
 
 if (args.key == 'report' or args.key == 'all'):
     report = rsCNN.evaluation.ExperimentReport(experiment,
-                                               training_sequence,
                                                validation_sequence)
+                                               #training_sequence,
     report.create_report()
 
 
