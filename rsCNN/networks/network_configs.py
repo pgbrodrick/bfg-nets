@@ -23,7 +23,7 @@ def load_network_config(dir_config):
             # everything, unfortunately, so just be diligent with config files.
             try:
                 value = ast.literal_eval(value)
-            except ValueError:
+            except:
                 value = str(value)
             kwargs[key] = value
     return create_network_config(**kwargs)
@@ -46,7 +46,6 @@ def save_network_config(network_config: dict, dir_config: str, filename: str = N
 
 def create_network_config(
         architecture: str,
-        model_name: str,
         inshape: Tuple[int, int, int],
         n_classes: int,
         loss_metric: str,
@@ -70,8 +69,7 @@ def create_network_config(
     config = OrderedDict()
 
     config['model'] = {
-        'model_name': model_name,
-        'dir_out': os.path.join(kwargs.get('dir_out', './'), model_name),
+        'dir_out': kwargs.get('dir_out'),
         'verbosity': kwargs.get('verbosity', 1),
         'assert_gpu': kwargs.get('assert_gpu', False),
     }

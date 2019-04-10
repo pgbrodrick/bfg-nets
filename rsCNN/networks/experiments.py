@@ -66,6 +66,7 @@ class Experiment(object):
                 _logger.debug('Setting learning rate to value from last training epoch')
                 K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
         n_gpu_avail = gpus.get_count_available_gpus()
+        n_gpu_avail = 1
         _logger.debug('Using multiple GPUs with {} available'.format(n_gpu_avail))
         if (n_gpu_avail > 1):
             self._original_model = self.model
