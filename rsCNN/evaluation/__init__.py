@@ -32,7 +32,7 @@ class ExperimentReport(object):
             # Model summary
             pdf.savefig(networks.print_model_summary(self.experiment.model), bbox_inches='tight')
             # Model history
-            pdf.savefig(networks.plot_history(self.experiment.history), bbox_inches='tight')
+            #pdf.savefig(networks.plot_history(self.experiment.history), bbox_inches='tight')
             # Input examples and their scaled representations
             #for fig in rs_data.plot_raw_and_scaled_input_examples(self.test_sequence):
             #    pdf.savefig(fig, bbox_inches='tight')
