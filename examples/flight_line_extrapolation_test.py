@@ -63,6 +63,7 @@ training_sequence = sequences.build_memmaped_sequence(data_config, train_folds, 
 validation_sequence = sequences.build_memmaped_sequence(data_config, [data_config.validation_fold], batch_size=100)
 
 
+#Move the inshape intot he build_or_load_model
 network_config = create_network_config(inshape=(data_config.window_radius*2,data_config.window_radius*2,3),**global_options)
 
 experiment = Experiment(network_config, resume=True)

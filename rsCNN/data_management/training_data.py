@@ -38,7 +38,7 @@ def build_or_load_scalers(data_config, rebuild=False):
             response_scaler.save()
 
         data_config.feature_scaler = feature_scaler
-        data_config.response_scaler = feature_scaler
+        data_config.response_scaler = response_scaler
 
 
 def build_or_load_data(config, rebuild=False):
