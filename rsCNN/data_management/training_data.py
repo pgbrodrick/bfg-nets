@@ -4,9 +4,31 @@ from pathlib import Path
 import re
 from tqdm import tqdm
 
+import fiona
+import rasterio.features
 from rsCNN.utils import logger
 from rsCNN.utils.general import *
 from rsCNN.data_management import scalers
+
+def rasterize_vector(vector_file,geotransform,output_shape):
+    """ Rasterizes an input vector directly into a numpy array.
+    Arguments:
+    vector_file - str
+      Input vector file to be rasterized.
+    geotransform - list
+      A gdal style geotransform.
+    output_shape - tuple
+      The shape of the output file to be generated.
+
+    Return:
+    A rasterized 2-d numpy array.
+    """
+    ds = fiona.open(vector_file,'r')
+    geotransform = [geotransform[1],geotransform[2],geotransform[0],geotransform[4],geotransform[5],geotransform[3]]
+    mask = np.zeros(output_shape)
+    for n in range(0,len(ds)):
+      rasterio.features.rasterize([ds[n]['geometry']],transform=geotransform,default_value=1,out=mask)
+    return mask
 
 
 _logger = logger.get_child_logger(__name__)

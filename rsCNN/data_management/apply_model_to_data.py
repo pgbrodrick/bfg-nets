@@ -49,6 +49,8 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
     feature[np.isnan(feature)] = data_config.feature_nodata_value
     feature[np.isinf(feature)] = data_config.feature_nodata_value
 
+    feature[feature == data_config.feature_nodata_value] = np.nan
+
     n_classes = cnn.predict((np.zeros((1,data_config.window_radius*2,data_config.window_radius*2,feature.shape[-1])))).shape[-1]
 
     output = np.zeros((feature.shape[0], feature.shape[1], n_classes)) + data_config.response_nodata_value
@@ -78,14 +80,14 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
 
 
         if (data_config.feature_mean_centering is True):
-            images[images == data_config.feature_nodata_value] = np.nan
             images -= np.nanmean(images,axis=(1,2))[:,np.newaxis,np.newaxis,:]
-            images[np.isnan(images)] = data_config.feature_nodata_value
 
         if (feature_transformer is not None):
             images = feature_transformer.transform(images)
 
         pred_y = cnn.predict(images)
+        nd_set = np.any(np.isnan(images),axis=(1,2,3))
+        pred_y[nd_set,...] = data_config.response_nodata_value
 
         _i = 0
         for n in rowlist:
@@ -100,9 +102,10 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
                 break
 
     # TODO: think through if this order of operations screws things up if response_nodata_value != feature_nodata_value
-    output[np.all(feature == data_config.feature_nodata_value, axis=-1), :] = data_config.response_nodata_value
     if (feature_transformer is not None):
         output = response_transformer.inverse_transform(output)
+
+    output[np.all(np.isnan(feature), axis=-1), :] = data_config.response_nodata_value
 
     if (make_png):
         output[output == data_config.response_nodata_value] = np.nan

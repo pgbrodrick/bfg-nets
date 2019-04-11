@@ -106,13 +106,6 @@ class BaseSequence(keras.utils.Sequence):
     def _scale_responses(self, responses: List[np.array]) -> List[np.array]:
         return [self.response_scaler.transform(response) for response in responses]
 
-    def _mean_center(self, data: List[np.array]) -> List[np.array]:
-        # TODO:  Phil:  it seems weird to have this in the base class when it's only used by one child class. Is that
-        #  the case? Should we put this in the child class as a one liner? Also, I'm pretty sure this will cause an
-        #  error as written. The method expects a list of numpy arrays and returns a list of numpy arrays, but you can't
-        #  subtract lists.
-        return data - np.mean(data, axis=(1, 2))[:, np.newaxis, np.newaxis, :]
-
     def _apply_random_transformations(
             self,
             features: List[np.array],
@@ -163,6 +156,9 @@ class MemmappedSequence(BaseSequence):
     def __len__(self):
         # Method is required for Keras functionality, a.k.a. steps_per_epoch in fit_generator
         return int(np.ceil(self.cum_samples_per_array[-1] / self.batch_size))
+
+    def _mean_center(self, data: np.array) -> np.array:
+        return data - np.mean(data, axis=(1, 2))[:, np.newaxis, np.newaxis, :]
 
     def _get_features_responses_weights(self, index: int) -> Tuple[List[np.array], List[np.array], List[np.array]]:
         # start by finding which array we're starting in, based on the input index, batch size,

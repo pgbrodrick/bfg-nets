@@ -46,9 +46,9 @@ class BaseGlobalScaler(object):
 
     def inverse_transform(self, image_array):
         # User can overwrite image_array values with nodata_value if input data is missing
-        image_array[image_array == self.nodata_value] = np.nan
+        #image_array[image_array == self.nodata_value] = np.nan
         image_array = self._inverse_transform(image_array)
-        image_array[~np.isfinite(image_array)] = self.nodata_value
+        #image_array[~np.isfinite(image_array)] = self.nodata_value
         return image_array
 
     def _inverse_transform(self, image_array):
@@ -56,12 +56,12 @@ class BaseGlobalScaler(object):
 
     def transform(self, image_array):
         # convert nodata values to nans temporarily
-        image_array[image_array == self.nodata_value] = np.nan
+        #image_array[image_array == self.nodata_value] = np.nan
         image_array = self._transform(image_array)
         num_conflicts = np.sum(image_array == self.nodata_value)
         if num_conflicts > 0:
             _logger.warn('{} values in transformed data are equal to nodata value'.format(num_conflicts))
-        image_array[~np.isfinite(image_array)] = self.nodata_value
+        #image_array[~np.isfinite(image_array)] = self.nodata_value
         return image_array
 
     def _transform(self, image_array):
