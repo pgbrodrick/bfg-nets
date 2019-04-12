@@ -407,7 +407,8 @@ def build_training_data_ordered(config):
 
                     if (pos_len >= config.max_samples):
                         break
-
+    del feature
+    del response
     # stack images up
     features = np.stack(features)
     responses = np.stack(responses)
@@ -416,8 +417,9 @@ def build_training_data_ordered(config):
     perm = np.random.permutation(features.shape[0])
     features = features[perm, :]
     responses = responses[perm, :]
-    fold_assignments = np.zeros(responses.shape[0]).astype(int)
+    del perm
 
+    fold_assignments = np.zeros(responses.shape[0]).astype(int)
     for f in range(0, config.n_folds):
         idx_start = int(round(f / config.n_folds * len(fold_assignments)))
         idx_finish = int(round((f + 1) / config.n_folds * len(fold_assignments)))
