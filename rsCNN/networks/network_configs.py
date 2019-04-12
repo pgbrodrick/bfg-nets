@@ -10,9 +10,11 @@ from rsCNN.networks import architectures
 FILENAME_NETWORK_CONFIG = 'network_config.ini'
 
 
-def load_network_config(dir_config):
+def load_network_config(dir_config, filename: str = None) -> OrderedDict:
+    if filename is None:
+        filename = FILENAME_NETWORK_CONFIG
     config = configparser.ConfigParser()
-    config.read(os.path.join(dir_config, FILENAME_NETWORK_CONFIG))
+    config.read(os.path.join(dir_config, filename))
     kwargs = dict()
     for section in config.sections():
         for key, value in config[section].items():
