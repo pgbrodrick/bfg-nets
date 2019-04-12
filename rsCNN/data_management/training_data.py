@@ -5,6 +5,8 @@ import re
 from tqdm import tqdm
 
 import fiona
+import numpy as np
+import numpy.matlib
 import rasterio.features
 from rsCNN.utils import logger
 from rsCNN.utils.general import *
@@ -263,12 +265,9 @@ def calculate_categorical_weights(responses, weights, config, batch_size=100):
             weights[_array][ind:ind+batch_size, :, :, 0] = lw
 
     if (config.data_save_name is not None):
-        config.saved_data = False
-        config.save_to_file()
+        # TODO:  Phil fix for mutex save
         for _w in range(len(weights)):
             np.save(config.weight_files[_w], weights[_w])
-        config.saved_data = True
-        config.save_to_file()
 
     return weights
 
