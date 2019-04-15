@@ -11,8 +11,7 @@ class DataConfig:
 
     def __init__(self, **kwargs):
 
-
-        #TODO: put appropriate asserts for the below values in build_training_data
+        # TODO: put appropriate asserts for the below values in build_training_data
         """
           Arguments:
           window_radius - determines the subset image size, which results as 2*window_radius
@@ -119,5 +118,3 @@ class DataConfig:
 
         self.feature_scaler = None
         self.response_scaler = None
-
-

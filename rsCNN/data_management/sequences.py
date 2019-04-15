@@ -12,32 +12,32 @@ _logger = logger.get_child_logger(__name__)
 
 
 # TODO: this is almost certainly the wrong place for this
-def build_memmaped_sequence(data_config, fold_indices, batch_size = 100, rebuild = False):
+def build_memmaped_sequence(data_config, fold_indices, batch_size=100, rebuild=False):
+    """
+        This function does the following, considering the rebuild parameter at each step:
+            2) load/initialize/fit scalers
+            3) initiate train/validation/test sequences as components of Experiment
+    """
 
-        """
-            This function does the following, considering the rebuild parameter at each step:
-                2) load/initialize/fit scalers
-                3) initiate train/validation/test sequences as components of Experiment
-        """
+    assert data_config.features is not None, 'data config must have loaded feature numpy files'
+    assert data_config.responses is not None, 'data config must have loaded responses numpy files'
+    assert data_config.weights is not None, 'data config must have loaded weight numpy files'
 
-        assert data_config.features is not None, 'data config must have loaded feature numpy files'
-        assert data_config.responses is not None, 'data config must have loaded responses numpy files'
-        assert data_config.weights is not None, 'data config must have loaded weight numpy files'
+    assert data_config.feature_scaler is not None, 'Feature scaler must be defined'
+    assert data_config.response_scaler is not None, 'Response scaler must be defined'
 
-        assert data_config.feature_scaler is not None, 'Feature scaler must be defined'
-        assert data_config.response_scaler is not None, 'Response scaler must be defined'
+    apply_random = data_config.apply_random_transformations
+    mean_centering = data_config.feature_mean_centering
+    data_sequence = sequences.MemmappedSequence([data_config.features[_f] for _f in fold_indices],
+                                                [data_config.responses[_r] for _r in fold_indices],
+                                                [data_config.weights[_w] for _w in fold_indices],
+                                                data_config.feature_scaler,
+                                                data_config.response_scaler,
+                                                batch_size,
+                                                apply_random_transforms=apply_random,
+                                                feature_mean_centering=mean_centering)
+    return data_sequence
 
-        apply_random = data_config.apply_random_transformations
-        mean_centering = data_config.feature_mean_centering
-        data_sequence = sequences.MemmappedSequence([data_config.features[_f] for _f in fold_indices],
-                                                    [data_config.responses[_r] for _r in fold_indices],
-                                                    [data_config.weights[_w] for _w in fold_indices],
-                                                    data_config.feature_scaler,
-                                                    data_config.response_scaler,
-                                                    batch_size,
-                                                    apply_random_transforms=apply_random,
-                                                    feature_mean_centering=mean_centering)
-        return data_sequence
 
 class BaseSequence(keras.utils.Sequence):
     feature_scaler = None

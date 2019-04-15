@@ -12,7 +12,8 @@ from rsCNN.utils import logger
 from rsCNN.utils.general import *
 from rsCNN.data_management import scalers
 
-def rasterize_vector(vector_file,geotransform,output_shape):
+
+def rasterize_vector(vector_file, geotransform, output_shape):
     """ Rasterizes an input vector directly into a numpy array.
     Arguments:
     vector_file - str
@@ -25,11 +26,12 @@ def rasterize_vector(vector_file,geotransform,output_shape):
     Return:
     A rasterized 2-d numpy array.
     """
-    ds = fiona.open(vector_file,'r')
-    geotransform = [geotransform[1],geotransform[2],geotransform[0],geotransform[4],geotransform[5],geotransform[3]]
+    ds = fiona.open(vector_file, 'r')
+    geotransform = [geotransform[1], geotransform[2], geotransform[0],
+                    geotransform[4], geotransform[5], geotransform[3]]
     mask = np.zeros(output_shape)
-    for n in range(0,len(ds)):
-      rasterio.features.rasterize([ds[n]['geometry']],transform=geotransform,default_value=1,out=mask)
+    for n in range(0, len(ds)):
+        rasterio.features.rasterize([ds[n]['geometry']], transform=geotransform, default_value=1, out=mask)
     return mask
 
 
@@ -37,32 +39,32 @@ _logger = logger.get_child_logger(__name__)
 
 
 def build_or_load_scalers(data_config, rebuild=False):
-        feat_scaler_atr = {'nodata_value': data_config.feature_nodata_value,
-                           'savename_base': data_config.data_save_name + '_feature_scaler'}
-        feature_scaler = scalers.get_scaler(data_config.feature_scaler_name,
-                                                 feat_scaler_atr)
+    feat_scaler_atr = {'nodata_value': data_config.feature_nodata_value,
+                       'savename_base': data_config.data_save_name + '_feature_scaler'}
+    feature_scaler = scalers.get_scaler(data_config.feature_scaler_name,
+                                        feat_scaler_atr)
 
-        resp_scaler_atr = {'nodata_value': data_config.response_nodata_value,
-                           'savename_base': data_config.data_save_name + '_response_scaler'}
-        response_scaler = scalers.get_scaler(data_config.response_scaler_name,
-                                                  resp_scaler_atr)
-        feature_scaler.load()
-        response_scaler.load()
+    resp_scaler_atr = {'nodata_value': data_config.response_nodata_value,
+                       'savename_base': data_config.data_save_name + '_response_scaler'}
+    response_scaler = scalers.get_scaler(data_config.response_scaler_name,
+                                         resp_scaler_atr)
+    feature_scaler.load()
+    response_scaler.load()
 
-        train_folds = [x for x in np.arange(
-            data_config.n_folds) if x is not data_config.validation_fold and x is not data_config.test_fold]
+    train_folds = [x for x in np.arange(
+        data_config.n_folds) if x is not data_config.validation_fold and x is not data_config.test_fold]
 
-        if (feature_scaler.is_fitted is False or rebuild is True):
-            # TODO: do better
-            feature_scaler.fit(data_config.features[train_folds[0]])
-            feature_scaler.save()
-        if (response_scaler.is_fitted is False or rebuild is True):
-            # TODO: do better
-            response_scaler.fit(data_config.responses[train_folds[0]])
-            response_scaler.save()
+    if (feature_scaler.is_fitted is False or rebuild is True):
+        # TODO: do better
+        feature_scaler.fit(data_config.features[train_folds[0]])
+        feature_scaler.save()
+    if (response_scaler.is_fitted is False or rebuild is True):
+        # TODO: do better
+        response_scaler.fit(data_config.responses[train_folds[0]])
+        response_scaler.save()
 
-        data_config.feature_scaler = feature_scaler
-        data_config.response_scaler = response_scaler
+    data_config.feature_scaler = feature_scaler
+    data_config.response_scaler = response_scaler
 
 
 def build_or_load_data(config, rebuild=False):
@@ -289,7 +291,7 @@ def get_response_data_section(ds, x, y, x_size, y_size, config):
     return dat
 
 
-#TODO: break into more usable pieces
+# TODO: break into more usable pieces
 
 
 def build_training_data_ordered(config):

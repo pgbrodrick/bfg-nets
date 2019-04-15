@@ -51,7 +51,8 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
 
     feature[feature == data_config.feature_nodata_value] = np.nan
 
-    n_classes = cnn.predict((np.zeros((1,data_config.window_radius*2,data_config.window_radius*2,feature.shape[-1])))).shape[-1]
+    n_classes = cnn.predict(
+        (np.zeros((1, data_config.window_radius*2, data_config.window_radius*2, feature.shape[-1])))).shape[-1]
 
     output = np.zeros((feature.shape[0], feature.shape[1], n_classes)) + data_config.response_nodata_value
 
@@ -71,23 +72,22 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
         for n in rowlist:
             d = feature[n-data_config.window_radius:n+data_config.window_radius,
                         col-data_config.window_radius:col+data_config.window_radius].copy()
-            if(d.shape[0] == data_config.window_radius*2 and d.shape[1] == data_config.window_radius*2): 
+            if(d.shape[0] == data_config.window_radius*2 and d.shape[1] == data_config.window_radius*2):
                 # TODO: consider having this as an option
                 # d = fill_nearest_neighbor(d)
                 images.append(d)
         images = np.stack(images)
         images = images.reshape((images.shape[0], images.shape[1], images.shape[2], dataset.RasterCount))
 
-
         if (data_config.feature_mean_centering is True):
-            images -= np.nanmean(images,axis=(1,2))[:,np.newaxis,np.newaxis,:]
+            images -= np.nanmean(images, axis=(1, 2))[:, np.newaxis, np.newaxis, :]
 
         if (feature_transformer is not None):
             images = feature_transformer.transform(images)
 
         pred_y = cnn.predict(images)
-        nd_set = np.any(np.isnan(images),axis=(1,2,3))
-        pred_y[nd_set,...] = data_config.response_nodata_value
+        nd_set = np.any(np.isnan(images), axis=(1, 2, 3))
+        pred_y[nd_set, ...] = data_config.response_nodata_value
 
         _i = 0
         for n in rowlist:

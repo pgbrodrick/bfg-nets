@@ -29,7 +29,7 @@ class ExperimentReport(object):
         self.test_sequence = test_sequence
 
     def create_report(self):
-        filepath_report = os.path.join(self.experiment.network_config['model']['dir_out'],'evaluation_report.pdf')
+        filepath_report = os.path.join(self.experiment.network_config['model']['dir_out'], 'evaluation_report.pdf')
         with PdfPages(filepath_report) as pdf:
             # Model summary
             pdf.savefig(networks.print_model_summary(self.experiment.model), bbox_inches='tight')
