@@ -39,14 +39,13 @@ logging.get_root_logger('debug_out.out')
 # Grab some basic info from the first sequence elements (AKA, find inshape)
 
 
-
 parser = argparse.ArgumentParser(description='Example spatial extrapolation application')
 parser.add_argument('settings_file')
 parser.add_argument('key')
 args = parser.parse_args()
 
 assert os.path.isfile(args.settings_file), 'Settings file: ' + args.settings_file + ' does not exist'
-global_options = yaml.load(open(args.settings_file,'r'))
+global_options = yaml.load(open(args.settings_file, 'r'))
 
 global_options['raw_feature_file_list'] = ['../global_cwc/dat/features/feat_subset.tif']
 global_options['raw_response_file_list'] = ['../global_cwc/dat/responses/resp_subset.tif']
@@ -63,8 +62,9 @@ training_sequence = sequences.build_memmaped_sequence(data_config, train_folds, 
 validation_sequence = sequences.build_memmaped_sequence(data_config, [data_config.validation_fold], batch_size=100)
 
 
-#Move the inshape intot he build_or_load_model
-network_config = create_network_config(inshape=(data_config.window_radius*2,data_config.window_radius*2,3),**global_options)
+# Move the inshape intot he build_or_load_model
+network_config = create_network_config(
+    inshape=(data_config.window_radius*2, data_config.window_radius*2, 3), **global_options)
 
 experiment = Experiment(network_config, resume=True)
 experiment.build_or_load_model()
@@ -75,7 +75,7 @@ if (args.key == 'train' or args.key == 'all'):
 if (args.key == 'report' or args.key == 'all'):
     report = rsCNN.evaluation.ExperimentReport(experiment,
                                                validation_sequence)
-                                               #training_sequence,
+    # training_sequence,
     report.create_report()
 
 
@@ -94,5 +94,3 @@ if (args.key == 'application'):
 #                                                                        make_tif=True,
 #                                                                        feature_transformer=feature_scaler,
 #                                                                        response_transformer=response_scaler)
-
-
