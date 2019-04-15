@@ -19,9 +19,9 @@ class HistoryCheckpoint(keras.callbacks.Callback):
         super().__init__()
         # TODO:  remove this log line
         if hasattr(self, 'model'):
-            _logger.debug('model attributes and methods:  {}'.format(dir(self.model)))
+            _logger.debug('init model attributes and methods:  {}'.format(dir(self.model)))
             if hasattr(self.model, 'model'):
-                _logger.debug('model.model attributes and methods:  {}'.format(dir(self.model.model)))
+                _logger.debug('init model.model attributes and methods:  {}'.format(dir(self.model.model)))
         self.dir_out = dir_out
         if existing_history is None:
             existing_history = dict()
@@ -34,9 +34,9 @@ class HistoryCheckpoint(keras.callbacks.Callback):
     def on_train_begin(self, logs=None):
         # TODO:  remove this log line
         if hasattr(self, 'model'):
-            _logger.debug('model attributes and methods:  {}'.format(dir(self.model)))
+            _logger.debug('train begin model attributes and methods:  {}'.format(dir(self.model)))
             if hasattr(self.model, 'model'):
-                _logger.debug('model.model attributes and methods:  {}'.format(dir(self.model.model)))
+                _logger.debug('train begin model.model attributes and methods:  {}'.format(dir(self.model.model)))
         _logger.debug('Beginning network training')
         _logger.debug('on_training_begin logs: {}'.format(logs))
         for key in ('epoch_start', 'epoch_finish'):
