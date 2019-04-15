@@ -6,7 +6,7 @@ from keras.layers import BatchNormalization, Concatenate, Conv2D, MaxPooling2D, 
 
 DEFAULT_BLOCK_STRUCTURE = (2, 2, 2, 2)
 DEFAULT_USE_BATCH_NORM = True
-DEFAULT_INITIAL_FILTERS = 64
+DEFAULT_FILTERS = 64
 DEFAULT_KERNEL_SIZE = (3, 3)
 DEFAULT_MIN_CONV_WIDTH = 8
 DEFAULT_PADDING = 'same'
@@ -18,7 +18,7 @@ DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER = False
 def parse_architecture_options(**kwargs):
     return {
         'block_structure': kwargs.get('block_structure', DEFAULT_BLOCK_STRUCTURE),
-        'initial_filters': kwargs.get('initial_filters', DEFAULT_INITIAL_FILTERS),
+        'filters': kwargs.get('filters', DEFAULT_FILTERS),
         'kernel_size': kwargs.get('kernel_size', DEFAULT_KERNEL_SIZE),
         'min_conv_width': kwargs.get('min_conv_width', DEFAULT_MIN_CONV_WIDTH),
         'padding': kwargs.get('padding', DEFAULT_PADDING),
@@ -36,7 +36,7 @@ def create_model(
         n_classes: int,
         output_activation: str,
         block_structure: Tuple[int, ...] = DEFAULT_BLOCK_STRUCTURE,
-        initial_filters: int = DEFAULT_INITIAL_FILTERS,
+        filters: int = DEFAULT_FILTERS,
         kernel_size: Tuple[int, int] = DEFAULT_KERNEL_SIZE,
         min_conv_width: int = DEFAULT_MIN_CONV_WIDTH,
         padding: str = DEFAULT_PADDING,
@@ -55,7 +55,6 @@ def create_model(
         'the value of min_conv_width.'
 
     # Need to track the following throughout the model creation
-    filters = initial_filters
     layers_pass_through = list()
 
     # Encodings

@@ -6,7 +6,7 @@ from keras.layers import BatchNormalization, Concatenate, Conv2D, MaxPooling2D, 
 
 DEFAULT_BLOCK_STRUCTURE = (1, 1, 1, 1)
 DEFAULT_USE_BATCH_NORM = True
-DEFAULT_INITIAL_FILTERS = 64
+DEFAULT_FILTERS = 64
 DEFAULT_KERNEL_SIZE = (3, 3)
 DEFAULT_MIN_CONV_WIDTH = 8
 DEFAULT_PADDING = 'same'
@@ -22,7 +22,7 @@ DEFAULT_USE_GROWTH = False
 def parse_architecture_options(**kwargs):
     return {
         'block_structure': kwargs.get('block_structure', DEFAULT_BLOCK_STRUCTURE),
-        'initial_filters': kwargs.get('initial_filters', DEFAULT_INITIAL_FILTERS),
+        'filters': kwargs.get('filters', DEFAULT_FILTERS),
         'kernel_size': kwargs.get('kernel_size', DEFAULT_KERNEL_SIZE),
         'min_conv_width': kwargs.get('min_conv_width', DEFAULT_MIN_CONV_WIDTH),
         'padding': kwargs.get('padding', DEFAULT_PADDING),
@@ -37,7 +37,7 @@ def create_model(
         n_classes: int,
         output_activation: str,
         block_structure: Tuple[int, ...] = DEFAULT_BLOCK_STRUCTURE,
-        initial_filters: int = DEFAULT_INITIAL_FILTERS,
+        filters: int = DEFAULT_FILTERS,
         kernel_size: Tuple[int, int] = DEFAULT_KERNEL_SIZE,
         min_conv_width: int = DEFAULT_MIN_CONV_WIDTH,
         padding: str = DEFAULT_PADDING,
@@ -50,7 +50,7 @@ def create_model(
         n_classes=n_classes,
         output_activation=output_activation,
         block_structure=block_structure,
-        initial_filters=initial_filters,
+        filters=filters,
         kernel_size=kernel_size,
         min_conv_width=min_conv_width,
         padding=padding,
@@ -73,7 +73,7 @@ class ImageChangeDetection(object):
             n_classes: int,
             output_activation: str,
             block_structure: Tuple[int, ...] = DEFAULT_BLOCK_STRUCTURE,
-            initial_filters: int = DEFAULT_INITIAL_FILTERS,
+            filters: int = DEFAULT_FILTERS,
             kernel_size: Tuple[int, int] = DEFAULT_KERNEL_SIZE,
             min_conv_width: int = DEFAULT_MIN_CONV_WIDTH,
             padding: str = DEFAULT_PADDING,
@@ -94,7 +94,7 @@ class ImageChangeDetection(object):
         self.n_classes = n_classes
         self.output_activation = output_activation
         self.block_structure = block_structure
-        self.initial_filters = initial_filters
+        self.filters = filters
         self.kernel_size = kernel_size
         self.min_conv_width = min_conv_width
         self.padding = padding
@@ -103,7 +103,7 @@ class ImageChangeDetection(object):
         self.use_growth = use_growth
         # State to track through model
         self._layers_pass_through = list()
-        self._current_filters = initial_filters
+        self._current_filters = filters
         # Create model
         self.model = self._create_model()
 

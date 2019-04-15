@@ -7,7 +7,7 @@ from keras.layers.normalization import BatchNormalization
 
 
 DEFAULT_DILATION_RATE = 2
-DEFAULT_INITIAL_FILTERS = 64
+DEFAULT_FILTERS = 64
 DEFAULT_KERNEL_SIZE = (3, 3)
 DEFAULT_NUM_LAYERS = 8
 DEFAULT_PADDING = 'same'
@@ -18,7 +18,7 @@ DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER = False
 def parse_architecture_options(**kwargs):
     return {
         'dilation_rate': kwargs.get('dilation_rate', DEFAULT_DILATION_RATE),
-        'initial_filters': kwargs.get('initial_filters', DEFAULT_INITIAL_FILTERS),
+        'filters': kwargs.get('filters', DEFAULT_FILTERS),
         'kernel_size': kwargs.get('kernel_size', DEFAULT_KERNEL_SIZE),
         'num_layers': kwargs.get('num_layers', DEFAULT_NUM_LAYERS),
         'padding': kwargs.get('padding', DEFAULT_PADDING),
@@ -34,7 +34,7 @@ def create_model(
         n_classes: int,
         output_activation: str,
         dilation_rate: int = DEFAULT_DILATION_RATE,
-        initial_filters: int = DEFAULT_INITIAL_FILTERS,
+        filters: int = DEFAULT_FILTERS,
         kernel_size: Union[Tuple[int, int], List[Tuple[int, int]]] = DEFAULT_KERNEL_SIZE,
         num_layers: int = DEFAULT_NUM_LAYERS,
         padding: str = DEFAULT_PADDING,
@@ -57,10 +57,8 @@ def create_model(
         conv = BatchNormalization()(conv)
 
     for kernel_size in kernel_sizes:
-        conv = Conv2D(
-            filters=initial_filters, dilation_rate=dilation_rate, kernel_size=kernel_size, padding=padding)(conv)
-        conv = Conv2D(
-            filters=initial_filters, dilation_rate=dilation_rate, kernel_size=kernel_size, padding=padding)(conv)
+        conv = Conv2D(filters=filters, dilation_rate=dilation_rate, kernel_size=kernel_size, padding=padding)(conv)
+        conv = Conv2D(filters=filters, dilation_rate=dilation_rate, kernel_size=kernel_size, padding=padding)(conv)
         if use_batch_norm:
             conv = BatchNormalization()(conv)
 
