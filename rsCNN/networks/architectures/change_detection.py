@@ -14,6 +14,11 @@ DEFAULT_POOL_SIZE = (2, 2)
 DEFAULT_USE_GROWTH = False
 
 
+# TODO:  this script should be generalized and not called something as specific as "change detection". Also, I need to
+#  test whether it makes more sense to just remove this and instead use a u-net with four bands instead of a this u-net
+#  with two images with two band each.
+
+
 def parse_architecture_options(**kwargs):
     return {
         'block_structure': kwargs.get('block_structure', DEFAULT_BLOCK_STRUCTURE),
