@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from rsCNN.data_management.sequences import BaseSequence
+from rsCNN.evaluation import subplots
 
 
 plt.switch_backend('Agg')  # Needed for remote server plotting
@@ -97,7 +98,7 @@ def plot_raw_and_scaled_input_examples(data_sequence: BaseSequence):
                         plt.title('Transformed\nResponse ' + str(_r) + '\n' +
                                   str(round(trans_resp_mins[_r], 2)) + '\n' + str(round(trans_resp_maxs[_r], 2)))
                 ax = plt.subplot(gs1[_s-_sample_ind, -1])
-                ax.imshow(np.squeeze(weights[_s, :, :]), vmin=weight_mins[0], vmax=weight_maxs[0], cmap='Greys_r')
+                subplots.plot_weights(weights[_s, :, :], ax, weight_mins[0], weight_maxs[0])
                 plt.xticks([])
                 plt.yticks([])
 

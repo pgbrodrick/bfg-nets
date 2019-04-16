@@ -5,6 +5,7 @@ import numpy as np
 
 from rsCNN.data_management.sequences import BaseSequence
 from rsCNN.networks.experiments import Experiment
+from rsCNN.evaluation import subplots
 
 
 def plot_raw_and_scaled_result_examples(data_sequence: BaseSequence, experiment: Experiment):
@@ -112,7 +113,7 @@ def plot_raw_and_scaled_result_examples(data_sequence: BaseSequence, experiment:
                         ax.add_patch(rect)
 
                 ax = plt.subplot(gs1[_s-_sample_ind, -1])
-                ax.imshow(np.squeeze(weights[_s, :, :]), vmin=weight_mins[0], vmax=weight_maxs[0], cmap='Greys_r')
+                subplots.plot_weights(weights[_s, :, :], ax, weight_mins[0], weight_maxs[0])
                 plt.xticks([])
                 plt.yticks([])
 
