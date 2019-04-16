@@ -7,8 +7,6 @@ import numpy as np
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
 
-
-
 def print_model_summary(model):
     stringlist = ['CNN Architecture Summary']
     model.summary(print_fn=lambda x: stringlist.append(x))
