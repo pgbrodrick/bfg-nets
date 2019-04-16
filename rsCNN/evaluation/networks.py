@@ -51,14 +51,13 @@ def plot_history(history):
 
 
 def print_model_summary(model):
-    stringlist = []
+    stringlist = ['CNN Architecture Summary']
     model.summary(print_fn=lambda x: stringlist.append(x))
     model_summary_string = "\n".join(stringlist)
 
     fig, axes = plt.subplots(figsize=(8.5, 11), nrows=1, ncols=1)
     plt.text(0, 0, model_summary_string, **{'fontsize': 8, 'fontfamily': 'monospace'})
     plt.axis('off')
-    plt.suptitle('CNN Summary')
 
     return fig
 
