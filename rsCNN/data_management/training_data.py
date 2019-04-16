@@ -442,7 +442,7 @@ def build_training_data_ordered(config):
         weights[:, :, -buf:, -1] = 0
 
     _logger.debug('Feature shape: {}'.format(features.shape))
-    _logger.debug('Response shape: {}'.format(response.shape))
+    _logger.debug('Response shape: {}'.format(responses.shape))
 
     config.response_shape = responses.shape
     config.feature_shape = features.shape
