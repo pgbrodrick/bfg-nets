@@ -1,16 +1,20 @@
+import keras
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
 
 from rsCNN.data_management.sequences import BaseSequence
-from rsCNN.networks.experiments import Experiment
 from rsCNN.evaluation import subplots
 
 
-def plot_raw_and_scaled_result_examples(data_sequence: BaseSequence, experiment: Experiment):
+def plot_raw_and_scaled_result_examples(
+        model: keras.Model,
+        network_config: dict,
+        data_sequence: BaseSequence
+):
     features, responses = data_sequence.__getitem__(0)
-    predictions = experiment.model.predict(features)
+    predictions = model.predict(features)
     features = features[0]
     responses = responses[0]
     responses, weights = responses[..., :-1], responses[..., -1]
@@ -22,7 +26,7 @@ def plot_raw_and_scaled_result_examples(data_sequence: BaseSequence, experiment:
     raw_responses = data_sequence.response_scaler.inverse_transform(responses)
     raw_predictions = data_sequence.response_scaler.inverse_transform(predictions)
 
-    internal_window_radius = experiment.network_config['architecture']['internal_window_radius']
+    internal_window_radius = network_config['architecture']['internal_window_radius']
 
     fig_list = []
     # NOTE - this is not meant to be a universal config setup, which would be annoyingly hard.
@@ -134,32 +138,6 @@ def plot_raw_and_scaled_result_examples(data_sequence: BaseSequence, experiment:
     return fig_list
 
 
-# TODO:  I started refactoring this, but I don't quite know what fa is and whether we need fa or verification_fold. I'm
-#  guessing that we can get both fa and verification_fold from the experiment object, as in the plotting function above,
-#  or that we can simply use the verification sequence. Taking a step back, it seems like it might be useful to make a
-#  class that looks like the following, and then the plotting functions are methods on this object that have access to
-#  the features, responses, and predictions without recreating those objects and without passing a shitton of variables
-#  around.
-
-
-class ResultsReport(object):
-
-    def __init__(self, data_sequence: BaseSequence, experiment: Experiment):
-        self.data_sequence = data_sequence
-        self.experiment = experiment
-        self.features, tmp_responses = self.data_sequence.__getitem__(0)
-        self.responses, self.weights = tmp_responses[..., :-1], tmp_responses[..., -1]
-        self.predictions = experiment.predict(self.features)
-
-        self.features[self.features == data_sequence.feature_scaler.nodata_value] = np.nan
-        self.responses[self.responses == data_sequence.response_scaler.nodata_value] = np.nan
-
-        self.raw_responses = data_sequence.response_scaler.inverse_transform(self.responses)
-        self.raw_predictions = data_sequence.response_scaler.inverse_transform(self.predictions)
-
-    # TODO:  move plotting functions to methods on this object
-
-
 def _get_lhist(data, bins=10):
     hist, edge = np.histogram(data, bins=bins, range=(np.nanmin(data), np.nanmax(data)))
     hist = hist.tolist()
@@ -180,11 +158,15 @@ def _get_lhist(data, bins=10):
     return phist, pedge
 
 
-def single_sequence_prediction_histogram(data_sequence: BaseSequence, experiment: Experiment, seq_str: str = ''):
+def single_sequence_prediction_histogram(
+        model: keras.Model,
+        data_sequence: BaseSequence,
+        seq_str: str = ''
+):
 
         # TODO: deal with more than one batch....
     features, responses = data_sequence.__getitem__(0)
-    pred_responses = experiment.model.predict(features)
+    pred_responses = model.predict(features)
     features = features[0]
     responses = responses[0]
     responses, weights = responses[..., :-1], responses[..., -1]
@@ -236,14 +218,17 @@ def single_sequence_prediction_histogram(data_sequence: BaseSequence, experiment
     return fig_list
 
 
-def spatial_error(data_sequence: BaseSequence, experiment: Experiment):
+def spatial_error(
+        model: keras.Model,
+        data_sequence: BaseSequence
+):
 
     # TODO: Consider handling weights
     fig_list = []
 
     # TODO: deal with more than one batch....
     features, responses = data_sequence.__getitem__(0)
-    pred_responses = experiment.model.predict(features)
+    pred_responses = model.predict(features)
     features = features[0]
     responses = responses[0]
     responses, weights = responses[..., :-1], responses[..., -1]
