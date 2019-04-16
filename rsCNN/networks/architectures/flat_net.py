@@ -65,7 +65,7 @@ def create_model(
     inlayer = keras.layers.Input(inshape)
 
     if type(kernel_size) is tuple:
-        kernel_sizes = [kernel_size] * len(num_layers)
+        kernel_sizes = [kernel_size] * num_layers
     else:
         assert len(kernel_size) == num_layers, 'If providing a list of kernel sizes, length must equal num_layers'
         kernel_sizes = kernel_size
