@@ -6,10 +6,10 @@ import numpy as np
 
 from rsCNN.data_management.sequences import BaseSequence
 from rsCNN.networks import callbacks, histories, losses, models, network_configs
-from rsCNN.utils import gpus, logger
+from rsCNN.utils import gpus, logging
 
 
-_logger = logger.get_child_logger(__name__)
+_logger = logging.get_child_logger(__name__)
 
 
 # TODO: rename Experiment to something more reasonable, as well as this file
