@@ -33,8 +33,6 @@ class ExperimentReport(object):
         with PdfPages(filepath_report) as pdf:
             # Model summary
             pdf.savefig(networks.print_model_summary(self.experiment.model), bbox_inches='tight')
-            # Model history
-            #pdf.savefig(networks.plot_history(self.experiment.history), bbox_inches='tight')
             # Input examples and their scaled representations
             for fig in rs_data.plot_raw_and_scaled_input_examples(self.train_sequence):
                 pdf.savefig(fig, bbox_inches='tight')
@@ -65,6 +63,8 @@ class ExperimentReport(object):
                 for fig in results.single_sequence_prediction_histogram(self.validation_sequence, self.experiment, 'Validation'):
                     pdf.savefig(fig, bbox_inches='tight')
 
+            # Model history
+            pdf.savefig(networks.plot_history(self.experiment.history), bbox_inches='tight')
             # TODO
             # weight_visualization
             # visual_stitching_artifact_check
