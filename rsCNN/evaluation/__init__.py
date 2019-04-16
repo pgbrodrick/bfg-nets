@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 from rsCNN.data_management.sequences import BaseSequence
-from rsCNN.evaluation import networks, rs_data, results
+from rsCNN.evaluation import histories, networks, rs_data, results
 from rsCNN.networks import experiments
 
 
@@ -65,7 +65,7 @@ def create_report(
                 pdf.savefig(fig, bbox_inches='tight')
 
         # Model history
-        pdf.savefig(networks.plot_history(history), bbox_inches='tight')
+        pdf.savefig(history.plot_history(history), bbox_inches='tight')
         # TODO
         # weight_visualization
         # visual_stitching_artifact_check
