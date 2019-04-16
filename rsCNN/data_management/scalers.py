@@ -5,10 +5,10 @@ import os
 from sklearn.externals import joblib
 import sklearn.preprocessing
 
-from rsCNN.utils import logger
+from rsCNN.utils import logging
 
 
-_logger = logger.get_child_logger(__name__)
+_logger = logging.get_child_logger(__name__)
 
 
 def get_scaler(scaler_name, scaler_options):
