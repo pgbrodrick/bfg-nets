@@ -47,15 +47,10 @@ def create_report(
         for fig in networks.visualize_feature_progression(train_sequence, model):
             pdf.savefig(fig, bbox_inches='tight')
 
-        # TODO: Fabina, going through it more and I'd prefer not to have a separate ResultsReport class.  The only inherrent
-        # benefit is not re-performing predictions.  That function is currently cheap, and even if it weren't we could just
-        # do it here and pass it in, eliminating the need for a single-use class with one asset
-
         # Plot Spatial Error
         for fig in results.spatial_error(model, train_sequence):
             pdf.savefig(fig, bbox_inches='tight')
 
-        # TODO: Fabina, I'm not happy with the way these sequences are called at all (see note above).
         # Plot Training Sequence
         for fig in results.single_sequence_prediction_histogram(model, train_sequence, 'Training'):
             pdf.savefig(fig, bbox_inches='tight')
