@@ -1,4 +1,5 @@
-import keras
+from typing import List
+
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,62 +8,41 @@ from rsCNN.data_management.sequences import BaseSequence
 from rsCNN.evaluation import samples, shared
 
 
-def plot_raw_and_scaled_result_examples(sampled: samples.Samples):
-    fig_list = []
-    # NOTE - this is not meant to be a universal config setup, which would be annoyingly hard.
-    # This can always be exanded, but gives a reasonable amount of flexibility to start,
-    # while showing the full range of things we should actually need to see.
-    # Starting with the single response assumption.
-    max_responses_per_page = 1
+def plot_raw_and_scaled_result_examples(
+        sampled: samples.Samples,
+        max_pages: int = 8,
+        max_samples_per_page: int = 10,
+        max_features_per_page: int = 5,
+        max_responses_per_page: int = 5
+) -> List[plt.Figure]:
+    return shared.plot_figures_iterating_through_samples_features_responses(
+        sampled, _plot_results_page, 'Prediction Example Plots (page {})', max_pages, max_samples_per_page,
+        max_features_per_page, max_responses_per_page
+    )
 
-    max_samples_per_page = min(10, sampled.num_samples)
-    max_pages = 8
 
-    _response_ind = 0
-    _sample_ind = 0
-
-    while _sample_ind < sampled.num_samples:
-        l_num_samp = min(max_samples_per_page, sampled.num_samples - _sample_ind)
-
-        while _response_ind < sampled.num_responses:
-            l_num_resp = min(max_responses_per_page, sampled.num_responses - _response_ind)
-
-            fig = plt.figure(figsize=(30*(max_responses_per_page*4 + 1) / (max_responses_per_page*4 + 1 + max_samples_per_page),
-                                      30*max_samples_per_page / (max_responses_per_page*4 + 1 + max_samples_per_page)))
-            gs1 = gridspec.GridSpec(l_num_samp, l_num_resp*4+1)
-
-            for _s in range(_sample_ind, _sample_ind + l_num_samp):
-                for _r in range(_response_ind, _response_ind + l_num_resp):
-                    # Raw response
-                    ax = plt.subplot(gs1[_s-_sample_ind, _r-_response_ind])
-                    shared.plot_raw_responses(sampled, _s, _r, ax, _s == _sample_ind, _r == _response_ind)
-
-                    # Transformed response
-                    ax = plt.subplot(gs1[_s-_sample_ind, l_num_resp + _r-_response_ind])
-                    shared.plot_transformed_responses(sampled, _s, _r, ax, False, _r == _response_ind)
-
-                    # Prediction
-                    ax = plt.subplot(gs1[_s-_sample_ind, 2*l_num_resp + _r-_response_ind])
-                    shared.plot_raw_predictions(sampled, _s, _r, ax, False, _s == _sample_ind)
-
-                    # Transformed Prediction
-                    ax = plt.subplot(gs1[_s-_sample_ind, 3*l_num_resp + _r-_response_ind])
-                    shared.plot_transformed_predictions(sampled, _s, _r, ax, False, _s == _sample_ind)
-
-                ax = plt.subplot(gs1[_s-_sample_ind, -1])
-                shared.plot_weights(sampled, ax, _s == _sample_ind)
-
-            plt.suptitle('Prediction Plots Page ' + str((len(fig_list))))
-            fig_list.append(fig)
-            _response_ind += max_responses_per_page
-
-            if (len(fig_list) > max_pages):
-                break
-        _sample_ind += max_samples_per_page
-        if (len(fig_list) > max_pages):
-            break
-
-    return fig_list
+def _plot_results_page(
+        sampled: samples.Samples,
+        range_samples: range,
+        range_responses: range
+) -> plt.Figure:
+    nrows = len(range_samples)
+    ncols = 1 + 4 * len(range_responses)
+    fig, grid = shared.get_figure_and_grid(nrows, ncols)
+    for idx_sample in range_samples:
+        idx_col = 0
+        for idx_response in range_responses:
+            ax = plt.subplot(grid[idx_sample, idx_col])
+            shared.plot_raw_responses(sampled, idx_sample, idx_response, ax, idx_sample == 0, idx_col == 0)
+            ax = plt.subplot(grid[idx_sample, idx_col])
+            shared.plot_transformed_responses(sampled, idx_sample, idx_response, ax, idx_sample == 0, False)
+            ax = plt.subplot(grid[idx_sample, idx_col])
+            shared.plot_raw_predictions(sampled, idx_sample, idx_response, ax, idx_sample == 0, False)
+            ax = plt.subplot(grid[idx_sample, idx_col])
+            shared.plot_transformed_predictions(sampled, idx_sample, idx_response, ax, idx_sample == 0, False)
+        ax = plt.subplot(grid[idx_sample, idx_col])
+        shared.plot_weights(sampled, ax, idx_sample == 0)
+    return fig
 
 
 def _get_lhist(data, bins=10):

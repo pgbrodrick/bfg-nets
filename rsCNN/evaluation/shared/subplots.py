@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 from rsCNN.evaluation import samples
 
 
+plt.switch_backend('Agg')  # Needed for remote server plotting
+
+
 _COLORMAP_WEIGHTS = 'Greys_r'
 _FLOAT_DECIMALS = 2
 
