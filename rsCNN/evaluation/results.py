@@ -1,5 +1,6 @@
 from typing import List
 
+import keras
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,6 +9,8 @@ from rsCNN.data_management.sequences import BaseSequence
 from rsCNN.evaluation import samples, shared
 
 
+# TODO:  I want to see one-hot encoded categories, e.g., both geomorphic and benthic, as single categorical plots
+
 def plot_raw_and_transformed_result_examples(
         sampled: samples.Samples,
         max_pages: int = 8,
@@ -15,6 +18,7 @@ def plot_raw_and_transformed_result_examples(
         max_features_per_page: int = 5,
         max_responses_per_page: int = 5
 ) -> List[plt.Figure]:
+    # TODO:  allow user to configure which features, if any, show on results plot (currently none)
     figures = shared.plot_figures_iterating_through_samples_features_responses(
         sampled, _plot_results_page, max_pages, max_samples_per_page, max_features_per_page, max_responses_per_page
     )
