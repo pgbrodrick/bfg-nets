@@ -50,5 +50,5 @@ def _plot_inputs_page(
             shared.plot_transformed_responses(sampled, idx_sample, idx_response, ax, idx_sample == 0, False)
             idx_col += 1
         ax = plt.subplot(grid[idx_sample, idx_col])
-        shared.plot_weights(sampled, ax, idx_sample == 0)
+        shared.plot_weights(sampled, idx_sample, ax, idx_sample == 0, False)
     return fig
