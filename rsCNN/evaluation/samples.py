@@ -7,10 +7,11 @@ from rsCNN.data_management import scalers, sequences
 
 
 class Samples(object):
+    data_sequence = None
+    network_config = None
     num_samples = None
     num_features = None
     num_responses = None
-    data_sequence = None
     raw_features = None
     raw_features_range = None
     trans_features = None
@@ -26,8 +27,9 @@ class Samples(object):
     weights = None
     weights_range = None
 
-    def __init__(self, data_sequence: sequences.BaseSequence, model: keras.Model) -> None:
+    def __init__(self, data_sequence: sequences.BaseSequence, model: keras.Model, network_config: dict) -> None:
         self.data_sequence = data_sequence
+        self.network_config = network_config
         sampled_features, sampled_responses = self._get_sampled_features_responses_and_set_metadata_and_weights()
         predictions = model.predict(sampled_features)
         self._set_raw_and_transformed_features_and_responses(sampled_features, sampled_responses, predictions)
