@@ -1,64 +1,64 @@
-import keras
-import matplotlib.gridspec as gridspec
+from typing import List
+
 import matplotlib.pyplot as plt
 
-from rsCNN.data_management.sequences import BaseSequence
 from rsCNN.evaluation import samples, shared
 
 
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
 
-def plot_raw_and_scaled_input_examples(sampled: samples.Samples):
-    fig_list = []
-    # NOTE - this is not meant to be a universal config setup, which would be annoyingly hard.
-    # This can always be exanded, but gives a reasonable amount of flexibility to start,
-    # while showing the full range of things we should actually need to see.
-    # Starting with the single response assumption.
-    max_features_per_page = 5
-    max_responses_per_page = 5
+def plot_raw_and_scaled_input_examples(
+        sampled: samples.Samples,
+        max_pages: int = 8,
+        max_samples_per_page: int = 10,
+        max_features_per_page: int = 5,
+        max_responses_per_page: int = 5
+) -> List[plt.Figure]:
+    figures = []
+    idx_current_sample = 0
+    idx_current_feature = 0
+    idx_current_response = 0
+    while idx_current_sample < sampled.num_samples and len(figures) < max_pages:
+        idx_last_sample = min(sampled.num_samples, idx_current_sample + max_samples_per_page)
+        range_samples = range(idx_current_sample, idx_last_sample)
+        while idx_current_feature < sampled.num_features:
+            idx_last_feature = min(sampled.num_features, idx_current_feature + max_features_per_page)
+            range_features = range(idx_current_feature, idx_last_feature)
+            idx_last_response = min(sampled.num_responses, idx_current_response + max_responses_per_page)
+            range_responses = range(idx_current_response, idx_last_response)
+            fig = _plot_input_page(sampled, range_samples, range_features, range_responses)
+            fig.suptitle('Input Example Plots (page {})'.format(len(figures)))
+            figures.append(fig)
+            idx_current_feature = min(sampled.num_features, idx_current_feature + max_features_per_page)
+            idx_current_response = min(sampled.num_responses, idx_current_response + max_responses_per_page)
+        idx_current_sample = min(sampled.num_samples, idx_current_sample + max_samples_per_page)
+    return figures
 
-    max_samples_per_page = min(10, sampled.num_samples)
-    max_pages = 8
 
-    _feature_ind = 0
-    _response_ind = 0
-    _sample_ind = 0
-
-    while _sample_ind < sampled.num_samples:
-        l_num_samp = min(max_samples_per_page, sampled.num_samples-_sample_ind)
-
-        while _feature_ind < sampled.num_features:
-            l_num_feat = min(max_features_per_page, sampled.num_features-_feature_ind)
-            l_num_resp = min(max_responses_per_page, sampled.num_responses-_response_ind)
-
-            fig = plt.figure(figsize=(30*((max_features_per_page + max_responses_per_page)*2 + 1) / ((max_features_per_page + max_responses_per_page)*2 + 1 + max_samples_per_page),
-                                      30*max_samples_per_page / ((max_features_per_page + max_responses_per_page)*2 + 1 + max_samples_per_page)))
-            gs1 = gridspec.GridSpec(l_num_samp, l_num_feat*2+l_num_resp*2+1)
-
-            for _s in range(_sample_ind, _sample_ind + l_num_samp):
-                for _f in range(_feature_ind, _feature_ind + l_num_feat):
-                    ax = plt.subplot(gs1[_s-_sample_ind, _f-_feature_ind])
-                    shared.plot_raw_features(sampled, _s, _f, ax, _f == _feature_ind, _s == _sample_ind)
-                    ax = plt.subplot(gs1[_s - _sample_ind, l_num_feat + _f - _feature_ind])
-                    shared.plot_transformed_features(sampled, _s, _f, ax, False, _s == _sample_ind)
-
-                for _r in range(_response_ind, _response_ind + l_num_resp):
-                    ax = plt.subplot(gs1[_s-_sample_ind, 2*l_num_feat + _r-_response_ind])
-                    shared.plot_raw_responses(sampled, _s, _f, ax, False, _s == _sample_ind)
-                    ax = plt.subplot(gs1[_s-_sample_ind, 2*l_num_feat + l_num_resp + _r-_response_ind])
-                    shared.plot_transformed_responses(sampled, _s, _f, ax, False, _s == _sample_ind)
-                ax = plt.subplot(gs1[_s-_sample_ind, -1])
-                shared.plot_weights(sampled, ax, _s == _sample_ind)
-
-            plt.suptitle('Input Example Plots Page ' + str((len(fig_list))))
-            fig_list.append(fig)
-            _feature_ind += max_features_per_page
-
-            if (len(fig_list) > max_pages):
-                break
-        _sample_ind += max_samples_per_page
-        if (len(fig_list) > max_pages):
-            break
-
-    return fig_list
+def _plot_input_page(sampled: samples.Samples, range_samples: range, range_features: range, range_responses: range)\
+        -> plt.Figure:
+    nrows = 1 + len(range_samples)
+    ncols = 1 + 2 * (len(range_features) + len(range_responses))
+    fig, grid = shared.get_figure_and_grid(nrows, ncols)
+    idx_col = 0
+    for idx_sample in range_samples:
+        for idx_feature in range_features:
+            ax = plt.subplot(grid[idx_sample, idx_col])
+            shared.plot_raw_features(sampled, idx_sample, idx_feature, ax, idx_sample == 0, idx_col == 0)
+            idx_col += 1
+        for idx_feature in range_features:
+            ax = plt.subplot(grid[idx_sample, idx_col])
+            shared.plot_transformed_features(sampled, idx_sample, idx_feature, ax, idx_sample == 0, idx_col == 0)
+            idx_col += 1
+        for idx_response in range_responses:
+            ax = plt.subplot(grid[idx_sample, idx_col])
+            shared.plot_raw_responses(sampled, idx_sample, idx_response, ax, idx_sample == 0, idx_col == 0)
+            idx_col += 1
+        for idx_response in range_responses:
+            ax = plt.subplot(grid[idx_sample, idx_col])
+            shared.plot_transformed_responses(sampled, idx_sample, idx_response, ax, idx_sample == 0, idx_col == 0)
+            idx_col += 1
+        ax = plt.subplot(grid[idx_sample, idx_col])
+        shared.plot_weights(sampled, ax, idx_sample == 0)
+    return fig
