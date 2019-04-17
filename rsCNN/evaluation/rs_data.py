@@ -1,26 +1,17 @@
+import keras
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
 
 from rsCNN.data_management.sequences import BaseSequence
-from rsCNN.evaluation import subplots
+from rsCNN.evaluation import samples, subplots
 
 
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
 
-def plot_raw_and_scaled_input_examples(data_sequence: BaseSequence):
-    features, responses = data_sequence.__getitem__(0)
-    features = features[0]
-    responses = responses[0]
-    responses, weights = responses[..., :-1], responses[..., -1]
-    weights = weights.reshape((weights.shape[0], weights.shape[1], weights.shape[2], 1))
-
-    features[features == data_sequence.feature_scaler.nodata_value] = np.nan
-    responses[responses == data_sequence.response_scaler.nodata_value] = np.nan
-
-    invtrans_features = data_sequence.feature_scaler.inverse_transform(features)
-    trans_responses = data_sequence.response_scaler.transform(responses)
+def plot_raw_and_scaled_input_examples(data_sequence: BaseSequence, model: keras.Model):
+    sampled = samples.Samples(data_sequence, model)
 
     fig_list = []
     # NOTE - this is not meant to be a universal config setup, which would be annoyingly hard.
@@ -30,25 +21,19 @@ def plot_raw_and_scaled_input_examples(data_sequence: BaseSequence):
     max_features_per_page = 5
     max_responses_per_page = 5
 
-    max_samples_per_page = min(10, features.shape[0])
+    max_samples_per_page = min(10, sampled.num_samples)
     max_pages = 8
 
     _feature_ind = 0
     _response_ind = 0
     _sample_ind = 0
 
-    feat_mins, feat_maxs = _get_mins_maxs(features)
-    resp_mins, resp_maxs = _get_mins_maxs(responses)
-    invtrans_feat_mins, invtrans_feat_maxs = _get_mins_maxs(invtrans_features)
-    trans_resp_mins, trans_resp_maxs = _get_mins_maxs(trans_responses)
-    weight_mins, weight_maxs = _get_mins_maxs(weights)
+    while _sample_ind < sampled.num_samples:
+        l_num_samp = min(max_samples_per_page, sampled.num_samples-_sample_ind)
 
-    while _sample_ind < features.shape[0]:
-        l_num_samp = min(max_samples_per_page, features.shape[0]-_sample_ind)
-
-        while _feature_ind < features.shape[-1]:
-            l_num_feat = min(max_features_per_page, features.shape[-1]-_feature_ind)
-            l_num_resp = min(max_responses_per_page, responses.shape[-1]-_response_ind)
+        while _feature_ind < sampled.num_features:
+            l_num_feat = min(max_features_per_page, sampled.num_features-_feature_ind)
+            l_num_resp = min(max_responses_per_page, sampled.num_responses-_response_ind)
 
             fig = plt.figure(figsize=(30*((max_features_per_page + max_responses_per_page)*2 + 1) / ((max_features_per_page + max_responses_per_page)*2 + 1 + max_samples_per_page),
                                       30*max_samples_per_page / ((max_features_per_page + max_responses_per_page)*2 + 1 + max_samples_per_page)))
@@ -57,26 +42,8 @@ def plot_raw_and_scaled_input_examples(data_sequence: BaseSequence):
             for _s in range(_sample_ind, _sample_ind + l_num_samp):
                 for _f in range(_feature_ind, _feature_ind + l_num_feat):
                     ax = plt.subplot(gs1[_s-_sample_ind, _f-_feature_ind])
-                    ax.imshow(np.squeeze(invtrans_features[_s, :, :, _f]),
-                              vmin=invtrans_feat_mins[_f], vmax=invtrans_feat_maxs[_f])
-                    plt.xticks([])
-                    plt.yticks([])
-
-                    if (_f == _feature_ind):
-                        plt.ylabel('Sample ' + str(_s))
-                    if (_s == _sample_ind):
-                        plt.title('Feature ' + str(_f) + '\n' +
-                                  str(round(invtrans_feat_mins[_f], 2)) + '\n' + str(round(invtrans_feat_maxs[_f], 2)))
-
-                    ax = plt.subplot(gs1[_s-_sample_ind, l_num_feat + _f-_feature_ind])
-                    ax.imshow(np.squeeze(features[_s, :, :, _f]),
-                              vmin=feat_mins[_f], vmax=feat_maxs[_f])
-                    plt.xticks([])
-                    plt.yticks([])
-
-                    if (_s == _sample_ind):
-                        plt.title('Transformed\nFeature ' + str(_f) + '\n' +
-                                  str(round(feat_mins[_f], 2)) + '\n' + str(round(feat_maxs[_f], 2)))
+                    subplots.plot_raw_features(sampled, _s, _f, ax, _f == _feature_ind, _s == _sample_ind)
+                    subplots.plot_transformed_features(sampled, _s, _f, False, _s == _sample_ind)
 
                 for _r in range(_response_ind, _response_ind + l_num_resp):
                     ax = plt.subplot(gs1[_s-_sample_ind, 2*l_num_feat + _r-_response_ind])
@@ -98,13 +65,7 @@ def plot_raw_and_scaled_input_examples(data_sequence: BaseSequence):
                         plt.title('Transformed\nResponse ' + str(_r) + '\n' +
                                   str(round(trans_resp_mins[_r], 2)) + '\n' + str(round(trans_resp_maxs[_r], 2)))
                 ax = plt.subplot(gs1[_s-_sample_ind, -1])
-                subplots.plot_weights(weights[_s, :, :], ax, weight_mins[0], weight_maxs[0])
-                plt.xticks([])
-                plt.yticks([])
-
-                if (_s == _sample_ind):
-                    plt.title('Weights = \n' +
-                              str(round(weight_mins[0], 2)) + '\n' + str(round(weight_maxs[0], 2)))
+                subplots.plot_weights(sampled, ax, _s == _sample_ind)
 
             plt.suptitle('Input Example Plots Page ' + str((len(fig_list))))
             fig_list.append(fig)
@@ -117,9 +78,3 @@ def plot_raw_and_scaled_input_examples(data_sequence: BaseSequence):
             break
 
     return fig_list
-
-
-def _get_mins_maxs(data):
-    data_mins = np.nanpercentile(data.reshape((-1, data.shape[-1])), 0, axis=0)
-    data_maxs = np.nanpercentile(data.reshape((-1, data.shape[-1])), 100, axis=0)
-    return data_mins, data_maxs
