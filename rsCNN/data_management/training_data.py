@@ -12,6 +12,7 @@ from rsCNN.utils import logging
 from rsCNN.utils.general import *
 from rsCNN.data_management import scalers
 
+_logger = logging.get_child_logger(__name__)
 
 def rasterize_vector(vector_file, geotransform, output_shape):
     """ Rasterizes an input vector directly into a numpy array.
@@ -154,7 +155,7 @@ def get_proj(fname, is_vector):
     return re.sub('\W', '', str(b_proj))
 
 
-def check_data_matches(set_a, set_b, set_b_is_vector=False, set_c=[], set_c_is_vector=False, ignore_projections=False):
+def check_data_matches(set_a, set_b, set_b_is_vector=False, set_c=[], set_c_is_vector=False, ignore_projections=False, ignore_extents=False):
     """ Check to see if two different gdal datasets have the same projection, geotransform, and extent.
     Arguments:
     set_a - list
@@ -187,7 +188,7 @@ def check_data_matches(set_a, set_b, set_b_is_vector=False, set_c=[], set_c_is_v
         a_proj = get_proj(set_a[n], False)
         b_proj = get_proj(set_b[n], set_b_is_vector)
 
-        if (a_proj != b_proj and ignore_projections == False):
+        if (a_proj is not b_proj and ignore_projections is False):
             raise Exception(('projection mismatch between', set_a[n], 'and', set_b[n]))
 
         if (len(set_c) > 0):
@@ -196,21 +197,25 @@ def check_data_matches(set_a, set_b, set_b_is_vector=False, set_c=[], set_c_is_v
             else:
                 c_proj = b_proj
 
-            if (a_proj != c_proj and ignore_projections == False):
+            if (a_proj != c_proj and ignore_projections is False):
                 raise Exception(('projection mismatch between', set_a[n], 'and', set_c[n]))
 
         if (set_b_is_vector == False):
             dataset_a = gdal.Open(set_a[n], gdal.GA_ReadOnly)
             dataset_b = gdal.Open(set_b[n], gdal.GA_ReadOnly)
 
-            if (dataset_a.GetProjection() != dataset_b.GetProjection() and ignore_projections == False):
+            if (dataset_a.GetProjection() != dataset_b.GetProjection() and ignore_projections is False):
                 raise Exception(('projection mismatch between', set_a[n], 'and', set_b[n]))
 
-            if (dataset_a.GetGeoTransform() != dataset_b.GetGeoTransform()):
-                raise Exception(('geotransform mismatch between', set_a[n], 'and', set_b[n]))
+            if (dataset_a.GetGeoTransform()[1,5] != dataset_b.GetGeoTransform()[1,5]):
+                raise Exception(('resolution mismatch between', set_a[n], 'and', set_b[n]))
 
-            if (dataset_a.RasterXSize != dataset_b.RasterXSize or dataset_a.RasterYSize != dataset_b.RasterYSize):
-                raise Exception(('extent mismatch between', set_a[n], 'and', set_b[n]))
+            if (ignore_extents is False):
+                if (dataset_a.GetGeoTransform()[0,3] != dataset_b.GetGeoTransform()[0,3]):
+                    raise Exception(('upper left mismatch between', set_a[n], 'and', set_b[n]))
+
+                if (dataset_a.RasterXSize != dataset_b.RasterXSize or dataset_a.RasterYSize != dataset_b.RasterYSize):
+                    raise Exception(('extent mismatch between', set_a[n], 'and', set_b[n]))
 
         if (len(set_c) > 0):
             if (set_c[n] is not None and set_c_is_vector == False):
@@ -220,11 +225,15 @@ def check_data_matches(set_a, set_b, set_b_is_vector=False, set_c=[], set_c_is_v
                 if (dataset_a.GetProjection() != dataset_c.GetProjection() and ignore_projections == False):
                     raise Exception(('projection mismatch between', set_a[n], 'and', set_c[n]))
 
-                if (dataset_a.GetGeoTransform() != dataset_c.GetGeoTransform()):
+                if (dataset_a.GetGeoTransform()[1,5] != dataset_c.GetGeoTransform()[1,5]):
                     raise Exception(('geotransform mismatch between', set_a[n], 'and', set_c[n]))
 
-                if (dataset_a.RasterXSize != dataset_c.RasterXSize or dataset_a.RasterYSize != dataset_c.RasterYSize):
-                    raise Exception(('extent mismatch between', set_a[n], 'and', set_c[n]))
+                if (ignore_extents is False):
+                    if (dataset_a.GetGeoTransform()[0,3] != dataset_c.GetGeoTransform()[0,3]):
+                        raise Exception(('upper left mismatch between', set_a[n], 'and', set_c[n]))
+
+                    if (dataset_a.RasterXSize != dataset_c.RasterXSize or dataset_a.RasterYSize != dataset_c.RasterYSize):
+                        raise Exception(('extent mismatch between', set_a[n], 'and', set_c[n]))
 
 # Calculates categorical weights for a single response
 
@@ -291,7 +300,73 @@ def get_response_data_section(ds, x, y, x_size, y_size, config):
     return dat
 
 
-# TODO: break into more usable pieces
+
+
+def read_chunk(f_set,
+               r_set,
+               feature_upper_left,
+               response_upper_left,
+               config,
+               boundary_vector_file = None,
+               boundary_subset_geotransform = None,
+               b_set = None,
+               boundary_upper_left = None):
+
+        window_diameter = config.window_radius * 2
+
+        # Start by checking if we're inside boundary, if there is one
+        mask = None
+        if (boundary_vector_file is not None):
+            mask = rasterize_vector(boundary_vector_file, boundary_subset_geotransform, (window_diameter, window_diameter))
+        if (b_set is not None):
+            mask = b_set.ReadAsArray(boundary_upper_left[0],boundary_upper_left[1],window_diameter,window_diameter)
+
+        if (mask is not None):
+            mask = mask != config.boundary_bad_value
+
+            if (np.sum(mask) == 0):
+                return None, None
+
+
+        # Next check to see if we have a response, if so read all
+
+        # Last, read in features
+
+        # Final check, and return
+
+
+        feature = np.zeros((window_diameter, window_diameter, f_set.RasterCount))
+        for n in range(0, f_set.RasterCount):
+            feature[:, :, n] = f_set.GetRasterBand(n+1).ReadAsArray()
+
+        response = gdal.Open(config.raw_response_file_list[_i]).ReadAsArray().astype(float)
+        if (config.response_min_value is not None):
+            response[response < config.response_min_value] = config.response_nodata_value
+        if (config.response_max_value is not None):
+            response[response > config.response_max_value] = config.response_nodata_value
+
+        if (len(config.boundary_file_list) > 0):
+            if (config.boundary_file_list[_i] is not None):
+                if (config.boundary_as_vectors):
+                    mask = rasterize_vector(config.boundary_file_list[_i], dataset.GetGeoTransform(), [
+                                            feature.shape[0], feature.shape[1]])
+                else:
+                    mask = gdal.Open(config.boundary_file_list[_i]).ReadAsArray().astype(float)
+                feature[mask == config.boundary_bad_value, :] = config.feature_nodata_value
+                response[mask == config.boundary_bad_value] = config.response_nodata_value
+
+        # ensure nodata values are consistent
+        if (not dataset.GetRasterBand(1).GetNoDataValue() is None):
+            feature[feature == dataset.GetRasterBand(1).GetNoDataValue()] = config.feature_nodata_value
+        feature[np.isnan(feature)] = config.feature_nodata_value
+        feature[np.isinf(feature)] = config.feature_nodata_value
+
+        # TODO: consider whether we want the lines below included (or if we want them as an option)
+        response[feature[:, :, 0] == config.feature_nodata_value] = config.response_nodata_value
+        feature[response == config.response_nodata_value, :] = config.feature_nodata_value
+
+        return local_feature, local_response
+
 
 
 def build_training_data_ordered(config):
@@ -320,9 +395,8 @@ def build_training_data_ordered(config):
     if (config.random_seed is not None):
         np.random.seed(config.random_seed)
 
-    # TODO: relax reading style to not force all of these conditions (e.g., flex extents, though proj and px size should match for now)
     check_data_matches(config.raw_feature_file_list, config.raw_response_file_list, False,
-                       config.boundary_file_list, config.boundary_as_vectors, config.ignore_projections)
+                       config.boundary_file_list, config.boundary_as_vectors, config.ignore_projections, ignore_extents=True)
 
     if (isinstance(config.max_samples, list)):
         if (len(config.max_samples) != len(config.raw_feature_file_list)):
@@ -330,57 +404,64 @@ def build_training_data_ordered(config):
 
     features = []
     responses = []
-    repeat_index = []
 
     n_features = np.nan
 
     for _i in range(0, len(config.raw_feature_file_list)):
-        # TODO: external update through loggers
 
         # open requisite datasets
-        dataset = gdal.Open(config.raw_feature_file_list[_i], gdal.GA_ReadOnly)
-        if (np.isnan(n_features)):
-            n_features = dataset.RasterCount
-        feature = np.zeros((dataset.RasterYSize, dataset.RasterXSize, dataset.RasterCount))
-        for n in range(0, dataset.RasterCount):
-            feature[:, :, n] = dataset.GetRasterBand(n+1).ReadAsArray()
-
-        response = gdal.Open(config.raw_response_file_list[_i]).ReadAsArray().astype(float)
-        if (config.response_min_value is not None):
-            response[response < config.response_min_value] = config.response_nodata_value
-        if (config.response_max_value is not None):
-            response[response > config.response_max_value] = config.response_nodata_value
-
+        feature_set = gdal.Open(config.raw_feature_file_list[_i], gdal.GA_ReadOnly)
+        response_set = gdal.Open(config.raw_response_file_list[_i], gdal.GA_ReadOnly)
+        boundary_set = None
         if (len(config.boundary_file_list) > 0):
-            if (config.boundary_file_list[n] is not None):
-                if (config.boundary_as_vectors):
-                    mask = rasterize_vector(config.boundary_file_list[_i], dataset.GetGeoTransform(), [
-                                            feature.shape[0], feature.shape[1]])
-                else:
-                    mask = gdal.Open(config.boundary_file_list[_i]).ReadAsArray().astype(float)
-                feature[mask == config.boundary_bad_value, :] = config.feature_nodata_value
-                response[mask == config.boundary_bad_value] = config.response_nodata_value
+            if (config.boundary_file_list[_i] is not None):
+                if (config.boundary_as_vectors is False):
+                    boundary_set = gdal.Open(config.boundary_file_list[_i],gdal.GA_ReadOnly)
 
-        # TODO: log feature shape
-        # _logger.trace(whatever)
+        if (np.isnan(n_features)):
+            n_features = feature_set.RasterCount
 
-        # ensure nodata values are consistent
-        if (not dataset.GetRasterBand(1).GetNoDataValue() is None):
-            feature[feature == dataset.GetRasterBand(1).GetNoDataValue()] = config.feature_nodata_value
-        feature[np.isnan(feature)] = config.feature_nodata_value
-        feature[np.isinf(feature)] = config.feature_nodata_value
+        f_trans = feature_set.GetGeoTransform()
+        r_trans = response_set.GetGeoTransform()
+        b_trans = None
+        if (boundary_set is not None):
+            b_trans = boundary_set.GetGeoTransform()
 
-        # TODO: consider whether we want the lines below included (or if we want them as an option)
-        response[feature[:, :, 0] == config.feature_nodata_value] = config.response_nodata_value
-        feature[response == config.response_nodata_value, :] = config.feature_nodata_value
+        # Get upper left interior coordinates in pixel space
+        # Broken out for clarity, it can obviously be condensed
+        interior_x = max(r_trans[0], f_trans[0])
+        interior_y = min(r_trans[3], f_trans[3])
+        if (b_trans is not None):
+            interior_x = max(interior_x, b_trans[0])
+            interior_y = max(interior_y, b_trans[3])
 
-        pos_len = 0
-        cr = [0, feature.shape[1]]
-        rr = [0, feature.shape[0]]
+        f_x_ul = max((r_trans[0] - interior_x)/f_trans[1],0)
+        f_y_ul = max((interior_y - f_trans[3])/f_trans[5],0)
 
-        collist = [x for x in range(cr[0]+config.window_radius, cr[1] -
+        r_x_ul = max((f_trans[0] - interior_x)/r_trans[1],0)
+        r_y_ul = max((interior_y - r_trans[3])/r_trans[5],0)
+
+        if (b_trans is not None):
+            b_x_ul = max((b_trans[0] - interior_x)/b_trans[1],0)
+            b_y_ul = max((interior_y - b_trans[3])/b_trans[5],0)
+
+        x_len = min(feature_set.RasterXSize - f_x_ul, response_set.RasterXSize - r_x_ul)
+        y_len = min(feature_set.RasterYSize - f_y_ul, response_set.RasterYSize - r_y_ul)
+
+        if (b_trans is not None):
+            x_len = min(x_len, boundary_set.RasterXSize - b_x_ul)
+            y_len = min(y_len, boundary_set.RasterYSize - b_y_ul)
+
+        f_ul = np.array([f_x_ul, f_y_ul])
+        r_ul = np.array([r_x_ul, r_y_ul])
+        if (b_x_ul is not None):
+            b_ul = np.array([b_x_ul, b_y_ul])
+        else:
+            b_ul = None
+
+        collist = [x for x in range(config.window_radius, x_len -
                                     config.window_radius, config.internal_window_radius*2)]
-        rowlist = [x for x in range(rr[0]+config.window_radius, rr[1] -
+        rowlist = [y for y in range(config.window_radius, y_len -
                                     config.window_radius, config.internal_window_radius*2)]
 
         colrow = np.zeros((len(collist)*len(rowlist), 2)).astype(int)
@@ -391,26 +472,48 @@ def build_training_data_ordered(config):
 
         colrow = colrow[np.random.permutation(colrow.shape[0]), :]
 
-        # TODO: replace tqdm with log
+        subset_geotransform = None
+        if (len(config.boundary_file_list) > 0):
+            if (config.boundary_file_list[_i] is not None):
+                if (config.boundary_as_vectors):
+                    subset_geotransform = [f_trans[0], f_trans[1], 0, f_trans[3], 0, f_trans[5]]
+
         for _cr in tqdm(range(len(colrow)), ncols=80):
-            col = colrow[_cr, 0]
-            row = colrow[_cr, 1]
 
-            r = response[row-config.window_radius:row+config.window_radius,
-                         col-config.window_radius:col+config.window_radius].copy()
-            if(r.shape[0] == config.window_radius*2 and r.shape[1] == config.window_radius*2):
-                if ((np.sum(r == config.response_nodata_value) <= r.size * config.nodata_maximum_fraction)):
-                    d = feature[row-config.window_radius:row+config.window_radius,
-                                col-config.window_radius:col+config.window_radius].copy()
+            if (boundary_set is None):
+                if (subset_geotransform is None):
+                    local_feature, local_response = read_chunk(feature_set,
+                                                               response_set,
+                                                               f_ul + colrow[_cr, :],
+                                                               r_ul + colrow[_cr, :],
+                                                               config)
+                else:
+                    subset_geotransform[0] = f_trans[0] + (f_ul[0] + colrow[_cr, 0]) * f_trans[1]
+                    subset_geotransform[3] = f_trans[3] + (f_ul[1] + colrow[_cr, 1]) * f_trans[5]
 
-                    responses.append(r)
-                    features.append(d)
-                    pos_len += 1
+                    local_feature, local_response = read_chunk(feature_set,
+                                                               response_set,
+                                                               f_ul + colrow[_cr, :],
+                                                               r_ul + colrow[_cr, :],
+                                                               config,
+                                                               boundary_vector_file = config.boundary_file_list[_i],
+                                                               boundary_subset_geotransform = subset_geotransform)
+            else:
+                local_feature, local_response = read_chunk(feature_set,
+                                                           response_set,
+                                                           f_ul + colrow[_cr, :],
+                                                           r_ul + colrow[_cr, :],
+                                                           config,
+                                                           b_set = boundary_set,
+                                                           boundary_upper_left = b_ul + colrow[_cr, :])
 
-                    if (pos_len >= config.max_samples):
-                        break
-    del feature
-    del response
+            if (local_feature is not None):
+                features.append(local_feature)
+                responses.append(local_response)
+
+                if (len(features) >= config.max_samples):
+                    break
+
     # stack images up
     features = np.stack(features)
     responses = np.stack(responses)

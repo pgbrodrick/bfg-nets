@@ -61,7 +61,7 @@ class ExperimentReport(object):
             for fig in results.single_sequence_prediction_histogram(self.train_sequence, self.experiment, 'Training'):
                 pdf.savefig(fig, bbox_inches='tight')
             # Plot Validation Sequence
-            if (self.validation_sequence is not None):
+            if self.validation_sequence is not None:
                 for fig in results.single_sequence_prediction_histogram(self.validation_sequence, self.experiment, 'Validation'):
                     pdf.savefig(fig, bbox_inches='tight')
 
