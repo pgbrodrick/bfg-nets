@@ -35,7 +35,9 @@ class Samples(object):
         self._set_raw_and_transformed_features_and_responses(sampled_features, sampled_responses, predictions)
 
     def _get_sampled_features_responses_and_set_metadata_and_weights(self) -> Tuple[np.array, np.array]:
-        # TODO:  handle getting representative samples
+        # TODO:  handle getting representative samples, e.g., get images that show specific classes so all are covered,
+        #  probably want to do something like, given x classes, for each class find y images with class in the loss
+        #  window, for x * y images total
         # TODO:  handle multiple inputs
         features, responses = self.data_sequence.__getitem__(0)
         # We expect weights to be the last element in the responses array
