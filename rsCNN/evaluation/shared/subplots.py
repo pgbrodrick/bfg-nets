@@ -1,4 +1,4 @@
-from typing import Tuple, Union
+from typing import Union
 
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt

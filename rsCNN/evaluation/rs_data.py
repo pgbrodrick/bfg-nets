@@ -3,7 +3,7 @@ import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 
 from rsCNN.data_management.sequences import BaseSequence
-from rsCNN.evaluation import samples, subplots
+from rsCNN.evaluation import samples, shared
 
 
 plt.switch_backend('Agg')  # Needed for remote server plotting
@@ -39,17 +39,17 @@ def plot_raw_and_scaled_input_examples(sampled: samples.Samples):
             for _s in range(_sample_ind, _sample_ind + l_num_samp):
                 for _f in range(_feature_ind, _feature_ind + l_num_feat):
                     ax = plt.subplot(gs1[_s-_sample_ind, _f-_feature_ind])
-                    subplots.plot_raw_features(sampled, _s, _f, ax, _f == _feature_ind, _s == _sample_ind)
+                    shared.plot_raw_features(sampled, _s, _f, ax, _f == _feature_ind, _s == _sample_ind)
                     ax = plt.subplot(gs1[_s - _sample_ind, l_num_feat + _f - _feature_ind])
-                    subplots.plot_transformed_features(sampled, _s, _f, ax, False, _s == _sample_ind)
+                    shared.plot_transformed_features(sampled, _s, _f, ax, False, _s == _sample_ind)
 
                 for _r in range(_response_ind, _response_ind + l_num_resp):
                     ax = plt.subplot(gs1[_s-_sample_ind, 2*l_num_feat + _r-_response_ind])
-                    subplots.plot_raw_responses(sampled, _s, _f, ax, False, _s == _sample_ind)
+                    shared.plot_raw_responses(sampled, _s, _f, ax, False, _s == _sample_ind)
                     ax = plt.subplot(gs1[_s-_sample_ind, 2*l_num_feat + l_num_resp + _r-_response_ind])
-                    subplots.plot_transformed_responses(sampled, _s, _f, ax, False, _s == _sample_ind)
+                    shared.plot_transformed_responses(sampled, _s, _f, ax, False, _s == _sample_ind)
                 ax = plt.subplot(gs1[_s-_sample_ind, -1])
-                subplots.plot_weights(sampled, ax, _s == _sample_ind)
+                shared.plot_weights(sampled, ax, _s == _sample_ind)
 
             plt.suptitle('Input Example Plots Page ' + str((len(fig_list))))
             fig_list.append(fig)
