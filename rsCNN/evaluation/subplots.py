@@ -17,8 +17,7 @@ def plot_raw_features(
         add_xlabel: bool,
         add_ylabel: bool
 ) -> None:
-    is_transformed = False
-    return _plot_features(sampled, idx_sample, idx_feature, ax, is_transformed, add_xlabel, add_ylabel)
+    return _plot_sample_attribute(sampled, idx_sample, idx_feature, 'raw_features', ax, add_xlabel, add_ylabel)
 
 
 def plot_transformed_features(
@@ -29,38 +28,54 @@ def plot_transformed_features(
         add_xlabel: bool,
         add_ylabel: bool
 ) -> None:
-    is_transformed = True
-    return _plot_features(sampled, idx_sample, idx_feature, ax, is_transformed, add_xlabel, add_ylabel)
+    return _plot_sample_attribute(sampled, idx_sample, idx_feature, 'trans_features', ax, add_xlabel, add_ylabel)
 
 
-def _plot_features(
+def plot_raw_responses(
         sampled: samples.Samples,
         idx_sample: int,
         idx_feature: int,
         ax: plt.Axes,
-        is_transformed: bool,
         add_xlabel: bool,
         add_ylabel: bool
 ) -> None:
-    if is_transformed:
-        features = sampled.trans_features
-        range_ = sampled.trans_features_range
-        label_prepend = 'Transformed\n'
-    else:
-        features = sampled.raw_features
-        range_ = sampled.raw_features_range
-        label_prepend = ''
+    return _plot_sample_attribute(sampled, idx_sample, idx_feature, 'raw_responses', ax, add_xlabel, add_ylabel)
+
+
+def plot_transformed_responses(
+        sampled: samples.Samples,
+        idx_sample: int,
+        idx_feature: int,
+        ax: plt.Axes,
+        add_xlabel: bool,
+        add_ylabel: bool
+) -> None:
+    return _plot_sample_attribute(sampled, idx_sample, idx_feature, 'trans_responses', ax, add_xlabel, add_ylabel)
+
+
+def _plot_sample_attribute(
+        sampled: samples.Samples,
+        idx_sample: int,
+        idx_feature: int,
+        attribute_name: str,
+        ax: plt.Axes,
+        add_xlabel: bool,
+        add_ylabel: bool
+) -> None:
+    attribute = getattr(sampled, attribute_name)
+    range_ = getattr(sampled, attribute_name + '_range')
+    y_label = '\n'.join(word.capitalize() for word in attribute_name.split('_')).rstrip('s')
     min_, max_ = range_[idx_feature, :]
-    ax.imshow(features[idx_sample, :, :, idx_feature], vmin=min_, vmax=max_)
+    ax.imshow(attribute[idx_sample, :, :, idx_feature], vmin=min_, vmax=max_)
     ax.set_xticks([])
     ax.set_yticks([])
     if add_xlabel:
         ax.set_xlabel('Sample\n{}'.format(idx_sample))
     if add_ylabel:
-        ax.set_ylabel('{}Feature\n{}\n{}'.format(label_prepend, _format_number(min_), _format_number(max_)))
+        ax.set_ylabel('{}\n{}\n{}'.format(y_label, _format_number(min_), _format_number(max_)))
 
 
-def plot_weights(sampled: samples.Samples, ax: plt.Axes, add_xlabel: bool = False) -> None:
+def plot_weights(sampled: samples.Samples, ax: plt.Axes, add_xlabel: bool) -> None:
     min_, max_ = sampled.weights_range[0, :]
     ax.imshow(sampled.weights, vmin=min_, vmax=max_, cmap=_COLORMAP_WEIGHTS)
     ax.set_xticks([])
