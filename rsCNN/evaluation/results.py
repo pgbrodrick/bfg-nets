@@ -8,17 +8,19 @@ from rsCNN.data_management.sequences import BaseSequence
 from rsCNN.evaluation import samples, shared
 
 
-def plot_raw_and_scaled_result_examples(
+def plot_raw_and_transformed_result_examples(
         sampled: samples.Samples,
         max_pages: int = 8,
         max_samples_per_page: int = 10,
         max_features_per_page: int = 5,
         max_responses_per_page: int = 5
 ) -> List[plt.Figure]:
-    return shared.plot_figures_iterating_through_samples_features_responses(
-        sampled, _plot_results_page, 'Prediction Example Plots (page {})', max_pages, max_samples_per_page,
-        max_features_per_page, max_responses_per_page
+    figures = shared.plot_figures_iterating_through_samples_features_responses(
+        sampled, _plot_results_page, max_pages, max_samples_per_page, max_features_per_page, max_responses_per_page
     )
+    for idx, figure in enumerate(figures):
+        figure.suptitle('Prediction Example Plots (page {})'.format(idx))
+    return figures
 
 
 def _plot_results_page(

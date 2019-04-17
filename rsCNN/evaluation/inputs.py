@@ -12,10 +12,12 @@ def plot_raw_and_transformed_input_samples(
         max_features_per_page: int = 5,
         max_responses_per_page: int = 5
 ) -> List[plt.Figure]:
-    return shared.plot_figures_iterating_through_samples_features_responses(
-        sampled, _plot_inputs_page, 'Input Example Plots (page {})', max_pages, max_samples_per_page,
-        max_features_per_page, max_responses_per_page
+    figures = shared.plot_figures_iterating_through_samples_features_responses(
+        sampled, _plot_inputs_page, max_pages, max_samples_per_page, max_features_per_page, max_responses_per_page
     )
+    for idx, figure in enumerate(figures):
+        figure.suptitle('Input Example Plots (page {})'.format(idx))
+    return figures
 
 
 def _plot_inputs_page(

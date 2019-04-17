@@ -20,7 +20,6 @@ def get_figure_and_grid(nrows, ncols):
 def plot_figures_iterating_through_samples_features_responses(
         sampled: samples.Samples,
         plotter: callable,
-        page_label: str,
         max_pages: int = 8,
         max_samples_per_page: int = 10,
         max_features_per_page: int = 5,
@@ -39,7 +38,6 @@ def plot_figures_iterating_through_samples_features_responses(
             idx_last_response = min(sampled.num_responses, idx_current_response + max_responses_per_page)
             range_responses = range(idx_current_response, idx_last_response)
             fig = plotter(sampled, range_samples, range_features, range_responses)
-            fig.suptitle(page_label.format(len(figures)))
             figures.append(fig)
             idx_current_feature = min(sampled.num_features, idx_current_feature + max_features_per_page)
             idx_current_response = min(sampled.num_responses, idx_current_response + max_responses_per_page)
