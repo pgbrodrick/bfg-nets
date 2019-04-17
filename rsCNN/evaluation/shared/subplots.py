@@ -33,6 +33,8 @@ def plot_transformed_features(
         add_xlabel: bool,
         add_ylabel: bool
 ) -> None:
+    # TODO:  when data config accessible, perhaps via network config, then check if NullScaler applied to features
+    #  if so, then ax.remove() if NullScaler applied and it should just work (TM)
     _plot_sample_attribute(sampled, idx_sample, idx_feature, 'trans_features', ax, add_xlabel, add_ylabel)
 
 
@@ -55,6 +57,8 @@ def plot_transformed_responses(
         add_xlabel: bool,
         add_ylabel: bool
 ) -> None:
+    # TODO:  when data config accessible, perhaps via network config, then check if NullScaler applied to features
+    #  if so, then ax.remove() if NullScaler applied and it should just work (TM)
     _plot_sample_attribute(sampled, idx_sample, idx_response, 'trans_responses', ax, add_xlabel, add_ylabel)
 
 
@@ -78,6 +82,8 @@ def plot_transformed_predictions(
         add_xlabel: bool,
         add_ylabel: bool
 ) -> None:
+    # TODO:  when data config accessible, perhaps via network config, then check if NullScaler applied to features
+    #  if so, then ax.remove() if NullScaler applied and it should just work (TM)
     _plot_sample_attribute(sampled, idx_sample, idx_response, 'trans_predictions', ax, add_xlabel, add_ylabel)
     _add_internal_window_to_subplot(sampled, ax)
 
