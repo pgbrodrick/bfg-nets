@@ -9,9 +9,7 @@ from rsCNN.evaluation import samples, subplots
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
 
-def plot_raw_and_scaled_input_examples(data_sequence: BaseSequence, model: keras.Model, network_config: dict):
-    sampled = samples.Samples(data_sequence, model, network_config)
-
+def plot_raw_and_scaled_input_examples(sampled: samples.Samples):
     fig_list = []
     # NOTE - this is not meant to be a universal config setup, which would be annoyingly hard.
     # This can always be exanded, but gives a reasonable amount of flexibility to start,
