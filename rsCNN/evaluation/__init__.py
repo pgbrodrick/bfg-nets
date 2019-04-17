@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 from rsCNN.data_management.sequences import BaseSequence
-from rsCNN.evaluation import histories, networks, rs_data, results
+from rsCNN.evaluation import histories, networks, rs_data, results, samples
 from rsCNN.networks import experiments
 
 
@@ -35,10 +35,11 @@ def create_report(
         # Model summary
         pdf.savefig(networks.print_model_summary(model), bbox_inches='tight')
         # Input examples and their scaled representations
-        for fig in rs_data.plot_raw_and_scaled_input_examples(train_sequence, model):
+        sampled_train = samples.Samples(train_sequence, model, network_config)
+        for fig in rs_data.plot_raw_and_scaled_input_examples(sampled_train):
             pdf.savefig(fig, bbox_inches='tight')
         # Output examples and their scaled representations
-        for fig in results.plot_raw_and_scaled_result_examples(model, network_config, train_sequence):
+        for fig in results.plot_raw_and_scaled_result_examples(sampled_train):
             pdf.savefig(fig, bbox_inches='tight')
         # Compact network visualization
         for fig in networks.visualize_feature_progression(train_sequence, model, compact=True):
