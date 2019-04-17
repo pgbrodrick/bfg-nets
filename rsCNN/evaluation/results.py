@@ -32,20 +32,29 @@ def _plot_results_page(
         range_samples: range,
         range_responses: range
 ) -> plt.Figure:
+    has_softmax = sampled.network_config['architecture_options']['output_activation'] == 'softmax'
     nrows = len(range_samples)
-    ncols = 1 + 4 * len(range_responses)
+    ncols = 1 + 4 * len(range_responses) + int(has_softmax)
     fig, grid = shared.get_figure_and_grid(nrows, ncols)
     for idx_sample in range_samples:
         idx_col = 0
         for idx_response in range_responses:
             ax = plt.subplot(grid[idx_sample, idx_col])
             shared.plot_raw_responses(sampled, idx_sample, idx_response, ax, idx_sample == 0, idx_col == 0)
+            idx_col += 1
             ax = plt.subplot(grid[idx_sample, idx_col])
             shared.plot_transformed_responses(sampled, idx_sample, idx_response, ax, idx_sample == 0, False)
+            idx_col += 1
             ax = plt.subplot(grid[idx_sample, idx_col])
             shared.plot_raw_predictions(sampled, idx_sample, idx_response, ax, idx_sample == 0, False)
+            idx_col += 1
             ax = plt.subplot(grid[idx_sample, idx_col])
             shared.plot_transformed_predictions(sampled, idx_sample, idx_response, ax, idx_sample == 0, False)
+            idx_col += 1
+            if has_softmax:
+                ax = plt.subplot(grid[idx_sample, idx_col])
+                shared.plot_softmax(sampled, ax, idx_sample == 0)
+                idx_col += 1
         ax = plt.subplot(grid[idx_sample, idx_col])
         shared.plot_weights(sampled, ax, idx_sample == 0)
     return fig

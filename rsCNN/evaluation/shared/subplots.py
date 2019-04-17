@@ -121,6 +121,17 @@ def plot_weights(sampled: samples.Samples, ax: plt.Axes, add_xlabel: bool) -> No
         ax.set_xlabel('Weights\n{}\n{}'.format(_format_number(min_), _format_number(max_)))
 
 
+def plot_softmax(sampled: samples.Samples, ax: plt.Axes, add_xlabel: bool) -> None:
+    # Note:  this assumes that the softmax applied to all prediction axes
+    min_, max_ = (0, sampled.raw_predictions.shape[-1] - 1)
+    ax.imshow(np.argmax(sampled.raw_predictions, axis=-1), vmin=min_, vmax=max_)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    if add_xlabel:
+        # TODO:  Phil:  better label?
+        ax.set_xlabel('Softmax\nCategories\n{}\n{}'.format(0, _format_number(max_)))
+
+
 def _add_internal_window_to_subplot(sampled: samples.Samples, ax: plt.Axes) -> None:
     inshape = sampled.network_config['architecture']['inshape'],
     internal_window_radius = sampled.network_config['architecture']['internal_window_radius'],
