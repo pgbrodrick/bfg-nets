@@ -8,7 +8,7 @@ import fiona
 import numpy as np
 import numpy.matlib
 import rasterio.features
-from rsCNN.utils import logger
+from rsCNN.utils import logging
 from rsCNN.utils.general import *
 from rsCNN.data_management import scalers
 
@@ -35,7 +35,7 @@ def rasterize_vector(vector_file, geotransform, output_shape):
     return mask
 
 
-_logger = logger.get_child_logger(__name__)
+_logger = logging.get_child_logger(__name__)
 
 
 def build_or_load_scalers(data_config, rebuild=False):
@@ -442,7 +442,7 @@ def build_training_data_ordered(config):
         weights[:, :, -buf:, -1] = 0
 
     _logger.debug('Feature shape: {}'.format(features.shape))
-    _logger.debug('Response shape: {}'.format(response.shape))
+    _logger.debug('Response shape: {}'.format(responses.shape))
 
     config.response_shape = responses.shape
     config.feature_shape = features.shape

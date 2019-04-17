@@ -6,10 +6,10 @@ from typing import List
 import keras
 
 from rsCNN.networks import histories
-from rsCNN.utils import logger
+from rsCNN.utils import logging
 
 
-_logger = logger.get_child_logger(__name__)
+_logger = logging.get_child_logger(__name__)
 
 
 class HistoryCheckpoint(keras.callbacks.Callback):

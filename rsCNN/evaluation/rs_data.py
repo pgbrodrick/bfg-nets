@@ -26,8 +26,8 @@ def plot_raw_and_scaled_input_examples(data_sequence: BaseSequence):
     # This can always be exanded, but gives a reasonable amount of flexibility to start,
     # while showing the full range of things we should actually need to see.
     # Starting with the single response assumption.
-    max_features_per_page = 3
-    max_responses_per_page = 2
+    max_features_per_page = 5
+    max_responses_per_page = 5
 
     max_samples_per_page = min(10, features.shape[0])
     max_pages = 8

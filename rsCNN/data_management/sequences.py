@@ -5,10 +5,10 @@ import keras
 import numpy as np
 
 from rsCNN.data_management.scalers import BaseGlobalScaler
-from rsCNN.utils import logger
-from rsCNN.data_management import sequences
+from rsCNN.utils import logging
 
-_logger = logger.get_child_logger(__name__)
+
+_logger = logging.get_child_logger(__name__)
 
 
 # TODO: this is almost certainly the wrong place for this
@@ -28,14 +28,14 @@ def build_memmaped_sequence(data_config, fold_indices, batch_size=100, rebuild=F
 
     apply_random = data_config.apply_random_transformations
     mean_centering = data_config.feature_mean_centering
-    data_sequence = sequences.MemmappedSequence([data_config.features[_f] for _f in fold_indices],
-                                                [data_config.responses[_r] for _r in fold_indices],
-                                                [data_config.weights[_w] for _w in fold_indices],
-                                                data_config.feature_scaler,
-                                                data_config.response_scaler,
-                                                batch_size,
-                                                apply_random_transforms=apply_random,
-                                                feature_mean_centering=mean_centering)
+    data_sequence = MemmappedSequence([data_config.features[_f] for _f in fold_indices],
+                                      [data_config.responses[_r] for _r in fold_indices],
+                                      [data_config.weights[_w] for _w in fold_indices],
+                                      data_config.feature_scaler,
+                                      data_config.response_scaler,
+                                      batch_size,
+                                      apply_random_transforms=apply_random,
+                                      feature_mean_centering=mean_centering)
     return data_sequence
 
 
