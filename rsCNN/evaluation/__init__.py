@@ -35,7 +35,7 @@ def create_report(
         # Model summary
         pdf.savefig(networks.print_model_summary(model), bbox_inches='tight')
         # Input examples and their scaled representations
-        for fig in rs_data.plot_raw_and_scaled_input_examples(train_sequence):
+        for fig in rs_data.plot_raw_and_scaled_input_examples(train_sequence, model):
             pdf.savefig(fig, bbox_inches='tight')
         # Output examples and their scaled representations
         for fig in results.plot_raw_and_scaled_result_examples(model, network_config, train_sequence):

@@ -118,8 +118,6 @@ def plot_raw_and_scaled_result_examples(
 
                 ax = plt.subplot(gs1[_s-_sample_ind, -1])
                 subplots.plot_weights(weights[_s, :, :], ax, weight_mins[0], weight_maxs[0])
-                plt.xticks([])
-                plt.yticks([])
 
                 if (_s == _sample_ind):
                     plt.title('Weights = \n' +
