@@ -8,7 +8,7 @@ from rsCNN.evaluation import samples, shared
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
 
-def plot_raw_and_scaled_input_examples(
+def plot_raw_and_transformed_input_samples(
         sampled: samples.Samples,
         max_pages: int = 8,
         max_samples_per_page: int = 10,
