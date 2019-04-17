@@ -53,10 +53,10 @@ def _plot_results_page(
             idx_col += 1
             if has_softmax:
                 ax = plt.subplot(grid[idx_sample, idx_col])
-                shared.plot_softmax(sampled, ax, idx_sample == 0)
+                shared.plot_softmax(sampled, idx_sample, ax, idx_sample == 0, False)
                 idx_col += 1
         ax = plt.subplot(grid[idx_sample, idx_col])
-        shared.plot_weights(sampled, ax, idx_sample == 0)
+        shared.plot_weights(sampled, idx_sample, ax, idx_sample == 0, False)
     return fig
 
 
