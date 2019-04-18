@@ -31,35 +31,32 @@ def create_report(
         history: dict = None,
 ) -> None:
     filepath_report = os.path.join(network_config['model']['dir_out'], 'evaluation_report.pdf')
+    sampled_train = samples.Samples(train_sequence, model, network_config)
     with PdfPages(filepath_report) as pdf:
-        # Model summary
-        pdf.savefig(networks.print_model_summary(model), bbox_inches='tight')
-        # Input examples and their scaled representations
-        sampled_train = samples.Samples(train_sequence, model, network_config)
-        for fig in inputs.plot_raw_and_transformed_input_samples(sampled_train):
-            pdf.savefig(fig, bbox_inches='tight')
-        # Output examples and their scaled representations
-        for fig in results.plot_raw_and_transformed_prediction_samples(sampled_train):
-            pdf.savefig(fig, bbox_inches='tight')
-        # Compact network visualization
-        for fig in networks.visualize_feature_progression(train_sequence, model, compact=True):
-            pdf.savefig(fig, bbox_inches='tight')
-        # Expanded network visualization
-        for fig in networks.visualize_feature_progression(train_sequence, model):
-            pdf.savefig(fig, bbox_inches='tight')
-        # Plot Spatial Error
-        for fig in results.plot_spatial_error(sampled_train):
-            pdf.savefig(fig, bbox_inches='tight')
-        # Plot Training Sequence
-        for fig in results.single_sequence_prediction_histogram(model, train_sequence, 'Training'):
-            pdf.savefig(fig, bbox_inches='tight')
-        # Plot Validation Sequence
+        figures = list()
+        # Plot model summary
+        figures.append(networks.print_model_summary(model))
+        # Plot input data
+        figures.extend(inputs.plot_raw_and_transformed_input_samples(sampled_train))
+        # Plot results
+        figures.extend(results.plot_raw_and_transformed_prediction_samples(sampled_train))
+        # Plot compact and expanded network feature progression
+        figures.extend(networks.visualize_feature_progression(train_sequence, model, compact=True))
+        figures.extend(networks.visualize_feature_progression(train_sequence, model))
+        # Plot spatial error
+        if network_config['architecture_options']['output_activation'] == 'softmax':
+            figures.extend(results.plot_spatial_regression_error(sampled_train))
+        else:
+            figures.extend(results.plot_spatial_regression_error(sampled_train))
+        # Plot training and validation sequence
+        figures.extend(results.single_sequence_prediction_histogram(model, train_sequence, 'Training'))
         if (validation_sequence is not None):
-            for fig in results.single_sequence_prediction_histogram(model, validation_sequence, 'Validation'):
-                pdf.savefig(fig, bbox_inches='tight')
-
+            figures.extend(results.single_sequence_prediction_histogram(model, validation_sequence, 'Validation'))
         # Model history
-        pdf.savefig(history.plot_history(history), bbox_inches='tight')
+        figures.append(history.plot_history(history))
+        for fig in figures:
+            pdf.savefig(fig, bbox_inches='tight')
+
         # TODO
         # weight_visualization
         # visual_stitching_artifact_check
