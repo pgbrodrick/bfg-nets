@@ -51,7 +51,8 @@ def _plot_sample_feature_progression(
     layer_names.append('Feature(s)')
     for _l in range(0, len(sampled.model.layers)):
         if (isinstance(sampled.model.layers[_l], keras.layers.convolutional.Conv2D)):
-            im_model = keras.models.Model(inputs=sampled.model.layers[0].output, outputs=sampled.model.layers[_l].output)
+            im_model = keras.models.Model(
+                inputs=sampled.model.layers[0].output, outputs=sampled.model.layers[_l].output)
             pred_set.append(im_model.predict(sample_features))
             layer_names.append(sampled.model.layers[_l].name)
     pred_set.append(sample_responses)

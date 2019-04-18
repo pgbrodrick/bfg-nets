@@ -44,25 +44,25 @@ def _plot_predictions_page(
         axes = shared.get_axis_iterator_for_sample_row(grid, idx_sample)
         for idx_response in range_responses:
             shared.plot_raw_responses(
-                sampled, idx_sample, idx_response, axes.next(), idx_sample == 0, idx_response == 0)
+                sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, idx_response == 0)
             shared.plot_transformed_responses(
-                sampled, idx_sample, idx_response, axes.next(), idx_sample == 0, False)
+                sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
             shared.plot_raw_predictions(
-                sampled, idx_sample, idx_response, axes.next(), idx_sample == 0, False)
+                sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
             shared.plot_transformed_predictions(
-                sampled, idx_sample, idx_response, axes.next(), idx_sample == 0, False)
+                sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
             if not has_softmax:
                 shared.plot_raw_error_regression(
-                    sampled, idx_sample, idx_response, axes.next(), idx_sample == 0, False)
+                    sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
                 shared.plot_transformed_error_regression(
-                    sampled, idx_sample, idx_response, axes.next(), idx_sample == 0, False)
+                    sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
         # Note: if softmax aka categorical, then we only need one plot per sample, not per response
         if has_softmax:
             # TODO:  we're not really "plotting softmax", what's a better name for this? It's escaping me!
-            shared.plot_softmax(sampled, idx_sample, axes.next(), idx_sample == 0, False)
+            shared.plot_softmax(sampled, idx_sample, axes.__next__(), idx_sample == 0, False)
             # TODO:  same naming issue here
-            shared.plot_error_categorical(sampled, idx_sample, axes.next(), idx_sample == 0, False)
-        shared.plot_weights(sampled, idx_sample, axes.next(), idx_sample == 0, False)
+            shared.plot_error_categorical(sampled, idx_sample, axes.__next__(), idx_sample == 0, False)
+        shared.plot_weights(sampled, idx_sample, axes.__next__(), idx_sample == 0, False)
     return fig
 
 
