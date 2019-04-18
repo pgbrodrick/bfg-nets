@@ -41,39 +41,28 @@ def _plot_results_page(
     ncols = 1 + (4 + 2 * int(not has_softmax)) * len(range_responses) + 2 * int(has_softmax)
     fig, grid = shared.get_figure_and_grid(nrows, ncols)
     for idx_sample in range_samples:
-        idx_col = 0
+        axes = shared.get_axis_generator_for_sample_row(grid, idx_sample)
         for idx_response in range_responses:
-            ax = plt.subplot(grid[idx_sample, idx_col])
-            shared.plot_raw_responses(sampled, idx_sample, idx_response, ax, idx_sample == 0, idx_col == 0)
-            idx_col += 1
-            ax = plt.subplot(grid[idx_sample, idx_col])
-            shared.plot_transformed_responses(sampled, idx_sample, idx_response, ax, idx_sample == 0, False)
-            idx_col += 1
-            ax = plt.subplot(grid[idx_sample, idx_col])
-            shared.plot_raw_predictions(sampled, idx_sample, idx_response, ax, idx_sample == 0, False)
-            idx_col += 1
-            ax = plt.subplot(grid[idx_sample, idx_col])
-            shared.plot_transformed_predictions(sampled, idx_sample, idx_response, ax, idx_sample == 0, False)
-            idx_col += 1
+            shared.plot_raw_responses(
+                sampled, idx_sample, idx_response, axes.next(), idx_sample == 0, idx_response == 0)
+            shared.plot_transformed_responses(
+                sampled, idx_sample, idx_response, axes.next(), idx_sample == 0, False)
+            shared.plot_raw_predictions(
+                sampled, idx_sample, idx_response, axes.next(), idx_sample == 0, False)
+            shared.plot_transformed_predictions(
+                sampled, idx_sample, idx_response, axes.next(), idx_sample == 0, False)
             if not has_softmax:
-                ax = plt.subplot(grid[idx_sample, idx_col])
-                shared.plot_raw_error_regression(sampled, idx_sample, idx_response, ax, idx_sample == 0, False)
-                idx_col += 1
-                ax = plt.subplot(grid[idx_sample, idx_col])
-                shared.plot_transformed_error_regression(sampled, idx_sample, idx_response, ax, idx_sample == 0, False)
-                idx_col += 1
+                shared.plot_raw_error_regression(
+                    sampled, idx_sample, idx_response, axes.next(), idx_sample == 0, False)
+                shared.plot_transformed_error_regression(
+                    sampled, idx_sample, idx_response, axes.next(), idx_sample == 0, False)
         # Note: if softmax aka categorical, then we only need one plot per sample, not per response
         if has_softmax:
-            ax = plt.subplot(grid[idx_sample, idx_col])
             # TODO:  we're not really "plotting softmax", what's a better name for this? It's escaping me!
-            shared.plot_softmax(sampled, idx_sample, ax, idx_sample == 0, False)
-            idx_col += 1
-            ax = plt.subplot(grid[idx_sample, idx_col])
+            shared.plot_softmax(sampled, idx_sample, axes.next(), idx_sample == 0, False)
             # TODO:  same naming issue here
-            shared.plot_error_categorical(sampled, idx_sample, ax, idx_sample == 0, False)
-            idx_col += 1
-        ax = plt.subplot(grid[idx_sample, idx_col])
-        shared.plot_weights(sampled, idx_sample, ax, idx_sample == 0, False)
+            shared.plot_error_categorical(sampled, idx_sample, axes.next(), idx_sample == 0, False)
+        shared.plot_weights(sampled, idx_sample, axes.next(), idx_sample == 0, False)
     return fig
 
 

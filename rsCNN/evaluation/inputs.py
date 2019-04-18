@@ -32,23 +32,14 @@ def _plot_inputs_page(
     ncols = 1 + 2 * (len(range_features) + len(range_responses))
     fig, grid = shared.get_figure_and_grid(nrows, ncols)
     for idx_sample in range_samples:
-        idx_col = 0
+        axes = shared.get_axis_generator_for_sample_row(grid, idx_sample)
         for idx_feature in range_features:
-            ax = plt.subplot(grid[idx_sample, idx_col])
-            shared.plot_raw_features(sampled, idx_sample, idx_feature, ax, idx_sample == 0, idx_col == 0)
-            idx_col += 1
+            shared.plot_raw_features(sampled, idx_sample, idx_feature, axes.next(), idx_sample == 0, idx_feature == 0)
         for idx_feature in range_features:
-            ax = plt.subplot(grid[idx_sample, idx_col])
-            shared.plot_transformed_features(sampled, idx_sample, idx_feature, ax, idx_sample == 0, False)
-            idx_col += 1
+            shared.plot_transformed_features(sampled, idx_sample, idx_feature, axes.next(), idx_sample == 0, False)
         for idx_response in range_responses:
-            ax = plt.subplot(grid[idx_sample, idx_col])
-            shared.plot_raw_responses(sampled, idx_sample, idx_response, ax, idx_sample == 0, False)
-            idx_col += 1
+            shared.plot_raw_responses(sampled, idx_sample, idx_response, axes.next(), idx_sample == 0, False)
         for idx_response in range_responses:
-            ax = plt.subplot(grid[idx_sample, idx_col])
-            shared.plot_transformed_responses(sampled, idx_sample, idx_response, ax, idx_sample == 0, False)
-            idx_col += 1
-        ax = plt.subplot(grid[idx_sample, idx_col])
-        shared.plot_weights(sampled, idx_sample, ax, idx_sample == 0, False)
+            shared.plot_transformed_responses(sampled, idx_sample, idx_response, axes.next(), idx_sample == 0, False)
+        shared.plot_weights(sampled, idx_sample, axes.next(), idx_sample == 0, False)
     return fig
