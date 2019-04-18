@@ -39,7 +39,7 @@ def create_report(
         for fig in inputs.plot_raw_and_transformed_input_samples(sampled_train):
             pdf.savefig(fig, bbox_inches='tight')
         # Output examples and their scaled representations
-        for fig in results.plot_raw_and_transformed_result_examples(sampled_train):
+        for fig in results.plot_raw_and_transformed_prediction_samples(sampled_train):
             pdf.savefig(fig, bbox_inches='tight')
         # Compact network visualization
         for fig in networks.visualize_feature_progression(train_sequence, model, compact=True):

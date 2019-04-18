@@ -216,7 +216,7 @@ def plot_transformed_error_regression(
 def _add_internal_window_to_subplot(sampled: samples.Samples, ax: plt.Axes) -> None:
     inshape = sampled.network_config['architecture']['inshape'],
     internal_window_radius = sampled.network_config['architecture']['internal_window_radius'],
-    if (internal_window_radius*2 == inshape[0]):
+    if (internal_window_radius * 2 == inshape[0]):
         return
     buffer = (inshape[0] - internal_window_radius * 2) / 2
     rect = patches.Rectangle(
