@@ -41,8 +41,8 @@ def create_report(
         # Plot results
         figures.extend(results.plot_raw_and_transformed_prediction_samples(sampled_train))
         # Plot compact and expanded network feature progression
-        figures.extend(networks.visualize_feature_progression(train_sequence, model, compact=True))
-        figures.extend(networks.visualize_feature_progression(train_sequence, model))
+        figures.extend(networks.plot_network_feature_progression(sampled_train, compact=True))
+        figures.extend(networks.plot_network_feature_progression(sampled_train, compact=False))
         # Plot spatial error
         if network_config['architecture_options']['output_activation'] == 'softmax':
             figures.extend(results.plot_spatial_categorical_error(sampled_train))
