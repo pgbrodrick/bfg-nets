@@ -187,21 +187,26 @@ def _plot_spatial_error(
     max_rows_per_page: int
 ) -> List[plt.Figure]:
     figures = []
-    num_pages = min(max_pages, np.ceil(sampled.num_responses / (max_responses_per_row * max_rows_per_page)))
+
+    max_responses_per_page = max_responses_per_row * max_rows_per_page
+    num_pages = min(max_pages, np.ceil(sampled.num_responses / max_responses_per_page))
+
+    inshape = sampled.network_config['architecture']['inshape']
+    internal_window_radius = sampled.network_config['architecture']['internal_window_radius']
+    buffer = int((inshape[0] - internal_window_radius * 2) / 2)
 
     def _get_axis_generator_for_page(grid, num_rows, num_cols):
         for idx_col in range(num_cols):
             for idx_row in range(num_rows):
                 yield plt.subplot(grid[idx_row, idx_col])
 
-    inshape = sampled.network_config['architecture']['inshape']
-    internal_window_radius = sampled.network_config['architecture']['internal_window_radius']
-    buffer = int((inshape[0] - internal_window_radius * 2) / 2)
-
     idx_page = 0
     idx_response = 0
-    while idx_page < num_pages and idx_response < error.shape[-1]:
-        fig, grid = shared.get_figure_and_grid(max_rows_per_page, max_responses_per_row)
+    while idx_page < num_pages:
+        num_figs_on_page = min(max_responses_per_page, error.shape[-1] - idx_response)
+        nrows = np.ceil(num_figs_on_page / max_responses_per_row)
+        ncols = min(max_responses_per_row, num_figs_on_page)
+        fig, grid = shared.get_figure_and_grid(nrows, ncols)
         for ax in _get_axis_generator_for_page(grid, max_rows_per_page, max_responses_per_row):
             min_ = 0
             max_ = np.nanmax(error[buffer:-buffer, buffer:-buffer, idx_response])
@@ -211,7 +216,10 @@ def _plot_spatial_error(
             ax.set_xticks([])
             ax.set_yticks([])
             idx_response += 1
-        fig.suptitle('Response Spatial Deviation {}'.format(idx_page))
+            if idx_response > error.shape[-1]:
+                break
         figures.append(fig)
         idx_page += 1
+    for fig in figures:
+        fig.suptitle('Response Spatial Deviation {}'.format(idx_page))
     return figures
