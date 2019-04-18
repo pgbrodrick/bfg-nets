@@ -111,14 +111,17 @@ def _plot_sample_attribute(
 
 
 def plot_softmax(sampled: samples.Samples, idx_sample: int, ax: plt.Axes, add_xlabel: bool, add_ylabel: bool) -> None:
-    # Note:  this assumes that the softmax applied to all prediction axes
-    min_, max_ = (0, sampled.raw_predictions.shape[-1] - 1)
+    # Note:  this assumes that the softmax applied to all prediction axes and that there was no transformation applied
+    #  to the categorical data.
+    # TODO:  Phil:  are we going to have issues if a transformation was applied to categorical data? I think so?
+    min_ = 0
+    max_ = sampled.raw_predictions.shape[-1] - 1
     ax.imshow(np.argmax(sampled.raw_predictions[idx_sample, :], axis=-1), vmin=min_, vmax=max_)
     ax.set_xticks([])
     ax.set_yticks([])
     if add_xlabel:
         # TODO:  Phil:  better label?
-        ax.set_xlabel('Softmax\nCategories\n{}\n{}'.format(0, _format_number(max_)))
+        ax.set_xlabel('Softmax\nCategories\n{}\n{}'.format(_format_number(min_), _format_number(max_)))
     if add_ylabel:
         ax.set_ylabel('Sample\n{}'.format(idx_sample))
 
@@ -134,6 +137,76 @@ def plot_weights(sampled: samples.Samples, idx_sample: int, ax: plt.Axes, add_xl
         ax.set_xlabel('Weights\n{}\n{}'.format(_format_number(min_), _format_number(max_)))
     if add_ylabel:
         ax.set_ylabel('Sample\n{}'.format(idx_sample))
+
+
+def plot_error_categorical(
+        sampled: samples.Samples,
+        idx_sample: int,
+        ax: plt.Axes,
+        add_xlabel: bool,
+        add_ylabel: bool
+) -> None:
+    # Note:  this assumes that the softmax applied to all prediction axes and that there was no transformation applied
+    #  to the categorical data.
+    # TODO:  Phil:  are we going to have issues if a transformation was applied to categorical data? I think so?
+    min_ = 0
+    max_ = 1
+    actual = np.argmax(sampled.raw_responses[idx_sample, :], axis=-1)
+    predicted = np.argmax(sampled.raw_predictions[idx_sample, :], axis=-1)
+    ax.imshow(predicted == actual, vmin=min_, vmax=max_)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    if add_xlabel:
+        # TODO:  Phil:  better label?
+        ax.set_xlabel('Categorical\nErrors\n{}\n{}'.format(_format_number(min_), _format_number(max_)))
+    if add_ylabel:
+        ax.set_ylabel('Sample\n{}'.format(idx_sample))
+    _add_internal_window_to_subplot(sampled, ax)
+
+
+def plot_raw_error_regression(
+        sampled: samples.Samples,
+        idx_sample: int,
+        idx_response: int,
+        ax: plt.Axes,
+        add_xlabel: bool,
+        add_ylabel: bool
+) -> None:
+    error = sampled.raw_predictions[idx_sample, :, :, idx_response] - \
+        sampled.raw_responses[idx_sample, :, :, idx_response]
+    min_ = float(np.nanmin(error))
+    max_ = float(np.nanmax(error))
+    ax.imshow(error, vmin=min_, vmax=max_)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    if add_xlabel:
+        ax.set_xlabel('Raw\nRegression\nErrors\n{}\n{}'.format(_format_number(min_), _format_number(max_)))
+    if add_ylabel:
+        ax.set_ylabel('Sample\n{}'.format(idx_sample))
+    _add_internal_window_to_subplot(sampled, ax)
+
+
+def plot_transformed_error_regression(
+        sampled: samples.Samples,
+        idx_sample: int,
+        idx_response: int,
+        ax: plt.Axes,
+        add_xlabel: bool,
+        add_ylabel: bool
+) -> None:
+    error = sampled.trans_predictions[idx_sample, :, :, idx_response] - \
+        sampled.trans_responses[idx_sample, :, :, idx_response]
+    min_ = float(np.nanmin(error))
+    max_ = float(np.nanmax(error))
+    ax.imshow(error, vmin=min_, vmax=max_)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    if add_xlabel:
+        ax.set_xlabel('Trans\nRegression\nErrors\n{}\n{}'.format(_format_number(min_), _format_number(max_)))
+    if add_ylabel:
+        ax.set_ylabel('Sample\n{}'.format(idx_sample))
+    _add_internal_window_to_subplot(sampled, ax)
+    _add_internal_window_to_subplot(sampled, ax)
 
 
 def _add_internal_window_to_subplot(sampled: samples.Samples, ax: plt.Axes) -> None:
