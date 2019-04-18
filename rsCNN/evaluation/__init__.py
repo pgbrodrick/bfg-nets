@@ -45,7 +45,7 @@ def create_report(
         figures.extend(networks.visualize_feature_progression(train_sequence, model))
         # Plot spatial error
         if network_config['architecture_options']['output_activation'] == 'softmax':
-            figures.extend(results.plot_spatial_regression_error(sampled_train))
+            figures.extend(results.plot_spatial_categorical_error(sampled_train))
         else:
             figures.extend(results.plot_spatial_regression_error(sampled_train))
         # Plot training and validation sequence
