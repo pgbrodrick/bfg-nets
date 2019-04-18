@@ -146,7 +146,7 @@ def _get_lhist(data, bins=10):
     return phist, pedge
 
 
-def plot_spatial_error(
+def plot_spatial_regression_error(
         sampled: samples.Samples,
         max_pages: int = 8,
         max_responses_per_row: int = 10,
