@@ -200,7 +200,7 @@ def _plot_spatial_error(
 
     idx_page = 0
     idx_response = 0
-    while idx_page < num_pages and idx_response < sampled.num_responses:
+    while idx_page < num_pages and idx_response < error.shape[-1]:
         fig, grid = shared.get_figure_and_grid(max_rows_per_page, max_responses_per_row)
         for ax in _get_axis_generator_for_page(grid, max_rows_per_page, max_responses_per_row):
             min_ = 0
