@@ -37,26 +37,33 @@ def _plot_predictions_page(
     #  most likely class predicted by the softmax, but it's not a sufficient check for categorical data. That means
     #  that the regression or categorical plot check below is going to be wrong in some cases. We can wait to see how
     #  Phil handles data types in the data config.
-    has_softmax = sampled.network_config['architecture_options']['output_activation'] == 'softmax'
     nrows = len(range_samples)
-    ncols = 1 + (4 + 2 * int(not has_softmax)) * len(range_responses) + 2 * int(has_softmax)
+    has_softmax = sampled.network_config['architecture_options']['output_activation'] == 'softmax'
+    num_responses_plots = (1 + int(sampled.has_features_transform)) * len(range_responses)
+    num_predictions_plots = num_responses_plots
+    num_categorical_plots = 1 + int(has_softmax)
+    num_weights_plots = 1
+    ncols = num_responses_plots + num_predictions_plots + num_categorical_plots + num_weights_plots
     fig, grid = shared.get_figure_and_grid(nrows, ncols)
     for idx_sample in range_samples:
         axes = shared.get_axis_iterator_for_sample_row(grid, idx_sample)
         for idx_response in range_responses:
             shared.plot_raw_responses(
                 sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, idx_response == 0)
-            shared.plot_transformed_responses(
-                sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
+            if sampled.has_responses_transform:
+                shared.plot_transformed_responses(
+                    sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
             shared.plot_raw_predictions(
                 sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
-            shared.plot_transformed_predictions(
-                sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
+            if sampled.has_responses_transform:
+                shared.plot_transformed_predictions(
+                    sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
             if not has_softmax:
                 shared.plot_raw_error_regression(
                     sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
-                shared.plot_transformed_error_regression(
-                    sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
+                if sampled.has_responses_transform:
+                    shared.plot_transformed_error_regression(
+                        sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
         # Note: if softmax aka categorical, then we only need one plot per sample, not per response
         if has_softmax:
             # TODO:  we're not really "plotting softmax", what's a better name for this? It's escaping me!
