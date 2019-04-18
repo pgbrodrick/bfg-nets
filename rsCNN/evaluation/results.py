@@ -174,9 +174,9 @@ def plot_spatial_regression_error(
 def _plot_spatial_error(
     error: np.array,
     sampled: samples.Samples,
-    max_pages: int = 8,
-    max_responses_per_row: int = 10,
-    max_rows_per_page: int = 10
+    max_pages: int,
+    max_responses_per_row: int,
+    max_rows_per_page: int
 ) -> List[plt.Figure]:
     figures = []
     num_pages = min(max_pages, np.ceil(sampled.num_responses / (max_responses_per_row * max_rows_per_page)))
