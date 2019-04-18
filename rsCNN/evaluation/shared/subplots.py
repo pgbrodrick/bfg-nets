@@ -1,6 +1,6 @@
 from typing import Union
 
-import matplotlib.patches as patches
+from matplotlib import colors, patches
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -9,6 +9,10 @@ from rsCNN.evaluation import samples
 
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
+
+_COLOR_CORRECT = (158, 202, 225)
+_COLOR_INCORRECT = (253, 174, 107)
+_COLORMAP_ERROR = colors.ListedColormap([_COLOR_INCORRECT, _COLOR_CORRECT])
 
 _COLORMAP_WEIGHTS = 'Greys_r'
 _FLOAT_DECIMALS = 2
@@ -153,7 +157,7 @@ def plot_error_categorical(
     max_ = 1
     actual = np.argmax(sampled.raw_responses[idx_sample, :], axis=-1)
     predicted = np.argmax(sampled.raw_predictions[idx_sample, :], axis=-1)
-    ax.imshow(predicted == actual, vmin=min_, vmax=max_)
+    ax.imshow(predicted == actual, vmin=min_, vmax=max_, cmap=_COLORMAP_ERROR)
     ax.set_xticks([])
     ax.set_yticks([])
     if add_xlabel:
@@ -176,7 +180,7 @@ def plot_raw_error_regression(
         sampled.raw_responses[idx_sample, :, :, idx_response]
     min_ = float(np.nanmin(error))
     max_ = float(np.nanmax(error))
-    ax.imshow(error, vmin=min_, vmax=max_)
+    ax.imshow(error, vmin=min_, vmax=max_, cmap=_COLORMAP_ERROR)
     ax.set_xticks([])
     ax.set_yticks([])
     if add_xlabel:
@@ -198,7 +202,7 @@ def plot_transformed_error_regression(
         sampled.trans_responses[idx_sample, :, :, idx_response]
     min_ = float(np.nanmin(error))
     max_ = float(np.nanmax(error))
-    ax.imshow(error, vmin=min_, vmax=max_)
+    ax.imshow(error, vmin=min_, vmax=max_, cmap=_COLORMAP_ERROR)
     ax.set_xticks([])
     ax.set_yticks([])
     if add_xlabel:
