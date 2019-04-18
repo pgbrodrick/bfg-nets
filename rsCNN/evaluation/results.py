@@ -171,7 +171,8 @@ def plot_spatial_error(
             min_ = np.nanmin(abs_error[:, :, idx_response][sampled.weights != 0])
             max_ = np.nanmax(abs_error[:, :, idx_response][sampled.weights != 0])
             ax.imshow(abs_error[:, idx_response], vmin=min_, vmax=max_, cmap=shared.COLORMAP_ERROR)
-            ax.xlabel('Response {}'.format(idx_response))
+            ax.set_xlabel('Response {}'.format(idx_response))
+            ax.xaxis.set_label_position('top')
             ax.set_xticks([])
             ax.set_yticks([])
             idx_response += 1
