@@ -35,6 +35,7 @@ class Samples(object):
         sampled_features, sampled_responses = self._get_sampled_features_responses_and_set_metadata_and_weights()
         predictions = model.predict(sampled_features)
         self._set_raw_and_transformed_features_and_responses(sampled_features, sampled_responses, predictions)
+        self._set_raw_and_transformed_ranges()
 
     def _get_sampled_features_responses_and_set_metadata_and_weights(self) -> Tuple[np.array, np.array]:
         # TODO:  handle getting representative samples, e.g., get images that show specific classes so all are covered,
@@ -92,6 +93,8 @@ class Samples(object):
         self.weights_range = self._get_range(self.weights)
 
     def _get_range(self, data: np.array) -> np.array:
+        if data is None:
+            return None
         mins = np.nanpercentile(data.reshape((-1, data.shape[-1])), 0, axis=0)
         maxs = np.nanpercentile(data.reshape((-1, data.shape[-1])), 100, axis=0)
         return np.dstack([mins, maxs])[0]
