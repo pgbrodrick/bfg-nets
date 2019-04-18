@@ -162,8 +162,8 @@ def plot_spatial_categorical_error(
 ) -> List[plt.Figure]:
     # TODO: Consider handling weights, already handle 0 weights but could weight errors differently
     # TODO: This assumes that categorical variables are one-hot encoded
-    actual = np.argmax(sampled.raw_responses, axis=-1)
-    predicted = np.argmax(sampled.raw_predictions, axis=-1)
+    actual = np.expand_dims(np.argmax(sampled.raw_responses, axis=-1), -1)
+    predicted = np.expand_dims(np.argmax(sampled.raw_predictions, axis=-1), -1)
     error = np.nanmean(np.abs(predicted - actual), axis=0)
     return _plot_spatial_error(error, sampled, max_pages, max_responses_per_row, max_rows_per_page)
 
@@ -199,8 +199,11 @@ def _plot_spatial_error(
     while idx_page < num_pages and idx_response < sampled.num_responses:
         fig, grid = shared.get_figure_and_grid(max_rows_per_page, max_responses_per_row)
         for ax in _get_axis_generator_for_page(grid, max_rows_per_page, max_responses_per_row):
-            min_ = np.nanmin(error[:, :, idx_response][sampled.weights != 0])
-            max_ = np.nanmax(error[:, :, idx_response][sampled.weights != 0])
+            inshape = sampled.network_config['architecture']['inshape']
+            internal_window_radius = sampled.network_config['architecture']['internal_window_radius']
+            buffer = (inshape[0] - internal_window_radius * 2) / 2
+            min_ = np.nanmin(error[buffer:-buffer, buffer:-buffer, idx_response][sampled.weights != 0])
+            max_ = np.nanmax(error[buffer:-buffer, buffer:-buffer, idx_response][sampled.weights != 0])
             ax.imshow(error[:, idx_response], vmin=min_, vmax=max_, cmap=shared.COLORMAP_ERROR)
             ax.set_xlabel('Response {}'.format(idx_response))
             ax.xaxis.set_label_position('top')
