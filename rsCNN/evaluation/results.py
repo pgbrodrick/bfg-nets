@@ -30,6 +30,7 @@ def plot_raw_and_transformed_prediction_samples(
 def _plot_predictions_page(
         sampled: samples.Samples,
         range_samples: range,
+        range_features: range,
         range_responses: range
 ) -> plt.Figure:
     # TODO:  the has_softmax check needs to be updated in the future. I think it's probably still useful to show the

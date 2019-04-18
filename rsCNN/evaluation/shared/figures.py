@@ -30,6 +30,8 @@ def plot_figures_iterating_through_samples_features_responses(
         max_features_per_page: int = 5,
         max_responses_per_page: int = 5
 ) -> List[plt.Figure]:
+    # TODO:  Phil:  how do you feel about restricting features and responses to being on separate pages? It'd slightly
+    #  simplify the API and make it more general. I think this only applies to the input page right now.
     figures = []
     idx_current_sample = 0
     idx_current_feature = 0
