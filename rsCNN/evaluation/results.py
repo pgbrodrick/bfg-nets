@@ -146,6 +146,20 @@ def _get_lhist(data, bins=10):
     return phist, pedge
 
 
+def plot_spatial_categorical_error(
+        sampled: samples.Samples,
+        max_pages: int = 8,
+        max_responses_per_row: int = 10,
+        max_rows_per_page: int = 10
+) -> List[plt.Figure]:
+    # TODO: Consider handling weights, already handle 0 weights but could weight errors differently
+    # TODO: This assumes that categorical variables are one-hot encoded
+    actual = np.argmax(sampled.raw_responses, axis=-1)
+    predicted = np.argmax(sampled.raw_predictions, axis=-1)
+    error = np.nanmean(np.abs(predicted - actual), axis=0)
+    return _plot_spatial_error(error, sampled, max_pages, max_responses_per_row, max_rows_per_page)
+
+
 def plot_spatial_regression_error(
         sampled: samples.Samples,
         max_pages: int = 8,
@@ -153,8 +167,17 @@ def plot_spatial_regression_error(
         max_rows_per_page: int = 10
 ) -> List[plt.Figure]:
     # TODO: Consider handling weights, already handle 0 weights but could weight errors differently
-    abs_error = np.nanmean(np.abs(sampled.raw_predictions, - sampled.raw_responses), axis=0)
+    abs_error = np.nanmean(np.abs(sampled.raw_predictions - sampled.raw_responses), axis=0)
+    return _plot_spatial_error(abs_error, sampled, max_pages, max_responses_per_row, max_rows_per_page)
 
+
+def _plot_spatial_error(
+    error: np.array,
+    sampled: samples.Samples,
+    max_pages: int = 8,
+    max_responses_per_row: int = 10,
+    max_rows_per_page: int = 10
+) -> List[plt.Figure]:
     figures = []
     num_pages = min(max_pages, np.ceil(sampled.num_responses / (max_responses_per_row * max_rows_per_page)))
 
@@ -168,9 +191,9 @@ def plot_spatial_regression_error(
     while idx_page < num_pages and idx_response < sampled.num_responses:
         fig, grid = shared.get_figure_and_grid(max_rows_per_page, max_responses_per_row)
         for ax in _get_axis_generator_for_page(grid, max_rows_per_page, max_responses_per_row):
-            min_ = np.nanmin(abs_error[:, :, idx_response][sampled.weights != 0])
-            max_ = np.nanmax(abs_error[:, :, idx_response][sampled.weights != 0])
-            ax.imshow(abs_error[:, idx_response], vmin=min_, vmax=max_, cmap=shared.COLORMAP_ERROR)
+            min_ = np.nanmin(error[:, :, idx_response][sampled.weights != 0])
+            max_ = np.nanmax(error[:, :, idx_response][sampled.weights != 0])
+            ax.imshow(error[:, idx_response], vmin=min_, vmax=max_, cmap=shared.COLORMAP_ERROR)
             ax.set_xlabel('Response {}'.format(idx_response))
             ax.xaxis.set_label_position('top')
             ax.set_xticks([])
