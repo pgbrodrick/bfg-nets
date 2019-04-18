@@ -204,8 +204,8 @@ def _plot_spatial_error(
     idx_response = 0
     while idx_page < num_pages:
         num_figs_on_page = min(max_responses_per_page, error.shape[-1] - idx_response)
-        nrows = np.ceil(num_figs_on_page / max_responses_per_row)
-        ncols = min(max_responses_per_row, num_figs_on_page)
+        nrows = int(np.ceil(num_figs_on_page / max_responses_per_row))
+        ncols = int(min(max_responses_per_row, num_figs_on_page))
         fig, grid = shared.get_figure_and_grid(nrows, ncols)
         for ax in _get_axis_generator_for_page(grid, max_rows_per_page, max_responses_per_row):
             min_ = 0
