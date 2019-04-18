@@ -203,8 +203,8 @@ def _plot_spatial_error(
     while idx_page < num_pages and idx_response < sampled.num_responses:
         fig, grid = shared.get_figure_and_grid(max_rows_per_page, max_responses_per_row)
         for ax in _get_axis_generator_for_page(grid, max_rows_per_page, max_responses_per_row):
-            min_ = np.nanmin(error[buffer:-buffer, buffer:-buffer, idx_response][sampled.weights != 0])
-            max_ = np.nanmax(error[buffer:-buffer, buffer:-buffer, idx_response][sampled.weights != 0])
+            min_ = 0
+            max_ = np.nanmax(error[buffer:-buffer, buffer:-buffer, idx_response])
             ax.imshow(error[:, idx_response], vmin=min_, vmax=max_, cmap=shared.COLORMAP_ERROR)
             ax.set_xlabel('Response {}'.format(idx_response))
             ax.xaxis.set_label_position('top')
