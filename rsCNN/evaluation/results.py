@@ -11,7 +11,7 @@ from rsCNN.evaluation import samples, shared
 
 # TODO:  I want to see one-hot encoded categories, e.g., both geomorphic and benthic, as single categorical plots
 
-def plot_raw_and_transformed_result_examples(
+def plot_raw_and_transformed_prediction_samples(
         sampled: samples.Samples,
         max_pages: int = 8,
         max_samples_per_page: int = 10,
@@ -27,7 +27,7 @@ def plot_raw_and_transformed_result_examples(
     return figures
 
 
-def _plot_results_page(
+def _plot_predictions_page(
         sampled: samples.Samples,
         range_samples: range,
         range_responses: range
@@ -64,26 +64,6 @@ def _plot_results_page(
             shared.plot_error_categorical(sampled, idx_sample, axes.next(), idx_sample == 0, False)
         shared.plot_weights(sampled, idx_sample, axes.next(), idx_sample == 0, False)
     return fig
-
-
-def _get_lhist(data, bins=10):
-    hist, edge = np.histogram(data, bins=bins, range=(np.nanmin(data), np.nanmax(data)))
-    hist = hist.tolist()
-    edge = edge.tolist()
-    phist = [0]
-    pedge = [edge[0]]
-    for _e in range(0, len(edge)-1):
-        phist.append(hist[_e])
-        phist.append(hist[_e])
-
-        pedge.append(edge[_e])
-        pedge.append(edge[_e+1])
-
-    phist.append(0)
-    pedge.append(edge[-1])
-    phist = np.array(phist)
-    pedge = np.array(pedge)
-    return phist, pedge
 
 
 def single_sequence_prediction_histogram(
@@ -144,6 +124,26 @@ def single_sequence_prediction_histogram(
         plt.suptitle(seq_str + ' Response Histogram Page ' + str((len(fig_list))))
         fig_list.append(fig)
     return fig_list
+
+
+def _get_lhist(data, bins=10):
+    hist, edge = np.histogram(data, bins=bins, range=(np.nanmin(data), np.nanmax(data)))
+    hist = hist.tolist()
+    edge = edge.tolist()
+    phist = [0]
+    pedge = [edge[0]]
+    for _e in range(0, len(edge)-1):
+        phist.append(hist[_e])
+        phist.append(hist[_e])
+
+        pedge.append(edge[_e])
+        pedge.append(edge[_e+1])
+
+    phist.append(0)
+    pedge.append(edge[-1])
+    phist = np.array(phist)
+    pedge = np.array(pedge)
+    return phist, pedge
 
 
 def spatial_error(
