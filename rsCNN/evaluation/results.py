@@ -194,14 +194,15 @@ def _plot_spatial_error(
             for idx_row in range(num_rows):
                 yield plt.subplot(grid[idx_row, idx_col])
 
+    inshape = sampled.network_config['architecture']['inshape']
+    internal_window_radius = sampled.network_config['architecture']['internal_window_radius']
+    buffer = int((inshape[0] - internal_window_radius * 2) / 2)
+
     idx_page = 0
     idx_response = 0
     while idx_page < num_pages and idx_response < sampled.num_responses:
         fig, grid = shared.get_figure_and_grid(max_rows_per_page, max_responses_per_row)
         for ax in _get_axis_generator_for_page(grid, max_rows_per_page, max_responses_per_row):
-            inshape = sampled.network_config['architecture']['inshape']
-            internal_window_radius = sampled.network_config['architecture']['internal_window_radius']
-            buffer = (inshape[0] - internal_window_radius * 2) / 2
             min_ = np.nanmin(error[buffer:-buffer, buffer:-buffer, idx_response][sampled.weights != 0])
             max_ = np.nanmax(error[buffer:-buffer, buffer:-buffer, idx_response][sampled.weights != 0])
             ax.imshow(error[:, idx_response], vmin=min_, vmax=max_, cmap=shared.COLORMAP_ERROR)
