@@ -207,7 +207,7 @@ def _plot_spatial_error(
         nrows = int(np.ceil(num_figs_on_page / max_responses_per_row))
         ncols = int(min(max_responses_per_row, num_figs_on_page))
         fig, grid = shared.get_figure_and_grid(nrows, ncols)
-        for ax in _get_axis_generator_for_page(grid, max_rows_per_page, max_responses_per_row):
+        for ax in _get_axis_generator_for_page(grid, nrows, ncols):
             min_ = 0
             max_ = np.nanmax(error[buffer:-buffer, buffer:-buffer, idx_response])
             ax.imshow(error[:, idx_response], vmin=min_, vmax=max_, cmap=shared.COLORMAP_ERROR)
