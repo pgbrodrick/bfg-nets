@@ -34,12 +34,16 @@ def _plot_inputs_page(
     for idx_sample in range_samples:
         axes = shared.get_axis_iterator_for_sample_row(grid, idx_sample)
         for idx_feature in range_features:
-            shared.plot_raw_features(sampled, idx_sample, idx_feature, axes.next(), idx_sample == 0, idx_feature == 0)
+            shared.plot_raw_features(
+                sampled, idx_sample, idx_feature, axes.__next__(), idx_sample == 0, idx_feature == 0)
         for idx_feature in range_features:
-            shared.plot_transformed_features(sampled, idx_sample, idx_feature, axes.next(), idx_sample == 0, False)
+            shared.plot_transformed_features(
+                sampled, idx_sample, idx_feature, axes.__next__(), idx_sample == 0, False)
         for idx_response in range_responses:
-            shared.plot_raw_responses(sampled, idx_sample, idx_response, axes.next(), idx_sample == 0, False)
+            shared.plot_raw_responses(
+                sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
         for idx_response in range_responses:
-            shared.plot_transformed_responses(sampled, idx_sample, idx_response, axes.next(), idx_sample == 0, False)
-        shared.plot_weights(sampled, idx_sample, axes.next(), idx_sample == 0, False)
+            shared.plot_transformed_responses(
+                sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
+        shared.plot_weights(sampled, idx_sample, axes.__next__(), idx_sample == 0, False)
     return fig
