@@ -106,6 +106,7 @@ def _plot_sample_attribute(
     ax.set_yticks([])
     if add_xlabel:
         ax.set_xlabel('{}\n{}\n{}'.format(y_label, _format_number(min_), _format_number(max_)))
+        ax.xaxis.set_label_position('top')
     if add_ylabel:
         ax.set_ylabel('Sample\n{}'.format(idx_sample))
 
@@ -122,6 +123,7 @@ def plot_softmax(sampled: samples.Samples, idx_sample: int, ax: plt.Axes, add_xl
     if add_xlabel:
         # TODO:  Phil:  better label?
         ax.set_xlabel('Softmax\nCategories\n{}\n{}'.format(_format_number(min_), _format_number(max_)))
+        ax.xaxis.set_label_position('top')
     if add_ylabel:
         ax.set_ylabel('Sample\n{}'.format(idx_sample))
 
@@ -135,6 +137,7 @@ def plot_weights(sampled: samples.Samples, idx_sample: int, ax: plt.Axes, add_xl
     ax.set_yticks([])
     if add_xlabel:
         ax.set_xlabel('Weights\n{}\n{}'.format(_format_number(min_), _format_number(max_)))
+        ax.xaxis.set_label_position('top')
     if add_ylabel:
         ax.set_ylabel('Sample\n{}'.format(idx_sample))
 
@@ -159,6 +162,7 @@ def plot_error_categorical(
     if add_xlabel:
         # TODO:  Phil:  better label?
         ax.set_xlabel('Categorical\nErrors\n{}\n{}'.format(_format_number(min_), _format_number(max_)))
+        ax.xaxis.set_label_position('top')
     if add_ylabel:
         ax.set_ylabel('Sample\n{}'.format(idx_sample))
     _add_internal_window_to_subplot(sampled, ax)
@@ -181,6 +185,7 @@ def plot_raw_error_regression(
     ax.set_yticks([])
     if add_xlabel:
         ax.set_xlabel('Raw\nRegression\nErrors\n{}\n{}'.format(_format_number(min_), _format_number(max_)))
+        ax.xaxis.set_label_position('top')
     if add_ylabel:
         ax.set_ylabel('Sample\n{}'.format(idx_sample))
     _add_internal_window_to_subplot(sampled, ax)
@@ -203,6 +208,7 @@ def plot_transformed_error_regression(
     ax.set_yticks([])
     if add_xlabel:
         ax.set_xlabel('Trans\nRegression\nErrors\n{}\n{}'.format(_format_number(min_), _format_number(max_)))
+        ax.xaxis.set_label_position('top')
     if add_ylabel:
         ax.set_ylabel('Sample\n{}'.format(idx_sample))
     _add_internal_window_to_subplot(sampled, ax)
