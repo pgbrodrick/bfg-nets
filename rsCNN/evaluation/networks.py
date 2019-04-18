@@ -38,10 +38,9 @@ def _plot_sample_feature_progression(
         compact: bool,
         max_filters: int
 ) -> plt.Figure:
-    sample_features = np.expand_dims(sampled.trans_features[idx_sample, :], 0)
-    sample_responses = sampled.trans_responses
-    if sample_responses is None:
-        sample_responses = sampled.raw_responses
+    sample_features = sampled.trans_features or sampled.raw_features
+    sample_features = np.expand_dims(sample_features[idx_sample, :], 0)
+    sample_responses = sampled.trans_responses or sampled.raw_responses
     sample_responses = np.expand_dims(sample_responses[idx_sample, :], 0)
 
     # Run through the model and grab any Conv2D layer (other layers could also be grabbed as desired)
