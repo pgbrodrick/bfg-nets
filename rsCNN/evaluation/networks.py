@@ -88,7 +88,7 @@ def _plot_sample_feature_progression(
             # Get the indices sorted by filter std, as a proxy for interest
             ordered_pred_std = np.argsort(pred_std[_l])[::-1]
             # prep the image
-            tp = np.squeeze(pred_set[_l][idx_sample, :, :, ordered_pred_std[_iii]])
+            tp = np.squeeze(pred_set[_l][:, ordered_pred_std[_iii]])
 
             # Plot!
             ax = fig.add_axes([ip[0], ip[1], image_size, image_size], zorder=max_filters+1-_iii)
