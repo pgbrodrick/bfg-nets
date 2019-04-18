@@ -20,7 +20,7 @@ def plot_raw_and_transformed_prediction_samples(
 ) -> List[plt.Figure]:
     # TODO:  allow user to configure which features, if any, show on results plot (currently none)
     figures = shared.plot_figures_iterating_through_samples_features_responses(
-        sampled, _plot_results_page, max_pages, max_samples_per_page, max_features_per_page, max_responses_per_page
+        sampled, _plot_predictions_page, max_pages, max_samples_per_page, max_features_per_page, max_responses_per_page
     )
     for idx, figure in enumerate(figures):
         figure.suptitle('Prediction Example Plots (page {})'.format(idx))
@@ -41,7 +41,7 @@ def _plot_predictions_page(
     ncols = 1 + (4 + 2 * int(not has_softmax)) * len(range_responses) + 2 * int(has_softmax)
     fig, grid = shared.get_figure_and_grid(nrows, ncols)
     for idx_sample in range_samples:
-        axes = shared.get_axis_generator_for_sample_row(grid, idx_sample)
+        axes = shared.get_axis_iterator_for_sample_row(grid, idx_sample)
         for idx_response in range_responses:
             shared.plot_raw_responses(
                 sampled, idx_sample, idx_response, axes.next(), idx_sample == 0, idx_response == 0)
@@ -146,42 +146,36 @@ def _get_lhist(data, bins=10):
     return phist, pedge
 
 
-def spatial_error(
-        model: keras.Model,
-        data_sequence: BaseSequence
-):
+def plot_spatial_error(
+        sampled: samples.Samples,
+        max_pages: int = 8,
+        max_responses_per_row: int = 10,
+        max_rows_per_page: int = 10
+) -> List[plt.Figure]:
+    # TODO: Consider handling weights, already handle 0 weights but could weight errors differently
+    abs_error = np.nanmean(np.abs(sampled.raw_predictions, - sampled.raw_responses), axis=0)
 
-    # TODO: Consider handling weights
-    fig_list = []
+    figures = []
+    num_pages = min(max_pages, np.ceil(sampled.num_responses / (max_responses_per_row * max_rows_per_page)))
 
-    # TODO: deal with more than one batch....
-    features, responses = data_sequence.__getitem__(0)
-    pred_responses = model.predict(features)
-    features = features[0]
-    responses = responses[0]
-    responses, weights = responses[..., :-1], responses[..., -1]
+    def _get_axis_generator_for_page(grid, num_rows, num_cols):
+        for idx_col in range(num_cols):
+            for idx_row in range(num_rows):
+                yield plt.subplot(grid[idx_row, idx_col])
 
-    diff = np.abs(responses-pred_responses)
-
-    max_resp_per_page = min(8, responses.shape[-1])
-
-    _response_ind = 0
-    while (_response_ind < responses.shape[-1]):
-        fig = plt.figure(figsize=(25, 8))
-        gs1 = gridspec.GridSpec(1, max_resp_per_page)
-        for _r in range(_response_ind, min(responses.shape[-1], _response_ind + max_resp_per_page)):
-            ax = plt.subplot(gs1[0, _r - _response_ind])
-
-            vset = diff.copy()
-            vset[weights == 0] = np.nan
-            vset = np.nanmean(vset, axis=0)
-            ax.imshow(np.nanmean(diff[..., _r], axis=0), vmin=np.nanmin(
-                vset), vmax=np.nanmax(vset))
-            plt.title('Response ' + str(_r))
-            plt.axis('off')
-
-        _response_ind += max_resp_per_page
-        plt.suptitle('Response Spatial Deviation ' + str((len(fig_list))))
-        fig_list.append(fig)
-
-    return fig_list
+    idx_page = 0
+    idx_response = 0
+    while idx_page < num_pages and idx_response < sampled.num_responses:
+        fig, grid = shared.get_figure_and_grid(max_rows_per_page, max_responses_per_row)
+        for ax in _get_axis_generator_for_page(grid, max_rows_per_page, max_responses_per_row):
+            min_ = np.nanmin(abs_error[:, :, idx_response][sampled.weights != 0])
+            max_ = np.nanmax(abs_error[:, :, idx_response][sampled.weights != 0])
+            ax.imshow(abs_error[:, idx_response], vmin=min_, vmax=max_, cmap=shared.COLORMAP_ERROR)
+            ax.xlabel('Response {}'.format(idx_response))
+            ax.set_xticks([])
+            ax.set_yticks([])
+            idx_response += 1
+        fig.suptitle('Response Spatial Deviation {}'.format(idx_page))
+        figures.append(fig)
+        idx_page += 1
+    return figures

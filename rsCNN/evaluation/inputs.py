@@ -32,7 +32,7 @@ def _plot_inputs_page(
     ncols = 1 + 2 * (len(range_features) + len(range_responses))
     fig, grid = shared.get_figure_and_grid(nrows, ncols)
     for idx_sample in range_samples:
-        axes = shared.get_axis_generator_for_sample_row(grid, idx_sample)
+        axes = shared.get_axis_iterator_for_sample_row(grid, idx_sample)
         for idx_feature in range_features:
             shared.plot_raw_features(sampled, idx_sample, idx_feature, axes.next(), idx_sample == 0, idx_feature == 0)
         for idx_feature in range_features:

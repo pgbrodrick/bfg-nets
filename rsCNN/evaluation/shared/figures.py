@@ -17,10 +17,9 @@ def get_figure_and_grid(nrows, ncols):
     return fig, grid
 
 
-def get_axis_generator_for_sample_row(grid, idx_sample):
+def get_axis_iterator_for_sample_row(grid, idx_sample):
     num_cols = grid.get_geometry()[1]
-    for idx_col in range(num_cols):
-        yield plt.subplot(grid[idx_sample, idx_col])
+    return iter([plt.subplot(grid[idx_sample, idx_col]) for idx_col in range(num_cols)])
 
 
 def plot_figures_iterating_through_samples_features_responses(
