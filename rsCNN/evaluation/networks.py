@@ -6,7 +6,7 @@ import numpy as np
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
 
-def print_model_summary(model):
+def print_model_summary(model: keras.Model) -> plt.Figure:
     stringlist = ['CNN Architecture Summary']
     model.summary(print_fn=lambda x: stringlist.append(x))
     model_summary_string = "\n".join(stringlist)
@@ -16,14 +16,6 @@ def print_model_summary(model):
     plt.axis('off')
 
     return fig
-
-
-def adjust_axis(lax):
-    for sp in lax.spines:
-        lax.spines[sp].set_color('white')
-        lax.spines[sp].set_linewidth(2)
-    lax.set_xticks([])
-    lax.set_yticks([])
 
 
 def visualize_feature_progression(data_sequence, model, compact=False, max_filters=10, item_index=0):
@@ -90,7 +82,7 @@ def visualize_feature_progression(data_sequence, model, compact=False, max_filte
             ax = fig.add_axes([ip[0], ip[1], image_size, image_size], zorder=max_filters+1-_iii)
             top = max(top, ip[1]+image_size)
             plt.imshow(tp, vmin=np.nanpercentile(tp, 0), vmax=np.nanpercentile(tp, 100))
-            adjust_axis(ax)
+            _adjust_axis(ax)
             if (_iii == 0):
                 plt.xlabel(layer_names[_l])
 
@@ -101,3 +93,11 @@ def visualize_feature_progression(data_sequence, model, compact=False, max_filte
     plt.axis('off')
     plt.text(0, 0, tit, ha='center', va='center')
     return [fig]
+
+
+def _adjust_axis(lax):
+    for sp in lax.spines:
+        lax.spines[sp].set_color('white')
+        lax.spines[sp].set_linewidth(2)
+    lax.set_xticks([])
+    lax.set_yticks([])
