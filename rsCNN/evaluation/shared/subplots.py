@@ -1,20 +1,16 @@
 from typing import Union
 
-from matplotlib import colors, patches
+from matplotlib import patches
 import matplotlib.pyplot as plt
 import numpy as np
 
 from rsCNN.evaluation import samples
+from rsCNN.evaluation.shared import colormaps
 
 
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
 
-_COLOR_CORRECT = (158, 202, 225)
-_COLOR_INCORRECT = (253, 174, 107)
-_COLORMAP_ERROR = colors.ListedColormap([_COLOR_INCORRECT, _COLOR_CORRECT])
-
-_COLORMAP_WEIGHTS = 'Greys_r'
 _FLOAT_DECIMALS = 2
 
 
@@ -134,7 +130,7 @@ def plot_weights(sampled: samples.Samples, idx_sample: int, ax: plt.Axes, add_xl
     min_, max_ = sampled.weights_range[0, :]
     weights = sampled.weights[idx_sample, :].copy()
     weights[weights == 0] = np.nan
-    ax.imshow(weights, vmin=min_, vmax=max_, cmap=_COLORMAP_WEIGHTS)
+    ax.imshow(weights, vmin=min_, vmax=max_, cmap=colormaps.COLORMAP_WEIGHTS)
     ax.set_xticks([])
     ax.set_yticks([])
     if add_xlabel:
@@ -157,7 +153,7 @@ def plot_error_categorical(
     max_ = 1
     actual = np.argmax(sampled.raw_responses[idx_sample, :], axis=-1)
     predicted = np.argmax(sampled.raw_predictions[idx_sample, :], axis=-1)
-    ax.imshow(predicted == actual, vmin=min_, vmax=max_, cmap=_COLORMAP_ERROR)
+    ax.imshow(predicted == actual, vmin=min_, vmax=max_, cmap=colormaps.COLORMAP_ERROR)
     ax.set_xticks([])
     ax.set_yticks([])
     if add_xlabel:
@@ -180,7 +176,7 @@ def plot_raw_error_regression(
         sampled.raw_responses[idx_sample, :, :, idx_response]
     min_ = float(np.nanmin(error))
     max_ = float(np.nanmax(error))
-    ax.imshow(error, vmin=min_, vmax=max_, cmap=_COLORMAP_ERROR)
+    ax.imshow(error, vmin=min_, vmax=max_, cmap=colormaps.COLORMAP_ERROR)
     ax.set_xticks([])
     ax.set_yticks([])
     if add_xlabel:
@@ -202,7 +198,7 @@ def plot_transformed_error_regression(
         sampled.trans_responses[idx_sample, :, :, idx_response]
     min_ = float(np.nanmin(error))
     max_ = float(np.nanmax(error))
-    ax.imshow(error, vmin=min_, vmax=max_, cmap=_COLORMAP_ERROR)
+    ax.imshow(error, vmin=min_, vmax=max_, cmap=colormaps.COLORMAP_ERROR)
     ax.set_xticks([])
     ax.set_yticks([])
     if add_xlabel:

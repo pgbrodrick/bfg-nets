@@ -47,11 +47,9 @@ def create_report(
         # Expanded network visualization
         for fig in networks.visualize_feature_progression(train_sequence, model):
             pdf.savefig(fig, bbox_inches='tight')
-
         # Plot Spatial Error
-        for fig in results.spatial_error(model, train_sequence):
+        for fig in results.plot_spatial_error(sampled_train):
             pdf.savefig(fig, bbox_inches='tight')
-
         # Plot Training Sequence
         for fig in results.single_sequence_prediction_histogram(model, train_sequence, 'Training'):
             pdf.savefig(fig, bbox_inches='tight')
