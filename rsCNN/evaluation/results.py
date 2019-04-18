@@ -32,9 +32,13 @@ def _plot_results_page(
         range_samples: range,
         range_responses: range
 ) -> plt.Figure:
+    # TODO:  the has_softmax check needs to be updated in the future. I think it's probably still useful to show the
+    #  most likely class predicted by the softmax, but it's not a sufficient check for categorical data. That means
+    #  that the regression or categorical plot check below is going to be wrong in some cases. We can wait to see how
+    #  Phil handles data types in the data config.
     has_softmax = sampled.network_config['architecture_options']['output_activation'] == 'softmax'
     nrows = len(range_samples)
-    ncols = 1 + 4 * len(range_responses) + int(has_softmax)
+    ncols = 1 + (4 + 2 * int(not has_softmax)) * len(range_responses) + 2 * int(has_softmax)
     fig, grid = shared.get_figure_and_grid(nrows, ncols)
     for idx_sample in range_samples:
         idx_col = 0
@@ -51,10 +55,23 @@ def _plot_results_page(
             ax = plt.subplot(grid[idx_sample, idx_col])
             shared.plot_transformed_predictions(sampled, idx_sample, idx_response, ax, idx_sample == 0, False)
             idx_col += 1
-            if has_softmax:
+            if not has_softmax:
                 ax = plt.subplot(grid[idx_sample, idx_col])
-                shared.plot_softmax(sampled, idx_sample, ax, idx_sample == 0, False)
+                shared.plot_raw_error_regression(sampled, idx_sample, idx_response, ax, idx_sample == 0, False)
                 idx_col += 1
+                ax = plt.subplot(grid[idx_sample, idx_col])
+                shared.plot_transformed_error_regression(sampled, idx_sample, idx_response, ax, idx_sample == 0, False)
+                idx_col += 1
+        # Note: if softmax aka categorical, then we only need one plot per sample, not per response
+        if has_softmax:
+            ax = plt.subplot(grid[idx_sample, idx_col])
+            # TODO:  we're not really "plotting softmax", what's a better name for this? It's escaping me!
+            shared.plot_softmax(sampled, idx_sample, ax, idx_sample == 0, False)
+            idx_col += 1
+            ax = plt.subplot(grid[idx_sample, idx_col])
+            # TODO:  same naming issue here
+            shared.plot_error_categorical(sampled, idx_sample, ax, idx_sample == 0, False)
+            idx_col += 1
         ax = plt.subplot(grid[idx_sample, idx_col])
         shared.plot_weights(sampled, idx_sample, ax, idx_sample == 0, False)
     return fig
