@@ -13,6 +13,8 @@ class Samples(object):
     num_samples = None
     num_features = None
     num_responses = None
+    has_features_transform = None
+    has_responses_transform = None
     raw_features = None
     raw_features_range = None
     trans_features = None
@@ -65,17 +67,21 @@ class Samples(object):
             predictions: np.array
     ) -> None:
         if type(self.data_sequence.feature_scaler) is scalers.NullScaler:
+            self.has_features_transform = False
             self.raw_features = sampled_features
             self.trans_features = None
         else:
+            self.has_features_transform = True
             self.raw_features = self.data_sequence.feature_scaler.inverse_transform(sampled_features)
             self.trans_features = sampled_features
         if type(self.data_sequence.response_scaler) is scalers.NullScaler:
+            self.has_responses_transform = False
             self.raw_responses = sampled_responses
             self.trans_responses = None
             self.raw_predictions = predictions
             self.trans_predictions = None
         else:
+            self.has_responses_transform = True
             self.raw_responses = self.data_sequence.response_scaler.inverse_transform(sampled_responses)
             self.trans_responses = sampled_responses
             self.raw_predictions = self.data_sequence.response_scaler.inverse_transform(predictions)
