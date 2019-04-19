@@ -14,11 +14,7 @@ from rsCNN.evaluation import samples, shared
 
 
 def print_classification_report(sampled: samples.Samples) -> List[plt.Figure]:
-    classes = range(sampled.num_responses)
-    actual = np.argmax(sampled.raw_responses, axis=-1).ravel()
-    actual = actual[np.isfinite(actual)]
-    predicted = np.argmax(sampled.raw_predictions, axis=-1).ravel()
-    predicted = predicted[np.isfinite(predicted)]
+    classes, actual, predicted = _calculate_classification_classes_actual_and_predicted(sampled)
     classification_report = sklearn.metrics.classification_report(actual, predicted, classes)
     fig, ax = plt.subplots(figsize=(8.5, 11), nrows=1, ncols=1)
     ax.text(0, 0, classification_report, **{'fontsize': 8, 'fontfamily': 'monospace'})
@@ -27,14 +23,9 @@ def print_classification_report(sampled: samples.Samples) -> List[plt.Figure]:
 
 
 def plot_confusion_matrix(sampled: samples.Samples) -> [plt.Figure]:
-    classes = range(sampled.num_responses)
-    actual = np.argmax(sampled.raw_responses, axis=-1).ravel()
-    actual = actual[np.isfinite(actual)]
-    predicted = np.argmax(sampled.raw_predictions, axis=-1).ravel()
-    predicted = predicted[np.isfinite(predicted)]
+    classes, actual, predicted = _calculate_classification_classes_actual_and_predicted(sampled)
     confusion_matrix = sklearn.metrics.confusion_matrix(actual, predicted, labels=classes)
     normed_matrix = confusion_matrix.astype(float) / confusion_matrix.sum(axis=1)[:, np.newaxis]
-
     fig, axes = plt.subplots(figsize=(16, 8), nrows=1, ncols=2)
     for idx_ax, ax in enumerate(axes):
         if idx_ax == 0:
@@ -57,6 +48,15 @@ def plot_confusion_matrix(sampled: samples.Samples) -> [plt.Figure]:
                 ax.text(j, i, format(matrix[i, j], value_format), ha='center', va='center',
                         color='white' if matrix[i, j] > max_ / 2. else 'black')
     return [fig]
+
+
+def _calculate_classification_classes_actual_and_predicted(sampled):
+    classes = range(sampled.num_responses)
+    actual = np.argmax(sampled.raw_responses, axis=-1).ravel()
+    actual = actual[np.isfinite(actual)]
+    predicted = np.argmax(sampled.raw_predictions, axis=-1).ravel()
+    predicted = predicted[np.isfinite(predicted)]
+    return classes, actual, predicted
 
 
 def plot_raw_and_transformed_prediction_samples(
