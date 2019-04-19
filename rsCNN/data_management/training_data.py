@@ -188,7 +188,7 @@ def check_data_matches(set_a, set_b, set_b_is_vector=False, set_c=[], set_c_is_v
         a_proj = get_proj(set_a[n], False)
         b_proj = get_proj(set_b[n], set_b_is_vector)
 
-        if (a_proj is not b_proj and ignore_projections is False):
+        if (a_proj != b_proj and ignore_projections is False):
             raise Exception(('projection mismatch between', set_a[n], 'and', set_b[n]))
 
         if (len(set_c) > 0):
@@ -203,15 +203,17 @@ def check_data_matches(set_a, set_b, set_b_is_vector=False, set_c=[], set_c_is_v
         if (set_b_is_vector == False):
             dataset_a = gdal.Open(set_a[n], gdal.GA_ReadOnly)
             dataset_b = gdal.Open(set_b[n], gdal.GA_ReadOnly)
+            a_trans = dataset_a.GetGeoTransform()
+            b_trans = dataset_b.GetGeoTransform()
 
             if (dataset_a.GetProjection() != dataset_b.GetProjection() and ignore_projections is False):
                 raise Exception(('projection mismatch between', set_a[n], 'and', set_b[n]))
 
-            if (dataset_a.GetGeoTransform()[1,5] != dataset_b.GetGeoTransform()[1,5]):
+            if (a_trans[1] != b_trans[1] or a_trans[5] != b_trans[5]):
                 raise Exception(('resolution mismatch between', set_a[n], 'and', set_b[n]))
 
             if (ignore_extents is False):
-                if (dataset_a.GetGeoTransform()[0,3] != dataset_b.GetGeoTransform()[0,3]):
+                if (a_trans[0] != b_trans[0] or a_trans[3] != b_trans[3]):
                     raise Exception(('upper left mismatch between', set_a[n], 'and', set_b[n]))
 
                 if (dataset_a.RasterXSize != dataset_b.RasterXSize or dataset_a.RasterYSize != dataset_b.RasterYSize):
@@ -221,15 +223,17 @@ def check_data_matches(set_a, set_b, set_b_is_vector=False, set_c=[], set_c_is_v
             if (set_c[n] is not None and set_c_is_vector == False):
                 dataset_a = gdal.Open(set_a[n], gdal.GA_ReadOnly)
                 dataset_c = gdal.Open(set_c[n], gdal.GA_ReadOnly)
+                a_trans = dataset_a.GetGeoTransform()
+                c_trans = dataset_c.GetGeoTransform()
 
                 if (dataset_a.GetProjection() != dataset_c.GetProjection() and ignore_projections == False):
                     raise Exception(('projection mismatch between', set_a[n], 'and', set_c[n]))
 
-                if (dataset_a.GetGeoTransform()[1,5] != dataset_c.GetGeoTransform()[1,5]):
-                    raise Exception(('geotransform mismatch between', set_a[n], 'and', set_c[n]))
+                if (a_trans[1] != c_trans[1] or a_trans[5] != c_trans[5]):
+                    raise Exception(('resolution mismatch between', set_a[n], 'and', set_c[n]))
 
                 if (ignore_extents is False):
-                    if (dataset_a.GetGeoTransform()[0,3] != dataset_c.GetGeoTransform()[0,3]):
+                    if (a_trans[0] != c_trans[0] or a_trans[3] != c_trans[3]):
                         raise Exception(('upper left mismatch between', set_a[n], 'and', set_c[n]))
 
                     if (dataset_a.RasterXSize != dataset_c.RasterXSize or dataset_a.RasterYSize != dataset_c.RasterYSize):
@@ -322,48 +326,45 @@ def read_chunk(f_set,
             mask = b_set.ReadAsArray(boundary_upper_left[0],boundary_upper_left[1],window_diameter,window_diameter)
 
         if (mask is not None):
-            mask = mask != config.boundary_bad_value
+            mask = mask == config.boundary_bad_value
 
-            if (np.sum(mask) == 0):
+            if (np.sum(mask) == np.prod(mask.shape)):
                 return None, None
-
+        if (mask is None):
+            mask = np.zeros((window_diameter,window_diameter)).astype(bool)
 
         # Next check to see if we have a response, if so read all
+        local_response = np.zeros((window_diameter, window_diameter, r_set.RasterCount))
+        for _b in range(r_set.RasterCount):
+            local_response[:,:,_b] = r_set.GetRasterBand(_b+1).ReadAsArray(response_upper_left[0],response_upper_left[1],window_diameter,window_diameter)
+        local_response[local_response == config.response_nodata_value] = np.nan
+        local_response[np.isfinite(local_response) == False] = np.nan
+        local_response[mask,:] = np.nan
 
+        if (config.response_min_value is not None):
+            local_response[local_response < config.response_min_value] = np.nan
+        if (config.response_max_value is not None):
+            local_response[local_response > config.response_max_value] = np.nan
+
+        if (np.nansum(local_response) == np.prod(local_response.shape)):
+            return None, None
+        mask[np.any(np.isnan(local_response),axis=-1)] = True
+            
         # Last, read in features
+        local_feature = np.zeros((window_diameter, window_diameter, f_set.RasterCount))
+        for _b in range(0, f_set.RasterCount):
+            local_feature[:, :, _b] = f_set.GetRasterBand(_b+1).ReadAsArray(feature_upper_left[0],feature_upper_left[1],window_diameter,window_diameter)
+
+        local_feature[local_feature == config.feature_nodata_value] = np.nan
+        local_feature[np.isfinite(local_feature) == False] = np.nan
+        local_feature[mask,:] = np.nan
+        if (np.nansum(local_feature) == np.prod(local_feature.shape)):
+            return None, None
+        mask[np.any(np.isnan(local_response),axis=-1)] = True
 
         # Final check, and return
-
-
-        feature = np.zeros((window_diameter, window_diameter, f_set.RasterCount))
-        for n in range(0, f_set.RasterCount):
-            feature[:, :, n] = f_set.GetRasterBand(n+1).ReadAsArray()
-
-        response = gdal.Open(config.raw_response_file_list[_i]).ReadAsArray().astype(float)
-        if (config.response_min_value is not None):
-            response[response < config.response_min_value] = config.response_nodata_value
-        if (config.response_max_value is not None):
-            response[response > config.response_max_value] = config.response_nodata_value
-
-        if (len(config.boundary_file_list) > 0):
-            if (config.boundary_file_list[_i] is not None):
-                if (config.boundary_as_vectors):
-                    mask = rasterize_vector(config.boundary_file_list[_i], dataset.GetGeoTransform(), [
-                                            feature.shape[0], feature.shape[1]])
-                else:
-                    mask = gdal.Open(config.boundary_file_list[_i]).ReadAsArray().astype(float)
-                feature[mask == config.boundary_bad_value, :] = config.feature_nodata_value
-                response[mask == config.boundary_bad_value] = config.response_nodata_value
-
-        # ensure nodata values are consistent
-        if (not dataset.GetRasterBand(1).GetNoDataValue() is None):
-            feature[feature == dataset.GetRasterBand(1).GetNoDataValue()] = config.feature_nodata_value
-        feature[np.isnan(feature)] = config.feature_nodata_value
-        feature[np.isinf(feature)] = config.feature_nodata_value
-
-        # TODO: consider whether we want the lines below included (or if we want them as an option)
-        response[feature[:, :, 0] == config.feature_nodata_value] = config.response_nodata_value
-        feature[response == config.response_nodata_value, :] = config.feature_nodata_value
+        local_feature[mask,:] = np.nan
+        local_response[mask,:] = np.nan
 
         return local_feature, local_response
 
@@ -402,11 +403,22 @@ def build_training_data_ordered(config):
         if (len(config.max_samples) != len(config.raw_feature_file_list)):
             raise Exception('max_samples must equal feature_file_list length, or be an integer.')
 
-    features = []
-    responses = []
+    feature_set = gdal.Open(config.raw_feature_file_list[0], gdal.GA_ReadOnly)
+    response_set = gdal.Open(config.raw_response_file_list[0], gdal.GA_ReadOnly)
+    n_features = feature_set.RasterCount
 
-    n_features = np.nan
+    features = np.memmap(config.data_save_name + '_feature_munge_memmap.npy',
+                         dtype=np.float32,
+                         mode='w+',
+                         shape=(config.max_samples, config.window_radius*2, config.window_radius*2, n_features))
 
+    responses = np.memmap(config.data_save_name + '_response_munge_memmap.npy',
+                         dtype=np.float32,
+                         mode='w+',
+                         shape=(config.max_samples, config.window_radius*2, config.window_radius*2, response_set.RasterCount))
+
+    sample_index = 0
+    
     for _i in range(0, len(config.raw_feature_file_list)):
 
         # open requisite datasets
@@ -417,9 +429,6 @@ def build_training_data_ordered(config):
             if (config.boundary_file_list[_i] is not None):
                 if (config.boundary_as_vectors is False):
                     boundary_set = gdal.Open(config.boundary_file_list[_i],gdal.GA_ReadOnly)
-
-        if (np.isnan(n_features)):
-            n_features = feature_set.RasterCount
 
         f_trans = feature_set.GetGeoTransform()
         r_trans = response_set.GetGeoTransform()
@@ -454,15 +463,18 @@ def build_training_data_ordered(config):
 
         f_ul = np.array([f_x_ul, f_y_ul])
         r_ul = np.array([r_x_ul, r_y_ul])
-        if (b_x_ul is not None):
+        if (b_trans is not None):
             b_ul = np.array([b_x_ul, b_y_ul])
         else:
             b_ul = None
 
-        collist = [x for x in range(config.window_radius, x_len -
-                                    config.window_radius, config.internal_window_radius*2)]
-        rowlist = [y for y in range(config.window_radius, y_len -
-                                    config.window_radius, config.internal_window_radius*2)]
+
+        collist = [x for x in range(0, 
+                                    int(x_len - 2*config.window_radius), 
+                                    int(config.internal_window_radius*2))]
+        rowlist = [y for y in range(0, 
+                                    int(y_len - 2*config.window_radius), 
+                                    int(config.internal_window_radius*2))]
 
         colrow = np.zeros((len(collist)*len(rowlist), 2)).astype(int)
         colrow[:, 0] = np.matlib.repmat(np.array(collist).reshape((-1, 1)), 1, len(rowlist)).flatten()
@@ -508,15 +520,15 @@ def build_training_data_ordered(config):
                                                            boundary_upper_left = b_ul + colrow[_cr, :])
 
             if (local_feature is not None):
-                features.append(local_feature)
-                responses.append(local_response)
+                features[sample_index,...] = local_feature.copy()
+                responses[sample_index,...] = local_response.copy()
+                sample_index += 1
 
-                if (len(features) >= config.max_samples):
+                if (sample_index >= config.max_samples):
                     break
 
-    # stack images up
-    features = np.stack(features)
-    responses = np.stack(responses)
+    features.resize((sample_index,features.shape[1],features.shape[2],features.shape[3]),refcheck=False)
+    responses.resize((sample_index,responses.shape[1],responses.shape[2],responses.shape[3]),refcheck=False)
 
     # randombly permute data to reshuffle everything
     perm = np.random.permutation(features.shape[0])
@@ -530,12 +542,12 @@ def build_training_data_ordered(config):
         idx_finish = int(round((f + 1) / config.n_folds * len(fold_assignments)))
         fold_assignments[idx_start:idx_finish] = f
 
-    # reshape images for the CNN
-    features = features.reshape((features.shape[0], features.shape[1], features.shape[2], n_features))
-    responses = responses.reshape((responses.shape[0], responses.shape[1], responses.shape[2], 1))
-
-    weights = np.ones((responses.shape[0], responses.shape[1], responses.shape[2], 1))
-    weights[responses[..., 0] == config.response_nodata_value] = 0
+    weights = np.memmap(config.data_save_name + '_weights_munge_memmap.npy',
+                         dtype=np.float32,
+                         mode='w+',
+                         shape=(features.shape[0],features.shape[1],features.shape[2],1))
+    weights[:,:,:,:] = 1
+    weights[np.isnan(responses[...,0])] = 0
 
     if (config.internal_window_radius != config.window_radius):
         buf = config.window_radius - config.internal_window_radius
@@ -546,13 +558,9 @@ def build_training_data_ordered(config):
 
     _logger.debug('Feature shape: {}'.format(features.shape))
     _logger.debug('Response shape: {}'.format(responses.shape))
-
-    config.response_shape = responses.shape
-    config.feature_shape = features.shape
+    _logger.debug('Weight shape: {}'.format(weights.shape))
 
     if (config.data_build_category == 'ordered_categorical'):
-        # Lists are a hack so that the calculate_categorical_weights can be written for external
-        # use cases
         un_resp = np.unique(responses)
         un_resp = un_resp[un_resp != config.response_nodata_value]
         cat_responses = np.zeros((responses.shape[0], responses.shape[1], responses.shape[2], len(un_resp)))
@@ -560,18 +568,18 @@ def build_training_data_ordered(config):
             cat_responses[..., _r] = np.squeeze(responses == un_resp[_r])
         responses = cat_responses
 
-    features = [features[fold_assignments == fold, ...] for fold in range(config.n_folds)]
-    responses = [responses[fold_assignments == fold, ...] for fold in range(config.n_folds)]
-    weights = [weights[fold_assignments == fold, ...] for fold in range(config.n_folds)]
+    output_features = [features[fold_assignments == fold, ...] for fold in range(config.n_folds)]
+    output_responses = [responses[fold_assignments == fold, ...] for fold in range(config.n_folds)]
+    output_weights = [weights[fold_assignments == fold, ...] for fold in range(config.n_folds)]
     if (config.data_build_category == 'ordered_categorical'):
-        weights = calculate_categorical_weights(responses, weights, config)
+        output_weights = calculate_categorical_weights(output_responses, output_weights, config)
 
     if (config.data_save_name is not None):
         for fold in range(config.n_folds):
-            np.save(config.feature_files[fold], features[fold])
-            np.save(config.response_files[fold], responses[fold])
-            np.save(config.weight_files[fold], weights[fold])
+            np.save(config.feature_files[fold], output_features[fold])
+            np.save(config.response_files[fold], output_responses[fold])
+            np.save(config.weight_files[fold], output_weights[fold])
 
         Path(config.successful_data_save_file).touch()
 
-    return features, responses, weights
+    return output_features, output_responses, output_weights
