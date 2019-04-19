@@ -2,7 +2,7 @@ import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 
 
-def plot_history(history):
+def plot_history(history: dict) -> [plt.Figure]:
     fig = plt.figure(figsize=(12, 10))
     gs1 = gridspec.GridSpec(2, 2)
 
@@ -41,4 +41,4 @@ def plot_history(history):
 
     # Add figure title
     plt.suptitle('Training History')
-    return fig
+    return [fig]

@@ -10,7 +10,7 @@ from rsCNN.evaluation import samples
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
 
-def print_model_summary(model: keras.Model) -> plt.Figure:
+def print_model_summary(model: keras.Model) -> [plt.Figure]:
     stringlist = ['CNN Architecture Summary']
     model.summary(print_fn=lambda x: stringlist.append(x))
     model_summary_string = "\n".join(stringlist)

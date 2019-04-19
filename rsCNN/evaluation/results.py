@@ -13,7 +13,7 @@ from rsCNN.evaluation import samples, shared
 # TODO:  I want to see one-hot encoded categories, e.g., both geomorphic and benthic, as single categorical plots
 
 
-def plot_confusion_matrix(sampled: samples.Samples) -> plt.Figure:
+def plot_confusion_matrix(sampled: samples.Samples) -> [plt.Figure]:
     classes = range(sampled.num_responses)
     actual = np.argmax(sampled.raw_responses, axis=-1).ravel()
     actual = actual[np.isfinite(actual)]
@@ -43,7 +43,7 @@ def plot_confusion_matrix(sampled: samples.Samples) -> plt.Figure:
             for j in range(matrix.shape[1]):
                 ax.text(j, i, format(matrix[i, j], value_format), ha='center', va='center',
                         color='white' if matrix[i, j] > max_ / 2. else 'black')
-    return fig
+    return [fig]
 
 
 def plot_raw_and_transformed_prediction_samples(
