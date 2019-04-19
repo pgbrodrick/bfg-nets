@@ -32,20 +32,13 @@ def plot_model_loss_comparison(model_histories: List[dict]) -> List[plt.Figure]:
 
 
 def plot_model_timing_comparison(model_histories: List[dict]) -> List[plt.Figure]:
-    # TODO:  add validation timings and switch to new timing keys
-
-    def _get_training_time(history):
-        total_time = 0
-        for start, finish in zip(history['epoch_start'], history['epoch_finish']):
-            total_time += (finish - start).seconds
-        return total_time / 60
-
+    # TODO:  add validation/test timings
     fig, ax = plt.subplots(figsize=(8, 6))
     labels = list()
     timings = list()
     for history in sorted(model_histories, key=lambda x: x['model_name']):
         labels.append(history['model_name'])
-        timings.append(_get_training_time(history))
+        timings.append((history['train_finish'] - history['train_start']).minutes)
     ax.barh(np.arange(len(timings)), timings, tick_label=labels)
     ax.set_xlabel('Minutes')
     ax.set_title('Training times')
