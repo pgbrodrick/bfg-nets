@@ -1,12 +1,13 @@
 import os
+from typing import List
 
 import keras
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 from rsCNN.data_management.sequences import BaseSequence
-from rsCNN.evaluation import histories, inputs, networks, results, samples
-from rsCNN.networks import experiments
+from rsCNN.evaluation import comparisons, histories, inputs, networks, results, samples
+from rsCNN.networks import experiments, histories
 
 
 plt.switch_backend('Agg')  # Needed for remote server plotting
@@ -19,20 +20,20 @@ plt.switch_backend('Agg')  # Needed for remote server plotting
 #  and incorrect near deep water. Is this something we can generalize for remote sensing problems?
 
 
-def create_report_from_experiment(experiment: experiments.Experiment):
-    return create_report(
+def create_model_report_from_experiment(experiment: experiments.Experiment):
+    return create_model_report(
         experiment.model, experiment.train_sequence, experiment.validation_sequence, experiment.test_sequence,
         experiment.network_config, experiment.history
     )
 
 
-def create_report(
+def create_model_report(
         model: keras.Model,
         network_config: dict,
         train_sequence: BaseSequence,
         validation_sequence: BaseSequence = None,
         test_sequence: BaseSequence = None,
-        history: dict = None,
+        history: dict = None
 ) -> None:
     # TODO:  come up with consistent and general defaults for all visualization parameters (e.g., max_pages) and
     #  update the function definitions to match
@@ -72,3 +73,23 @@ def create_report(
         # weight_visualization
         # visual_stitching_artifact_check
         # quant_stitching_artificat_check
+
+
+def create_model_comparison_report(
+        filepath_out: str,
+        dirs_histories: List[str] = None,
+        paths_histories: List[str] = None
+) -> None:
+    assert dirs_histories or paths_histories, \
+        'Either provide a directory containing model histories or paths to model histories'
+    if not paths_histories:
+        paths_histories = list()
+    if dirs_histories:
+        paths_histories.extend(comparisons.walk_directories_for_model_histories(dirs_histories))
+    model_histories = [histories.load_history(os.path.dirname(p), os.path.basename(p)) for p in paths_histories]
+    with PdfPages(filepath_out) as pdf:
+        figures = list()
+        figures.extend(comparisons.plot_model_loss_comparison(model_histories))
+        figures.extend(comparisons.plot_model_timing_comparison(model_histories))
+        for fig in figures:
+            pdf.savefig(fig, bbox_inches='tight')

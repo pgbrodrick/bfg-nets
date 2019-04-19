@@ -1,13 +1,12 @@
 from typing import List
 
 import os
-import pickle
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 
-def walk_directories_for_model_history_paths(directories: List[str]) -> List[str]:
+def walk_directories_for_model_histories(directories: List[str]) -> List[str]:
     paths_histories = list()
     for directory in directories:
         for path, dirs, files in os.walk(directory):
@@ -15,14 +14,6 @@ def walk_directories_for_model_history_paths(directories: List[str]) -> List[str
                 if file_ == 'history.pkl':
                     paths_histories.append(os.path.join(path, file_))
     return paths_histories
-
-
-def load_model_histories(paths_histories: List[str]) -> List[dict]:
-    histories = list()
-    for path in paths_histories:
-        with open(path, 'rb') as file_:
-            histories.append(pickle.load(file_))
-    return histories
 
 
 def plot_model_loss_comparison(model_histories: List[dict]) -> List[plt.Figure]:

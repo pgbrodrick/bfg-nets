@@ -6,8 +6,8 @@ from typing import Union
 FILENAME_HISTORY = 'history.pkl'
 
 
-def load_history(dir_history: str) -> Union[dict, None]:
-    filepath = os.path.join(dir_history, FILENAME_HISTORY)
+def load_history(dir_history: str, filename: str = None) -> Union[dict, None]:
+    filepath = os.path.join(dir_history, filename or FILENAME_HISTORY)
     if not os.path.exists(filepath):
         return None
     with open(filepath, 'rb') as file_:
@@ -15,10 +15,10 @@ def load_history(dir_history: str) -> Union[dict, None]:
     return history
 
 
-def save_history(history: dict, dir_history: str) -> None:
+def save_history(history: dict, dir_history: str, filename: str = None) -> None:
     if not os.path.exists(dir_history):
         os.makedirs(dir_history)
-    filepath = os.path.join(dir_history, FILENAME_HISTORY)
+    filepath = os.path.join(dir_history, filename or FILENAME_HISTORY)
     with open(filepath, 'wb') as file_:
         pickle.dump(history, file_)
 
