@@ -222,7 +222,7 @@ def _add_internal_window_to_subplot(sampled: samples.Samples, ax: plt.Axes) -> N
         return
     buffer = int((inshape[0] - internal_window_radius * 2) / 2)
     rect = patches.Rectangle(
-        (buffer, buffer), internal_window_radius * 2, internal_window_radius * 2, linewidth=1, edgecolor='white',
+        (buffer, buffer), internal_window_radius * 2, internal_window_radius * 2, linewidth=1, edgecolor='red',
         facecolor='none'
     )
     ax.add_patch(rect)
