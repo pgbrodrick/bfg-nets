@@ -40,10 +40,10 @@ def create_report(
     with PdfPages(filepath_report) as pdf:
         figures = list()
         # Plot model summary
-        figures.append(networks.print_model_summary(model))
+        figures.extend(networks.print_model_summary(model))
         # Plot classification error
         if network_config['architecture_options']['output_activation'] == 'softmax':
-            figures.append(results.plot_confusion_matrix(sampled_train))
+            figures.extend(results.plot_confusion_matrix(sampled_train))
         # Plot input data
         figures.extend(inputs.plot_raw_and_transformed_input_samples(sampled_train))
         # Plot results
@@ -61,7 +61,7 @@ def create_report(
         if (validation_sequence is not None):
             figures.extend(results.single_sequence_prediction_histogram(model, validation_sequence, 'Validation'))
         # Model history
-        figures.append(history.plot_history(history))
+        figures.extend(history.plot_history(history))
         for fig in figures:
             pdf.savefig(fig, bbox_inches='tight')
 
