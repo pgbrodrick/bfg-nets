@@ -34,6 +34,8 @@ def create_report(
         test_sequence: BaseSequence = None,
         history: dict = None,
 ) -> None:
+    # TODO:  come up with consistent and general defaults for all visualization parameters (e.g., max_pages) and
+    #  update the function definitions to match
     # TODO:  add validation and testing sequence plots where it makes sense, e.g., confusion matrix
     filepath_report = os.path.join(network_config['model']['dir_out'], 'evaluation_report.pdf')
     sampled_train = samples.Samples(train_sequence, model, network_config)
