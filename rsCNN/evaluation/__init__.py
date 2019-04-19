@@ -30,12 +30,16 @@ def create_report(
         test_sequence: BaseSequence = None,
         history: dict = None,
 ) -> None:
+    # TODO:  add validation and testing sequence plots where it makes sense, e.g., confusion matrix
     filepath_report = os.path.join(network_config['model']['dir_out'], 'evaluation_report.pdf')
     sampled_train = samples.Samples(train_sequence, model, network_config)
     with PdfPages(filepath_report) as pdf:
         figures = list()
         # Plot model summary
         figures.append(networks.print_model_summary(model))
+        # Plot classification error
+        if network_config['architecture_options']['output_activation'] == 'softmax':
+            figures.append(results.plot_confusion_matrix(sampled_train))
         # Plot input data
         figures.extend(inputs.plot_raw_and_transformed_input_samples(sampled_train))
         # Plot results
