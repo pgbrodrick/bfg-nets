@@ -4,12 +4,47 @@ import keras
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
+import sklearn.metrics
 
 from rsCNN.data_management.sequences import BaseSequence
 from rsCNN.evaluation import samples, shared
 
 
 # TODO:  I want to see one-hot encoded categories, e.g., both geomorphic and benthic, as single categorical plots
+
+
+def plot_confusion_matrix(sampled: samples.Samples) -> plt.Figure:
+    classes = range(sampled.num_responses)
+    actual = np.argmax(sampled.raw_responses, axis=-1).ravel()
+    actual = actual[np.isfinite(actual)]
+    predicted = np.argmax(sampled.raw_predictions, axis=-1).ravel()
+    predicted = predicted[np.isfinite(predicted)]
+    confusion_matrix = sklearn.metrics.confusion_matrix(actual, predicted, labels=classes)
+    normed_matrix = confusion_matrix.astype(float) / confusion_matrix.sum(axis=1)[:, np.newaxis]
+
+    fig, axes = plt.subplots(figsize=(16, 8), nrows=1, ncols=2)
+    for idx_ax, ax in enumerate(axes):
+        if idx_ax == 0:
+            title = 'Confusion matrix, with counts'
+            matrix = confusion_matrix
+            value_format = 'd'
+            max_ = np.nanmax(matrix)
+        else:
+            title = 'Normalized confusion matrix'
+            matrix = normed_matrix
+            value_format = '.2f'
+            max_ = 1
+        im = ax.imshow(matrix, interpolation='nearest', vmin=0, vmax=max_, cmap=shared.COLORMAP_METRICS)
+        ax.figure.colorbar(im, ax=ax, )
+        ax.set(xticks=np.arange(matrix.shape[1]), yticks=np.arange(matrix.shape[0]), xticklabels=classes,
+               yticklabels=classes, title=title, ylabel='True label', xlabel='Predicted label')
+        # Matrix element labels
+        for i in range(matrix.shape[0]):
+            for j in range(matrix.shape[1]):
+                ax.text(j, i, format(matrix[i, j], value_format), ha='center', va='center',
+                        color='white' if matrix[i, j] > max_ / 2. else 'black')
+    return fig
+
 
 def plot_raw_and_transformed_prediction_samples(
         sampled: samples.Samples,

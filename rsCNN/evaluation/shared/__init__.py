@@ -1,4 +1,4 @@
-from rsCNN.evaluation.shared.colormaps import COLORMAP_ERROR, COLORMAP_WEIGHTS
+from rsCNN.evaluation.shared.colormaps import COLORMAP_ERROR, COLORMAP_METRICS, COLORMAP_WEIGHTS
 from rsCNN.evaluation.shared.figures \
     import get_figure_and_grid, get_axis_iterator_for_sample_row, \
     plot_figures_iterating_through_samples_features_responses
