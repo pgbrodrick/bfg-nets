@@ -84,7 +84,6 @@ class BaseSequence(keras.utils.Sequence):
         _logger.debug('Convert nan features')
         if (self.nan_conversion_value is not None):
           features = self._convert_list_nans(features, self.nan_conversion_value)
-        
         _logger.debug('Append weights to responses for loss functions')
         responses_with_weights = [np.append(response, weight, axis=-1) for response, weight in zip(responses, weights)]
 

@@ -84,7 +84,7 @@ def build_or_load_data(config, rebuild=False):
     config.weights = weights
 
 
-def load_training_data(config):
+def load_training_data(config, writeable=False):
     """
         Loads and returns training data from disk based on the config savename
         Arguments:
@@ -100,24 +100,29 @@ def load_training_data(config):
         _logger.debug('no saved data')
         success = False
 
+    if (writeable is True):
+        mode = 'r+'
+    else:
+        mode = 'r'
+
     features = []
     responses = []
     weights = []
     for fold in range(config.n_folds):
         if (os.path.isfile(config.feature_files[fold])):
-            features.append(np.load(config.feature_files[fold], mmap_mode='r'))
+            features.append(np.load(config.feature_files[fold], mmap_mode=mode))
         else:
             success = False
             _logger.debug('failed read at {}'.format(config.feature_files[fold]))
             break
         if (os.path.isfile(config.response_files[fold])):
-            responses.append(np.load(config.response_files[fold], mmap_mode='r'))
+            responses.append(np.load(config.response_files[fold], mmap_mode=mode))
         else:
             _logger.debug('failed read at {}'.format(config.response_files[fold]))
             success = False
             break
         if (os.path.isfile(config.weight_files[fold])):
-            weights.append(np.load(config.weight_files[fold], mmap_mode='r'))
+            weights.append(np.load(config.weight_files[fold], mmap_mode=mode))
         else:
             _logger.debug('failed read at {}'.format(config.weight_files[fold]))
             success = False
@@ -375,19 +380,6 @@ def build_training_data_ordered(config):
         Arguments:
         config - object of type Data_Config with the requisite values for preparing training data (see __init__.py)
 
-
-        Return: 
-        features - 4d numpy array 
-          Array of data features, arranged as n,y,x,p, where n is the number of samples, y is the 
-          data y dimension (2*window_radius), x is the data x dimension (2*window_radius), 
-          and p is the number of features.
-        responses - 4d numpy array
-          Array of of data responses, arranged as n,y,x,p, where n is the number of samples, y is the 
-          data y dimension (2*window_radius), x is the data x dimension (2*window_radius), 
-          and p is the number of responses.  Each slice in the response dimension is a binary array o
-          f that response class value.
-        training_fold - numpy array 
-          An array indicating which sample belongs to which data fold, from 0 to n_folds-1.
     """
 
     assert config.raw_feature_file_list is not [], 'feature files to pull data from are required'
@@ -413,9 +405,9 @@ def build_training_data_ordered(config):
                          shape=(config.max_samples, config.window_radius*2, config.window_radius*2, n_features))
 
     responses = np.memmap(config.data_save_name + '_response_munge_memmap.npy',
-                         dtype=np.float32,
-                         mode='w+',
-                         shape=(config.max_samples, config.window_radius*2, config.window_radius*2, response_set.RasterCount))
+                          dtype=np.float32,
+                          mode='w+',
+                          shape=(config.max_samples, config.window_radius*2, config.window_radius*2, response_set.RasterCount))
 
     sample_index = 0
     
@@ -561,25 +553,29 @@ def build_training_data_ordered(config):
     _logger.debug('Weight shape: {}'.format(weights.shape))
 
     if (config.data_build_category == 'ordered_categorical'):
+        
         un_resp = np.unique(responses)
         un_resp = un_resp[un_resp != config.response_nodata_value]
-        cat_responses = np.zeros((responses.shape[0], responses.shape[1], responses.shape[2], len(un_resp)))
-        for _r in range(len(un_resp)):
-            cat_responses[..., _r] = np.squeeze(responses == un_resp[_r])
-        responses = cat_responses
 
-    output_features = [features[fold_assignments == fold, ...] for fold in range(config.n_folds)]
-    output_responses = [responses[fold_assignments == fold, ...] for fold in range(config.n_folds)]
-    output_weights = [weights[fold_assignments == fold, ...] for fold in range(config.n_folds)]
+        responses.resize((responses.shape[0],responses.shape[1],responses.shape[2],len(un_resp)),refcheck=False)
+
+        for _r in range(len(un_resp)-1,-1,-1):
+            responses[..., _r] = np.squeeze(responses[...,0] == un_resp[_r])
+
+    for fold in range(config.n_folds):
+       np.save(config.feature_files[fold], features[fold_assignments == fold,...]) 
+       np.save(config.response_files[fold], responses[fold_assignments == fold,...]) 
+       np.save(config.weight_files[fold], weights[fold_assignments == fold,...]) 
+
+    del features, responses, weights
     if (config.data_build_category == 'ordered_categorical'):
-        output_weights = calculate_categorical_weights(output_responses, output_weights, config)
-
-    if (config.data_save_name is not None):
-        for fold in range(config.n_folds):
-            np.save(config.feature_files[fold], output_features[fold])
-            np.save(config.response_files[fold], output_responses[fold])
-            np.save(config.weight_files[fold], output_weights[fold])
+        features, responses, weights, success = load_training_data(config, writeable=True)
+        weights = calculate_categorical_weights(output_responses, weights, config)
 
         Path(config.successful_data_save_file).touch()
+    else:
+        Path(config.successful_data_save_file).touch()
 
-    return output_features, output_responses, output_weights
+    features, responses, weights, success = load_training_data(config, writeable=True)
+    return features, responses, weights
+
