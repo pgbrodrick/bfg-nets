@@ -62,6 +62,9 @@ class Experiment(object):
                 **self.network_config['architecture_options']
             )
             self.model.compile(loss=loss_function, optimizer=self.network_config['training']['optimizer'])
+            self.history['model_name'] = self.network_config['model']['dir_out']
+            # TODO:  PHIL, I THINK THIS IS WRONG, BUT I'M NOT CONFIDENT IN MY FRIDAY NIGHT CODING, SHOULD THIS BE SET
+            #  IN THE OTHER BRANCH OF THE IF/ELSE?
             if 'lr' in self.history:
                 _logger.debug('Setting learning rate to value from last training epoch')
                 K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
