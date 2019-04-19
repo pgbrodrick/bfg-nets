@@ -15,6 +15,10 @@ plt.switch_backend('Agg')  # Needed for remote server plotting
 # TODO:  add page with printed warnings and errors from log file, especially following line from NanTermination:
 #  Batch 0: Invalid loss, terminating training
 
+# TODO:  Phil:  how can we quantify a "spatial" confusion matrix? e.g., coral classifications are correct near sand
+#  and incorrect near deep water. Is this something we can generalize for remote sensing problems?
+
+
 def create_report_from_experiment(experiment: experiments.Experiment):
     return create_report(
         experiment.model, experiment.train_sequence, experiment.validation_sequence, experiment.test_sequence,
