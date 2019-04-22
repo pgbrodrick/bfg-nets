@@ -51,6 +51,9 @@ class Experiment(object):
         self.history = histories.load_history(self.network_config['model']['dir_out']) or dict()
         if self.history:
             _logger.debug('History exists in out directory, loading model from same location')
+            if 'lr' in self.history:
+                _logger.debug('Setting learning rate to value from last training epoch')
+                K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
             self.model = models.load_model(
                 self.network_config['model']['dir_out'], custom_objects={'_cropped_loss': loss_function})
             # TODO:  do we want to warn or raise or nothing if the network type doesn't match the model type?
@@ -63,11 +66,6 @@ class Experiment(object):
             )
             self.model.compile(loss=loss_function, optimizer=self.network_config['training']['optimizer'])
             self.history['model_name'] = self.network_config['model']['dir_out']
-            # TODO:  PHIL, I THINK THIS IS WRONG, BUT I'M NOT CONFIDENT IN MY FRIDAY NIGHT CODING, SHOULD THIS BE SET
-            #  IN THE OTHER BRANCH OF THE IF/ELSE?
-            if 'lr' in self.history:
-                _logger.debug('Setting learning rate to value from last training epoch')
-                K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
         n_gpu_avail = gpus.get_count_available_gpus()
         n_gpu_avail = 1
         _logger.debug('Using multiple GPUs with {} available'.format(n_gpu_avail))
