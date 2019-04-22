@@ -10,7 +10,7 @@ from rsCNN.evaluation import samples
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
 
-def print_model_summary(model: keras.Model) -> [plt.Figure]:
+def print_model_summary(model: keras.Model) -> List[plt.Figure]:
     stringlist = ['CNN Architecture Summary']
     model.summary(print_fn=lambda x: stringlist.append(x))
     model_summary_string = "\n".join(stringlist)
@@ -19,7 +19,7 @@ def print_model_summary(model: keras.Model) -> [plt.Figure]:
     plt.text(0, 0, model_summary_string, **{'fontsize': 8, 'fontfamily': 'monospace'})
     plt.axis('off')
 
-    return fig
+    return [fig]
 
 
 def plot_network_feature_progression(
