@@ -41,7 +41,6 @@ def save_network_config(network_config: dict, dir_config: str, filename: str = N
             if (key == 'create_model'):
                 continue
             writer[section][key] = str(value)
-        #writer[section] = section_items
     with open(os.path.join(dir_config, filename), 'w') as file_:
         writer.write(file_)
 
