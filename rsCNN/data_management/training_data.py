@@ -177,6 +177,7 @@ def check_data_matches(set_a, set_b, set_b_is_vector=False, set_c=[], set_c_is_v
     Return: 
     None, simply throw error if the check fails
     """
+    # TODO:  this should confirm that the input is actually a list
     if (len(set_a) != len(set_b)):
         raise Exception('different number of training features and responses')
     if (len(set_c) > 0):
