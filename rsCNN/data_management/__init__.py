@@ -146,7 +146,9 @@ class DataConfig:
         assert self.data_save_name is not None, 'current workflow requires a data save name'
         if (self.data_save_name is not None):
             # TODO:  Phil:  is there a reason we don't just make the directory?
-            assert os.path.isdir(os.path.dirname(self.data_save_name)), 'Invalid path for data_save_name'
+            if not os.path.exists(os.path.dirname(self.data_save_name)):
+                os.makedirs(os.path.dirname(self.data_save_name))
+            #assert os.path.isdir(os.path.dirname(self.data_save_name)), 'Invalid path for data_save_name'
             self.response_files = [self.data_save_name + '_responses_' +
                                    str(fold) + '.npy' for fold in range(self.n_folds)]
             self.feature_files = [self.data_save_name + '_features_' +
