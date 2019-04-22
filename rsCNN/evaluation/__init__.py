@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 from rsCNN.data_management.sequences import BaseSequence
-from rsCNN.evaluation import comparisons, histories, inputs, networks, results, samples
+from rsCNN.evaluation import comparisons, inputs, networks, results, samples
+from rsCNN.evaluation.histories import plot_history
 from rsCNN.networks import experiments, histories
 
 
@@ -65,7 +66,7 @@ def create_model_report(
         if (validation_sequence is not None):
             figures.extend(results.single_sequence_prediction_histogram(model, validation_sequence, 'Validation'))
         # Model history
-        figures.extend(histories.plot_history(history))
+        figures.extend(plot_history(history))
         for fig in figures:
             pdf.savefig(fig, bbox_inches='tight')
 
