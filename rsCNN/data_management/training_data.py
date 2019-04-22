@@ -102,6 +102,8 @@ def load_training_data(config):
     features = []
     responses = []
     weights = []
+    # TODO:  Phil:  I get a failed read on the first file when running this and building... but I think everything works
+    #  after that? I don't know if "failed read" is the right message for something that succeeds?
     for fold in range(config.n_folds):
         if (os.path.isfile(config.feature_files[fold])):
             features.append(np.load(config.feature_files[fold], mmap_mode='r'))
