@@ -65,7 +65,7 @@ def create_model_report(
         if (validation_sequence is not None):
             figures.extend(results.single_sequence_prediction_histogram(model, validation_sequence, 'Validation'))
         # Model history
-        figures.extend(history.plot_history(history))
+        figures.extend(histories.plot_history(history))
         for fig in figures:
             pdf.savefig(fig, bbox_inches='tight')
 
