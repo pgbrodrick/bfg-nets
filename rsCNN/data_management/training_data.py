@@ -409,8 +409,8 @@ def build_training_data_ordered(config):
 
                     if (pos_len >= config.max_samples):
                         break
-    del feature
-    del response
+        del feature
+        del response
     # stack images up
     features = np.stack(features)
     responses = np.stack(responses)
