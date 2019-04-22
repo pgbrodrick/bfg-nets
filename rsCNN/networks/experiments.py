@@ -51,11 +51,11 @@ class Experiment(object):
         self.history = histories.load_history(self.network_config['model']['dir_out']) or dict()
         if self.history:
             _logger.debug('History exists in out directory, loading model from same location')
+            self.model = models.load_model(
+                self.network_config['model']['dir_out'], custom_objects={'_cropped_loss': loss_function})
             if 'lr' in self.history:
                 _logger.debug('Setting learning rate to value from last training epoch')
                 K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
-            self.model = models.load_model(
-                self.network_config['model']['dir_out'], custom_objects={'_cropped_loss': loss_function})
             # TODO:  do we want to warn or raise or nothing if the network type doesn't match the model type?
         else:
             _logger.debug('History does not exists in out directory, creating new model')
