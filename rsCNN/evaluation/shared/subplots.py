@@ -116,8 +116,11 @@ def plot_softmax(sampled: samples.Samples, idx_sample: int, ax: plt.Axes, add_xl
     #  to the categorical data.
     # TODO:  Phil:  are we going to have issues if a transformation was applied to categorical data? I think so?
     min_ = 0
-    max_ = sampled.raw_predictions.shape[-1] - 1
-    ax.imshow(np.argmax(sampled.raw_predictions[idx_sample, :], axis=-1), vmin=min_, vmax=max_)
+    max_ = sampled.num_responses - 1
+    assert not colormaps.check_is_categorical_colormap_repeated(sampled.num_responses), \
+        'Number of categorical responses is greater than length of colormap, figure out how to handle gracefully'
+    ax.imshow(np.argmax(sampled.raw_predictions[idx_sample, :], axis=-1), vmin=min_, vmax=max_,
+              cmap=colormaps.COLORMAP_CATEGORICAL)
     ax.set_xticks([])
     ax.set_yticks([])
     if add_xlabel:
