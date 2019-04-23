@@ -564,10 +564,21 @@ def build_training_data_ordered(config):
         un_resp = np.unique(responses)
         un_resp = un_resp[un_resp != config.response_nodata_value]
 
-        responses.resize((responses.shape[0], responses.shape[1], responses.shape[2], len(un_resp)), refcheck=False)
+        resp_shape = responses.shape
+
+        cat_response_memmap_file = config.data_save_name + '_cat_response_munge_memmap.npy'
+        cat_responses = np.memmap(cat_response_memmap_file,
+                                  dtype=np.float32,
+                                  mode='w+',
+                                  shape=(resp_shape[0], resp_shape[1], resp_shape[2], len(un_resp)))
+
 
         for _r in range(len(un_resp)-1, -1, -1):
-            responses[..., _r] = np.squeeze(responses[..., 0] == un_resp[_r])
+            cat_responses[..., _r] = np.squeeze(responses[..., 0] == un_resp[_r])
+        del responses
+        del cat_responses
+        response_memmap_file = cat_response_memmap_file
+        responses = np.memmap(response_memmap_file, dtype=np.float32, mode='r+',shape=tuple(resp_shape))
 
     for fold in range(config.n_folds):
         np.save(config.feature_files[fold], features[fold_assignments == fold, ...])
@@ -577,7 +588,7 @@ def build_training_data_ordered(config):
     del features, responses, weights
     if (config.data_build_category == 'ordered_categorical'):
         features, responses, weights, success = load_training_data(config, writeable=True)
-        weights = calculate_categorical_weights(output_responses, weights, config)
+        weights = calculate_categorical_weights(responses, weights, config)
 
         Path(config.successful_data_save_file).touch()
     else:
