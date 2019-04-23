@@ -70,11 +70,6 @@ def create_model_report(
         for fig in figures:
             pdf.savefig(fig, bbox_inches='tight')
 
-        # TODO
-        # weight_visualization
-        # visual_stitching_artifact_check
-        # quant_stitching_artificat_check
-
 
 def create_model_comparison_report(
         filepath_out: str,
