@@ -34,12 +34,13 @@ class Samples(object):
         self.data_sequence = data_sequence
         self.model = model
         self.network_config = network_config
-        sampled_features, sampled_responses = self._get_sampled_features_responses_and_set_metadata_and_weights()
-        predictions = model.predict(sampled_features)
-        self._set_raw_and_transformed_features_and_responses(sampled_features, sampled_responses, predictions)
+        self._get_sampled_features_responses_and_set_metadata_and_weights()
+        self.trans_predictions = model.predict(self.trans_features)
+        self.raw_predictions = self.data_sequence.response_scaler.inverse_transform(self.trans_predictions)
+        self._set_has_transforms()
         self._set_raw_and_transformed_ranges()
 
-    def _get_sampled_features_responses_and_set_metadata_and_weights(self) -> Tuple[np.array, np.array]:
+    def _get_sampled_features_responses_and_set_metadata_and_weights(self) -> None:
         # TODO:  handle getting representative samples, e.g., get images that show specific classes so all are covered,
         #  probably want to do something like, given x classes, for each class find y images with class in the loss
         #  window, for x * y images total
@@ -47,45 +48,25 @@ class Samples(object):
         features, responses = self.data_sequence.__getitem__(0)
         # We expect weights to be the last element in the responses array
         self.weights = responses[0][..., -1]
-        # TODO:  confirm this was not necessary:
-        # weights = weights.reshape((weights.shape[0], weights.shape[1], weights.shape[2], 1))
-        # Unpack features and responses, convert nodata values to nan
-        features = features[0]
-        responses = responses[0][..., :-1]
-        features[features == self.data_sequence.feature_scaler.nodata_value] = np.nan
-        responses[responses == self.data_sequence.response_scaler.nodata_value] = np.nan
+        # Unpack features and responses, inverse transform to get raw values
+        self.trans_features = features[0]
+        self.raw_features = self.data_sequence.feature_scaler.inverse_transform(self.trans_features)
+        self.trans_responses = responses[0][..., :-1]
+        self.raw_responses = self.data_sequence.response_scaler.inverse_transform(self.trans_responses)
         # Set sample metadata
-        self.num_samples = features.shape[0]
-        self.num_features = features.shape[-1]
-        self.num_responses = responses.shape[-1]
-        return features, responses
+        self.num_samples = self.trans_features.shape[0]
+        self.num_features = self.trans_features.shape[-1]
+        self.num_responses = self.trans_responses.shape[-1]
 
-    def _set_raw_and_transformed_features_and_responses(
-            self,
-            sampled_features: np.array,
-            sampled_responses: np.array,
-            predictions: np.array
-    ) -> None:
+    def _set_has_transforms(self) -> None:
         if type(self.data_sequence.feature_scaler) is scalers.NullScaler:
             self.has_features_transform = False
-            self.raw_features = sampled_features
-            self.trans_features = None
         else:
             self.has_features_transform = True
-            self.raw_features = self.data_sequence.feature_scaler.inverse_transform(sampled_features)
-            self.trans_features = sampled_features
         if type(self.data_sequence.response_scaler) is scalers.NullScaler:
             self.has_responses_transform = False
-            self.raw_responses = sampled_responses
-            self.trans_responses = None
-            self.raw_predictions = predictions
-            self.trans_predictions = None
         else:
             self.has_responses_transform = True
-            self.raw_responses = self.data_sequence.response_scaler.inverse_transform(sampled_responses)
-            self.trans_responses = sampled_responses
-            self.raw_predictions = self.data_sequence.response_scaler.inverse_transform(predictions)
-            self.trans_predictions = predictions
 
     def _set_raw_and_transformed_ranges(self):
         # Note:  ranges are a (num_values, 2) array, e.g., raw_features_range with 3 features is a (3, 2) array with
