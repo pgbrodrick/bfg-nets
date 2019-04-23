@@ -103,10 +103,6 @@ class DataConfig:
         self.response_max_value = kwargs.get('response_max_value', None)
 
         # Sampling type - options are 'ordered' and 'bootstrap'
-        # TODO:  Phil:  this is the only place this is used, remove? Alternatively, if this is the same "ordered" as
-        #  in "ordered_continuous" and "ordered_categorical" above, ordered makes more sense in this context. It might
-        #  be worth keeping them as separate options so that it's easier to do different pairwise combinations and
-        #  introduce new sampling methods in the future.
         self.sample_type = kwargs.get('sample_type', 'ordered')
 
         # if None, don't save the data name, otherwise, do save requisite components as npz files

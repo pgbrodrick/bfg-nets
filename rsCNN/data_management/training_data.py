@@ -397,12 +397,15 @@ def build_training_data_ordered(config):
     response_set = gdal.Open(config.raw_response_file_list[0], gdal.GA_ReadOnly)
     n_features = feature_set.RasterCount
 
-    features = np.memmap(config.data_save_name + '_feature_munge_memmap.npy',
+    feature_memmap_file = config.data_save_name + '_feature_munge_memmap.npy'
+    response_memmap_file = config.data_save_name + '_response_munge_memmap.npy'
+    
+    features = np.memmap(feature_memmap_file,
                          dtype=np.float32,
                          mode='w+',
                          shape=(config.max_samples, config.window_radius*2, config.window_radius*2, n_features))
 
-    responses = np.memmap(config.data_save_name + '_response_munge_memmap.npy',
+    responses = np.memmap(response_memmap_file,
                           dtype=np.float32,
                           mode='w+',
                           shape=(config.max_samples, config.window_radius*2, config.window_radius*2, response_set.RasterCount))
@@ -515,8 +518,24 @@ def build_training_data_ordered(config):
                 if (sample_index >= config.max_samples):
                     break
 
+    # flush data out
+    features.flush()
+    responses.flush()
+
+    #reload in place
+    features = np.load(feature_memmap_file, mmap_mode='r+')
+    responses = np.load(response_memmap_file, mmap_mode='r+')
+
     features.resize((sample_index, features.shape[1], features.shape[2], features.shape[3]), refcheck=False)
     responses.resize((sample_index, responses.shape[1], responses.shape[2], responses.shape[3]), refcheck=False)
+
+    # flush data out
+    features.flush()
+    responses.flush()
+
+    #reload in place
+    features = np.load(feature_memmap_file, mmap_mode='r+')
+    responses = np.load(response_memmap_file, mmap_mode='r+')
 
     # randombly permute data to reshuffle everything
     perm = np.random.permutation(features.shape[0])
