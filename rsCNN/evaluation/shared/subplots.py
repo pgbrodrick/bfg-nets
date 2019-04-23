@@ -232,7 +232,8 @@ def _add_internal_window_to_subplot(sampled: samples.Samples, ax: plt.Axes) -> N
 
 
 def _format_number(number: Union[int, float]) -> str:
-    if type(number) is int:
+    # isinstance needed for multiple numpy integer and float types
+    if isinstance(number, int):
         return str(number)
-    elif type(number) is float:
+    elif isinstance(number, float):
         return str(round(number, _FLOAT_DECIMALS))
