@@ -41,15 +41,10 @@ _logger = logging.get_child_logger(__name__)
 
 
 def build_or_load_scalers(data_config, rebuild=False):
-    feat_scaler_atr = {'nodata_value': data_config.feature_nodata_value,
-                       'savename_base': data_config.data_save_name + '_feature_scaler'}
-    feature_scaler = scalers.get_scaler(data_config.feature_scaler_name,
-                                        feat_scaler_atr)
-
-    resp_scaler_atr = {'nodata_value': data_config.response_nodata_value,
-                       'savename_base': data_config.data_save_name + '_response_scaler'}
-    response_scaler = scalers.get_scaler(data_config.response_scaler_name,
-                                         resp_scaler_atr)
+    feat_scaler_atr = {'savename_base': data_config.data_save_name + '_feature_scaler'}
+    feature_scaler = scalers.get_scaler(data_config.feature_scaler_name, feat_scaler_atr)
+    resp_scaler_atr = {'savename_base': data_config.data_save_name + '_response_scaler'}
+    response_scaler = scalers.get_scaler(data_config.response_scaler_name, resp_scaler_atr)
     feature_scaler.load()
     response_scaler.load()
 

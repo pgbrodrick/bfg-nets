@@ -22,22 +22,19 @@ class BaseGlobalScaler(object):
     scalers from the scikit-learn package to handle the nitty-gritty of the transform and inverse transform, and we use
     the Scaler class to handle the nitty-gritty of reshaping and otherwise handling the image arrays.
     """
-    nodata_value = None
     savename = None
     scaler_name = None
 
-    def __init__(self, nodata_value=None, savename_base=None):
+    def __init__(self, savename_base=None):
         """
         :param savename_base: the directory and optionally filename prefix for saving data
         """
-        self.nodata_value = nodata_value
         if (savename_base is not None):
             self.savename = savename_base + self.scaler_name
         self.is_fitted = False
 
     def fit(self, image_array):
         assert self.is_fitted is False, 'Scaler has already been fit to data'
-        image_array[image_array == self.nodata_value] = np.nan
         self._fit(image_array)
         self.is_fitted = True
 
@@ -45,26 +42,14 @@ class BaseGlobalScaler(object):
         raise NotImplementedError
 
     def inverse_transform(self, image_array):
-        image_array = self._inverse_transform(image_array)
-        return image_array
-
-    def _inverse_transform(self, image_array):
         raise NotImplementedError
 
     def transform(self, image_array):
-        image_array = self._transform(image_array)
-        num_conflicts = np.sum(image_array == self.nodata_value)
-        if num_conflicts > 0:
-            _logger.warn('{} values in transformed data are equal to nodata value'.format(num_conflicts))
-        return image_array
-
-    def _transform(self, image_array):
         raise NotImplementedError
 
     def fit_transform(self, image_array):
         self.fit(image_array)
-        self.transform(image_array)
-        return image_array
+        return self.transform(image_array)
 
     def save(self):
         raise NotImplementedError
@@ -76,9 +61,9 @@ class BaseGlobalScaler(object):
 class BaseSklearnScaler(BaseGlobalScaler):
     scaler = None
 
-    def __init__(self, nodata_value, savename_base):
+    def __init__(self, savename_base):
         self.scaler_name = 'sklearn_' + self.scaler.__class__.__name__
-        super().__init__(nodata_value, savename_base)
+        super().__init__(savename_base)
 
     def _fit(self, image_array):
         # Reshape to (num_samples, num_features)
@@ -115,9 +100,9 @@ class BaseSklearnScaler(BaseGlobalScaler):
 
 class NullScaler(BaseGlobalScaler):
 
-    def __init__(self, nodata_value, savename_base):
+    def __init__(self, savename_base):
         self.scaler_name = 'NullScaler'
-        super().__init__(nodata_value, savename_base)
+        super().__init__(savename_base)
 
     def _fit(self, image_array):
         return image_array
@@ -139,24 +124,22 @@ class ConstantScaler(BaseGlobalScaler):
     constant_scaler = None
     constant_offset = None
 
-    def __init__(self, nodata_value, savename_base, constant_scaler=None, constant_offset=None):
+    def __init__(self, savename_base, constant_scaler=None, constant_offset=None):
         self.constant_scaler = constant_scaler
         self.constant_offset = constant_offset
 
         self.scaler_name = 'ConstantScaler'
-        super().__init__(nodata_value, savename_base)
+        super().__init__(savename_base)
 
     def _fit(self, image_array):
         pass
 
     def _inverse_transform(self, image_array):
-        idx_valid = image_array != self.nodata_value
-        image_array[idx_valid] = (image_array[idx_valid] - self.constant_offset) * self.constant_scaler
+        image_array = (image_array - self.constant_offset) * self.constant_scaler
         return image_array
 
     def _transform(self, image_array):
-        idx_valid = image_array != self.nodata_value
-        image_array[idx_valid] = image_array[idx_valid] / self.constant_scaler + self.constant_offset
+        image_array = image_array / self.constant_scaler + self.constant_offset
         return image_array
 
     def save(self):
@@ -172,34 +155,34 @@ class ConstantScaler(BaseGlobalScaler):
 
 class StandardScaler(BaseSklearnScaler):
 
-    def __init__(self, nodata_value, savename_base):
+    def __init__(self, savename_base):
         self.scaler = sklearn.preprocessing.StandardScaler(copy=True)
-        super().__init__(nodata_value, savename_base)
+        super().__init__(savename_base)
 
 
 class MinMaxScaler(BaseSklearnScaler):
 
-    def __init__(self, nodata_value, savename_base, feature_range=(-1, 1)):
+    def __init__(self, savename_base, feature_range=(-1, 1)):
         self.scaler = sklearn.preprocessing.MinMaxScaler(feature_range=feature_range, copy=True)
-        super().__init__(nodata_value, savename_base)
+        super().__init__(savename_base)
 
 
 class RobustScaler(BaseSklearnScaler):
 
-    def __init__(self, nodata_value, savename_base, quantile_range=(10.0, 90.0)):
+    def __init__(self, savename_base, quantile_range=(10.0, 90.0)):
         self.scaler = sklearn.preprocessing.RobustScaler(quantile_range=quantile_range, copy=True)
-        super().__init__(nodata_value, savename_base)
+        super().__init__(savename_base)
 
 
 class PowerScaler(BaseSklearnScaler):
 
-    def __init__(self, nodata_value, savename_base, method='box-cox'):
+    def __init__(self, savename_base, method='box-cox'):
         self.scaler = sklearn.preprocessing.PowerTransformer(method=method, copy=True)
-        super().__init__(nodata_value, savename_base)
+        super().__init__(savename_base)
 
 
 class QuantileUniformScaler(BaseSklearnScaler):
 
-    def __init__(self, nodata_value, savename_base, output_distribution='uniform'):
+    def __init__(self, savename_base, output_distribution='uniform'):
         self.scaler = sklearn.preprocessing.QuantileTransformer(output_distribution=output_distribution, copy=True)
-        super().__init__(nodata_value, savename_base)
+        super().__init__(savename_base)
