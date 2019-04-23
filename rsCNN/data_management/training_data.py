@@ -14,6 +14,7 @@ from rsCNN.data_management import scalers
 
 _logger = logging.get_child_logger(__name__)
 
+
 def rasterize_vector(vector_file, geotransform, output_shape):
     """ Rasterizes an input vector directly into a numpy array.
     Arguments:
@@ -312,70 +313,69 @@ def get_response_data_section(ds, x, y, x_size, y_size, config):
     return dat
 
 
-
-
 def read_chunk(f_set,
                r_set,
                feature_upper_left,
                response_upper_left,
                config,
-               boundary_vector_file = None,
-               boundary_subset_geotransform = None,
-               b_set = None,
-               boundary_upper_left = None):
+               boundary_vector_file=None,
+               boundary_subset_geotransform=None,
+               b_set=None,
+               boundary_upper_left=None):
 
-        window_diameter = config.window_radius * 2
+    window_diameter = config.window_radius * 2
 
-        # Start by checking if we're inside boundary, if there is one
-        mask = None
-        if (boundary_vector_file is not None):
-            mask = rasterize_vector(boundary_vector_file, boundary_subset_geotransform, (window_diameter, window_diameter))
-        if (b_set is not None):
-            mask = b_set.ReadAsArray(boundary_upper_left[0],boundary_upper_left[1],window_diameter,window_diameter)
+    # Start by checking if we're inside boundary, if there is one
+    mask = None
+    if (boundary_vector_file is not None):
+        mask = rasterize_vector(boundary_vector_file, boundary_subset_geotransform, (window_diameter, window_diameter))
+    if (b_set is not None):
+        mask = b_set.ReadAsArray(boundary_upper_left[0], boundary_upper_left[1], window_diameter, window_diameter)
 
-        if (mask is not None):
-            mask = mask == config.boundary_bad_value
+    if (mask is not None):
+        mask = mask == config.boundary_bad_value
 
-            if (np.sum(mask) == np.prod(mask.shape)):
-                return None, None
-        if (mask is None):
-            mask = np.zeros((window_diameter,window_diameter)).astype(bool)
-
-        # Next check to see if we have a response, if so read all
-        local_response = np.zeros((window_diameter, window_diameter, r_set.RasterCount))
-        for _b in range(r_set.RasterCount):
-            local_response[:,:,_b] = r_set.GetRasterBand(_b+1).ReadAsArray(response_upper_left[0],response_upper_left[1],window_diameter,window_diameter)
-        local_response[local_response == config.response_nodata_value] = np.nan
-        local_response[np.isfinite(local_response) == False] = np.nan
-        local_response[mask,:] = np.nan
-
-        if (config.response_min_value is not None):
-            local_response[local_response < config.response_min_value] = np.nan
-        if (config.response_max_value is not None):
-            local_response[local_response > config.response_max_value] = np.nan
-
-        if (np.nansum(local_response) == np.prod(local_response.shape)):
+        if (np.sum(mask) == np.prod(mask.shape)):
             return None, None
-        mask[np.any(np.isnan(local_response),axis=-1)] = True
-            
-        # Last, read in features
-        local_feature = np.zeros((window_diameter, window_diameter, f_set.RasterCount))
-        for _b in range(0, f_set.RasterCount):
-            local_feature[:, :, _b] = f_set.GetRasterBand(_b+1).ReadAsArray(feature_upper_left[0],feature_upper_left[1],window_diameter,window_diameter)
+    if (mask is None):
+        mask = np.zeros((window_diameter, window_diameter)).astype(bool)
 
-        local_feature[local_feature == config.feature_nodata_value] = np.nan
-        local_feature[np.isfinite(local_feature) == False] = np.nan
-        local_feature[mask,:] = np.nan
-        if (np.nansum(local_feature) == np.prod(local_feature.shape)):
-            return None, None
-        mask[np.any(np.isnan(local_response),axis=-1)] = True
+    # Next check to see if we have a response, if so read all
+    local_response = np.zeros((window_diameter, window_diameter, r_set.RasterCount))
+    for _b in range(r_set.RasterCount):
+        local_response[:, :, _b] = r_set.GetRasterBand(
+            _b+1).ReadAsArray(response_upper_left[0], response_upper_left[1], window_diameter, window_diameter)
+    local_response[local_response == config.response_nodata_value] = np.nan
+    local_response[np.isfinite(local_response) == False] = np.nan
+    local_response[mask, :] = np.nan
 
-        # Final check, and return
-        local_feature[mask,:] = np.nan
-        local_response[mask,:] = np.nan
+    if (config.response_min_value is not None):
+        local_response[local_response < config.response_min_value] = np.nan
+    if (config.response_max_value is not None):
+        local_response[local_response > config.response_max_value] = np.nan
 
-        return local_feature, local_response
+    if (np.nansum(local_response) == np.prod(local_response.shape)):
+        return None, None
+    mask[np.any(np.isnan(local_response), axis=-1)] = True
 
+    # Last, read in features
+    local_feature = np.zeros((window_diameter, window_diameter, f_set.RasterCount))
+    for _b in range(0, f_set.RasterCount):
+        local_feature[:, :, _b] = f_set.GetRasterBand(
+            _b+1).ReadAsArray(feature_upper_left[0], feature_upper_left[1], window_diameter, window_diameter)
+
+    local_feature[local_feature == config.feature_nodata_value] = np.nan
+    local_feature[np.isfinite(local_feature) == False] = np.nan
+    local_feature[mask, :] = np.nan
+    if (np.nansum(local_feature) == np.prod(local_feature.shape)):
+        return None, None
+    mask[np.any(np.isnan(local_response), axis=-1)] = True
+
+    # Final check, and return
+    local_feature[mask, :] = np.nan
+    local_response[mask, :] = np.nan
+
+    return local_feature, local_response
 
 
 def build_training_data_ordered(config):
@@ -413,7 +413,7 @@ def build_training_data_ordered(config):
                           shape=(config.max_samples, config.window_radius*2, config.window_radius*2, response_set.RasterCount))
 
     sample_index = 0
-    
+
     for _i in range(0, len(config.raw_feature_file_list)):
 
         # open requisite datasets
@@ -423,7 +423,7 @@ def build_training_data_ordered(config):
         if (len(config.boundary_file_list) > 0):
             if (config.boundary_file_list[_i] is not None):
                 if (config.boundary_as_vectors is False):
-                    boundary_set = gdal.Open(config.boundary_file_list[_i],gdal.GA_ReadOnly)
+                    boundary_set = gdal.Open(config.boundary_file_list[_i], gdal.GA_ReadOnly)
 
         f_trans = feature_set.GetGeoTransform()
         r_trans = response_set.GetGeoTransform()
@@ -439,15 +439,15 @@ def build_training_data_ordered(config):
             interior_x = max(interior_x, b_trans[0])
             interior_y = max(interior_y, b_trans[3])
 
-        f_x_ul = max((r_trans[0] - interior_x)/f_trans[1],0)
-        f_y_ul = max((interior_y - f_trans[3])/f_trans[5],0)
+        f_x_ul = max((r_trans[0] - interior_x)/f_trans[1], 0)
+        f_y_ul = max((interior_y - f_trans[3])/f_trans[5], 0)
 
-        r_x_ul = max((f_trans[0] - interior_x)/r_trans[1],0)
-        r_y_ul = max((interior_y - r_trans[3])/r_trans[5],0)
+        r_x_ul = max((f_trans[0] - interior_x)/r_trans[1], 0)
+        r_y_ul = max((interior_y - r_trans[3])/r_trans[5], 0)
 
         if (b_trans is not None):
-            b_x_ul = max((b_trans[0] - interior_x)/b_trans[1],0)
-            b_y_ul = max((interior_y - b_trans[3])/b_trans[5],0)
+            b_x_ul = max((b_trans[0] - interior_x)/b_trans[1], 0)
+            b_y_ul = max((interior_y - b_trans[3])/b_trans[5], 0)
 
         x_len = min(feature_set.RasterXSize - f_x_ul, response_set.RasterXSize - r_x_ul)
         y_len = min(feature_set.RasterYSize - f_y_ul, response_set.RasterYSize - r_y_ul)
@@ -463,12 +463,11 @@ def build_training_data_ordered(config):
         else:
             b_ul = None
 
-
-        collist = [x for x in range(0, 
-                                    int(x_len - 2*config.window_radius), 
+        collist = [x for x in range(0,
+                                    int(x_len - 2*config.window_radius),
                                     int(config.internal_window_radius*2))]
-        rowlist = [y for y in range(0, 
-                                    int(y_len - 2*config.window_radius), 
+        rowlist = [y for y in range(0,
+                                    int(y_len - 2*config.window_radius),
                                     int(config.internal_window_radius*2))]
 
         colrow = np.zeros((len(collist)*len(rowlist), 2)).astype(int)
@@ -502,27 +501,27 @@ def build_training_data_ordered(config):
                                                                f_ul + colrow[_cr, :],
                                                                r_ul + colrow[_cr, :],
                                                                config,
-                                                               boundary_vector_file = config.boundary_file_list[_i],
-                                                               boundary_subset_geotransform = subset_geotransform)
+                                                               boundary_vector_file=config.boundary_file_list[_i],
+                                                               boundary_subset_geotransform=subset_geotransform)
             else:
                 local_feature, local_response = read_chunk(feature_set,
                                                            response_set,
                                                            f_ul + colrow[_cr, :],
                                                            r_ul + colrow[_cr, :],
                                                            config,
-                                                           b_set = boundary_set,
-                                                           boundary_upper_left = b_ul + colrow[_cr, :])
+                                                           b_set=boundary_set,
+                                                           boundary_upper_left=b_ul + colrow[_cr, :])
 
             if (local_feature is not None):
-                features[sample_index,...] = local_feature.copy()
-                responses[sample_index,...] = local_response.copy()
+                features[sample_index, ...] = local_feature.copy()
+                responses[sample_index, ...] = local_response.copy()
                 sample_index += 1
 
                 if (sample_index >= config.max_samples):
                     break
 
-    features.resize((sample_index,features.shape[1],features.shape[2],features.shape[3]),refcheck=False)
-    responses.resize((sample_index,responses.shape[1],responses.shape[2],responses.shape[3]),refcheck=False)
+    features.resize((sample_index, features.shape[1], features.shape[2], features.shape[3]), refcheck=False)
+    responses.resize((sample_index, responses.shape[1], responses.shape[2], responses.shape[3]), refcheck=False)
 
     # randombly permute data to reshuffle everything
     perm = np.random.permutation(features.shape[0])
@@ -537,11 +536,11 @@ def build_training_data_ordered(config):
         fold_assignments[idx_start:idx_finish] = f
 
     weights = np.memmap(config.data_save_name + '_weights_munge_memmap.npy',
-                         dtype=np.float32,
-                         mode='w+',
-                         shape=(features.shape[0],features.shape[1],features.shape[2],1))
-    weights[:,:,:,:] = 1
-    weights[np.isnan(responses[...,0])] = 0
+                        dtype=np.float32,
+                        mode='w+',
+                        shape=(features.shape[0], features.shape[1], features.shape[2], 1))
+    weights[:, :, :, :] = 1
+    weights[np.isnan(responses[..., 0])] = 0
 
     if (config.internal_window_radius != config.window_radius):
         buf = config.window_radius - config.internal_window_radius
@@ -555,19 +554,19 @@ def build_training_data_ordered(config):
     _logger.debug('Weight shape: {}'.format(weights.shape))
 
     if (config.data_build_category == 'ordered_categorical'):
-        
+
         un_resp = np.unique(responses)
         un_resp = un_resp[un_resp != config.response_nodata_value]
 
-        responses.resize((responses.shape[0],responses.shape[1],responses.shape[2],len(un_resp)),refcheck=False)
+        responses.resize((responses.shape[0], responses.shape[1], responses.shape[2], len(un_resp)), refcheck=False)
 
-        for _r in range(len(un_resp)-1,-1,-1):
-            responses[..., _r] = np.squeeze(responses[...,0] == un_resp[_r])
+        for _r in range(len(un_resp)-1, -1, -1):
+            responses[..., _r] = np.squeeze(responses[..., 0] == un_resp[_r])
 
     for fold in range(config.n_folds):
-       np.save(config.feature_files[fold], features[fold_assignments == fold,...]) 
-       np.save(config.response_files[fold], responses[fold_assignments == fold,...]) 
-       np.save(config.weight_files[fold], weights[fold_assignments == fold,...]) 
+        np.save(config.feature_files[fold], features[fold_assignments == fold, ...])
+        np.save(config.response_files[fold], responses[fold_assignments == fold, ...])
+        np.save(config.weight_files[fold], weights[fold_assignments == fold, ...])
 
     del features, responses, weights
     if (config.data_build_category == 'ordered_categorical'):
@@ -580,4 +579,3 @@ def build_training_data_ordered(config):
 
     features, responses, weights, success = load_training_data(config, writeable=True)
     return features, responses, weights
-

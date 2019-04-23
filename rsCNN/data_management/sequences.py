@@ -83,7 +83,7 @@ class BaseSequence(keras.utils.Sequence):
 
         _logger.debug('Convert nan features')
         if (self.nan_conversion_value is not None):
-          features = self._convert_list_nans(features, self.nan_conversion_value)
+            features = self._convert_list_nans(features, self.nan_conversion_value)
         _logger.debug('Append weights to responses for loss functions')
         responses_with_weights = [np.append(response, weight, axis=-1) for response, weight in zip(responses, weights)]
 
@@ -158,7 +158,7 @@ class MemmappedSequence(BaseSequence):
         self.responses = responses  # a list of numpy arrays, each of which is (n,y,x,r)
         self.weights = weights  # a list of numpy arrays, each of which is (n,y,x,1)
         super().__init__(feature_scaler=feature_scaler, response_scaler=response_scaler, batch_size=batch_size,
-                         apply_random_transforms=apply_random_transforms,nan_conversion_value=nan_conversion_value)
+                         apply_random_transforms=apply_random_transforms, nan_conversion_value=nan_conversion_value)
 
         # Determine the cumulative number of total samples across arrays - we're going to use
         # it to roll between files when exctracting samples
