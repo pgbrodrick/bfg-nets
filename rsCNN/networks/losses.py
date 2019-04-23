@@ -1,7 +1,9 @@
+from typing import Callable
+
 import keras
 
 
-def cropped_loss(loss_type, outer_width, inner_width, weighted=True):
+def cropped_loss(loss_type: str, outer_width: int, inner_width: int, weighted: bool = True) -> Callable:
     """ Loss function with optional per-pixel weighting
         and edge trimming options.
 

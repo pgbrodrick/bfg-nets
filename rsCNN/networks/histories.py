@@ -23,7 +23,7 @@ def save_history(history: dict, dir_history: str, filename: str = None) -> None:
         pickle.dump(history, file_)
 
 
-def combine_histories(existing_history, new_history):
+def combine_histories(existing_history: dict, new_history: dict) -> dict:
     combined_history = existing_history.copy()
     for key, value in new_history.items():
         combined_history.setdefault(key, list()).extend(value)
