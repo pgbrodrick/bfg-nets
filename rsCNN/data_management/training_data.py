@@ -526,8 +526,8 @@ def build_training_data_ordered(config):
     del responses
 
     #reload in place
-    features = np.memmap(feature_memmap_file, dtype=np.float32, mode='r+',shape=(tuple(feat_shape)))
-    responses = np.memmap(response_memmap_file, dtype=np.float32, mode='r+',shape=tuple(resp_shape))
+    features = np.memmap(feature_memmap_file, dtype=np.float32, mode='r+', shape=(tuple(feat_shape)))
+    responses = np.memmap(response_memmap_file, dtype=np.float32, mode='r+', shape=tuple(resp_shape))
 
     # randombly permute data to reshuffle everything
     perm = np.random.permutation(features.shape[0])
@@ -572,13 +572,12 @@ def build_training_data_ordered(config):
                                   mode='w+',
                                   shape=(resp_shape[0], resp_shape[1], resp_shape[2], len(un_resp)))
 
-
         for _r in range(len(un_resp)-1, -1, -1):
             cat_responses[..., _r] = np.squeeze(responses[..., 0] == un_resp[_r])
         del responses
         del cat_responses
         response_memmap_file = cat_response_memmap_file
-        responses = np.memmap(response_memmap_file, dtype=np.float32, mode='r+',shape=tuple(resp_shape))
+        responses = np.memmap(response_memmap_file, dtype=np.float32, mode='r+', shape=tuple(resp_shape))
 
     for fold in range(config.n_folds):
         np.save(config.feature_files[fold], features[fold_assignments == fold, ...])
