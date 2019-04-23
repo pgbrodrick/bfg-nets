@@ -589,6 +589,7 @@ def build_training_data_ordered(config):
     if (config.data_build_category == 'ordered_categorical'):
         features, responses, weights, success = load_training_data(config, writeable=True)
         weights = calculate_categorical_weights(responses, weights, config)
+        del features, responses, weights 
 
         Path(config.successful_data_save_file).touch()
     else:
