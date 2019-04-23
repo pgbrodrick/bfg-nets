@@ -82,6 +82,9 @@ class Samples(object):
     def _get_range(self, data: np.array) -> np.array:
         if data is None:
             return None
-        mins = np.nanpercentile(data.reshape((-1, data.shape[-1])), 0, axis=0)
-        maxs = np.nanpercentile(data.reshape((-1, data.shape[-1])), 100, axis=0)
+        last_dim = data.shape[-1]
+        if len(data.shape) == 3:
+            last_dim = 1
+        mins = np.nanpercentile(data.reshape((-1, last_dim)), 0, axis=0)
+        maxs = np.nanpercentile(data.reshape((-1, last_dim)), 100, axis=0)
         return np.dstack([mins, maxs])[0]
