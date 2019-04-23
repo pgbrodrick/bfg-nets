@@ -15,9 +15,9 @@ from rsCNN.evaluation import samples, shared
 
 def print_classification_report(sampled: samples.Samples) -> List[plt.Figure]:
     classes, actual, predicted = _calculate_classification_classes_actual_and_predicted(sampled)
-    classification_report = sklearn.metrics.classification_report(actual, predicted, classes)
+    report = 'Classification report\n\n' + sklearn.metrics.classification_report(actual, predicted, classes)
     fig, ax = plt.subplots(figsize=(8.5, 11), nrows=1, ncols=1)
-    ax.text(0, 0, classification_report, **{'fontsize': 8, 'fontfamily': 'monospace'})
+    ax.text(0, 0, report, **{'fontsize': 8, 'fontfamily': 'monospace'})
     ax.axis('off')
     return [fig]
 
