@@ -58,8 +58,8 @@ training_data.build_or_load_scalers(data_config)
 train_folds = [x for x in range(
     data_config.n_folds) if x is not data_config.validation_fold and x is not data_config.test_fold]
 
-training_sequence = sequences.build_memmaped_sequence(data_config, train_folds, batch_size=100)
-validation_sequence = sequences.build_memmaped_sequence(data_config, [data_config.validation_fold], batch_size=100)
+training_sequence = sequences.build_memmapped_sequence(data_config, train_folds, batch_size=100)
+validation_sequence = sequences.build_memmapped_sequence(data_config, [data_config.validation_fold], batch_size=100)
 
 # Move the inshape intot he build_or_load_model
 network_config = create_network_config(
