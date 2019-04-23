@@ -73,8 +73,8 @@ def create_model_report(
         # Model history
         if history:
             figures.extend(plot_history(history))
-            for fig in figures:
-                pdf.savefig(fig, bbox_inches='tight')
+        for fig in figures:
+            pdf.savefig(fig, bbox_inches='tight')
 
 
 def create_preliminary_model_report_from_experiment(experiment: experiments.Experiment):
