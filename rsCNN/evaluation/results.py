@@ -87,7 +87,7 @@ def _plot_predictions_page(
     #  Phil handles data types in the data config.
     nrows = len(range_samples)
     has_softmax = sampled.network_config['architecture_options']['output_activation'] == 'softmax'
-    num_responses_plots = (1 + int(sampled.has_features_transform)) * len(range_responses)
+    num_responses_plots = 2 * len(range_responses)
     num_predictions_plots = num_responses_plots
     num_categorical_plots = 1 + int(has_softmax)
     num_weights_plots = 1
@@ -98,20 +98,17 @@ def _plot_predictions_page(
         for idx_response in range_responses:
             shared.plot_raw_responses(
                 sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, idx_response == 0)
-            if sampled.has_responses_transform:
-                shared.plot_transformed_responses(
-                    sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
+            shared.plot_transformed_responses(
+                sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
             shared.plot_raw_predictions(
                 sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
-            if sampled.has_responses_transform:
-                shared.plot_transformed_predictions(
-                    sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
+            shared.plot_transformed_predictions(
+                sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
             if not has_softmax:
                 shared.plot_raw_error_regression(
                     sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
-                if sampled.has_responses_transform:
-                    shared.plot_transformed_error_regression(
-                        sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
+                shared.plot_transformed_error_regression(
+                    sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
         # Note: if softmax aka categorical, then we only need one plot per sample, not per response
         if has_softmax:
             # TODO:  we're not really "plotting softmax", what's a better name for this? It's escaping me!

@@ -29,8 +29,8 @@ def _plot_inputs_page(
         range_responses: range
 ) -> plt.Figure:
     nrows = len(range_samples)
-    num_features_plots = (1 + int(sampled.has_features_transform)) * len(range_features)
-    num_responses_plots = (1 + int(sampled.has_responses_transform)) * len(range_responses)
+    num_features_plots = 2 * len(range_features)
+    num_responses_plots = 2 * len(range_responses)
     num_weights_plots = 1
     ncols = num_features_plots + num_responses_plots + num_weights_plots
     fig, grid = shared.get_figure_and_grid(nrows, ncols)
@@ -39,16 +39,14 @@ def _plot_inputs_page(
         for idx_feature in range_features:
             shared.plot_raw_features(
                 sampled, idx_sample, idx_feature, axes.__next__(), idx_sample == 0, idx_feature == 0)
-        if sampled.has_features_transform:
-            for idx_feature in range_features:
-                shared.plot_transformed_features(
-                    sampled, idx_sample, idx_feature, axes.__next__(), idx_sample == 0, False)
+        for idx_feature in range_features:
+            shared.plot_transformed_features(
+                sampled, idx_sample, idx_feature, axes.__next__(), idx_sample == 0, False)
         for idx_response in range_responses:
             shared.plot_raw_responses(
                 sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
-        if sampled.has_responses_transform:
-            for idx_response in range_responses:
-                shared.plot_transformed_responses(
-                    sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
+        for idx_response in range_responses:
+            shared.plot_transformed_responses(
+                sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
         shared.plot_weights(sampled, idx_sample, axes.__next__(), idx_sample == 0, False)
     return fig
