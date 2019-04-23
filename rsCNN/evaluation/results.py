@@ -261,7 +261,7 @@ def _plot_spatial_error(
         for ax in _get_axis_generator_for_page(grid, nrows, ncols):
             min_ = 0
             max_ = np.nanmax(error[buffer:-buffer, buffer:-buffer, idx_response])
-            ax.imshow(error[:, idx_response], vmin=min_, vmax=max_, cmap=shared.COLORMAP_ERROR)
+            ax.imshow(error[..., idx_response], vmin=min_, vmax=max_, cmap=shared.COLORMAP_ERROR)
             ax.set_xlabel('Response {}'.format(idx_response))
             ax.xaxis.set_label_position('top')
             ax.set_xticks([])
