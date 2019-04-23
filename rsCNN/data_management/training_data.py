@@ -518,24 +518,16 @@ def build_training_data_ordered(config):
                 if (sample_index >= config.max_samples):
                     break
 
-    # flush data out
-    features.flush()
-    responses.flush()
+    feat_shape = [x for x in features.shape]
+    feat_shape[0] = sample_index
+    resp_shape = [x for x in responses.shape]
+    resp_shape[0] = sample_index
+    del features
+    del responses
 
     #reload in place
-    features = np.load(feature_memmap_file, mmap_mode='r+')
-    responses = np.load(response_memmap_file, mmap_mode='r+')
-
-    features.resize((sample_index, features.shape[1], features.shape[2], features.shape[3]), refcheck=False)
-    responses.resize((sample_index, responses.shape[1], responses.shape[2], responses.shape[3]), refcheck=False)
-
-    # flush data out
-    features.flush()
-    responses.flush()
-
-    #reload in place
-    features = np.load(feature_memmap_file, mmap_mode='r+')
-    responses = np.load(response_memmap_file, mmap_mode='r+')
+    features = np.memmap(feature_memmap_file, dtype=np.float32, mode='r+',shape=(tuple(feat_shape)))
+    responses = np.memmap(response_memmap_file, dtype=np.float32, mode='r+',shape=tuple(resp_shape))
 
     # randombly permute data to reshuffle everything
     perm = np.random.permutation(features.shape[0])
