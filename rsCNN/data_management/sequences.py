@@ -35,7 +35,8 @@ def build_memmapped_sequence(data_config, fold_indices, batch_size=100, rebuild=
                                       data_config.response_scaler,
                                       batch_size,
                                       apply_random_transforms=apply_random,
-                                      feature_mean_centering=mean_centering)
+                                      feature_mean_centering=mean_centering,
+                                      nan_conversion_value=data_config.feature_training_nodata_value)
     return data_sequence
 
 
@@ -77,6 +78,12 @@ class BaseSequence(keras.utils.Sequence):
         _logger.debug('Scale responses')
         responses = self._scale_responses(responses)
 
+        _logger.debug('Convert nan responses')
+        responses = self._convert_list_nans(responses, 0)
+
+        _logger.debug('Convert nan features')
+        if (self.nan_conversion_value is not None):
+          features = self._convert_list_nans(features, self.nan_conversion_value)
         _logger.debug('Append weights to responses for loss functions')
         responses_with_weights = [np.append(response, weight, axis=-1) for response, weight in zip(responses, weights)]
 
@@ -91,6 +98,13 @@ class BaseSequence(keras.utils.Sequence):
             'Custom Sequences must implement _get_features_responses_weights for training and reporting to work. ' +
             'See method header for expected arguments and returned objects.'
         )
+
+    def _convert_list_nans(self, data: List[np.array], convert_value):
+        for _r in range(len(data)):
+            lr = data[_r]
+            lr[np.isnan(lr)] = convert_value
+            data[_r] = lr
+        return data
 
     def _modify_features_responses_weights_before_scaling(
             self,
@@ -138,12 +152,13 @@ class MemmappedSequence(BaseSequence):
             batch_size: int,
             apply_random_transforms: bool,
             feature_mean_centering: False,
+            nan_conversion_value: None,
     ) -> None:
         self.features = features  # a list of numpy arrays, each of which is (n,y,x,f)
         self.responses = responses  # a list of numpy arrays, each of which is (n,y,x,r)
         self.weights = weights  # a list of numpy arrays, each of which is (n,y,x,1)
         super().__init__(feature_scaler=feature_scaler, response_scaler=response_scaler, batch_size=batch_size,
-                         apply_random_transforms=apply_random_transforms)
+                         apply_random_transforms=apply_random_transforms,nan_conversion_value=nan_conversion_value)
 
         # Determine the cumulative number of total samples across arrays - we're going to use
         # it to roll between files when exctracting samples
