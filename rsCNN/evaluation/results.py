@@ -209,7 +209,13 @@ def plot_spatial_categorical_error(
     # TODO: This assumes that categorical variables are one-hot encoded
     actual = np.expand_dims(np.argmax(sampled.raw_responses, axis=-1), -1)
     predicted = np.expand_dims(np.argmax(sampled.raw_predictions, axis=-1), -1)
-    error = np.nanmean(np.abs(predicted - actual), axis=0)
+    error = (actual != predicted).astype(float)
+    is_finite = np.logical_and(
+        np.isfinite(sampled.raw_responses).all(axis=-1),
+        np.isfinite(sampled.raw_predictions).all(axis=-1)
+    )
+    error[~is_finite] = np.nan
+    error = np.nanmean(error, axis=0)
     return _plot_spatial_error(error, sampled, max_pages, max_responses_per_row, max_rows_per_page)
 
 
