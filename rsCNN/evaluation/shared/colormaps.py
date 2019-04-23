@@ -1,8 +1,8 @@
 from matplotlib import colors
 
 
-_COLOR_CORRECT = (59, 117, 175)
-_COLOR_INCORRECT = (238, 134, 54)
+_COLOR_CORRECT = tuple([x / 255 for x in (59, 117, 175)])
+_COLOR_INCORRECT = tuple([x / 255 for x in (238, 134, 54)])
 COLORMAP_ERROR = colors.ListedColormap([_COLOR_INCORRECT, _COLOR_CORRECT])
 
 COLORMAP_CATEGORICAL = 'tab20'
