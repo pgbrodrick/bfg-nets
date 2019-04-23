@@ -6,12 +6,12 @@ import sys
 MAX_BYTES = int(100 * 1024 * 1024)  # 10 MB
 
 
-def get_child_logger(logger_name):
+def get_child_logger(logger_name: str) -> logging.Logger:
     _configure_logging()
     return logging.getLogger(logger_name)
 
 
-def get_root_logger(log_outfile=None):
+def get_root_logger(log_outfile: str = None) -> logging.Logger:
     _configure_logging()
     logger = logging.getLogger('rsCNN')
     logger.setLevel(logging.INFO)
@@ -32,7 +32,7 @@ def _configure_logging():
     _add_logging_level('TRACE', logging.DEBUG - 5)
 
 
-def _add_logging_level(level_name, level_num):
+def _add_logging_level(level_name: str, level_num: int) -> None:
     method_name = level_name.lower()
     if hasattr(logging, level_name) or hasattr(logging, method_name) or hasattr(logging.getLoggerClass(), method_name):
         return

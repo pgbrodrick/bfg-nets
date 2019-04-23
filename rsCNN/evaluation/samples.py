@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import keras
 import numpy as np
 
@@ -44,7 +42,7 @@ class Samples(object):
         # TODO:  handle getting representative samples, e.g., get images that show specific classes so all are covered,
         #  probably want to do something like, given x classes, for each class find y images with class in the loss
         #  window, for x * y images total
-        # TODO:  handle multiple inputs
+        # TODO:  handle multiple inputs when necessary
         features, responses = self.data_sequence.__getitem__(0)
         # We expect weights to be the last element in the responses array
         self.weights = responses[0][..., -1]
