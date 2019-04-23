@@ -70,14 +70,14 @@ class BaseSklearnScaler(BaseGlobalScaler):
         image_array = self._reshape_image_array(image_array)
         self.scaler.fit(image_array)
 
-    def _inverse_transform(self, image_array):
+    def inverse_transform(self, image_array):
         # Reshape to (num_samples, num_features) for sklearn
         shape = image_array.shape
         image_array = self._reshape_image_array(image_array)
         image_array = self.scaler.inverse_transform(image_array)
         return image_array.reshape(shape)
 
-    def _transform(self, image_array):
+    def transform(self, image_array):
         # Reshape to (num_samples, num_features) for sklearn
         shape = image_array.shape
         image_array = self._reshape_image_array(image_array)
@@ -107,10 +107,10 @@ class NullScaler(BaseGlobalScaler):
     def _fit(self, image_array):
         return image_array
 
-    def _inverse_transform(self, image_array):
+    def inverse_transform(self, image_array):
         return image_array
 
-    def _transform(self, image_array):
+    def transform(self, image_array):
         return image_array
 
     def save(self):
@@ -134,11 +134,11 @@ class ConstantScaler(BaseGlobalScaler):
     def _fit(self, image_array):
         pass
 
-    def _inverse_transform(self, image_array):
+    def inverse_transform(self, image_array):
         image_array = (image_array - self.constant_offset) * self.constant_scaler
         return image_array
 
-    def _transform(self, image_array):
+    def transform(self, image_array):
         image_array = image_array / self.constant_scaler + self.constant_offset
         return image_array
 

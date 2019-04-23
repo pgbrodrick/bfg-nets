@@ -399,7 +399,7 @@ def build_training_data_ordered(config):
 
     feature_memmap_file = config.data_save_name + '_feature_munge_memmap.npy'
     response_memmap_file = config.data_save_name + '_response_munge_memmap.npy'
-    
+
     features = np.memmap(feature_memmap_file,
                          dtype=np.float32,
                          mode='w+',
