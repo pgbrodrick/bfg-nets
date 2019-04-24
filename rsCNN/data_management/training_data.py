@@ -283,11 +283,6 @@ def calculate_categorical_weights(responses, weights, config, batch_size=100):
 
             weights[_array][ind:ind+batch_size, :, :, 0] = lw
 
-    if (config.data_save_name is not None):
-        # TODO:  Phil fix for mutex save
-        for _w in range(len(weights)):
-            np.save(config.weight_files[_w], weights[_w])
-
     return weights
 
 
@@ -602,5 +597,5 @@ def build_training_data_ordered(config):
     else:
         Path(config.successful_data_save_file).touch()
 
-    features, responses, weights, success = load_training_data(config, writeable=True)
+    features, responses, weights, success = load_training_data(config, writeable=False)
     return features, responses, weights
