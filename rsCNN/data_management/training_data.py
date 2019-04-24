@@ -283,11 +283,6 @@ def calculate_categorical_weights(responses, weights, config, batch_size=100):
 
             weights[_array][ind:ind+batch_size, :, :, 0] = lw
 
-    if (config.data_save_name is not None):
-        # TODO:  Phil fix for mutex save
-        for _w in range(len(weights)):
-            np.save(config.weight_files[_w], weights[_w])
-
     return weights
 
 
