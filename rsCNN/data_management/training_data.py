@@ -597,5 +597,5 @@ def build_training_data_ordered(config):
     else:
         Path(config.successful_data_save_file).touch()
 
-    features, responses, weights, success = load_training_data(config, writeable=True)
+    features, responses, weights, success = load_training_data(config, writeable=False)
     return features, responses, weights
