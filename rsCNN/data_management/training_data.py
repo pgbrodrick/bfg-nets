@@ -565,7 +565,7 @@ def build_training_data_ordered(config):
 
         un_resp = np.unique(responses[np.isfinite(responses)])
         un_resp = un_resp[un_resp != config.response_nodata_value]
-        _logger.debug('Found {} categorical responses'.format(len(resp)))
+        _logger.debug('Found {} categorical responses'.format(len(un_resp)))
 
         resp_shape = responses.shape
 
