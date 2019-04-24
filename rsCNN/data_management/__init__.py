@@ -94,7 +94,7 @@ class DataConfig:
         #  The value to ignore from the feature or response dataset.
         self.feature_nodata_value = kwargs.get('feature_nodata_value', -9999)
         self.response_nodata_value = kwargs.get('response_nodata_value', -9999)
-        self.feature_training_nodata_value = kwargs.get('response_nodata_value', -10)
+        self.feature_training_nodata_value = kwargs.get('feature_training_nodata_value', -10)
 
         # The minimum and maximum values for the response dataset
         # TODO:  Phil:  is this the raw min and max values or is this the min and max after the algorithm cleans
