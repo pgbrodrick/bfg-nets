@@ -400,6 +400,8 @@ def build_training_data_ordered(config):
     feature_memmap_file = config.data_save_name + '_feature_munge_memmap.npy'
     response_memmap_file = config.data_save_name + '_response_munge_memmap.npy'
 
+    #TODO: fix max size issue, but force for now to prevent overly sized sets
+    assert(config.max_samples* (config.window_radius*2)**2 * n_features / 1024.**3 < 10, 'max_samples too large')
     features = np.memmap(feature_memmap_file,
                          dtype=np.float32,
                          mode='w+',
@@ -561,14 +563,15 @@ def build_training_data_ordered(config):
 
     if (config.data_build_category == 'ordered_categorical'):
 
-        un_resp = np.unique(responses)
+        un_resp = np.unique(responses[np.isfinite(responses)])
         un_resp = un_resp[un_resp != config.response_nodata_value]
+        _logger.debug('Found {} categorical responses'.format(len(resp)))
 
         resp_shape = responses.shape
 
         cat_response_memmap_file = config.data_save_name + '_cat_response_munge_memmap.npy'
         cat_responses = np.memmap(cat_response_memmap_file,
-                                  dtype=np.float32,
+                                  dtype=np.float16,
                                   mode='w+',
                                   shape=(resp_shape[0], resp_shape[1], resp_shape[2], len(un_resp)))
 
