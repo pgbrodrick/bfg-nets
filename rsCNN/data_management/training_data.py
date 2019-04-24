@@ -589,6 +589,11 @@ def build_training_data_ordered(config):
 
     del features, responses, weights
     if (config.data_build_category == 'ordered_categorical'):
+        # TODO:  Phil:  this throws an error because the success file does not exist yet. Specifically, the
+        #  responses returned from load_training_data are None and then calculate_categorical_weights assumes
+        #  that those responses are not None. I'm creating the success file so this works, but this needs to be
+        #  changed.
+        Path(config.successful_data_save_file).touch()
         features, responses, weights, success = load_training_data(config, writeable=True)
         weights = calculate_categorical_weights(responses, weights, config)
         del features, responses, weights
