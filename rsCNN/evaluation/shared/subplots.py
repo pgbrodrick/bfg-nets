@@ -97,11 +97,16 @@ def _plot_sample_attribute(
         add_xlabel: bool,
         add_ylabel: bool
 ) -> None:
-    attribute = getattr(sampled, attribute_name)
+    attribute_values = getattr(sampled, attribute_name)[idx_sample, :, :, idx_axis]
     range_ = getattr(sampled, attribute_name + '_range')
+    # TODO:  this is a hack to account for transformed values that are nans, should be fixed when we have proper nan
+    #  handling elsewhere in the code
+    if attribute_name in ('trans_features', 'trans_responses', 'trans_predictions'):
+        attribute_values = attribute_values.copy()
+        attribute_values[sampled.data_sequence.nan_replacement_value] = np.nan
     y_label = '\n'.join(word.capitalize() for word in attribute_name.split('_') if word != 'raw').rstrip('s')
     min_, max_ = range_[idx_axis, :]
-    ax.imshow(attribute[idx_sample, :, :, idx_axis], vmin=min_, vmax=max_)
+    ax.imshow(attribute_values, vmin=min_, vmax=max_)
     ax.set_xticks([])
     ax.set_yticks([])
     if add_xlabel:
