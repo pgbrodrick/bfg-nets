@@ -540,7 +540,7 @@ def build_training_data_ordered(config: DataConfig):
                 if (sample_index >= config.max_samples):
                     break
 
-    # Should this just be list(features.shape)? To convert a tuple to a list?
+    # Get the feature/response shapes for re-reading (modified ooc resize)
     feat_shape = list(feature.shape) 
     feat_shape[0] = sample_index
     resp_shape = list(responses.shape) 
@@ -632,6 +632,10 @@ def build_training_data_ordered(config: DataConfig):
         #   with no weights, right?
         # FABINA - I don't understand how you could have an all-zero weight set, unless your max_nodata_fraction 
         # is 100%.  Can you clarify?
+        # Thinking through more, I see that this could occur if there are only values between the boundary and the
+        # interior window.  This best handled by modifying the read-chunk code to use the max_nodata_fraction
+        # within the interior window (for the responses), which was my original implemenation I believe (just didn't
+        # get ported over).  Is this what you were thinking of?
         weights = calculate_categorical_weights(responses, weights, config)
         del features, responses, weights
 
