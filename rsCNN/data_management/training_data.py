@@ -410,7 +410,6 @@ def build_training_data_ordered(config):
     # mentioning that we are going to have tests for this package so that we can trust that things don't break
     # when we continue iterating and adding new functionality
 
-
     # These checks could probably be at a higher level, before it even makes it to this area of the code, **IF**
     # this function is only called by other higher level functions and the user isn't calling it directly
     assert config.raw_feature_file_list is not [], 'feature files to pull data from are required'
