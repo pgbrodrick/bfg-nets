@@ -43,14 +43,15 @@ class Samples(object):
         #  probably want to do something like, given x classes, for each class find y images with class in the loss
         #  window, for x * y images total
         # TODO:  handle multiple inputs when necessary
-        features, responses = self.data_sequence.__getitem__(0)
+        (raw_features, raw_responses), (trans_features, trans_responses) = \
+            self.data_sequence.get_raw_and_transformed_sample(0)
         # We expect weights to be the last element in the responses array
-        self.weights = responses[0][..., -1]
+        self.weights = trans_responses[0][..., -1]
         # Unpack features and responses, inverse transform to get raw values
-        self.trans_features = features[0]
-        self.raw_features = self.data_sequence.feature_scaler.inverse_transform(self.trans_features)
-        self.trans_responses = responses[0][..., :-1]
-        self.raw_responses = self.data_sequence.response_scaler.inverse_transform(self.trans_responses)
+        self.raw_features = raw_features[0]
+        self.trans_features = trans_features[0]
+        self.raw_responses = raw_responses[0][..., :-1]
+        self.trans_responses = trans_responses[0][..., :-1]
         # Set sample metadata
         self.num_samples = self.trans_features.shape[0]
         self.num_features = self.trans_features.shape[-1]
