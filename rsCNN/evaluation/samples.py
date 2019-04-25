@@ -43,14 +43,15 @@ class Samples(object):
         #  probably want to do something like, given x classes, for each class find y images with class in the loss
         #  window, for x * y images total
         # TODO:  handle multiple inputs when necessary
-        features, responses = self.data_sequence.__getitem__(0)
+        (raw_features, raw_responses), (trans_features, trans_responses) = \
+            self.data_sequence.get_raw_and_transformed_sample(0)
         # We expect weights to be the last element in the responses array
-        self.weights = responses[0][..., -1]
+        self.weights = trans_responses[0][..., -1]
         # Unpack features and responses, inverse transform to get raw values
-        self.trans_features = features[0]
-        self.raw_features = self.data_sequence.feature_scaler.inverse_transform(self.trans_features)
-        self.trans_responses = responses[0][..., :-1]
-        self.raw_responses = self.data_sequence.response_scaler.inverse_transform(self.trans_responses)
+        self.raw_features = raw_features[0]
+        self.trans_features = trans_features[0]
+        self.raw_responses = raw_responses[0][..., :-1]
+        self.trans_responses = trans_responses[0][..., :-1]
         # Set sample metadata
         self.num_samples = self.trans_features.shape[0]
         self.num_features = self.trans_features.shape[-1]
@@ -69,12 +70,25 @@ class Samples(object):
     def _set_raw_and_transformed_ranges(self):
         # Note:  ranges are a (num_values, 2) array, e.g., raw_features_range with 3 features is a (3, 2) array with
         # raw_features_range[2, 0] being the minimum of the 3rd feature and raw_features_range[2, 1] being the maximum
+        # TODO:  because the nan handling was moved from the scalers to the sequence (?), now every function or
+        #  object is responsible for handling nans locally, leading to potential bugs or errors. I'm introducing this
+        #  hack right now because I don't know if Phil had a compelling reason to do this, but we need to figure out
+        #  a solution as soon as possible.
         self.raw_features_range = self._get_range(self.raw_features)
-        self.trans_features_range = self._get_range(self.trans_features)
+        # TODO:  note from above applies here
+        tmp_features = self.trans_features.copy()
+        tmp_features[tmp_features == self.data_sequence.nan_replacement_value] = np.nan
+        self.trans_features_range = self._get_range(tmp_features)
         self.raw_responses_range = self._get_range(self.raw_responses)
-        self.trans_responses_range = self._get_range(self.trans_responses)
+        # TODO:  note from above applies here
+        tmp_responses = self.trans_responses.copy()
+        tmp_responses[tmp_responses == self.data_sequence.nan_replacement_value] = np.nan
+        self.trans_responses_range = self._get_range(tmp_responses)
         self.raw_predictions_range = self._get_range(self.raw_predictions)
-        self.trans_predictions_range = self._get_range(self.trans_predictions)
+        # TODO:  note from above applies here
+        tmp_predictions = self.trans_predictions.copy()
+        tmp_predictions[tmp_predictions == self.data_sequence.nan_replacement_value] = np.nan
+        self.trans_predictions_range = self._get_range(tmp_predictions)
         self.weights_range = self._get_range(self.weights)
 
     def _get_range(self, data: np.array) -> np.array:
