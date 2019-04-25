@@ -67,9 +67,11 @@ def create_model_report(
         else:
             figures.extend(results.plot_spatial_regression_error(sampled_train))
         # Plot training and validation sequence
-        figures.extend(results.single_sequence_prediction_histogram(model, train_sequence, 'Training'))
-        if validation_sequence is not None:
-            figures.extend(results.single_sequence_prediction_histogram(model, validation_sequence, 'Validation'))
+        # TODO:  histograms are currently broken for categorical data, turning off here so I don't need to remember
+        #  to always comment it out before running
+        # figures.extend(results.single_sequence_prediction_histogram(model, train_sequence, 'Training'))
+        # if validation_sequence is not None:
+        #     figures.extend(results.single_sequence_prediction_histogram(model, validation_sequence, 'Validation'))
         # Model history
         if history:
             figures.extend(plot_history(history))
@@ -100,9 +102,11 @@ def create_preliminary_model_report(
         # Plot input data
         figures.extend(inputs.plot_raw_and_transformed_input_samples(sampled_train))
         # Plot training and validation sequence
-        figures.extend(results.single_sequence_prediction_histogram(model, train_sequence, 'Training'))
-        if validation_sequence is not None:
-            figures.extend(results.single_sequence_prediction_histogram(model, validation_sequence, 'Validation'))
+        # TODO:  histograms are currently broken for categorical data, turning off here so I don't need to remember
+        #  to always comment it out before running
+        # figures.extend(results.single_sequence_prediction_histogram(model, train_sequence, 'Training'))
+        # if validation_sequence is not None:
+        #     figures.extend(results.single_sequence_prediction_histogram(model, validation_sequence, 'Validation'))
         for fig in figures:
             pdf.savefig(fig, bbox_inches='tight')
 
