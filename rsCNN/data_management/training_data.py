@@ -627,6 +627,10 @@ def build_training_data_ordered(config: DataConfig):
         #  changed.
         Path(config.successful_data_save_file).touch()
         features, responses, weights, success = load_training_data(config, writeable=True)
+        # TODO:  Phil:  it's currently possible for weights to be set to 0 in the entire loss window and then to have
+        #   samples with no weights for the loss function. If a sample is composed of all overweighted classes, this
+        #   could cause hard errors, but it seems like it's pretty suboptimal to waste any CPU/GPU cycles on samples
+        #   with no weights, right?
         weights = calculate_categorical_weights(responses, weights, config)
         del features, responses, weights
         # Could pull the successful out of the if statement since it's done on both logic branches
