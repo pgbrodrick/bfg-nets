@@ -504,33 +504,31 @@ def build_training_data_ordered(config: DataConfig):
         # functions, etc
         # FABINA - I can maybe follow you with the above....but for the below, it's alreayd broken out into a
         # function....this loop is only assigning the appropriate option.  What would be a better way?
+        # Update - I've condensed the code below a bit to see if that helps at all.  Functionally the same, but
+        # not a bit tighter to read
         for _cr in tqdm(range(len(colrow)), ncols=80):
-            if (boundary_set is None):
-                if (subset_geotransform is None):
-                    local_feature, local_response = read_chunk(feature_set,
-                                                               response_set,
-                                                               f_ul + colrow[_cr, :],
-                                                               r_ul + colrow[_cr, :],
-                                                               config)
-                else:
-                    subset_geotransform[0] = f_trans[0] + (f_ul[0] + colrow[_cr, 0]) * f_trans[1]
-                    subset_geotransform[3] = f_trans[3] + (f_ul[1] + colrow[_cr, 1]) * f_trans[5]
 
-                    local_feature, local_response = read_chunk(feature_set,
-                                                               response_set,
-                                                               f_ul + colrow[_cr, :],
-                                                               r_ul + colrow[_cr, :],
-                                                               config,
-                                                               boundary_vector_file=config.boundary_file_list[_i],
-                                                               boundary_subset_geotransform=subset_geotransform)
-            else:
-                local_feature, local_response = read_chunk(feature_set,
-                                                           response_set,
-                                                           f_ul + colrow[_cr, :],
-                                                           r_ul + colrow[_cr, :],
-                                                           config,
-                                                           b_set=boundary_set,
-                                                           boundary_upper_left=b_ul + colrow[_cr, :])
+            # Determine local information about boundary file
+            local_boundary_vector_file = None
+            local_boundary_upper_left=None
+            if (boundary_set is not None):
+                local_boundary_set = boundary_set
+                local_boundary_upper_left = b_ul + colrow[_cr, :]
+            if (subset_geotransform is not None):
+                subset_geotransform[0] = f_trans[0] + (f_ul[0] + colrow[_cr, 0]) * f_trans[1]
+                subset_geotransform[3] = f_trans[3] + (f_ul[1] + colrow[_cr, 1]) * f_trans[5]
+                local_boundary_vector_file = config.boundary_file_list[_i]
+
+            read_chunk(feature_set,
+                       response_set,
+                       f_ul + colrow[_cr, :],
+                       r_ul + colrow[_cr, :],
+                       config,
+                       boundary_vector_file = local_boundary_vector_file,
+                       boundary_upper_left = local_boundary_upper_left,
+                       b_set = boundary_set,
+                       boundary_subset_geotransform = subset_geotransform)
+
 
             if (local_feature is not None):
                 features[sample_index, ...] = local_feature.copy()
@@ -598,21 +596,27 @@ def build_training_data_ordered(config: DataConfig):
         un_resp = un_resp[un_resp != config.response_nodata_value]
         _logger.debug('Found {} categorical responses'.format(len(un_resp)))
 
-        resp_shape = responses.shape
+        resp_shape = list(responses.shape)
+        resp_shape[-1] = len(un_resp)
 
         cat_response_memmap_file = config.data_save_name + '_cat_response_munge_memmap.npy'
         cat_responses = np.memmap(cat_response_memmap_file,
-                                  dtype=np.float16,
+                                  dtype=np.float32,
                                   mode='w+',
-                                  shape=(resp_shape[0], resp_shape[1], resp_shape[2], len(un_resp)))
+                                  shape=resp_shape)
 
         # TODO:  Are you trying to iterate backwards? If so, it's clearer to write reversed(range(len(un_resp)))
         # Also, I wonder whether there's an off-by-one error here? Should that really be len(un_resp) - 1?
-        # FABINA - yes, I'm trying to iterate backwards, and yes, we need to start at len()-1, since python is 0 based....
-        for _r in range(len(un_resp)-1, -1, -1):
+        # FABINA - yes, I was trying to iterate backwards, and no, there is no off-by-one erro, python being 0-based.
+        # Doesn't need to be reversed now, as I swapped in from being in-place, so I've removed (doesn't matter, but
+        # no need to confuse folks)
+
+        # One hot-encode
+        for _r in range(len(un_resp)):
             cat_responses[..., _r] = np.squeeze(responses[..., 0] == un_resp[_r])
-        del responses
-        del cat_responses
+
+        # Force file dump, and then reload the encoded responses as the primary response
+        del responses, cat_responses
         os.remove(response_memmap_file)
         response_memmap_file = cat_response_memmap_file
         responses = np.memmap(response_memmap_file, dtype=np.float32, mode='r+', shape=tuple(resp_shape))
