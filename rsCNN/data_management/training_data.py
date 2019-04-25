@@ -319,6 +319,11 @@ def read_chunk(f_set,
     #   below TODOs), and if/where new checks should be inserted. The calling function should probably call read_chunk
     #   and then do its own checks on those values, or this should be called read_chunk_and_return_if_valid or something
     #   similar
+    # FABINA - it sounds like you have an issue with the name, and the name only.  Fine, let's change it.  
+    # There is already a function to read a subset of a file, it's call ReadAsArray, 
+    # and it's used below, extensively.  A bulk read of all files is grossly inefficient, and makes no sense 
+    # to implement.  What this code does is to read any and all valid chunks.  It does not need to get refactored,
+    # at least from the argument above.  Rename as you like.
     window_diameter = config.window_radius * 2
 
     # Start by checking if we're inside boundary, if there is one
@@ -328,18 +333,6 @@ def read_chunk(f_set,
     if (b_set is not None):
         mask = b_set.ReadAsArray(boundary_upper_left[0], boundary_upper_left[1], window_diameter, window_diameter)
 
-    # TODO:  Note that this is much clearer by comparing with the old code, then delete the old code. Note the shorter
-    #  boolean comparison and the combined if/else rather than if/if
-    """
-    if (mask is not None):
-        mask = mask == config.boundary_bad_value
-        if (np.sum(mask) == np.prod(mask.shape)):
-        if np.all(mask):
-            return None, None
-    # TODO:  Note:  probably not good form to have mutually exclusive branches with two checks, potential for bugs
-    if (mask is None):
-        mask = np.zeros((window_diameter, window_diameter)).astype(bool)
-    """
     if mask is None:
         mask = np.zeros((window_diameter, window_diameter)).astype(bool)
     else:
@@ -354,6 +347,7 @@ def read_chunk(f_set,
             _b+1).ReadAsArray(response_upper_left[0], response_upper_left[1], window_diameter, window_diameter)
     local_response[local_response == config.response_nodata_value] = np.nan
     # TODO:  isn't this just checking whether values are nan and then assigning them to nan again?
+    # FABINA - no, it's also checking for other non-nan non-finite numpy values, which can (and sometimes are) read
     local_response[np.isfinite(local_response) is False] = np.nan
     local_response[mask, :] = np.nan
 
@@ -362,9 +356,7 @@ def read_chunk(f_set,
     if (config.response_max_value is not None):
         local_response[local_response > config.response_max_value] = np.nan
 
-    # TODO:  Phil:  what is this trying to do? I think this might be an error if you're actually trying to figure out
-    #  whether it's all nan. If so, it should be if np.all(np.isnan(local_response))
-    if (np.nansum(local_response) == np.prod(local_response.shape)):
+    if (np.all(np.isnan(local_response))):
         return None, None
     mask[np.any(np.isnan(local_response), axis=-1)] = True
 
@@ -375,13 +367,11 @@ def read_chunk(f_set,
             _b+1).ReadAsArray(feature_upper_left[0], feature_upper_left[1], window_diameter, window_diameter)
 
     local_feature[local_feature == config.feature_nodata_value] = np.nan
-    # TODO:  isn't this just checking whether values are nan and then assigning them to nan again?
     local_feature[np.isfinite(local_feature) is False] = np.nan
     local_feature[mask, :] = np.nan
-    # TODO:  Phil:  what is this trying to do? I think this might be an error if you're actually trying to figure out
-    #  whether it's all nan. If so, it should be if np.all(np.isnan(local_feature))
-    if (np.nansum(local_feature) == np.prod(local_feature.shape)):
+    if (np.all(np.isnan(local_feature))):
         return None, None
+
     feature_nodata_fraction = np.sum(np.isnan(local_feature)) / np.prod(local_feature.shape)
     # TODO:  as implemented, this only checks the feature nodata fraction, do we want to do responses too?
     if feature_nodata_fraction > config.nodata_maximum_fraction:
@@ -390,6 +380,7 @@ def read_chunk(f_set,
 
     # Final check, and return
     # TODO:  haven't we already done these operations above?
+    # FABINA - no, since the mask has built as it's gone forward
     local_feature[mask, :] = np.nan
     local_response[mask, :] = np.nan
 
@@ -446,7 +437,7 @@ def build_training_data_ordered(config: DataConfig):
 
         # this boolean could be simplified to two levels pretty easily, maybe even just one, but then it could
         # also be hidden in the above mentioned object
-        # FABINA - Fiar, I've simplified it to two lines.  I don't think it can safely go to one, could be wrong.
+        # FABINA - Fair, I've simplified it to two lines.  I don't think it can safely go to one, could be wrong.
         if (len(config.boundary_file_list) > 0 and config.boundary_as_vectors is False):
             if (config.boundary_file_list[_i] is not None):
                 boundary_set = gdal.Open(config.boundary_file_list[_i], gdal.GA_ReadOnly)
@@ -599,7 +590,7 @@ def build_training_data_ordered(config: DataConfig):
 
     # TODO: Why not just set all weights to zeros initially, then do the internal window set to ones, then do anything
     # isnan is zero? Would that be less code?
-    # FABINA - that is literally the exact same thing as goe on here, in reverse.
+    # FABINA - I think it would be basically the same
     if (config.internal_window_radius != config.window_radius):
         buf = config.window_radius - config.internal_window_radius
         weights[:, :buf, :, -1] = 0
@@ -627,6 +618,7 @@ def build_training_data_ordered(config: DataConfig):
 
         # TODO:  Are you trying to iterate backwards? If so, it's clearer to write reversed(range(len(un_resp)))
         # Also, I wonder whether there's an off-by-one error here? Should that really be len(un_resp) - 1?
+        # FABINA - yes, I'm trying to iterate backwards, and yes, we need to start at len()-1, since python is 0 based....
         for _r in range(len(un_resp)-1, -1, -1):
             cat_responses[..., _r] = np.squeeze(responses[..., 0] == un_resp[_r])
         del responses
@@ -651,6 +643,8 @@ def build_training_data_ordered(config: DataConfig):
         #   samples with no weights for the loss function. If a sample is composed of all overweighted classes, this
         #   could cause hard errors, but it seems like it's pretty suboptimal to waste any CPU/GPU cycles on samples
         #   with no weights, right?
+        # FABINA - I don't understand how you could have an all-zero weight set, unless your max_nodata_fraction 
+        # is 100%.  Can you clarify?
         weights = calculate_categorical_weights(responses, weights, config)
         del features, responses, weights
         # Could pull the successful out of the if statement since it's done on both logic branches
