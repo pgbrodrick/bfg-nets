@@ -80,19 +80,10 @@ def build_or_load_data(config, rebuild=False):
     config.weights = weights
 
 
-def load_training_data(config, writeable=False):
-    """
-        Loads and returns training data from disk based on the config savename
-        Arguments:
-            config - data config from which to reference data
-        Returns:
-            features - feature data
-            responses - response data
-            fold_assignments - per-sample fold assignments specified during data generation
-    """
+def load_training_data(config, writeable=False, override_success_file=False):
 
     success = True
-    if (os.path.isfile(config.successful_data_save_file) is not True):
+    if (os.path.isfile(config.successful_data_save_file) is not True and override_success_file is not True):
         _logger.debug('no saved data')
         success = False
 
@@ -106,6 +97,7 @@ def load_training_data(config, writeable=False):
     weights = []
     # TODO:  Phil:  I get a failed read on the first file when running this and building... but I think everything works
     #  after that? I don't know if "failed read" is the right message for something that succeeds?
+    # FABINA - if you get a failed read message, than you should also only be returning None...is that not the case?
     for fold in range(config.n_folds):
         if (os.path.isfile(config.feature_files[fold])):
             features.append(np.load(config.feature_files[fold], mmap_mode=mode))
@@ -414,6 +406,7 @@ def build_training_data_ordered(config: DataConfig):
 
     feature_memmap_file = config.data_save_name + '_feature_munge_memmap.npy'
     response_memmap_file = config.data_save_name + '_response_munge_memmap.npy'
+    weight_memmap_file = config.data_save_name + '_weight_munge_memmap.npy'
 
     # TODO: fix max size issue, but force for now to prevent overly sized sets
     assert(config.max_samples * (config.window_radius*2)**2 * n_features / 1024.**3 < 10, 'max_samples too large')
@@ -578,10 +571,7 @@ def build_training_data_ordered(config: DataConfig):
         idx_finish = int(round((f + 1) / config.n_folds * len(fold_assignments)))
         fold_assignments[idx_start:idx_finish] = f
 
-    # TODO:  Note:  do we need these munge files afterwards? They stay on disk and I'm not sure if they're required
-    # after the build finishes. If this is the case, we could also check whether the munge files are gone as
-    # a sign of success
-    weights = np.memmap(config.data_save_name + '_weights_munge_memmap.npy',
+    weights = np.memmap(weight_memmap_file,
                         dtype=np.float32,
                         mode='w+',
                         shape=(features.shape[0], features.shape[1], features.shape[2], 1))
@@ -623,6 +613,7 @@ def build_training_data_ordered(config: DataConfig):
             cat_responses[..., _r] = np.squeeze(responses[..., 0] == un_resp[_r])
         del responses
         del cat_responses
+        os.remove(response_memmap_file)
         response_memmap_file = cat_response_memmap_file
         responses = np.memmap(response_memmap_file, dtype=np.float32, mode='r+', shape=tuple(resp_shape))
 
@@ -633,12 +624,8 @@ def build_training_data_ordered(config: DataConfig):
 
     del features, responses, weights
     if (config.data_build_category == 'ordered_categorical'):
-        # TODO:  Phil:  this throws an error because the success file does not exist yet. Specifically, the
-        #  responses returned from load_training_data are None and then calculate_categorical_weights assumes
-        #  that those responses are not None. I'm creating the success file so this works, but this needs to be
-        #  changed.
-        Path(config.successful_data_save_file).touch()
-        features, responses, weights, success = load_training_data(config, writeable=True)
+
+        features, responses, weights, success = load_training_data(config, writeable=True, override_success_file=True)
         # TODO:  Phil:  it's currently possible for weights to be set to 0 in the entire loss window and then to have
         #   samples with no weights for the loss function. If a sample is composed of all overweighted classes, this
         #   could cause hard errors, but it seems like it's pretty suboptimal to waste any CPU/GPU cycles on samples
@@ -647,10 +634,18 @@ def build_training_data_ordered(config: DataConfig):
         # is 100%.  Can you clarify?
         weights = calculate_categorical_weights(responses, weights, config)
         del features, responses, weights
-        # Could pull the successful out of the if statement since it's done on both logic branches
-        Path(config.successful_data_save_file).touch()
-    else:
-        Path(config.successful_data_save_file).touch()
 
+    # clean up munge files
+    if (os.path.isfile(feature_memmap_file)):
+        os.remove(feature_memmap_file)
+    if (os.path.isfile(response_memmap_file)):
+        os.remove(response_memmap_file)
+    if (os.path.isfile(weight_memmap_file)):
+        os.remove(weight_memmap_file)
+
+    Path(config.successful_data_save_file).touch()
     features, responses, weights, success = load_training_data(config, writeable=False)
     return features, responses, weights
+
+
+
