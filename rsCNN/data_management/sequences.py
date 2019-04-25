@@ -36,7 +36,7 @@ def build_memmapped_sequence(data_config, fold_indices, batch_size=100, rebuild=
                                       batch_size,
                                       apply_random_transforms=apply_random,
                                       feature_mean_centering=mean_centering,
-                                      nan_conversion_value=data_config.feature_training_nodata_value)
+                                      nan_replacement_value=data_config.feature_training_nodata_value)
     return data_sequence
 
 
@@ -51,13 +51,13 @@ class BaseSequence(keras.utils.Sequence):
             response_scaler: BaseGlobalScaler,
             batch_size: int,
             apply_random_transforms: bool = False,
-            nan_conversion_value: float = None
+            nan_replacement_value: float = None
     ) -> None:
         self.feature_scaler = feature_scaler
         self.response_scaler = response_scaler
         self.batch_size = batch_size
         self.apply_random_transforms = apply_random_transforms
-        self.nan_conversion_value = nan_conversion_value
+        self.nan_replacement_value = nan_replacement_value
 
     def __len__(self) -> int:
         raise NotImplementedError('Method is required for Keras functionality. Should return steps_per_epoch.')
@@ -65,33 +65,47 @@ class BaseSequence(keras.utils.Sequence):
     def __getitem__(self, index: int) -> Tuple[List[np.array], List[np.array]]:
         # Method is required for Keras functionality
         _logger.debug('Get batch {} with {} items via sequence'.format(index, self.batch_size))
-        _logger.debug('Get features, responses, and weights')
         features, responses, weights = self._get_features_responses_weights(index)
+        return self._get_transformed_sample(features, responses, weights)
 
-        _logger.debug('Modify features, responses, and weights prior to scaling')
-        features, responses, weights = self._modify_features_responses_weights_before_scaling(
-            features, responses, weights)
+    def get_raw_and_transformed_sample(self, index: int) -> \
+            Tuple[Tuple[List[np.array], List[np.array]], Tuple[List[np.array], List[np.array]]]:
+        _logger.debug('Get batch {} with {} items via sequence'.format(index, self.batch_size))
+        _logger.debug('Get features, responses, and weights')
+        raw_features, raw_responses, raw_weights = self._get_features_responses_weights(index)
+        trans_features, trans_responses = self._get_transformed_sample(
+            raw_features.copy(), raw_responses.copy(), raw_weights.copy()
+        )
+        raw_responses = [np.append(response, weight, axis=-1) for response, weight in zip(raw_responses, raw_weights)]
+        return ((raw_features, raw_responses), (trans_features, trans_responses))
 
+    def _get_transformed_sample(self, raw_features, raw_responses, raw_weights) -> \
+            Tuple[List[np.array], List[np.array]]:
+        _logger.debug('Optionally modify features, responses, and weights prior to scaling')
+        # Reusing names to avoid creating new, large objects
+        raw_features, raw_responses, raw_weights = \
+            self._modify_features_responses_weights_before_scaling(raw_features, raw_responses, raw_weights)
         _logger.debug('Scale features')
-        features = self._scale_features(features)
-
+        raw_features = self._scale_features(raw_features)
         _logger.debug('Scale responses')
-        responses = self._scale_responses(responses)
-
-        _logger.debug('Convert nan responses')
-        responses = self._convert_list_nans(responses, 0)
-
-        _logger.debug('Convert nan features')
-        if (self.nan_conversion_value is not None):
-            features = self._convert_list_nans(features, self.nan_conversion_value)
-        _logger.debug('Append weights to responses for loss functions')
-        responses_with_weights = [np.append(response, weight, axis=-1) for response, weight in zip(responses, weights)]
-
+        raw_responses = self._scale_responses(raw_responses)
+        if self.nan_replacement_value is not None:
+            _logger.debug('Convert nan features to {}'.format(self.nan_replacement_value))
+            raw_features = self._replace_nan_data_values(raw_features, self.nan_replacement_value)
+            _logger.debug('Convert nan responses to {}'.format(self.nan_replacement_value))
+            raw_responses = self._replace_nan_data_values(raw_responses, self.nan_replacement_value)
+        else:
+            assert np.all(np.isfinite(raw_features)), \
+                'Some feature values are nan but nan_replacement_value not provided in data config. Please provide ' + \
+                'a nan_replacement_value to transform features correctly.'
+        _logger.debug('Append weights to responses for loss function calculations')
+        raw_responses = [np.append(response, weight, axis=-1) for response, weight in zip(raw_responses, raw_weights)]
         if self.apply_random_transforms is True:
             _logger.debug('Apply random transformations to features and responses')
-            self._apply_random_transformations(features, responses)
-
-        return features, responses_with_weights
+            self._apply_random_transformations(raw_features, raw_responses)
+        else:
+            _logger.debug('Random transformations not applied to features and responses')
+        return raw_features, raw_responses
 
     def _get_features_responses_weights(self, index: int) -> Tuple[List[np.array], List[np.array], List[np.array]]:
         raise NotImplementedError(
@@ -99,11 +113,9 @@ class BaseSequence(keras.utils.Sequence):
             'See method header for expected arguments and returned objects.'
         )
 
-    def _convert_list_nans(self, data: List[np.array], convert_value):
-        for _r in range(len(data)):
-            lr = data[_r]
-            lr[np.isnan(lr)] = convert_value
-            data[_r] = lr
+    def _replace_nan_data_values(self, data: List[np.array], replacement_value):
+        for idx_array in data:
+            data[idx_array][np.isnan(data[idx_array])] = replacement_value
         return data
 
     def _modify_features_responses_weights_before_scaling(
@@ -112,6 +124,7 @@ class BaseSequence(keras.utils.Sequence):
             responses: List[np.array],
             weights: List[np.array]
     ) -> Tuple[List[np.array], List[np.array], List[np.array]]:
+        _logger.debug('No preliminary modifications applied to features, responses, or weights')
         return features, responses, weights
 
     def _scale_features(self, features: List[np.array]) -> List[np.array]:
@@ -152,16 +165,16 @@ class MemmappedSequence(BaseSequence):
             batch_size: int,
             apply_random_transforms: bool,
             feature_mean_centering: False,
-            nan_conversion_value: None,
+            nan_replacement_value: None,
     ) -> None:
         self.features = features  # a list of numpy arrays, each of which is (n,y,x,f)
         self.responses = responses  # a list of numpy arrays, each of which is (n,y,x,r)
         self.weights = weights  # a list of numpy arrays, each of which is (n,y,x,1)
         super().__init__(feature_scaler=feature_scaler, response_scaler=response_scaler, batch_size=batch_size,
-                         apply_random_transforms=apply_random_transforms, nan_conversion_value=nan_conversion_value)
+                         apply_random_transforms=apply_random_transforms, nan_replacement_value=nan_replacement_value)
 
         # Determine the cumulative number of total samples across arrays - we're going to use
-        # it to roll between files when exctracting samples
+        # it to roll between files when extracting samples
         self.cum_samples_per_array = np.zeros(len(features)+1).astype(int)
         for _array in range(1, len(features)+1):
             self.cum_samples_per_array[_array] = features[_array-1].shape[0] + self.cum_samples_per_array[_array-1]
