@@ -114,7 +114,7 @@ class BaseSequence(keras.utils.Sequence):
         )
 
     def _replace_nan_data_values(self, data: List[np.array], replacement_value):
-        for idx_array in data:
+        for idx_array in range(len(data)):
             data[idx_array][np.isnan(data[idx_array])] = replacement_value
         return data
 
