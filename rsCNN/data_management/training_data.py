@@ -374,55 +374,13 @@ def build_training_data_ordered(config):
         config - object of type Data_Config with the requisite values for preparing training data (see __init__.py)
 
     """
-    # Overall note:  it seems that you're evaluating whether a function makes sense based on whether that code
-    # is reused other places or whether it's specific to this function (at least, from your comments about which
-    # lines could or could not be converted). That's not the only reason to have subfunctions, you could also
-    # have subfunctions to make the main function clearer, hide complexity, make the function more easily
-    # debugged, make the function more easily testable, avoid type errors or logic errors, etc.
-    # Right now, this function is called build_training_data_ordered, but what does it do?
-    # - check that the config is correct AND
-    # - check that data matches AND
-    # - set filenames AND
-    # - open arrays AND
-    # - iterate through files AND
-    # - do transform calculations AND
-    # - do other math AND
-    # - handle a grid of data AND
-    # - read data AND
-    # - reshape and shuffle data AND
-    # - make fold assignments AND
-    # - create weights AND
-    # - calculate loss windows AND
-    # - check if data is categorical several times AND
-    # - one-hot encode data AND
-    # - write arrays AND
-    # - recalculate arrays AND
-    # - reload data
-    # I had to look all that up from memory because it was so much. How do you debug something like this? Test
-    # something like this? The standard advice is that functions should only do one thing and, when you start
-    # packing multiple things into a function, you end up with side-effects, unintended consequences, difficulty
-    # in using the program, etc.
-    # Think about how we would write tests for this function. We would need to create multiple configs to test
-    # the different flows of logic through the function, we'd need to open up files to confirm that the correct
-    # things were written, we'd need to add a bunch of logging so that, if there was an error, we'd know where
-    # exactly things broken. If this was broken up, we'd instead have multiple smaller, simple, unit tests that
-    # check  individual components and then maybe only one or two end-to-end tests. And, I suppose it's worth
-    # mentioning that we are going to have tests for this package so that we can trust that things don't break
-    # when we continue iterating and adding new functionality
-
-    # These checks could probably be at a higher level, before it even makes it to this area of the code, **IF**
-    # this function is only called by other higher level functions and the user isn't calling it directly
     assert config.raw_feature_file_list is not [], 'feature files to pull data from are required'
     assert config.raw_response_file_list is not [], 'response files to pull data from are required'
-    # Same with this?
     if (config.random_seed is not None):
         np.random.seed(config.random_seed)
     # Check data matches what? If we name this better, we dont need to inspect that the function does
     check_data_matches(config.raw_feature_file_list, config.raw_response_file_list, False,
                        config.boundary_file_list, config.boundary_as_vectors, config.ignore_projections, ignore_extents=True)
-    # This check is probably less expensive than the one above, so it should come before it. Also, this seems to be
-    # another config check like the assertion lines above, and they could all go into the same function called
-    # something like _check_config_build_options_are_valid
     if (isinstance(config.max_samples, list)):
         if (len(config.max_samples) != len(config.raw_feature_file_list)):
             raise Exception('max_samples must equal feature_file_list length, or be an integer.')
@@ -435,10 +393,7 @@ def build_training_data_ordered(config):
     response_memmap_file = config.data_save_name + '_response_munge_memmap.npy'
 
     # TODO: fix max size issue, but force for now to prevent overly sized sets
-    # Another check that can be placed with the others? Not sure how expensive RasterCount is to calculate
     assert(config.max_samples * (config.window_radius*2)**2 * n_features / 1024.**3 < 10, 'max_samples too large')
-    # function called _create_memmap_array that accepts config and last dimension, hides the details and ensures this
-    # is only referenced once given that these details are important, but it is only a one-liner.
     features = np.memmap(feature_memmap_file,
                          dtype=np.float32,
                          mode='w+',
@@ -450,20 +405,12 @@ def build_training_data_ordered(config):
                           shape=(config.max_samples, config.window_radius*2, config.window_radius*2, response_set.RasterCount))
 
     sample_index = 0
-    # If you have loop, it's a pretty good sign that whatever is inside can be broken out into a function and
-    # that could be useful here
     for _i in range(0, len(config.raw_feature_file_list)):
 
         # open requisite datasets
-        # This feels like a code smell, where we have three almost identical variables, both in how they're
-        # accessed and how they're used, even moreso because there are downstream variables that are almost
-        # identical that are derived from these. We could keep these contents self contained and passed around
-        # more easily if they're in an object together with the methods shared
         feature_set = gdal.Open(config.raw_feature_file_list[_i], gdal.GA_ReadOnly)
         response_set = gdal.Open(config.raw_response_file_list[_i], gdal.GA_ReadOnly)
         boundary_set = None
-        # this boolean could be simplified to two levels pretty easily, maybe even just one, but then it could
-        # also be hidden in the above mentioned object
         if (len(config.boundary_file_list) > 0):
             if (config.boundary_file_list[_i] is not None):
                 if (config.boundary_as_vectors is False):
@@ -477,14 +424,6 @@ def build_training_data_ordered(config):
 
         # Get upper left interior coordinates in pixel space
         # Broken out for clarity, it can obviously be condensed
-        # Could be a function and return interior_xy, but everything in the lines below this seems like it's
-        # pretty boilerplate after you understand what it does. The problem is that I don't really understand
-        # what it does. It looks like there are several recurring patterns that could be combined into function
-        # and named so you know what the math means. It also looks like the same operations are applied to feats,
-        # resps, and bounds, and an object could hide all of that and hold the state.
-        # On top of that, anytime you need comments to explain something in the code, it's a pretty good sign that
-        # you could probably break it out into a well named function to hide the complexity and replace it with
-        # plain english
         interior_x = max(r_trans[0], f_trans[0])
         interior_y = min(r_trans[3], f_trans[3])
         if (b_trans is not None):
@@ -525,23 +464,18 @@ def build_training_data_ordered(config):
         colrow = np.zeros((len(collist)*len(rowlist), 2)).astype(int)
         colrow[:, 0] = np.matlib.repmat(np.array(collist).reshape((-1, 1)), 1, len(rowlist)).flatten()
         colrow[:, 1] = np.matlib.repmat(np.array(rowlist).reshape((1, -1)), len(collist), 1).flatten()
-        # IF these operations happen in functions, you don't need to worry about manually deleting these objects
-        # because they're lost when the function exits, i.e., they're only in the local scope
         del collist
         del rowlist
 
-        # There's a shuffle function that does this in np
+        # TODO:  There's a shuffle function that does this in np
         colrow = colrow[np.random.permutation(colrow.shape[0]), :]
 
         subset_geotransform = None
-        # same comment about nested ifs
         if (len(config.boundary_file_list) > 0):
             if (config.boundary_file_list[_i] is not None):
                 if (config.boundary_as_vectors):
                     subset_geotransform = [f_trans[0], f_trans[1], 0, f_trans[3], 0, f_trans[5]]
 
-        # same comments about turning nested content into a function, turning math into informatively named
-        # functions, etc
         for _cr in tqdm(range(len(colrow)), ncols=80):
             if (boundary_set is None):
                 if (subset_geotransform is None):
@@ -580,7 +514,7 @@ def build_training_data_ordered(config):
                 if (sample_index >= config.max_samples):
                     break
 
-    # Should this just be list(features.shape)? To convert a tuple to a list?
+    # TODO:  Should this just be list(features.shape)? To convert a tuple to a list?
     feat_shape = [x for x in features.shape]
     feat_shape[0] = sample_index
     resp_shape = [x for x in responses.shape]
@@ -589,32 +523,27 @@ def build_training_data_ordered(config):
     del responses
 
     #reload in place
-    # why reload in place?
+    # TODO:  note why?
     features = np.memmap(feature_memmap_file, dtype=np.float32, mode='r+', shape=(tuple(feat_shape)))
     responses = np.memmap(response_memmap_file, dtype=np.float32, mode='r+', shape=tuple(resp_shape))
 
     # randombly permute data to reshuffle everything
-    # why?
+    # TODO:  note why?
     perm = np.random.permutation(features.shape[0])
     features = features[perm, :]
     responses = responses[perm, :]
     del perm
 
-    # Honestly, at this point my head is starting to hurt. I'm trying to remember what has happened in this
-    # function up until this point because I was trying to make a mental "table of contents", but I can't
-    # do that without really focusing and looking back.
-    # You can do this in one line with something like np.repeat, if this is doing what I think
+    # TODO:  You can do this in one line with something like np.repeat, if this is doing what I think
     fold_assignments = np.zeros(responses.shape[0]).astype(int)
     for f in range(0, config.n_folds):
         idx_start = int(round(f / config.n_folds * len(fold_assignments)))
         idx_finish = int(round((f + 1) / config.n_folds * len(fold_assignments)))
         fold_assignments[idx_start:idx_finish] = f
 
-    # Note:  do we need these munge files afterwards? They stay on disk and I'm not sure if they're required
+    # TODO:  Note:  do we need these munge files afterwards? They stay on disk and I'm not sure if they're required
     # after the build finishes. If this is the case, we could also check whether the munge files are gone as
     # a sign of success
-    # The weights building could go into its own function called create_weights_array_with_loss_window or
-    # something similar
     weights = np.memmap(config.data_save_name + '_weights_munge_memmap.npy',
                         dtype=np.float32,
                         mode='w+',
@@ -622,7 +551,7 @@ def build_training_data_ordered(config):
     weights[:, :, :, :] = 1
     weights[np.isnan(responses[..., 0])] = 0
 
-    # Why not just set all weights to zeros initially, then do the internal window set to ones, then do anything
+    # TODO: Why not just set all weights to zeros initially, then do the internal window set to ones, then do anything
     # isnan is zero? Would that be less code?
     if (config.internal_window_radius != config.window_radius):
         buf = config.window_radius - config.internal_window_radius
@@ -636,9 +565,7 @@ def build_training_data_ordered(config):
     _logger.debug('Weight shape: {}'.format(weights.shape))
 
     if (config.data_build_category == 'ordered_categorical'):
-        # Could go in own function and you don't need to worry about deleting objects, would be called something
-        # like one_hot_encode_categorical_responses?
-        # Maybe we need a check here that un_resp not too long?
+        # TODO:  Maybe we need a check here that un_resp not too long?
         un_resp = np.unique(responses[np.isfinite(responses)])
         un_resp = un_resp[un_resp != config.response_nodata_value]
         _logger.debug('Found {} categorical responses'.format(len(un_resp)))
@@ -651,7 +578,7 @@ def build_training_data_ordered(config):
                                   mode='w+',
                                   shape=(resp_shape[0], resp_shape[1], resp_shape[2], len(un_resp)))
 
-        # Are you trying to iterate backwards? If so, it's clearer to write reversed(range(len(un_resp)))
+        # TODO:  Are you trying to iterate backwards? If so, it's clearer to write reversed(range(len(un_resp)))
         # Also, I wonder whether there's an off-by-one error here? Should that really be len(un_resp) - 1?
         for _r in range(len(un_resp)-1, -1, -1):
             cat_responses[..., _r] = np.squeeze(responses[..., 0] == un_resp[_r])
@@ -667,10 +594,6 @@ def build_training_data_ordered(config):
 
     del features, responses, weights
     if (config.data_build_category == 'ordered_categorical'):
-        # Why this block of code? Why do we calculate weights above and recalculate here? Why are weights
-        # calculated but seemingly nothing done with them? Why is everything deleted and reloaded a few lines
-        # later? Having in a function like recalculate_categorical_weights would help a bit, but I'm not sure
-        # why we recalculate them.
         # TODO:  Phil:  this throws an error because the success file does not exist yet. Specifically, the
         #  responses returned from load_training_data are None and then calculate_categorical_weights assumes
         #  that those responses are not None. I'm creating the success file so this works, but this needs to be
