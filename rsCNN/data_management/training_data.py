@@ -519,29 +519,28 @@ def build_training_data_ordered(config: DataConfig):
                 subset_geotransform[3] = f_trans[3] + (f_ul[1] + colrow[_cr, 1]) * f_trans[5]
                 local_boundary_vector_file = config.boundary_file_list[_i]
 
-            read_chunk(feature_set,
-                       response_set,
-                       f_ul + colrow[_cr, :],
-                       r_ul + colrow[_cr, :],
-                       config,
-                       boundary_vector_file = local_boundary_vector_file,
-                       boundary_upper_left = local_boundary_upper_left,
-                       b_set = boundary_set,
-                       boundary_subset_geotransform = subset_geotransform)
+            local_feature, local_response = read_chunk(feature_set,
+                                                       response_set,
+                                                       f_ul + colrow[_cr, :],
+                                                       r_ul + colrow[_cr, :],
+                                                       config,
+                                                       boundary_vector_file = local_boundary_vector_file,
+                                                       boundary_upper_left = local_boundary_upper_left,
+                                                       b_set = boundary_set,
+                                                       boundary_subset_geotransform = subset_geotransform)
 
 
             if (local_feature is not None):
                 features[sample_index, ...] = local_feature.copy()
                 responses[sample_index, ...] = local_response.copy()
                 sample_index += 1
-
                 if (sample_index >= config.max_samples):
                     break
 
     # Get the feature/response shapes for re-reading (modified ooc resize)
-    feat_shape = list(feature.shape) 
-    feat_shape[0] = sample_index
+    feat_shape = list(features.shape) 
     resp_shape = list(responses.shape) 
+    feat_shape[0] = sample_index
     resp_shape[0] = sample_index
 
     # Delete and reload feauters/responses, as a hard and fast way to force data dump to disc and reload
