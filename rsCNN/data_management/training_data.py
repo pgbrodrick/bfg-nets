@@ -10,7 +10,7 @@ import numpy.matlib
 import rasterio.features
 from rsCNN.utils import logging
 from rsCNN.utils.general import *
-from rsCNN.data_management import scalers
+from rsCNN.data_management import scalers, DataConfig
 
 _logger = logging.get_child_logger(__name__)
 
@@ -312,7 +312,13 @@ def read_chunk(f_set,
                boundary_subset_geotransform=None,
                b_set=None,
                boundary_upper_left=None):
-
+    # TODO:  This function should be refactored. read_chunk implies that the chunk is read, but this is also doing
+    #   a bunch of undocumented checks on the data. a return of None from a function named read_chunk implies that the
+    #   chunk was empty, but this actually means that it failed some sort of check. Additionally, the checks in here
+    #   are not clear as written, so it's hard to understand the flow of logic, whether there are existing bugs (see
+    #   below TODOs), and if/where new checks should be inserted. The calling function should probably call read_chunk
+    #   and then do its own checks on those values, or this should be called read_chunk_and_return_if_valid or something
+    #   similar
     window_diameter = config.window_radius * 2
 
     # Start by checking if we're inside boundary, if there is one
@@ -322,13 +328,24 @@ def read_chunk(f_set,
     if (b_set is not None):
         mask = b_set.ReadAsArray(boundary_upper_left[0], boundary_upper_left[1], window_diameter, window_diameter)
 
+    # TODO:  Note that this is much clearer by comparing with the old code, then delete the old code. Note the shorter
+    #  boolean comparison and the combined if/else rather than if/if
+    """
     if (mask is not None):
         mask = mask == config.boundary_bad_value
-
         if (np.sum(mask) == np.prod(mask.shape)):
+        if np.all(mask):
             return None, None
+    # TODO:  Note:  probably not good form to have mutually exclusive branches with two checks, potential for bugs
     if (mask is None):
         mask = np.zeros((window_diameter, window_diameter)).astype(bool)
+    """
+    if mask is None:
+        mask = np.zeros((window_diameter, window_diameter)).astype(bool)
+    else:
+        mask = mask == config.boundary_bad_value
+        if np.all(mask):
+            return None, None
 
     # Next check to see if we have a response, if so read all
     local_response = np.zeros((window_diameter, window_diameter, r_set.RasterCount))
@@ -336,7 +353,8 @@ def read_chunk(f_set,
         local_response[:, :, _b] = r_set.GetRasterBand(
             _b+1).ReadAsArray(response_upper_left[0], response_upper_left[1], window_diameter, window_diameter)
     local_response[local_response == config.response_nodata_value] = np.nan
-    local_response[np.isfinite(local_response) == False] = np.nan
+    # TODO:  isn't this just checking whether values are nan and then assigning them to nan again?
+    local_response[np.isfinite(local_response) is False] = np.nan
     local_response[mask, :] = np.nan
 
     if (config.response_min_value is not None):
@@ -344,6 +362,8 @@ def read_chunk(f_set,
     if (config.response_max_value is not None):
         local_response[local_response > config.response_max_value] = np.nan
 
+    # TODO:  Phil:  what is this trying to do? I think this might be an error if you're actually trying to figure out
+    #  whether it's all nan. If so, it should be if np.all(np.isnan(local_response))
     if (np.nansum(local_response) == np.prod(local_response.shape)):
         return None, None
     mask[np.any(np.isnan(local_response), axis=-1)] = True
@@ -355,20 +375,28 @@ def read_chunk(f_set,
             _b+1).ReadAsArray(feature_upper_left[0], feature_upper_left[1], window_diameter, window_diameter)
 
     local_feature[local_feature == config.feature_nodata_value] = np.nan
-    local_feature[np.isfinite(local_feature) == False] = np.nan
+    # TODO:  isn't this just checking whether values are nan and then assigning them to nan again?
+    local_feature[np.isfinite(local_feature) is False] = np.nan
     local_feature[mask, :] = np.nan
+    # TODO:  Phil:  what is this trying to do? I think this might be an error if you're actually trying to figure out
+    #  whether it's all nan. If so, it should be if np.all(np.isnan(local_feature))
     if (np.nansum(local_feature) == np.prod(local_feature.shape)):
+        return None, None
+    feature_nodata_fraction = np.sum(np.isnan(local_feature)) / np.prod(local_feature.shape)
+    # TODO:  as implemented, this only checks the feature nodata fraction, do we want to do responses too?
+    if feature_nodata_fraction > config.nodata_maximum_fraction:
         return None, None
     mask[np.any(np.isnan(local_response), axis=-1)] = True
 
     # Final check, and return
+    # TODO:  haven't we already done these operations above?
     local_feature[mask, :] = np.nan
     local_response[mask, :] = np.nan
 
     return local_feature, local_response
 
 
-def build_training_data_ordered(config):
+def build_training_data_ordered(config: DataConfig):
     """ Builds a set of training data based on the configuration input
         Arguments:
         config - object of type Data_Config with the requisite values for preparing training data (see __init__.py)
@@ -503,16 +531,15 @@ def build_training_data_ordered(config):
                                                            config,
                                                            b_set=boundary_set,
                                                            boundary_upper_left=b_ul + colrow[_cr, :])
-            # I'd normally do the opposite of this (if feature is None, then continue) because it leads to fewer
-            # nested lines.. not a big deal here, but just a habit that matters sometimes and saves headaches
-            # when it does
-            if (local_feature is not None):
-                features[sample_index, ...] = local_feature.copy()
-                responses[sample_index, ...] = local_response.copy()
-                sample_index += 1
 
-                if (sample_index >= config.max_samples):
-                    break
+            if local_feature is None:
+                continue
+            features[sample_index, ...] = local_feature.copy()
+            responses[sample_index, ...] = local_response.copy()
+            sample_index += 1
+
+            if (sample_index >= config.max_samples):
+                break
 
     # TODO:  Should this just be list(features.shape)? To convert a tuple to a list?
     feat_shape = [x for x in features.shape]
