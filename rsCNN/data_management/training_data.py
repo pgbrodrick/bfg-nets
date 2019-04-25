@@ -367,6 +367,10 @@ def read_chunk(f_set,
 
     return local_feature, local_response
 
+def upper_left_pixel(trans, interior_x, interior_y):
+    x_ul = max((trans[0] - interior_x)/trans[1], 0)
+    y_ul = max((interior_y - trans[3])/trans[5], 0)
+    return x_ul, y_ul
 
 def build_training_data_ordered(config):
     """ Builds a set of training data based on the configuration input
@@ -463,12 +467,13 @@ def build_training_data_ordered(config):
         feature_set = gdal.Open(config.raw_feature_file_list[_i], gdal.GA_ReadOnly)
         response_set = gdal.Open(config.raw_response_file_list[_i], gdal.GA_ReadOnly)
         boundary_set = None
+
         # this boolean could be simplified to two levels pretty easily, maybe even just one, but then it could
         # also be hidden in the above mentioned object
-        if (len(config.boundary_file_list) > 0):
+        # FABINA - Fiar, I've simplified it to two lines.  I don't think it can safely go to one, could be wrong.
+        if (len(config.boundary_file_list) > 0 and config.boundary_as_vectors is False):
             if (config.boundary_file_list[_i] is not None):
-                if (config.boundary_as_vectors is False):
-                    boundary_set = gdal.Open(config.boundary_file_list[_i], gdal.GA_ReadOnly)
+                boundary_set = gdal.Open(config.boundary_file_list[_i], gdal.GA_ReadOnly)
 
         f_trans = feature_set.GetGeoTransform()
         r_trans = response_set.GetGeoTransform()
@@ -476,39 +481,32 @@ def build_training_data_ordered(config):
         if (boundary_set is not None):
             b_trans = boundary_set.GetGeoTransform()
 
-        # Get upper left interior coordinates in pixel space
-        # Broken out for clarity, it can obviously be condensed
-        # Could be a function and return interior_xy, but everything in the lines below this seems like it's
-        # pretty boilerplate after you understand what it does. The problem is that I don't really understand
-        # what it does. It looks like there are several recurring patterns that could be combined into function
-        # and named so you know what the math means. It also looks like the same operations are applied to feats,
-        # resps, and bounds, and an object could hide all of that and hold the state.
-        # On top of that, anytime you need comments to explain something in the code, it's a pretty good sign that
-        # you could probably break it out into a well named function to hide the complexity and replace it with
-        # plain english
+        ############# Calculate the interior space location and extent
+        
+        # Find the interior (UL) x,y coordinates in map-space
         interior_x = max(r_trans[0], f_trans[0])
         interior_y = min(r_trans[3], f_trans[3])
         if (b_trans is not None):
             interior_x = max(interior_x, b_trans[0])
             interior_y = max(interior_y, b_trans[3])
 
-        f_x_ul = max((r_trans[0] - interior_x)/f_trans[1], 0)
-        f_y_ul = max((interior_y - f_trans[3])/f_trans[5], 0)
+        
+        # calculate the feature and response UL coordinates in pixel-space
+        f_x_ul, f_y_ul = upper_left_pixel(f_trans, interior_x, interior_y)
+        r_x_ul, r_y_ul = upper_left_pixel(r_trans, interior_x, interior_y)
 
-        r_x_ul = max((f_trans[0] - interior_x)/r_trans[1], 0)
-        r_y_ul = max((interior_y - r_trans[3])/r_trans[5], 0)
-
-        if (b_trans is not None):
-            b_x_ul = max((b_trans[0] - interior_x)/b_trans[1], 0)
-            b_y_ul = max((interior_y - b_trans[3])/b_trans[5], 0)
-
+        # calculate the size of the matched interior extent
         x_len = min(feature_set.RasterXSize - f_x_ul, response_set.RasterXSize - r_x_ul)
         y_len = min(feature_set.RasterYSize - f_y_ul, response_set.RasterYSize - r_y_ul)
 
+        # update the UL location, and the interior extent, if there is a boundary
         if (b_trans is not None):
+            b_x_ul, b_y_ul = upper_left_pixel(b_trans, interior_x, interior_y)
             x_len = min(x_len, boundary_set.RasterXSize - b_x_ul)
             y_len = min(y_len, boundary_set.RasterYSize - b_y_ul)
 
+        
+        # convert these UL coordinates to an array for easy addition later
         f_ul = np.array([f_x_ul, f_y_ul])
         r_ul = np.array([r_x_ul, r_y_ul])
         if (b_trans is not None):
@@ -528,21 +526,24 @@ def build_training_data_ordered(config):
         colrow[:, 1] = np.matlib.repmat(np.array(rowlist).reshape((1, -1)), len(collist), 1).flatten()
         # IF these operations happen in functions, you don't need to worry about manually deleting these objects
         # because they're lost when the function exits, i.e., they're only in the local scope
-        del collist
-        del rowlist
+        # FABINA - While that is true, what we're doing here is trying to free back up memory, and deleting
+        # thee objects does help with that.
+        del collist, rowlist
 
         # There's a shuffle function that does this in np
+        # FABINA - probably...is there a problem with this implementation (or is this hard to read???)
         colrow = colrow[np.random.permutation(colrow.shape[0]), :]
 
+
         subset_geotransform = None
-        # same comment about nested ifs
-        if (len(config.boundary_file_list) > 0):
+        if (len(config.boundary_file_list) > 0 and config.boundary_as_vectors):
             if (config.boundary_file_list[_i] is not None):
-                if (config.boundary_as_vectors):
-                    subset_geotransform = [f_trans[0], f_trans[1], 0, f_trans[3], 0, f_trans[5]]
+                subset_geotransform = [f_trans[0], f_trans[1], 0, f_trans[3], 0, f_trans[5]]
 
         # same comments about turning nested content into a function, turning math into informatively named
         # functions, etc
+        # FABINA - I can maybe follow you with the above....but for the below, it's alreayd broken out into a
+        # function....this loop is only assigning the appropriate option.  What would be a better way?
         for _cr in tqdm(range(len(colrow)), ncols=80):
             if (boundary_set is None):
                 if (subset_geotransform is None):
@@ -570,9 +571,7 @@ def build_training_data_ordered(config):
                                                            config,
                                                            b_set=boundary_set,
                                                            boundary_upper_left=b_ul + colrow[_cr, :])
-            # I'd normally do the opposite of this (if feature is None, then continue) because it leads to fewer
-            # nested lines.. not a big deal here, but just a habit that matters sometimes and saves headaches
-            # when it does
+
             if (local_feature is not None):
                 features[sample_index, ...] = local_feature.copy()
                 responses[sample_index, ...] = local_response.copy()
@@ -582,20 +581,19 @@ def build_training_data_ordered(config):
                     break
 
     # Should this just be list(features.shape)? To convert a tuple to a list?
-    feat_shape = [x for x in features.shape]
+    feat_shape = list(feature.shape) 
     feat_shape[0] = sample_index
-    resp_shape = [x for x in responses.shape]
+    resp_shape = list(responses.shape) 
     resp_shape[0] = sample_index
-    del features
-    del responses
 
-    #reload in place
-    # why reload in place?
+    # Delete and reload feauters/responses, as a hard and fast way to force data dump to disc and reload
+    # with a modified size....IE, an ooc resize
+    del features, responses
     features = np.memmap(feature_memmap_file, dtype=np.float32, mode='r+', shape=(tuple(feat_shape)))
     responses = np.memmap(response_memmap_file, dtype=np.float32, mode='r+', shape=tuple(resp_shape))
 
-    # randombly permute data to reshuffle everything
-    # why?
+    #Shuffle the data one last time (in case the fold-assignment would otherwise be biased beacuase of
+    #the feature/response file order
     perm = np.random.permutation(features.shape[0])
     features = features[perm, :]
     responses = responses[perm, :]
@@ -605,6 +603,8 @@ def build_training_data_ordered(config):
     # function up until this point because I was trying to make a mental "table of contents", but I can't
     # do that without really focusing and looking back.
     # You can do this in one line with something like np.repeat, if this is doing what I think
+    # FABINA -Maybe/probably you can swap this with a different set of lines that do basically the same thing.  But
+    # this is trivial code to follow.....it's literally a division, and has appropriate names.  And is 3 lines.
     fold_assignments = np.zeros(responses.shape[0]).astype(int)
     for f in range(0, config.n_folds):
         idx_start = int(round(f / config.n_folds * len(fold_assignments)))
@@ -616,6 +616,7 @@ def build_training_data_ordered(config):
     # a sign of success
     # The weights building could go into its own function called create_weights_array_with_loss_window or
     # something similar
+    # FABINA - You are correct, cleanup is in order and is in my working list of things to do
     weights = np.memmap(config.data_save_name + '_weights_munge_memmap.npy',
                         dtype=np.float32,
                         mode='w+',
@@ -625,6 +626,7 @@ def build_training_data_ordered(config):
 
     # Why not just set all weights to zeros initially, then do the internal window set to ones, then do anything
     # isnan is zero? Would that be less code?
+    # FABINA - that is literally the exact same thing as goe on here, in reverse.
     if (config.internal_window_radius != config.window_radius):
         buf = config.window_radius - config.internal_window_radius
         weights[:, :buf, :, -1] = 0
