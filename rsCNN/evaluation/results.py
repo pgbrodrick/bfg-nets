@@ -268,6 +268,7 @@ def _plot_spatial_error(
             ax.xaxis.set_label_position('top')
             ax.set_xticks([])
             ax.set_yticks([])
+            shared.add_internal_window_to_subplot(sampled, ax)
             idx_response += 1
             if idx_response > error.shape[-1]:
                 break

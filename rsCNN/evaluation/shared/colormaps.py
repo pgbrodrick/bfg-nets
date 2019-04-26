@@ -1,13 +1,7 @@
-from matplotlib import colors
-
-
-_COLOR_CORRECT = tuple([x / 255 for x in (59, 117, 175)])
-_COLOR_INCORRECT = tuple([x / 255 for x in (238, 134, 54)])
-COLORMAP_ERROR = colors.ListedColormap([_COLOR_INCORRECT, _COLOR_CORRECT])
-
 COLORMAP_CATEGORICAL = 'tab20'
 _CATEGORICAL_CLASSES_MAX = 20  # From tab20, it'd be 10 if we were using tab10
 
+COLORMAP_ERROR = 'RdBu'
 COLORMAP_METRICS = 'Blues'
 COLORMAP_WEIGHTS = 'Greys_r'
 
