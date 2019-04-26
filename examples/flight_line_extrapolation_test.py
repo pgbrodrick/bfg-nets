@@ -11,7 +11,7 @@ import rsCNN.data_management.apply_model_to_data
 import rsCNN.evaluation
 from rsCNN.data_management import training_data, sequences
 
-from gdcs.utils import logging
+from rsCNN.utils import logging
 logging.get_root_logger('debug_out.out')
 
 # Initialize in one of three modes:
