@@ -602,7 +602,7 @@ def build_training_data_ordered(config: DataConfig):
         cat_responses = np.memmap(cat_response_memmap_file,
                                   dtype=np.float32,
                                   mode='w+',
-                                  shape=resp_shape)
+                                  shape=tuple(resp_shape))
 
         # TODO:  Are you trying to iterate backwards? If so, it's clearer to write reversed(range(len(un_resp)))
         # Also, I wonder whether there's an off-by-one error here? Should that really be len(un_resp) - 1?
