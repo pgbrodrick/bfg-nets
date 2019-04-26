@@ -72,11 +72,11 @@ if (args.key == 'train' or args.key == 'all'):
     experiment.fit_network(training_sequence, validation_sequence)
 
 if (args.key == 'report' or args.key == 'all'):
-    rsCNN.evaluation.create_model_report(experiment.model, 
-                                         experiment.network_config, 
-                                         training_sequence, 
-                                         validation_sequence, 
-                                         history = experiment.history)
+    rsCNN.evaluation.create_model_report(experiment.model,
+                                         experiment.network_config,
+                                         training_sequence,
+                                         validation_sequence,
+                                         history=experiment.history)
 
 
 if (args.key == 'application'):
