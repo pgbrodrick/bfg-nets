@@ -113,6 +113,7 @@ def create_preliminary_model_report(
 
 def create_model_comparison_report(
         dir_out: str,
+        filename: str = None,
         dirs_histories: List[str] = None,
         paths_histories: List[str] = None
 ) -> None:
@@ -122,8 +123,11 @@ def create_model_comparison_report(
         paths_histories = list()
     if dirs_histories:
         paths_histories.extend(comparisons.walk_directories_for_model_histories(dirs_histories))
+        assert len(paths_histories) > 0, 'No model histories found to compare'
+    if not os.path.exists(dir_out):
+        os.makedirs(dir_out)
     model_histories = [histories.load_history(os.path.dirname(p), os.path.basename(p)) for p in paths_histories]
-    with PdfPages(os.path.join(dir_out, _FILENAME_MODEL_COMPARISON)) as pdf:
+    with PdfPages(os.path.join(dir_out, filename or _FILENAME_MODEL_COMPARISON)) as pdf:
         figures = list()
         figures.extend(comparisons.plot_model_loss_comparison(model_histories))
         figures.extend(comparisons.plot_model_timing_comparison(model_histories))
