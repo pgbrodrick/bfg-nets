@@ -47,7 +47,7 @@ class HistoryCheckpoint(keras.callbacks.Callback):
     def on_train_end(self, logs=None):
         _logger.debug('Ending network training')
         _logger.debug('on_training_end logs: {}'.format(logs))
-        self.existing_history['train_end'] = datetime.datetime.now()
+        self.existing_history['train_finish'] = datetime.datetime.now()
         self._save_history()
 
     def on_batch_begin(self, batch, logs=None):
