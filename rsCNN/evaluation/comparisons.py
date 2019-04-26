@@ -18,10 +18,14 @@ def walk_directories_for_model_histories(directories: List[str]) -> List[str]:
 
 def plot_model_loss_comparison(model_histories: List[dict]) -> List[plt.Figure]:
     fig, axes = plt.subplots(figsize=(16, 6), nrows=1, ncols=2)
+    x_min = 0
+    x_max = 0
     for history in sorted(model_histories, key=lambda x: x['model_name']):
         axes[0].plot(history['loss'], label=history['model_name'])
         axes[1].plot(history['val_loss'])
+        x_max = max(x_max, *history['loss'], *history['val_loss'])
     for ax in axes:
+        ax.set_xlim(x_min, x_max)
         ax.set_xlabel('Epochs')
         ax.set_ylabel('Loss')
         ax.set_yscale('log')
