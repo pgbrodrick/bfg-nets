@@ -209,8 +209,8 @@ def plot_transformed_error_regression(
 ) -> None:
     error = sampled.trans_predictions[idx_sample, :, :, idx_response] - \
         sampled.trans_responses[idx_sample, :, :, idx_response]
-    min_ = float(np.nanmin(error))
-    max_ = float(np.nanmax(error))
+    max_ = float(np.max(np.abs(np.nanmin(error)), np.nanmax(error)))
+    min_ = - max_
     ax.imshow(error, vmin=min_, vmax=max_, cmap=colormaps.COLORMAP_ERROR)
     ax.set_xticks([])
     ax.set_yticks([])
