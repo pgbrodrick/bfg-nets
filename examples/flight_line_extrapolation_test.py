@@ -12,7 +12,12 @@ import rsCNN.evaluation
 from rsCNN.data_management import training_data, sequences
 
 from rsCNN.utils import logging
-logging.get_root_logger('debug_out.out')
+
+logger = logging.get_root_logger('debug_out.out')
+_LOG_LEVEL = 'DEBUG' # 'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR'
+
+logger.setLevel(_LOG_LEVEL)
+
 
 # Initialize in one of three modes:
 #   1) config file / settings if we want to
