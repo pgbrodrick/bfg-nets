@@ -18,10 +18,14 @@ def walk_directories_for_model_histories(directories: List[str]) -> List[str]:
 
 def plot_model_loss_comparison(model_histories: List[dict]) -> List[plt.Figure]:
     fig, axes = plt.subplots(figsize=(16, 6), nrows=1, ncols=2)
+    x_min = 0
+    x_max = 0
     for history in sorted(model_histories, key=lambda x: x['model_name']):
         axes[0].plot(history['loss'], label=history['model_name'])
         axes[1].plot(history['val_loss'])
+        x_max = max(x_max, *history['loss'], *history['val_loss'])
     for ax in axes:
+        ax.set_xlim(x_min, x_max)
         ax.set_xlabel('Epochs')
         ax.set_ylabel('Loss')
         ax.set_yscale('log')
@@ -38,7 +42,10 @@ def plot_model_timing_comparison(model_histories: List[dict]) -> List[plt.Figure
     timings = list()
     for history in sorted(model_histories, key=lambda x: x['model_name']):
         labels.append(history['model_name'])
-        timings.append((history['train_finish'] - history['train_start']).minutes)
+        # TODO:  remove this check after rerunning models with the old key
+        if 'train_end' in history:
+            history['train_finish'] = history['train_end']
+        timings.append((history['train_finish'] - history['train_start']).seconds / 60)
     ax.barh(np.arange(len(timings)), timings, tick_label=labels)
     ax.set_xlabel('Minutes')
     ax.set_title('Training times')

@@ -5,4 +5,4 @@ from rsCNN.evaluation.shared.figures \
 from rsCNN.evaluation.shared.subplots \
     import plot_raw_features, plot_transformed_features, plot_raw_responses, plot_transformed_responses, \
     plot_raw_predictions, plot_transformed_predictions, plot_softmax, plot_weights, plot_error_categorical, \
-    plot_raw_error_regression, plot_transformed_error_regression
+    plot_raw_error_regression, plot_transformed_error_regression, add_internal_window_to_subplot

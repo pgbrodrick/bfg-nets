@@ -28,7 +28,7 @@ _FILENAME_PRELIMINARY_MODEL_REPORT = 'model_overview.pdf'
 
 def create_model_report_from_experiment(experiment: experiments.Experiment):
     return create_model_report(
-        experiment.model, experiment.train_sequence, experiment.validation_sequence, experiment.test_sequence,
+        experiment.model, experiment.train_sequence, experiment.validation_sequence,
         experiment.network_config, experiment.history
     )
 
@@ -38,51 +38,55 @@ def create_model_report(
         network_config: dict,
         train_sequence: BaseSequence,
         validation_sequence: BaseSequence = None,
-        test_sequence: BaseSequence = None,
         history: dict = None
 ) -> None:
     # TODO:  come up with consistent and general defaults for all visualization parameters (e.g., max_pages) and
     #  update the function definitions to match
-    # TODO:  add validation and testing sequence plots where it makes sense, e.g., confusion matrix
     filepath_report = os.path.join(network_config['model']['dir_out'], _FILENAME_MODEL_REPORT)
-    sampled_train = samples.Samples(train_sequence, model, network_config)
     with PdfPages(filepath_report) as pdf:
-        figures = list()
         # Plot model summary
-        figures.extend(networks.print_model_summary(model))
-        # Plot classification error
+        _add_figures(networks.print_model_summary(model), pdf)
+        # Plot training sequence figures
+        sampled = samples.Samples(train_sequence, model, network_config)
+        figures_overview = list()
         if network_config['architecture_options']['output_activation'] == 'softmax':
-            figures.extend(results.print_classification_report(sampled_train))
-            figures.extend(results.plot_confusion_matrix(sampled_train))
-        # Plot input data
-        figures.extend(inputs.plot_raw_and_transformed_input_samples(sampled_train))
-        # Plot results
-        figures.extend(results.plot_raw_and_transformed_prediction_samples(sampled_train))
-        # Plot compact and expanded network feature progression
-        figures.extend(networks.plot_network_feature_progression(sampled_train, compact=True))
-        figures.extend(networks.plot_network_feature_progression(sampled_train, compact=False))
-        # Plot spatial error
+            _add_figures(results.print_classification_report(sampled), pdf)
+            _add_figures(results.plot_confusion_matrix(sampled), pdf)
+        _add_figures(inputs.plot_raw_and_transformed_input_samples(sampled), pdf)
+        _add_figures(results.plot_raw_and_transformed_prediction_samples(sampled), pdf)
+        _add_figures(networks.plot_network_feature_progression(sampled, compact=True), pdf)
+        _add_figures(networks.plot_network_feature_progression(sampled, compact=False), pdf)
         if network_config['architecture_options']['output_activation'] == 'softmax':
-            figures.extend(results.plot_spatial_categorical_error(sampled_train))
+            _add_figures(results.plot_spatial_categorical_error(sampled), pdf)
         else:
-            figures.extend(results.plot_spatial_regression_error(sampled_train))
-        # Plot training and validation sequence
+            _add_figures(results.plot_spatial_regression_error(sampled), pdf)
+        # Plot validation sequence figures
+        if validation_sequence is not None:
+            sampled = samples.Samples(validation_sequence, model, network_config)
+            if network_config['architecture_options']['output_activation'] == 'softmax':
+                _add_figures(results.print_classification_report(sampled), pdf)
+                _add_figures(results.plot_confusion_matrix(sampled), pdf)
+            _add_figures(inputs.plot_raw_and_transformed_input_samples(sampled), pdf)
+            _add_figures(results.plot_raw_and_transformed_prediction_samples(sampled), pdf)
+            _add_figures(networks.plot_network_feature_progression(sampled, compact=True), pdf)
+            _add_figures(networks.plot_network_feature_progression(sampled, compact=False), pdf)
+            if network_config['architecture_options']['output_activation'] == 'softmax':
+                _add_figures(results.plot_spatial_categorical_error(sampled), pdf)
+            else:
+                _add_figures(results.plot_spatial_regression_error(sampled), pdf)
         # TODO:  histograms are currently broken for categorical data, turning off here so I don't need to remember
         #  to always comment it out before running
-        # figures.extend(results.single_sequence_prediction_histogram(model, train_sequence, 'Training'))
+        # _add_figures(results.single_sequence_prediction_histogram(model, train_sequence, 'Training'), pdf)
         # if validation_sequence is not None:
-        #     figures.extend(results.single_sequence_prediction_histogram(model, validation_sequence, 'Validation'))
+        #     _add_figures(results.single_sequence_prediction_histogram(model, validation_sequence, 'Validation'), pdf)
         # Model history
         if history:
-            figures.extend(plot_history(history))
-        for fig in figures:
-            pdf.savefig(fig, bbox_inches='tight')
+            _add_figures(plot_history(history), pdf)
 
 
 def create_preliminary_model_report_from_experiment(experiment: experiments.Experiment):
     return create_model_report(
-        experiment.model, experiment.train_sequence, experiment.validation_sequence, experiment.test_sequence,
-        experiment.network_config
+        experiment.model, experiment.train_sequence, experiment.validation_sequence, experiment.network_config
     )
 
 
@@ -91,28 +95,29 @@ def create_preliminary_model_report(
         network_config: dict,
         train_sequence: BaseSequence,
         validation_sequence: BaseSequence = None,
-        test_sequence: BaseSequence = None,
 ) -> None:
     filepath_report = os.path.join(network_config['model']['dir_out'], _FILENAME_PRELIMINARY_MODEL_REPORT)
-    sampled_train = samples.Samples(train_sequence, model, network_config)
     with PdfPages(filepath_report) as pdf:
-        figures = list()
         # Plot model summary
-        figures.extend(networks.print_model_summary(model))
-        # Plot input data
-        figures.extend(inputs.plot_raw_and_transformed_input_samples(sampled_train))
-        # Plot training and validation sequence
+        _add_figures(networks.print_model_summary(model), pdf)
+        # Plot training sequence figures
+        sampled = samples.Samples(train_sequence, model, network_config)
+        _add_figures(inputs.plot_raw_and_transformed_input_samples(sampled), pdf)
         # TODO:  histograms are currently broken for categorical data, turning off here so I don't need to remember
         #  to always comment it out before running
-        # figures.extend(results.single_sequence_prediction_histogram(model, train_sequence, 'Training'))
-        # if validation_sequence is not None:
-        #     figures.extend(results.single_sequence_prediction_histogram(model, validation_sequence, 'Validation'))
-        for fig in figures:
-            pdf.savefig(fig, bbox_inches='tight')
+        # _add_figures(results.single_sequence_prediction_histogram(model, train_sequence, 'Training'), pdf)
+        del sampled
+        # Plot validation sequence figures
+        if validation_sequence is not None:
+            sampled = samples.Samples(train_sequence, model, network_config)
+            _add_figures(inputs.plot_raw_and_transformed_input_samples(sampled), pdf)
+            # TODO:  histogram here too after fixing
+            del sampled
 
 
 def create_model_comparison_report(
         dir_out: str,
+        filename: str = None,
         dirs_histories: List[str] = None,
         paths_histories: List[str] = None
 ) -> None:
@@ -122,10 +127,15 @@ def create_model_comparison_report(
         paths_histories = list()
     if dirs_histories:
         paths_histories.extend(comparisons.walk_directories_for_model_histories(dirs_histories))
+        assert len(paths_histories) > 0, 'No model histories found to compare'
+    if not os.path.exists(dir_out):
+        os.makedirs(dir_out)
     model_histories = [histories.load_history(os.path.dirname(p), os.path.basename(p)) for p in paths_histories]
-    with PdfPages(os.path.join(dir_out, _FILENAME_MODEL_COMPARISON)) as pdf:
-        figures = list()
-        figures.extend(comparisons.plot_model_loss_comparison(model_histories))
-        figures.extend(comparisons.plot_model_timing_comparison(model_histories))
-        for fig in figures:
-            pdf.savefig(fig, bbox_inches='tight')
+    with PdfPages(os.path.join(dir_out, filename or _FILENAME_MODEL_COMPARISON)) as pdf:
+        _add_figures(comparisons.plot_model_loss_comparison(model_histories), pdf)
+        _add_figures(comparisons.plot_model_timing_comparison(model_histories), pdf)
+
+
+def _add_figures(figures: List[plt.Figure], pdf: PdfPages) -> None:
+    for fig in figures:
+        pdf.savefig(fig, bbox_inches='tight')
