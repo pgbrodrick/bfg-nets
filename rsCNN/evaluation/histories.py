@@ -19,9 +19,8 @@ def plot_history(history: dict) -> [plt.Figure]:
 
     # Epoch times different view
     ax = plt.subplot(gs1[0, 1])
-    dts = [epoch.strftime('%d %H:%M') for epoch in history['epoch_finish']]
-    ax.hist(dts)
-    ax.xaxis.set_tick_params(rotation=45)
+    ax.hist([(dt - history['train_start']).seconds / 60 for dt in history['epoch_finish']])
+    ax.set_xlabel('Minutes since start')
     ax.set_ylabel('Epochs completed')
 
     # Loss

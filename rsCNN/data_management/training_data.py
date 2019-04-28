@@ -311,9 +311,9 @@ def read_chunk(f_set,
     #   below TODOs), and if/where new checks should be inserted. The calling function should probably call read_chunk
     #   and then do its own checks on those values, or this should be called read_chunk_and_return_if_valid or something
     #   similar
-    # FABINA - it sounds like you have an issue with the name, and the name only.  Fine, let's change it.  
-    # There is already a function to read a subset of a file, it's call ReadAsArray, 
-    # and it's used below, extensively.  A bulk read of all files is grossly inefficient, and makes no sense 
+    # FABINA - it sounds like you have an issue with the name, and the name only.  Fine, let's change it.
+    # There is already a function to read a subset of a file, it's call ReadAsArray,
+    # and it's used below, extensively.  A bulk read of all files is grossly inefficient, and makes no sense
     # to implement.  What this code does is to read any and all valid chunks.  It does not need to get refactored,
     # at least from the argument above.  Rename as you like.
     window_diameter = config.window_radius * 2
@@ -378,10 +378,12 @@ def read_chunk(f_set,
 
     return local_feature, local_response
 
+
 def upper_left_pixel(trans, interior_x, interior_y):
     x_ul = max((trans[0] - interior_x)/trans[1], 0)
     y_ul = max((interior_y - trans[3])/trans[5], 0)
     return x_ul, y_ul
+
 
 def build_training_data_ordered(config: DataConfig):
     """ Builds a set of training data based on the configuration input
@@ -441,8 +443,8 @@ def build_training_data_ordered(config: DataConfig):
         if (boundary_set is not None):
             b_trans = boundary_set.GetGeoTransform()
 
-        ############# Calculate the interior space location and extent
-        
+        # Calculate the interior space location and extent
+
         # Find the interior (UL) x,y coordinates in map-space
         interior_x = max(r_trans[0], f_trans[0])
         interior_y = min(r_trans[3], f_trans[3])
@@ -450,7 +452,6 @@ def build_training_data_ordered(config: DataConfig):
             interior_x = max(interior_x, b_trans[0])
             interior_y = max(interior_y, b_trans[3])
 
-        
         # calculate the feature and response UL coordinates in pixel-space
         f_x_ul, f_y_ul = upper_left_pixel(f_trans, interior_x, interior_y)
         r_x_ul, r_y_ul = upper_left_pixel(r_trans, interior_x, interior_y)
@@ -465,7 +466,6 @@ def build_training_data_ordered(config: DataConfig):
             x_len = min(x_len, boundary_set.RasterXSize - b_x_ul)
             y_len = min(y_len, boundary_set.RasterYSize - b_y_ul)
 
-        
         # convert these UL coordinates to an array for easy addition later
         f_ul = np.array([f_x_ul, f_y_ul])
         r_ul = np.array([r_x_ul, r_y_ul])
@@ -494,7 +494,6 @@ def build_training_data_ordered(config: DataConfig):
         # FABINA - probably...is there a problem with this implementation (or is this hard to read???)
         colrow = colrow[np.random.permutation(colrow.shape[0]), :]
 
-
         subset_geotransform = None
         if (len(config.boundary_file_list) > 0 and config.boundary_as_vectors):
             if (config.boundary_file_list[_i] is not None):
@@ -510,7 +509,7 @@ def build_training_data_ordered(config: DataConfig):
 
             # Determine local information about boundary file
             local_boundary_vector_file = None
-            local_boundary_upper_left=None
+            local_boundary_upper_left = None
             if (boundary_set is not None):
                 local_boundary_set = boundary_set
                 local_boundary_upper_left = b_ul + colrow[_cr, :]
@@ -524,11 +523,10 @@ def build_training_data_ordered(config: DataConfig):
                                                        f_ul + colrow[_cr, :],
                                                        r_ul + colrow[_cr, :],
                                                        config,
-                                                       boundary_vector_file = local_boundary_vector_file,
-                                                       boundary_upper_left = local_boundary_upper_left,
-                                                       b_set = boundary_set,
-                                                       boundary_subset_geotransform = subset_geotransform)
-
+                                                       boundary_vector_file=local_boundary_vector_file,
+                                                       boundary_upper_left=local_boundary_upper_left,
+                                                       b_set=boundary_set,
+                                                       boundary_subset_geotransform=subset_geotransform)
 
             if (local_feature is not None):
                 features[sample_index, ...] = local_feature.copy()
@@ -538,8 +536,8 @@ def build_training_data_ordered(config: DataConfig):
                     break
 
     # Get the feature/response shapes for re-reading (modified ooc resize)
-    feat_shape = list(features.shape) 
-    resp_shape = list(responses.shape) 
+    feat_shape = list(features.shape)
+    resp_shape = list(responses.shape)
     feat_shape[0] = sample_index
     resp_shape[0] = sample_index
 
@@ -549,8 +547,8 @@ def build_training_data_ordered(config: DataConfig):
     features = np.memmap(feature_memmap_file, dtype=np.float32, mode='r+', shape=(tuple(feat_shape)))
     responses = np.memmap(response_memmap_file, dtype=np.float32, mode='r+', shape=tuple(resp_shape))
 
-    #Shuffle the data one last time (in case the fold-assignment would otherwise be biased beacuase of
-    #the feature/response file order
+    # Shuffle the data one last time (in case the fold-assignment would otherwise be biased beacuase of
+    # the feature/response file order
     perm = np.random.permutation(features.shape[0])
     features = features[perm, :]
     responses = responses[perm, :]
@@ -633,7 +631,7 @@ def build_training_data_ordered(config: DataConfig):
         #   samples with no weights for the loss function. If a sample is composed of all overweighted classes, this
         #   could cause hard errors, but it seems like it's pretty suboptimal to waste any CPU/GPU cycles on samples
         #   with no weights, right?
-        # FABINA - I don't understand how you could have an all-zero weight set, unless your max_nodata_fraction 
+        # FABINA - I don't understand how you could have an all-zero weight set, unless your max_nodata_fraction
         # is 100%.  Can you clarify?
         # Thinking through more, I see that this could occur if there are only values between the boundary and the
         # interior window.  This best handled by modifying the read-chunk code to use the max_nodata_fraction
@@ -653,6 +651,3 @@ def build_training_data_ordered(config: DataConfig):
     Path(config.successful_data_save_file).touch()
     features, responses, weights, success = load_training_data(config, writeable=False)
     return features, responses, weights
-
-
-

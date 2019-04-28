@@ -71,7 +71,7 @@ def plot_raw_predictions(
         add_ylabel: bool
 ) -> None:
     _plot_sample_attribute(sampled, idx_sample, idx_response, 'raw_predictions', ax, add_xlabel, add_ylabel)
-    _add_internal_window_to_subplot(sampled, ax)
+    add_internal_window_to_subplot(sampled, ax)
 
 
 def plot_transformed_predictions(
@@ -85,7 +85,7 @@ def plot_transformed_predictions(
     # TODO:  when data config accessible, perhaps via network config, then check if NullScaler applied to features
     #  if so, then ax.remove() if NullScaler applied and it should just work (TM)
     _plot_sample_attribute(sampled, idx_sample, idx_response, 'trans_predictions', ax, add_xlabel, add_ylabel)
-    _add_internal_window_to_subplot(sampled, ax)
+    add_internal_window_to_subplot(sampled, ax)
 
 
 def _plot_sample_attribute(
@@ -104,13 +104,13 @@ def _plot_sample_attribute(
     if attribute_name in ('trans_features', 'trans_responses', 'trans_predictions'):
         attribute_values = attribute_values.copy()
         attribute_values[sampled.data_sequence.nan_replacement_value] = np.nan
-    y_label = '\n'.join(word.capitalize() for word in attribute_name.split('_') if word != 'raw').rstrip('s')
+    x_label = '\n'.join(word.capitalize() for word in attribute_name.split('_') if word != 'raw').rstrip('s')
     min_, max_ = range_[idx_axis, :]
     ax.imshow(attribute_values, vmin=min_, vmax=max_)
     ax.set_xticks([])
     ax.set_yticks([])
     if add_xlabel:
-        ax.set_xlabel('{}\n{}\n{}'.format(y_label, _format_number(min_), _format_number(max_)))
+        ax.set_xlabel('{} {}\n{}\n{}'.format(x_label, idx_axis, _format_number(min_), _format_number(max_)))
         ax.xaxis.set_label_position('top')
     if add_ylabel:
         ax.set_ylabel('Sample\n{}'.format(idx_sample))
@@ -173,7 +173,7 @@ def plot_error_categorical(
         ax.xaxis.set_label_position('top')
     if add_ylabel:
         ax.set_ylabel('Sample\n{}'.format(idx_sample))
-    _add_internal_window_to_subplot(sampled, ax)
+    add_internal_window_to_subplot(sampled, ax)
 
 
 def plot_raw_error_regression(
@@ -196,7 +196,7 @@ def plot_raw_error_regression(
         ax.xaxis.set_label_position('top')
     if add_ylabel:
         ax.set_ylabel('Sample\n{}'.format(idx_sample))
-    _add_internal_window_to_subplot(sampled, ax)
+    add_internal_window_to_subplot(sampled, ax)
 
 
 def plot_transformed_error_regression(
@@ -209,8 +209,8 @@ def plot_transformed_error_regression(
 ) -> None:
     error = sampled.trans_predictions[idx_sample, :, :, idx_response] - \
         sampled.trans_responses[idx_sample, :, :, idx_response]
-    min_ = float(np.nanmin(error))
-    max_ = float(np.nanmax(error))
+    max_ = float(np.max(np.abs(np.nanmin(error)), np.nanmax(error)))
+    min_ = - max_
     ax.imshow(error, vmin=min_, vmax=max_, cmap=colormaps.COLORMAP_ERROR)
     ax.set_xticks([])
     ax.set_yticks([])
@@ -219,11 +219,11 @@ def plot_transformed_error_regression(
         ax.xaxis.set_label_position('top')
     if add_ylabel:
         ax.set_ylabel('Sample\n{}'.format(idx_sample))
-    _add_internal_window_to_subplot(sampled, ax)
-    _add_internal_window_to_subplot(sampled, ax)
+    add_internal_window_to_subplot(sampled, ax)
+    add_internal_window_to_subplot(sampled, ax)
 
 
-def _add_internal_window_to_subplot(sampled: samples.Samples, ax: plt.Axes) -> None:
+def add_internal_window_to_subplot(sampled: samples.Samples, ax: plt.Axes) -> None:
     inshape = sampled.network_config['architecture']['inshape']
     internal_window_radius = sampled.network_config['architecture']['internal_window_radius']
     if (internal_window_radius * 2 == inshape[0]):
