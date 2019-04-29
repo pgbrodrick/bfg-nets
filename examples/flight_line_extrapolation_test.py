@@ -11,8 +11,13 @@ import rsCNN.data_management.apply_model_to_data
 import rsCNN.evaluation
 from rsCNN.data_management import training_data, sequences
 
-from gdcs.utils import logging
-logging.get_root_logger('debug_out.out')
+from rsCNN.utils import logging
+
+logger = logging.get_root_logger('debug_out.out')
+_LOG_LEVEL = 'DEBUG' # 'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR'
+
+logger.setLevel(_LOG_LEVEL)
+
 
 # Initialize in one of three modes:
 #   1) config file / settings if we want to
