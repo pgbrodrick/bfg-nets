@@ -6,6 +6,7 @@ from rsCNN.data_management import scalers, sequences
 
 class Samples(object):
     data_sequence = None
+    data_sequence_label = None
     model = None
     network_config = None
     num_samples = None
@@ -28,10 +29,17 @@ class Samples(object):
     weights = None
     weights_range = None
 
-    def __init__(self, data_sequence: sequences.BaseSequence, model: keras.Model, network_config: dict) -> None:
+    def __init__(
+            self,
+            data_sequence: sequences.BaseSequence,
+            model: keras.Model,
+            network_config: dict,
+            data_sequence_label: str = None
+    ) -> None:
         self.data_sequence = data_sequence
         self.model = model
         self.network_config = network_config
+        self.data_sequence_label = data_sequence_label
         self._get_sampled_features_responses_and_set_metadata_and_weights()
         self.trans_predictions = model.predict(self.trans_features)
         self.raw_predictions = self.data_sequence.response_scaler.inverse_transform(self.trans_predictions)
