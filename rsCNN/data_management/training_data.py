@@ -150,7 +150,7 @@ def get_proj(fname, is_vector):
     return re.sub('\W', '', str(b_proj))
 
 
-def check_data_matches(set_a, set_b, set_b_is_vector=False, set_c=[], set_c_is_vector=False, ignore_projections=False, ignore_extents=False):
+def check_data_matches(set_a, set_b, set_b_is_vector=False, set_c=[], set_c_is_vector=[], ignore_projections=False, ignore_extents=False):
     """ Check to see if two different gdal datasets have the same projection, geotransform, and extent.
     Arguments:
     set_a - list
@@ -163,8 +163,8 @@ def check_data_matches(set_a, set_b, set_b_is_vector=False, set_c=[], set_c_is_v
       Flag to indicate if set_b is a vector, as opposed to a gdal_dataset.
     set_c - list
       A third (optional) list of gdal datasets to check.
-    set_c_is_vector - boolean
-      Flag to indicate if set_c is a vector, as opposed to a gdal_dataset.
+    set_c_is_vector - list
+      List of flags to indicate if set_c is a vector, as opposed to a gdal_dataset.
     ignore_projections - boolean
       A flag to ignore projection differences between feature and response sets - use only if you 
       are sure the projections are really the same.
@@ -216,7 +216,7 @@ def check_data_matches(set_a, set_b, set_b_is_vector=False, set_c=[], set_c_is_v
                     raise Exception(('extent mismatch between', set_a[n], 'and', set_b[n]))
 
         if (len(set_c) > 0):
-            if (set_c[n] is not None and set_c_is_vector == False):
+            if (set_c[n] is not None and set_c_is_vector[n] is False):
                 dataset_a = gdal.Open(set_a[n], gdal.GA_ReadOnly)
                 dataset_c = gdal.Open(set_c[n], gdal.GA_ReadOnly)
                 a_trans = dataset_a.GetGeoTransform()
@@ -433,8 +433,8 @@ def build_training_data_ordered(config: DataConfig):
         # this boolean could be simplified to two levels pretty easily, maybe even just one, but then it could
         # also be hidden in the above mentioned object
         # FABINA - Fair, I've simplified it to two lines.  I don't think it can safely go to one, could be wrong.
-        if (len(config.boundary_file_list) > 0 and config.boundary_as_vectors is False):
-            if (config.boundary_file_list[_i] is not None):
+        if (len(config.boundary_file_list) > 0):
+            if (config.boundary_file_list[_i] is not None and config.boundary_as_vectors[_i]):
                 boundary_set = gdal.Open(config.boundary_file_list[_i], gdal.GA_ReadOnly)
 
         f_trans = feature_set.GetGeoTransform()
@@ -495,8 +495,8 @@ def build_training_data_ordered(config: DataConfig):
         colrow = colrow[np.random.permutation(colrow.shape[0]), :]
 
         subset_geotransform = None
-        if (len(config.boundary_file_list) > 0 and config.boundary_as_vectors):
-            if (config.boundary_file_list[_i] is not None):
+        if (len(config.boundary_file_list) > 0):
+            if (config.boundary_file_list[_i] is not None and config.boundary_as_vectors[_i]):
                 subset_geotransform = [f_trans[0], f_trans[1], 0, f_trans[3], 0, f_trans[5]]
 
         # same comments about turning nested content into a function, turning math into informatively named
