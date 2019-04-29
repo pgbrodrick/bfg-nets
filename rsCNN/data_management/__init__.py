@@ -24,13 +24,13 @@ class DataConfig:
         self.window_radius = kwargs.get('window_radius', None)
 
         # file list of the feature rasters
-        self.raw_feature_file_list = kwargs.get('raw_feature_file_list', [])
+        self.raw_feature_file_list = kwargs.get('raw_feature_file_list', [[]])
 
         # file list of the response rasters
-        self.raw_response_file_list = kwargs.get('raw_response_file_list', [])
+        self.raw_response_file_list = kwargs.get('raw_response_file_list', [[]])
 
         # An optional list of boundary files for each feature/response file.
-        self.boundary_file_list = kwargs.get('raw_boundary_file_list', [])
+        self.boundary_file_list = kwargs.get('boundary_file_list', [])
 
         self.check_input_files(self.raw_feature_file_list, self.raw_response_file_list, self.boundary_file_list)
 
