@@ -81,6 +81,12 @@ def create_config_from_file(filepath: str) -> 'Config':
     return config_factory.create_config(raw_config)
 
 
+def create_config_template(filepath: str) -> None:
+    config_factory = ConfigFactory()
+    config = config_factory.create_config(dict())
+    save_config_to_file(config, filepath)
+
+
 def save_config_to_file(config: 'Config', filepath: str) -> None:
     config_out = dict()
     for section_name, config_section in config.__dict__.items():
