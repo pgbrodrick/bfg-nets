@@ -1,4 +1,6 @@
+import gdal
 import os
+from rsCNN.data_management import scalers
 
 
 class DataConfig:
@@ -22,10 +24,33 @@ class DataConfig:
         self.window_radius = kwargs.get('window_radius', None)
 
         # file list of the feature rasters
-        self.raw_feature_file_list = kwargs.get('raw_feature_file_list', [])
+        self.raw_feature_file_list = kwargs.get('raw_feature_file_list', [[]])
 
         # file list of the response rasters
-        self.raw_response_file_list = kwargs.get('raw_response_file_list', [])
+        self.raw_response_file_list = kwargs.get('raw_response_file_list', [[]])
+
+        # An optional list of boundary files for each feature/response file.
+        self.boundary_file_list = kwargs.get('boundary_file_list', [])
+
+        # Data type from each feature.  R == Real, C == categorical
+        # All Categorical bands will be one-hot-encoded...to keep them as 
+        # a single band, simply name them as real datatypes
+        self.feature_raw_band_type_input = kwargs.get('feature_raw_band_type_input',None)
+        self.response_raw_band_type_input = kwargs.get('response_raw_band_type_input',None)
+
+        # A boolean indication of whether the boundary file type is a vector or a raster (True for vector).
+        self.boundary_as_vectors = [os.path.splitext(x) == 'kml' or os.path.splitext(x) == 'shp' for x in self.boundary_file_list]
+
+        # Value that indicates pixels that are 'out of bounds' in a boundary raster file
+        self.boundary_bad_value = kwargs.get('boundary_bad_value', 0)
+
+        # Response format
+        self.response_data_format = kwargs.get('response_data_format','FCN')
+        assert self.response_data_format in ['FCN','CNN'], 'Invalid response data format'
+
+        self.response_background_value = kwargs.get('response_background_value',None)
+
+
 
         # A string that tells us how to build the training data set.  Current options are:
         # ordered_continuous
@@ -41,19 +66,8 @@ class DataConfig:
         self.data_build_category = kwargs.get('data_build_category', 'ordered_continuous')
 
         # A boolean indication of whether the response type is a vector or a raster (True for vector).
-        # TODO:  Phil:  this is the only instance of this in the repository, remove? If not, then is there a way we
-        #  can detect this automatically?
-        self.response_as_vectors = kwargs.get('response_as_vectors', False)
-
-        # An optional list of boundary files for each feature/response file.
-        self.boundary_file_list = kwargs.get('boundary_file_list', [])
-
-        # A boolean indication of whether the boundary file type is a vector or a raster (True for vector).
-        # TODO:  Phil:  this is used in one place, can we detect this automatically?
-        self.boundary_as_vectors = kwargs.get('boundary_as_vectors', False)
-
-        # Value that indicates pixels that are 'out of bounds' in a boundary raster file
-        self.boundary_bad_value = kwargs.get('boundary_bad_value', 0)
+        # TODO:  Implement option
+        #self.response_as_vectors = kwargs.get('response_as_vectors', False)
 
         # An inner image subset used to score the algorithm, and within which a response must lie to
         # be included in training data
@@ -161,7 +175,24 @@ class DataConfig:
         #  because this module silently used a NullScaler when I had no scaler selected. I think we should make these
         #  required parameters.
         self.feature_scaler_name = kwargs.get('feature_scaler_name', 'NullScaler')
+        if (type(self.feature_scaler_name) is list):
+            assert len(self.feature_scaler_name) == len(self.raw_feature_file_list)
+            for _s in range(len(self.feature_scaler_name)):
+                scalers.check_scaler_exists(self.feature_scaler_name[_s])
+
         self.response_scaler_name = kwargs.get('response_scaler_name', 'NullScaler')
+        if (type(self.response_scaler_name) is list):
+            assert len(self.response_scaler_name) == len(self.raw_response_file_list)
+            for _s in range(len(self.response_scaler_name)):
+                scalers.check_scaler_exists(self.response_scaler_name[_s])
+
+        # Data type from each feature.  R == Real, C == categorical
+        # All Categorical bands will be one-hot-encoded...to keep them as 
+        # a single band, simply name them as real datatypes
+        self.feature_band_types = kwargs.get('feature_band_types','R')
+        if (type(self.feature_band_types) is list):
+            assert len(self.feature_band_types)
+
         self.feature_mean_centering = kwargs.get('feature_mean_centering', False)
 
         self.apply_random_transformations = kwargs.get('apply_random_transformations', False)
@@ -172,3 +203,12 @@ class DataConfig:
 
         self.feature_scaler = None
         self.response_scaler = None
+
+
+
+
+
+
+
+
+
