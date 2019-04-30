@@ -7,6 +7,7 @@ from tqdm import tqdm
 import fiona
 import numpy as np
 import numpy.matlib
+import ogr
 import rasterio.features
 from rsCNN.utils import logging
 from rsCNN.utils.general import *
@@ -44,7 +45,7 @@ _logger = logging.get_child_logger(__name__)
 def build_or_load_rawfile_data(config, rebuild=False):
 
     data_container = Dataset()
-    check_input_files(config.raw_feature_file_list, config.raw_response_file_list, config.boundary_file_list)
+    data_container.check_input_files(config.raw_feature_file_list, config.raw_response_file_list, config.boundary_file_list)
 
     data_container.feature_raw_band_types = get_band_types(config.raw_feature_file_list, config.feature_raw_band_type_input)
     data_container.response_raw_band_types = get_band_types(config.raw_response_file_list, config.response_raw_band_type_input)
@@ -145,14 +146,14 @@ def get_proj(fname):
     elif (os.path.basename(fname).split('.')[-1] == 'kml'):
         vset = ogr.GetDriverByName('KML').Open(fname, gdal.GA_ReadOnly)
     else:
-        raise Exception('Cannot find projection from file {}'.format(fname)
+        raise Exception('Cannot find projection from file {}'.format(fname))
 
     if (vset is None):
-        raise Exception('Cannot find projection from file {}'.format(fname)
+        raise Exception('Cannot find projection from file {}'.format(fname))
     else:
         b_proj = vset.GetLayer().GetSpatialRef()
         if (b_proj is None):
-            raise Exception('Cannot find projection from file {}'.format(fname)
+            raise Exception('Cannot find projection from file {}'.format(fname))
         else:
             b_proj = re.sub('\W', '', str(b_proj))
     
@@ -172,7 +173,7 @@ def check_projections(a_files, b_files, c_files=[]):
     b_proj = []
     c_proj = []
 
-    if (_f in range(len(a_files))):
+    for _f in range(len(loc_a_files)):
         a_proj.append(get_proj(loc_a_files[_f]))
         b_proj.append(get_proj(loc_b_files[_f]))
         if (len(loc_c_files) > 0):
@@ -180,10 +181,10 @@ def check_projections(a_files, b_files, c_files=[]):
     
     for _p in range(len(a_proj)):
         if (len(c_proj) > 0):
-            assert (a_proj[_p] != b_proj[_p] and a_proj != c_proj[_p]), 'Projection_mismatch between {}: {}, {}: {}, {}: {}'.
+            assert (a_proj[_p] != b_proj[_p] and a_proj != c_proj[_p]), 'Projection_mismatch between {}: {}, {}: {}, {}: {}'.\
                    format(a_proj[_p], loc_a_files[_p], b_proj[_p], loc_b_files[_p], c_proj[_p], loc_c_files[_p])
         else:
-            assert (a_proj[_p] != b_proj[_p]), 'Projection_mismatch between {}: {}, {}: {}'.
+            assert (a_proj[_p] != b_proj[_p]), 'Projection_mismatch between {}: {}, {}: {}'.\
                    format(a_proj[_p], loc_a_files[_p], b_proj[_p], loc_b_files[_p])
                 
             
@@ -344,7 +345,7 @@ def read_segmentation_chunk(f_sets,
             return None, None
 
     # Next check to see if we have a response, if so read all
-    local_responses = np.zeros((window_diameter, window_diameter, np.sum([r_set.RasterCount for r_set in r_sets])))
+    local_response = np.zeros((window_diameter, window_diameter, np.sum([r_set.RasterCount for r_set in r_sets])))
     resp_idx = 0
     for _file in range(len(r_sets)):
         r_set = r_sets[_file]
@@ -366,12 +367,12 @@ def read_segmentation_chunk(f_sets,
         mask[np.any(np.isnan(file_response), axis=-1)] = True
         if np.all(mask):
             return None, None
-        local_responses[...,resp_idx:resp_idx+file_response.shape[-1]] = file_response
+        local_response[...,resp_idx:resp_idx+file_response.shape[-1]] = file_response
         resp_idx += file_response.shape[-1]
 
 
     # Last, read in features
-    local_features = np.zeros((window_diameter, window_diameter, np.sum([f_set.RasterCount for f_set in f_sets])))
+    local_feature = np.zeros((window_diameter, window_diameter, np.sum([f_set.RasterCount for f_set in f_sets])))
     feat_idx = 0
     for _file in range(len(f_sets)):
         f_set = f_sets[_file]
@@ -395,7 +396,7 @@ def read_segmentation_chunk(f_sets,
         mask[np.any(np.isnan(file_feature), axis=-1)] = True
         if np.all(mask):
             return None, None
-        local_features[...,feat_idx:feat_idx+file_feature.shape[-1]] = file_feature
+        local_feature[...,feat_idx:feat_idx+file_feature.shape[-1]] = file_feature
         feat_idx += file_feature.shape[-1]
 
     # Final check (propogate mask forward), and return
@@ -410,25 +411,25 @@ class Dataset:
 
     """ A container class that holds all sorts of data objects
     """
-    def __init__(config: DataConfig):
-        features = []
-        responses = []
-        weights = []
+    def __init__(self, config: DataConfig):
+        self.features = []
+        self.responses = []
+        self.weights = []
 
-        feature_band_types = None
-        response_band_types = None
-        feature_raw_band_types = None
-        response_raw_band_types = None
+        self.feature_band_types = None
+        self.response_band_types = None
+        self.feature_raw_band_types = None
+        self.response_raw_band_types = None
 
-        feature_scalers = []
-        response_scalers = []
+        self.feature_scalers = []
+        self.response_scalers = []
 
         self.train_folds = None
 
         self.config = config
 
 
-    def build_or_load_scalers(data_container, rebuild=False):
+    def build_or_load_scalers(self, data_container, rebuild=False):
 
         data_config = data_container.config
 
@@ -439,7 +440,7 @@ class Dataset:
         feature_scaler.load()
         response_scaler.load()
 
-        self.train_folds = [x for x in range(config.n_folds) if x is not config.validation_fold and x is not config.test_fold]
+        self.train_folds = [x for x in range(data_config.n_folds) if x is not data_config.validation_fold and x is not data_config.test_fold]
     
         if (feature_scaler.is_fitted is False or rebuild is True):
             # TODO: do better
@@ -454,7 +455,7 @@ class Dataset:
         data_container.response_scaler = response_scaler
 
 
-    def check_input_files(f_file_list, r_file_list, b_file_list):
+    def check_input_files(self, f_file_list, r_file_list, b_file_list):
         
         # f = feature, r = response, b = boundary
 
@@ -483,10 +484,10 @@ class Dataset:
             assert type(f_file_list[_site]) is list, 'Features at site {} are not as a list'.format(_site)
             assert type(r_file_list[_site]) is list, 'Responses at site {} are not as a list'.format(_site)
             for _band in range(len(f_file_list[_site])):
-                assert gdal.Open(f_file_list[_site][_band],gdal.GA_ReadOnly) is not None, 
+                assert gdal.Open(f_file_list[_site][_band],gdal.GA_ReadOnly) is not None,\
                        'Could not open feature site {}, file {}'.format(_site,_band)
             for _band in range(len(r_file_list[_site])):
-                assert gdal.Open(r_file_list[_site][_band],gdal.GA_ReadOnly) is not None, 
+                assert gdal.Open(r_file_list[_site][_band],gdal.GA_ReadOnly) is not None,\
                        'Could not open response site {}, file {}'.format(_site,_band)
 
         # Checks on the number of files per site
@@ -501,11 +502,11 @@ class Dataset:
         num_r_bands_per_file = [gdal.Open(x,gdal.GA_ReadOnly).RasterCount for x in r_file_list[0]]
         for _site in range(len(f_file_list)):
             for _file in range(len(f_file_list[_site])):
-                assert gdal.Open(f_file_list[_site][_file],gdal.GA_ReadOnly).RasterCount == num_f_bands_per_file[_file],
+                assert gdal.Open(f_file_list[_site][_file],gdal.GA_ReadOnly).RasterCount == num_f_bands_per_file[_file],\
                        'Inconsistent number of feature bands in site {}, file {}'.format(_site,_band)
 
             for _file in range(len(r_file_list[_site])):
-                assert gdal.Open(r_file_list[_site][_file],gdal.GA_ReadOnly).RasterCount == num_r_bands_per_site[_file]
+                assert gdal.Open(r_file_list[_site][_file],gdal.GA_ReadOnly).RasterCount == num_r_bands_per_file[_file],\
                        'Inconsistent number of response bands in site {}, file {}'.format(_site,_band)
 
 
@@ -533,7 +534,7 @@ class Dataset:
             # List of lists, option 3 from above - just check components
             if (type(band_types[0]) is list):
                 for _file in range(len(band_types)):
-                    assert(type(band_types[_file]) is list, 'If one element of band_types is a list, all elements must be lists'
+                    assert type(band_types[_file]) is list, 'If one element of band_types is a list, all elements must be lists'
                     assert len(band_types[_file]) == num_bands_per_file[_file], 'File {} has wrong number of band types'.format(_file)
                     for _band in range(len(band_types[_file])):
                         assert band_types[_file][_band] in valid_band_types, 'Invalid band types at file {}, band {}'.format(_file,_band)
@@ -560,7 +561,7 @@ def upper_left_pixel(trans, interior_x, interior_y):
     y_ul = max((interior_y - trans[3])/trans[5], 0)
     return x_ul, y_ul
 
-def get_interior_rectangle(dataset_list_of_lists : List[List[tuple]]):
+def get_interior_rectangle(dataset_list_of_lists : list[list[tuple]]):
     
     # Convert list of lists or list for interior convenience
     dataset_list =  [item for sublist in dataset_list_of_lists for item in sublist]
@@ -577,7 +578,7 @@ def get_interior_rectangle(dataset_list_of_lists : List[List[tuple]]):
     # calculate the UL coordinates in pixel-space
     ul_list = []
     for _d in range(len(dataset_list)):
-        ul_list.append(list(upper_lef_pixel(trans_list[_d],ul_list[_d][0],ul_list[d][1])))
+        ul_list.append(list(upper_left_pixel(trans_list[_d], ul_list[_d][0], ul_list[_d][1])))
     
     # calculate the size of the matched interior extent
     x_len = np.min([dataset_list[_d].RasterXSize - ul_list[_d][0] for _d in range(len(dataset_list))])
@@ -643,7 +644,7 @@ def get_interior_rectangle(feature_set, response_set, boundary_set):
 
 
 
-def build_training_data_ordered(config: DataConfig, raw_feature_band_types, raw_response_band_types):
+def build_training_data_ordered(config: DataConfig, feature_raw_band_types, response_raw_band_types):
     """ Builds a set of training data based on the configuration input
         Arguments:
         config - object of type Data_Config with the requisite values for preparing training data (see __init__.py)
@@ -657,9 +658,8 @@ def build_training_data_ordered(config: DataConfig, raw_feature_band_types, raw_
         if (len(config.max_samples) != len(config.raw_feature_file_list)):
             raise Exception('max_samples must equal feature_file_list length, or be an integer.')
 
-    feature_set = gdal.Open(config.raw_feature_file_list[0], gdal.GA_ReadOnly)
-    response_set = gdal.Open(config.raw_response_file_list[0], gdal.GA_ReadOnly)
-    n_features = feature_set.RasterCount
+    n_features = np.sum([len(feat_type) for feat_type in feature_raw_band_types])
+    n_responses = np.sum([len(resp_type) for resp_type in response_raw_band_types])
 
     feature_memmap_file = config.data_save_name + '_feature_munge_memmap.npy'
     response_memmap_file = config.data_save_name + '_response_munge_memmap.npy'
@@ -675,7 +675,7 @@ def build_training_data_ordered(config: DataConfig, raw_feature_band_types, raw_
     responses = np.memmap(response_memmap_file,
                           dtype=np.float32,
                           mode='w+',
-                          shape=(config.max_samples, config.window_radius*2, config.window_radius*2, response_set.RasterCount))
+                          shape=(config.max_samples, config.window_radius*2, config.window_radius*2, n_responses))
 
     sample_index = 0
     for _site in range(0, len(config.raw_feature_file_list)):
@@ -686,7 +686,7 @@ def build_training_data_ordered(config: DataConfig, raw_feature_band_types, raw_
         boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) if loc_file is not None else None for loc_file in config.raw_boundary_file_list[_site]]
 
         # Calculate the interior space location and extent
-        [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle([feature_set, response_set, boundary_set]) 
+        [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle([feature_sets, response_sets, boundary_sets])
 
         # Use interior space calculations to calculate pixel-based interior space offsets for data aquisition
         collist = [x for x in range(0,
@@ -715,7 +715,7 @@ def build_training_data_ordered(config: DataConfig, raw_feature_band_types, raw_
             local_boundary_vector_file = None
             local_boundary_upper_left = None
             if (boundary_sets[_site] is not None):
-                local_boundary_set = boundary_set
+                local_boundary_set = boundary_sets[_site]
                 local_boundary_upper_left = b_ul + colrow[_cr, :]
             if (subset_geotransform is not None):
                 subset_geotransform[0] = ref_trans[0] + (f_ul[0][0] + colrow[_cr, 0]) * ref_trans[1]
@@ -789,7 +789,7 @@ def build_training_data_ordered(config: DataConfig, raw_feature_band_types, raw_
 
         un_resp = np.unique(responses[np.isfinite(responses)][...,cat_band_locations[_c]])
         un_resp = un_resp[un_resp != config.response_nodata_value]
-        assert len(un_resp) < MAX_UNIQUE_RESPONSES, 
+        assert len(un_resp) < MAX_UNIQUE_RESPONSES,\
                'Too many ({}) unique responses found, suspected incorrect categorical specification'.format(len(un_resp))
         _logger.debug('Found {} categorical responses'.format(len(un_resp)))
 
@@ -803,13 +803,13 @@ def build_training_data_ordered(config: DataConfig, raw_feature_band_types, raw_
                                   shape=tuple(resp_shape))
 
         # One hot-encode
-        for _r in range(resp.shape[-1]):
+        for _r in range(resp_shape[-1]):
             if (_r >= cat_band_locations[_c] and _r < len(un_resp)):
                 cat_responses[..., _r] = np.squeeze(responses[..., cat_band_locations[_c]] == un_resp[_r - cat_band_locations[_c]])
             else:
                 if (_r < cat_band_locations[_c]):
                     cat_responses[..., _r] = responses[..., _r] 
-                else
+                else:
                     cat_responses[..., _r] = responses[..., _r - len(un_resp) + 1] 
 
 
