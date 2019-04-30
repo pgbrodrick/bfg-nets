@@ -1,18 +1,29 @@
-import gdal
 import os
 from pathlib import Path
 import re
-from tqdm import tqdm
+from typing import List
 
 import fiona
+import gdal
 import numpy as np
 import numpy.matlib
 import rasterio.features
+from tqdm import tqdm
+
 from rsCNN.utils import logging
 from rsCNN.utils.general import *
 from rsCNN.data_management import scalers, DataConfig
 
 _logger = logging.get_child_logger(__name__)
+
+
+_FILENAME_RESPONSES_SUFFIX = 'responses_{}.npy'
+_FILENAME_FEATURES_SUFFIX = 'features_{}.npy'
+_FILENAME_WEIGHTS_SUFFIX = 'weights_{}.npy'
+_VECTORIZED_FILENAMES = ('kml', 'shp')
+
+
+
 
 
 def rasterize_vector(vector_file, geotransform, output_shape):
@@ -92,26 +103,29 @@ def open_memmap_files(config, writeable=False, override_success_file=False):
     features = []
     responses = []
     weights = []
+    feature_files = get_built_features_filenames(config.data_save_name, config.n_folds)
+    response_files = get_built_responses_filenames(config.data_save_name, config.n_folds)
+    weight_files = get_built_weights_filenames(config.data_save_name, config.n_folds)
     # TODO:  Phil:  I get a failed read on the first file when running this and building... but I think everything works
     #  after that? I don't know if "failed read" is the right message for something that succeeds?
     # FABINA - if you get a failed read message, than you should also only be returning None...is that not the case?
     for fold in range(config.n_folds):
-        if (os.path.isfile(config.feature_files[fold])):
-            features.append(np.load(config.feature_files[fold], mmap_mode=mode))
+        if (os.path.isfile(feature_files[fold])):
+            features.append(np.load(feature_files[fold], mmap_mode=mode))
         else:
             success = False
-            _logger.debug('failed read at {}'.format(config.feature_files[fold]))
+            _logger.debug('failed read at {}'.format(feature_files[fold]))
             break
-        if (os.path.isfile(config.response_files[fold])):
-            responses.append(np.load(config.response_files[fold], mmap_mode=mode))
+        if (os.path.isfile(response_files[fold])):
+            responses.append(np.load(response_files[fold], mmap_mode=mode))
         else:
-            _logger.debug('failed read at {}'.format(config.response_files[fold]))
+            _logger.debug('failed read at {}'.format(response_files[fold]))
             success = False
             break
-        if (os.path.isfile(config.weight_files[fold])):
-            weights.append(np.load(config.weight_files[fold], mmap_mode=mode))
+        if (os.path.isfile(weight_files[fold])):
+            weights.append(np.load(weight_files[fold], mmap_mode=mode))
         else:
-            _logger.debug('failed read at {}'.format(config.weight_files[fold]))
+            _logger.debug('failed read at {}'.format(weight_files[fold]))
             success = False
             break
 
@@ -676,8 +690,8 @@ def build_training_data_ordered(config: DataConfig, raw_feature_band_types, raw_
 
         subset_geotransform = None
         if (len(config.boundary_file_list) > 0):
-            if (config.boundary_file_list[_i] is not None and config.boundary_as_vectors[_i]):
-                subset_geotransform = [f_trans[0], f_trans[1], 0, f_trans[3], 0, f_trans[5]]
+            if config.boundary_file_list[_i] is not None and is_boundary_file_vectorized(config.boundary_file_list[_i]):
+                subset_geotransform=[f_trans[0], f_trans[1], 0, f_trans[3], 0, f_trans[5]]
 
         # same comments about turning nested content into a function, turning math into informatively named
         # functions, etc
@@ -797,13 +811,17 @@ def build_training_data_ordered(config: DataConfig, raw_feature_band_types, raw_
         # Force file dump, and then reload the encoded responses as the primary response
         del responses, cat_responses
         os.remove(response_memmap_file)
-        response_memmap_file = cat_response_memmap_file
-        responses = np.memmap(response_memmap_file, dtype=np.float32, mode='r+', shape=tuple(resp_shape))
+        response_memmap_file=cat_response_memmap_file
+        responses=np.memmap(response_memmap_file, dtype=np.float32, mode='r+', shape=tuple(resp_shape))
+
+    feature_files = get_built_features_filenames(config.data_save_name, config.n_folds)
+    response_files = get_built_responses_filenames(config.data_save_name, config.n_folds)
+    weight_files = get_built_weights_filenames(config.data_save_name, config.n_folds)
 
     for fold in range(config.n_folds):
-        np.save(config.feature_files[fold], features[fold_assignments == fold, ...])
-        np.save(config.response_files[fold], responses[fold_assignments == fold, ...])
-        np.save(config.weight_files[fold], weights[fold_assignments == fold, ...])
+        np.save(feature_files[fold], features[fold_assignments == fold, ...])
+        np.save(response_files[fold], responses[fold_assignments == fold, ...])
+        np.save(weight_files[fold], weights[fold_assignments == fold, ...])
 
     del features, responses, weights
     if (config.data_build_category == 'ordered_categorical'):
@@ -916,8 +934,8 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
 
         subset_geotransform = None
         if (len(config.boundary_file_list) > 0):
-            if (config.boundary_file_list[_i] is not None and config.boundary_as_vectors[_i]):
-                subset_geotransform = [f_trans[0], f_trans[1], 0, f_trans[3], 0, f_trans[5]]
+            if config.boundary_file_list[_i] is not None and is_boundary_file_vectorized(config.boundary_file_list[_i]):
+                subset_geotransform=[f_trans[0], f_trans[1], 0, f_trans[3], 0, f_trans[5]]
 
 
         good_response_data = np.zeros(responses_per_file[_i].shape[0]).astype(bool)
@@ -1014,13 +1032,17 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
         # Force file dump, and then reload the encoded responses as the primary response
         del responses, cat_responses
         os.remove(response_memmap_file)
-        response_memmap_file = cat_response_memmap_file
-        responses = np.memmap(response_memmap_file, dtype=np.float32, mode='r+', shape=tuple(resp_shape))
+        response_memmap_file=cat_response_memmap_file
+        responses=np.memmap(response_memmap_file, dtype=np.float32, mode='r+', shape=tuple(resp_shape))
+
+    feature_files = get_built_features_filenames(config.data_save_name, config.n_folds)
+    response_files = get_built_responses_filenames(config.data_save_name, config.n_folds)
+    weight_files = get_built_weights_filenames(config.data_save_name, config.n_folds)
 
     for fold in range(config.n_folds):
-        np.save(config.feature_files[fold], features[fold_assignments == fold, ...])
-        np.save(config.response_files[fold], responses[fold_assignments == fold, ...])
-        np.save(config.weight_files[fold], weights[fold_assignments == fold, ...])
+        np.save(feature_files[fold], features[fold_assignments == fold, ...])
+        np.save(response_files[fold], responses[fold_assignments == fold, ...])
+        np.save(weight_files[fold], weights[fold_assignments == fold, ...])
 
     del features, responses, weights
     if (config.data_build_category == 'ordered_categorical'):
@@ -1050,3 +1072,29 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
     Path(config.successful_data_save_file).touch()
     features, responses, weights, success = open_memmap_files(config, writeable=False)
     return features, responses, weights
+
+
+
+def get_built_features_filenames(data_save_name: str, num_folds: int) -> List[str]:
+    basename = os.path.basename(data_save_name)
+    if basename:
+        data_save_name += '_'
+    return [data_save_name + _FILENAME_FEATURES_SUFFIX.format(idx_fold) for idx_fold in range(num_folds)]
+
+
+def get_built_responses_filenames(data_save_name: str, num_folds: int) -> List[str]:
+    basename = os.path.basename(data_save_name)
+    if basename:
+        data_save_name += '_'
+    return [data_save_name + _FILENAME_RESPONSES_SUFFIX.format(idx_fold) for idx_fold in range(num_folds)]
+
+
+def get_built_weights_filenames(data_save_name: str, num_folds: int) -> List[str]:
+    basename = os.path.basename(data_save_name)
+    if basename:
+        data_save_name += '_'
+    return [data_save_name + _FILENAME_WEIGHTS_SUFFIX.format(idx_fold) for idx_fold in range(num_folds)]
+
+
+def is_boundary_file_vectorized(boundary_filepath: str) -> bool:
+    return os.path.splitext(boundary_filepath).lower() in _VECTORIZED_FILENAMES
