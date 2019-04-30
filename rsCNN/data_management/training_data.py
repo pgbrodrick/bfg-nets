@@ -40,47 +40,38 @@ def rasterize_vector(vector_file, geotransform, output_shape):
 _logger = logging.get_child_logger(__name__)
 
 
-def build_or_load_scalers(data_config, rebuild=False):
-    feat_scaler_atr = {'savename_base': data_config.data_save_name + '_feature_scaler'}
-    feature_scaler = scalers.get_scaler(data_config.feature_scaler_name, feat_scaler_atr)
-    resp_scaler_atr = {'savename_base': data_config.data_save_name + '_response_scaler'}
-    response_scaler = scalers.get_scaler(data_config.response_scaler_name, resp_scaler_atr)
-    feature_scaler.load()
-    response_scaler.load()
+def build_or_load_rawfile_data(config, rebuild=False):
 
-    train_folds = [x for x in np.arange(
-        data_config.n_folds) if x is not data_config.validation_fold and x is not data_config.test_fold]
+    data_container = Dataset()
+    check_input_files(config.raw_feature_file_list, config.raw_response_file_list, config.boundary_file_list)
 
-    if (feature_scaler.is_fitted is False or rebuild is True):
-        # TODO: do better
-        feature_scaler.fit(data_config.features[train_folds[0]])
-        feature_scaler.save()
-    if (response_scaler.is_fitted is False or rebuild is True):
-        # TODO: do better
-        response_scaler.fit(data_config.responses[train_folds[0]])
-        response_scaler.save()
-
-    data_config.feature_scaler = feature_scaler
-    data_config.response_scaler = response_scaler
-
-
-def build_or_load_data(config, rebuild=False):
+    data_container.feature_raw_band_types, = get_band_types(config.raw_feature_file_list, config.feature_raw_band_type_input)
+    data_container.response_raw_band_types, = get_band_types(config.raw_response_file_list, config.response_raw_band_type_input)
 
     if (rebuild is False):
-        features, responses, weights, read_success = load_training_data(config)
+        features, responses, weights, read_success = open_memmap_files(config)
 
     if (read_success is False or rebuild is True):
         if (config.data_build_category in ['ordered_continuous', 'ordered_categorical']):
-            features, responses, weights = build_training_data_ordered(config)
+            assert config.raw_feature_file_list is not [], 'feature files to pull data from are required'
+            assert config.raw_response_file_list is not [], 'response files to pull data from are required'
+
+            if (config.response_data_format == 'FCN'):
+                features, responses, weights = build_training_data_ordered(config)
+            if (config.response_data_format == 'CNN'):
+                features, responses, weights = build_training_from_response_points(config)
+            
+
         else:
             raise NotImplementedError('Unknown data_build_category')
 
-    config.features = features
-    config.responses = responses
-    config.weights = weights
+    data_container.features = features
+    data_container.responses = responses
+    data_container.weights = weights
 
+    return data_container
 
-def load_training_data(config, writeable=False, override_success_file=False):
+def open_memmap_files(config, writeable=False, override_success_file=False):
 
     success = True
     if (os.path.isfile(config.successful_data_save_file) is not True and override_success_file is not True):
@@ -150,7 +141,7 @@ def get_proj(fname, is_vector):
     return re.sub('\W', '', str(b_proj))
 
 
-def check_data_matches(set_a, set_b, set_b_is_vector=False, set_c=[], set_c_is_vector=[], ignore_projections=False, ignore_extents=False):
+def check_data_extents_and_projections(set_a, set_b, set_b_is_vector=False, set_c=[], set_c_is_vector=[], ignore_projections=False, ignore_extents=False):
     """ Check to see if two different gdal datasets have the same projection, geotransform, and extent.
     Arguments:
     set_a - list
@@ -295,27 +286,15 @@ def get_response_data_section(ds, x, y, x_size, y_size, config):
     return dat
 
 
-def read_chunk(f_set,
-               r_set,
-               feature_upper_left,
-               response_upper_left,
-               config,
-               boundary_vector_file=None,
-               boundary_subset_geotransform=None,
-               b_set=None,
-               boundary_upper_left=None):
-    # TODO:  This function should be refactored. read_chunk implies that the chunk is read, but this is also doing
-    #   a bunch of undocumented checks on the data. a return of None from a function named read_chunk implies that the
-    #   chunk was empty, but this actually means that it failed some sort of check. Additionally, the checks in here
-    #   are not clear as written, so it's hard to understand the flow of logic, whether there are existing bugs (see
-    #   below TODOs), and if/where new checks should be inserted. The calling function should probably call read_chunk
-    #   and then do its own checks on those values, or this should be called read_chunk_and_return_if_valid or something
-    #   similar
-    # FABINA - it sounds like you have an issue with the name, and the name only.  Fine, let's change it.
-    # There is already a function to read a subset of a file, it's call ReadAsArray,
-    # and it's used below, extensively.  A bulk read of all files is grossly inefficient, and makes no sense
-    # to implement.  What this code does is to read any and all valid chunks.  It does not need to get refactored,
-    # at least from the argument above.  Rename as you like.
+def read_segmentation_chunk(f_set,
+                            r_set,
+                            feature_upper_left,
+                            response_upper_left,
+                            config,
+                            boundary_vector_file=None,
+                            boundary_subset_geotransform=None,
+                            b_set=None,
+                            boundary_upper_left=None):
     window_diameter = config.window_radius * 2
 
     # Start by checking if we're inside boundary, if there is one
@@ -379,10 +358,195 @@ def read_chunk(f_set,
     return local_feature, local_response
 
 
+
+class Dataset:
+
+    """ A container class that holds all sorts of data objects
+    """
+    def __init__(config: DataConfig):
+        features = []
+        responses = []
+        weights = []
+
+        feature_scalers = []
+        response_scalers = []
+
+        self.train_folds = None
+
+        self.config = config
+
+
+    def build_or_load_scalers(data_container, rebuild=False):
+
+        data_config = data_container.config
+
+        feat_scaler_atr = {'savename_base': data_config.data_save_name + '_feature_scaler'}
+        feature_scaler = scalers.get_scaler(data_config.feature_scaler_name, feat_scaler_atr)
+        resp_scaler_atr = {'savename_base': data_config.data_save_name + '_response_scaler'}
+        response_scaler = scalers.get_scaler(data_config.response_scaler_name, resp_scaler_atr)
+        feature_scaler.load()
+        response_scaler.load()
+
+        self.train_folds = [x for x in range(config.n_folds) if x is not config.validation_fold and x is not config.test_fold]
+    
+        if (feature_scaler.is_fitted is False or rebuild is True):
+            # TODO: do better
+            feature_scaler.fit(data_config.features[self.train_folds[0]])
+            feature_scaler.save()
+        if (response_scaler.is_fitted is False or rebuild is True):
+            # TODO: do better
+            response_scaler.fit(data_config.responses[self.train_folds[0]])
+            response_scaler.save()
+
+        data_container.feature_scaler = feature_scaler
+        data_container.response_scaler = response_scaler
+
+
+    def check_input_files(f_file_list, r_file_list, b_file_list):
+        
+        # f = feature, r = response, b = boundary
+
+        # file lists r and f are expected a list of lists.  The outer list is a series of sites (location a, b, etc.).  
+        # The inner list is a series of files associated with that site (band x, y, z).  Each site must have the
+        # same number of files, and each file from each site must have the same number of bands, in the same order.
+        # file list b is a list for each site, with one boundary file expected to be the interior boundary for all bands.
+
+        # Check that feature and response files are lists
+        assert type(f_file_list) is list, 'Feature files must be a list of lists'
+        assert type(r_file_list) is list, 'Response files must be a list of lists'
+
+        # Checks on the matching numbers of sites
+        assert len(f_file_list) == len(r_file_list), 'Feature and response site lists must be the same length'
+        assert len(f_file_list) > 0, 'At least one feature and response site is required'
+        if (len(b_file_list) > 0):
+            assert len(b_file_list) == len(f_file_list), 'Boundary and feature site lists must be the same length'
+
+        # Checks that we have lists of lists for f and r
+        for _f in range(len(f_file_list)):
+            assert type(f_file_list[_f]) is list, 'Features at site {} are not as a list'.format(_f)
+            assert type(r_file_list[_f]) is list, 'Responses at site {} are not as a list'.format(_f)
+
+        # Checks that all files can be opened by gdal
+        for _site in range(len(f_file_list)):
+            assert type(f_file_list[_site]) is list, 'Features at site {} are not as a list'.format(_site)
+            assert type(r_file_list[_site]) is list, 'Responses at site {} are not as a list'.format(_site)
+            for _band in range(len(f_file_list[_site])):
+                assert gdal.Open(f_file_list[_site][_band],gdal.GA_ReadOnly) is not None, 
+                       'Could not open feature site {}, file {}'.format(_site,_band)
+            for _band in range(len(r_file_list[_site])):
+                assert gdal.Open(r_file_list[_site][_band],gdal.GA_ReadOnly) is not None, 
+                       'Could not open response site {}, file {}'.format(_site,_band)
+
+        # Checks on the number of files per site
+        num_f_files_per_site = len(f_file_list[0])
+        num_r_files_per_site = len(r_file_list[0])
+        for _site in range(len(f_file_list)):
+            assert len(f_file_list[_site]) == num_f_files_per_site, 'Inconsistent number of feature files at site {}'.format(_site)
+            assert len(r_file_list[_site]) == num_r_files_per_site, 'Inconsistent number of response files at site {}'.format(_site)
+
+        # Checks on the number of bands per file
+        num_f_bands_per_file = [gdal.Open(x,gdal.GA_ReadOnly).RasterCount for x in f_file_list[0]]
+        num_r_bands_per_file = [gdal.Open(x,gdal.GA_ReadOnly).RasterCount for x in r_file_list[0]]
+        for _site in range(len(f_file_list)):
+            for _file in range(len(f_file_list[_site])):
+                assert gdal.Open(f_file_list[_site][_file],gdal.GA_ReadOnly).RasterCount == num_f_bands_per_file[_file],
+                       'Inconsistent number of feature bands in site {}, file {}'.format(_site,_band)
+
+            for _file in range(len(r_file_list[_site])):
+                assert gdal.Open(r_file_list[_site][_file],gdal.GA_ReadOnly).RasterCount == num_r_bands_per_site[_file]
+                       'Inconsistent number of response bands in site {}, file {}'.format(_site,_band)
+
+
+    def get_band_types(file_list, band_types):
+
+        valid_band_types = ['R','C']
+        # 3 options are available for specifying band_types:
+        # 1) band_types is None - assume all bands are real
+        # 2) band_types is a list of strings within valid_band_types - assume each band from the associated file is the specified type,
+        #    requires len(band_types) == len(file_list[0])
+        # 3) band_types is list of lists (of strings, contained in valid_band_types), with the outer list referring to 
+        #    files and the inner list referring to bands
+
+        num_bands_per_file = [gdal.Open(x,gdal.GA_ReadOnly).RasterCount for x in file_list[0]]
+
+        # Nonetype, option 1 from above, auto-generate
+        if (band_types is None):
+            for _file in range(len(file_list[0])):
+                output_raw_band_types = []
+                output_raw_band_types.append(['R' for _band in range(num_bands_per_file[_file])])
+
+        else:
+            assert(type(band_types) is list, 'band_types must be None or a list')
+
+            # List of lists, option 3 from above - just check components
+            if (type(band_types[0]) is list):
+                for _file in range(len(band_types)):
+                    assert(type(band_types[_file]) is list, 'If one element of band_types is a list, all elements must be lists'
+                    assert len(band_types[_file]) == num_bands_per_file[_file], 'File {} has wrong number of band types'.format(_file)
+                    for _band in range(len(band_types[_file])):
+                        assert band_types[_file][_band] in valid_band_types, 'Invalid band types at file {}, band {}'.format(_file,_band)
+                
+                output_raw_band_types = band_types
+
+            else:
+                # List of values valid_band_types, option 2 from above - convert to list of lists
+                output_raw_band_types = []
+                for _file in range(len(band_types)):
+                    assert band_types[_file] in valid_band_types, 'Invalid band type at File {}'.format(_file)
+                    output_raw_band_types.append([band_types[_file] for _band in range(num_bands_per_file[_file])])
+            
+        return output_raw_band_types
+
+
+
+
 def upper_left_pixel(trans, interior_x, interior_y):
     x_ul = max((trans[0] - interior_x)/trans[1], 0)
     y_ul = max((interior_y - trans[3])/trans[5], 0)
     return x_ul, y_ul
+
+
+def get_interior_rectangle(feature_set, response_set, boundary_set):
+    f_trans = feature_set.GetGeoTransform()
+    r_trans = response_set.GetGeoTransform()
+    b_trans = None
+    if (boundary_set is not None):
+        b_trans = boundary_set.GetGeoTransform()
+
+    # Calculate the interior space location and extent
+
+    # Find the interior (UL) x,y coordinates in map-space
+    interior_x = max(r_trans[0], f_trans[0])
+    interior_y = min(r_trans[3], f_trans[3])
+    if (b_trans is not None):
+        interior_x = max(interior_x, b_trans[0])
+        interior_y = max(interior_y, b_trans[3])
+
+    # calculate the feature and response UL coordinates in pixel-space
+    f_x_ul, f_y_ul = upper_left_pixel(f_trans, interior_x, interior_y)
+    r_x_ul, r_y_ul = upper_left_pixel(r_trans, interior_x, interior_y)
+
+    # calculate the size of the matched interior extent
+    x_len = min(feature_set.RasterXSize - f_x_ul, response_set.RasterXSize - r_x_ul)
+    y_len = min(feature_set.RasterYSize - f_y_ul, response_set.RasterYSize - r_y_ul)
+
+    # update the UL location, and the interior extent, if there is a boundary
+    if (b_trans is not None):
+        b_x_ul, b_y_ul = upper_left_pixel(b_trans, interior_x, interior_y)
+        x_len = min(x_len, boundary_set.RasterXSize - b_x_ul)
+        y_len = min(y_len, boundary_set.RasterYSize - b_y_ul)
+
+    # convert these UL coordinates to an array for easy addition later
+    f_ul = np.array([f_x_ul, f_y_ul])
+    r_ul = np.array([r_x_ul, r_y_ul])
+    if (b_trans is not None):
+        b_ul = np.array([b_x_ul, b_y_ul])
+    else:
+        b_ul = None
+
+    return f_ul, r_ul, b_ul, x_len, y_len
+
+
 
 
 def build_training_data_ordered(config: DataConfig):
@@ -391,13 +555,14 @@ def build_training_data_ordered(config: DataConfig):
         config - object of type Data_Config with the requisite values for preparing training data (see __init__.py)
 
     """
-    assert config.raw_feature_file_list is not [], 'feature files to pull data from are required'
-    assert config.raw_response_file_list is not [], 'response files to pull data from are required'
+    
     if (config.random_seed is not None):
         np.random.seed(config.random_seed)
-    # Check data matches what? If we name this better, we dont need to inspect that the function does
-    check_data_matches(config.raw_feature_file_list, config.raw_response_file_list, False,
-                       config.boundary_file_list, config.boundary_as_vectors, config.ignore_projections, ignore_extents=True)
+
+    check_data_extents_and_projections(config.raw_feature_file_list, config.raw_response_file_list, False,
+                                       config.boundary_file_list, config.boundary_as_vectors, 
+                                       config.ignore_projections, ignore_extents=True)
+
     if (isinstance(config.max_samples, list)):
         if (len(config.max_samples) != len(config.raw_feature_file_list)):
             raise Exception('max_samples must equal feature_file_list length, or be an integer.')
@@ -444,35 +609,7 @@ def build_training_data_ordered(config: DataConfig):
             b_trans = boundary_set.GetGeoTransform()
 
         # Calculate the interior space location and extent
-
-        # Find the interior (UL) x,y coordinates in map-space
-        interior_x = max(r_trans[0], f_trans[0])
-        interior_y = min(r_trans[3], f_trans[3])
-        if (b_trans is not None):
-            interior_x = max(interior_x, b_trans[0])
-            interior_y = max(interior_y, b_trans[3])
-
-        # calculate the feature and response UL coordinates in pixel-space
-        f_x_ul, f_y_ul = upper_left_pixel(f_trans, interior_x, interior_y)
-        r_x_ul, r_y_ul = upper_left_pixel(r_trans, interior_x, interior_y)
-
-        # calculate the size of the matched interior extent
-        x_len = min(feature_set.RasterXSize - f_x_ul, response_set.RasterXSize - r_x_ul)
-        y_len = min(feature_set.RasterYSize - f_y_ul, response_set.RasterYSize - r_y_ul)
-
-        # update the UL location, and the interior extent, if there is a boundary
-        if (b_trans is not None):
-            b_x_ul, b_y_ul = upper_left_pixel(b_trans, interior_x, interior_y)
-            x_len = min(x_len, boundary_set.RasterXSize - b_x_ul)
-            y_len = min(y_len, boundary_set.RasterYSize - b_y_ul)
-
-        # convert these UL coordinates to an array for easy addition later
-        f_ul = np.array([f_x_ul, f_y_ul])
-        r_ul = np.array([r_x_ul, r_y_ul])
-        if (b_trans is not None):
-            b_ul = np.array([b_x_ul, b_y_ul])
-        else:
-            b_ul = None
+        f_ul, r_ul, b_ul, x_len, y_len = get_interior_rectangle(feature_set, response_set, boundary_set)
 
         collist = [x for x in range(0,
                                     int(x_len - 2*config.window_radius),
@@ -518,15 +655,15 @@ def build_training_data_ordered(config: DataConfig):
                 subset_geotransform[3] = f_trans[3] + (f_ul[1] + colrow[_cr, 1]) * f_trans[5]
                 local_boundary_vector_file = config.boundary_file_list[_i]
 
-            local_feature, local_response = read_chunk(feature_set,
-                                                       response_set,
-                                                       f_ul + colrow[_cr, :],
-                                                       r_ul + colrow[_cr, :],
-                                                       config,
-                                                       boundary_vector_file=local_boundary_vector_file,
-                                                       boundary_upper_left=local_boundary_upper_left,
-                                                       b_set=boundary_set,
-                                                       boundary_subset_geotransform=subset_geotransform)
+            local_feature, local_response = read_segmentation_chunk(feature_set,
+                                                                    response_set,
+                                                                    f_ul + colrow[_cr, :],
+                                                                    r_ul + colrow[_cr, :],
+                                                                    config,
+                                                                    boundary_vector_file=local_boundary_vector_file,
+                                                                    boundary_upper_left=local_boundary_upper_left,
+                                                                    b_set=boundary_set,
+                                                                    boundary_subset_geotransform=subset_geotransform)
 
             if (local_feature is not None):
                 features[sample_index, ...] = local_feature.copy()
@@ -587,6 +724,7 @@ def build_training_data_ordered(config: DataConfig):
     _logger.debug('Response shape: {}'.format(responses.shape))
     _logger.debug('Weight shape: {}'.format(weights.shape))
 
+    #TODO - refactor based on the new info we have per band
     if (config.data_build_category == 'ordered_categorical'):
         # TODO:  Maybe we need a check here that un_resp not too long?
         un_resp = np.unique(responses[np.isfinite(responses)])
@@ -626,7 +764,7 @@ def build_training_data_ordered(config: DataConfig):
     del features, responses, weights
     if (config.data_build_category == 'ordered_categorical'):
 
-        features, responses, weights, success = load_training_data(config, writeable=True, override_success_file=True)
+        features, responses, weights, success = open_memmap_files(config, writeable=True, override_success_file=True)
         # TODO:  Phil:  it's currently possible for weights to be set to 0 in the entire loss window and then to have
         #   samples with no weights for the loss function. If a sample is composed of all overweighted classes, this
         #   could cause hard errors, but it seems like it's pretty suboptimal to waste any CPU/GPU cycles on samples
@@ -649,5 +787,226 @@ def build_training_data_ordered(config: DataConfig):
         os.remove(weight_memmap_file)
 
     Path(config.successful_data_save_file).touch()
-    features, responses, weights, success = load_training_data(config, writeable=False)
+    features, responses, weights, success = open_memmap_files(config, writeable=False)
+    return features, responses, weights
+
+
+
+
+
+
+
+
+def build_training_data_from_response_points(config: DataConfig):
+    """ Builds a set of training data based on the configuration input
+        Arguments:
+        config - object of type Data_Config with the requisite values for preparing training data (see __init__.py)
+
+    """
+    
+    if (config.random_seed is not None):
+        np.random.seed(config.random_seed)
+
+    check_data_extents_and_projections(config.raw_feature_file_list, config.raw_response_file_list, False,
+                                       config.boundary_file_list, config.boundary_as_vectors, 
+                                       config.ignore_projections, ignore_extents=True)
+
+
+    colrow_per_file = []
+    responses_per_file = []
+    for _i in range(0, len(config.raw_response_file_list)):
+        # open requisite datasets
+        feature_set = gdal.Open(config.raw_feature_file_list[_i], gdal.GA_ReadOnly)
+        response_set = gdal.Open(config.raw_response_file_list[_i], gdal.GA_ReadOnly)
+        boundary_set = gdal.Open(config.boundary_file_list[_i], gdal.GA_ReadOnly)
+
+        # Calculate the interior space location and extent
+        f_ul, r_ul, b_ul, x_len, y_len = get_interior_rectangle(feature_set, response_set, boundary_set)
+
+        # Run through responses first
+        collist = []
+        rowlist = []
+        responses = []
+        for _line in range(y_len):
+            line_dat = np.squeeze(response_set.ReadAsArray(r_ul[0], r_ul[1], x_len, 1).astype(np.float32))
+            if (len (line_dat.shape) == 1):
+                line_dat = line_dat.reshape(-1,1)
+
+            if (config.response_background_value is not None):
+                good_data = np.all(line_dat != config.response_background_value,axis=1)
+
+            if (np.sum(good_data) > 0):
+                line_x = np.arange(x_len)
+                line_y = np.arange(y_len)
+
+                collist.extend(line_x[good_data].tolist())
+                rowlist.extend(line_y[good_data].tolist())
+
+                responses.append(line_dat[good_data,:])
+
+        colrow = np.vstack([np.array(collist),np.array(rowlist)]).T
+        colrow_per_file.append(colrow)
+        responses_per_file.apend(np.vstack(responses))
+
+    max_samples = 0
+    for _i in range(0, len(responses_per_file)):
+        max_samples += responses_per_file[_i].shape[0]
+
+    assert max_samples > 0, 'need more than 1 valid sample...'
+
+    n_features = gdal.Open(raw_response_file_list[0],gdal.GA_ReadAsArray).RasterCount
+
+    # TODO: fix max size issue, but force for now to prevent overly sized sets
+    feature_memmap_file = config.data_save_name + '_feature_munge_memmap.npy'
+    assert(max_samples * (config.window_radius*2)**2 * n_features / 1024.**3 < 10, 'max_samples too large')
+    features = np.memmap(feature_memmap_file,
+                         dtype=np.float32,
+                         mode='w+',
+                         shape=(config.max_samples, config.window_radius*2, config.window_radius*2, n_features))
+
+
+    for _i in range(0, len(config.raw_response_file_list)):
+        feature_set = gdal.Open(config.raw_feature_file_list[_i], gdal.GA_ReadOnly)
+        response_set = gdal.Open(config.raw_response_file_list[_i], gdal.GA_ReadOnly)
+        boundary_set = gdal.Open(config.boundary_file_list[_i], gdal.GA_ReadOnly)
+
+        # Calculate the interior space location and extent
+        f_ul, r_ul, b_ul, x_len, y_len = get_interior_rectangle(feature_set, response_set, boundary_set)
+
+        colrow = colrow_per_file[_i]
+
+        subset_geotransform = None
+        if (len(config.boundary_file_list) > 0):
+            if (config.boundary_file_list[_i] is not None and config.boundary_as_vectors[_i]):
+                subset_geotransform = [f_trans[0], f_trans[1], 0, f_trans[3], 0, f_trans[5]]
+
+
+        good_response_data = np.zeros(responses_per_file[_i].shape[0]).astype(bool)
+        # Now read in features
+        for _cr in tqdm(range(len(colrow)), ncols=80):
+
+            # Determine local information about boundary file
+            local_boundary_vector_file = None
+            local_boundary_upper_left = None
+            if (boundary_set is not None):
+                local_boundary_set = boundary_set
+                local_boundary_upper_left = b_ul + colrow[_cr, :]
+            if (subset_geotransform is not None):
+                subset_geotransform[0] = f_trans[0] + (f_ul[0] + colrow[_cr, 0]) * f_trans[1]
+                subset_geotransform[3] = f_trans[3] + (f_ul[1] + colrow[_cr, 1]) * f_trans[5]
+                local_boundary_vector_file = config.boundary_file_list[_i]
+
+            local_feature = read_labeling_chunk(feature_set,
+                                                f_ul + colrow[_cr, :],
+                                                config,
+                                                boundary_vector_file=local_boundary_vector_file,
+                                                boundary_upper_left=local_boundary_upper_left,
+                                                b_set=boundary_set,
+                                                boundary_subset_geotransform=subset_geotransform)
+
+            if (local_feature is not None):
+                features[sample_index, ...] = local_feature.copy()
+                good_response_data[_i] = True
+                sample_index += 1
+        responses_per_file[_i] = responses_per_file[_i][good_response_data,:]
+    
+    # transform responses
+    responses = np.vstack(responses_per_file)
+    del responses_per_file
+
+    # Get the feature shapes for re-reading (modified ooc resize)
+    feat_shape = list(features.shape)
+    feat_shape[0] = sample_index
+
+
+    # Delete and reload feauters, as a hard and fast way to force data dump to disc and reload
+    # with a modified size....IE, an ooc resize
+    del features
+    features = np.memmap(feature_memmap_file, dtype=np.float32, mode='r+', shape=(tuple(feat_shape)))
+
+    # Shuffle the data one last time (in case the fold-assignment would otherwise be biased beacuase of
+    # the feature/response file order
+    perm = np.random.permutation(features.shape[0])
+    features = features[perm, :]
+    responses = responses[perm, :]
+    del perm
+
+
+    fold_assignments = np.zeros(responses.shape[0]).astype(int)
+    for f in range(0, config.n_folds):
+        idx_start = int(round(f / config.n_folds * len(fold_assignments)))
+        idx_finish = int(round((f + 1) / config.n_folds * len(fold_assignments)))
+        fold_assignments[idx_start:idx_finish] = f
+
+    weights = np.ones(responses.shape[0])
+
+    _logger.debug('Feature shape: {}'.format(features.shape))
+    _logger.debug('Response shape: {}'.format(responses.shape))
+    _logger.debug('Weight shape: {}'.format(weights.shape))
+
+
+    #TODO - refactor based on the new info we have per band
+    if (config.data_build_category == 'ordered_categorical'):
+        # TODO:  Maybe we need a check here that un_resp not too long?
+        un_resp = np.unique(responses[np.isfinite(responses)])
+        un_resp = un_resp[un_resp != config.response_nodata_value]
+        _logger.debug('Found {} categorical responses'.format(len(un_resp)))
+
+        resp_shape = list(responses.shape)
+        resp_shape[-1] = len(un_resp)
+
+        cat_response_memmap_file = config.data_save_name + '_cat_response_munge_memmap.npy'
+        cat_responses = np.memmap(cat_response_memmap_file,
+                                  dtype=np.float32,
+                                  mode='w+',
+                                  shape=tuple(resp_shape))
+
+        # TODO:  Are you trying to iterate backwards? If so, it's clearer to write reversed(range(len(un_resp)))
+        # Also, I wonder whether there's an off-by-one error here? Should that really be len(un_resp) - 1?
+        # FABINA - yes, I was trying to iterate backwards, and no, there is no off-by-one erro, python being 0-based.
+        # Doesn't need to be reversed now, as I swapped in from being in-place, so I've removed (doesn't matter, but
+        # no need to confuse folks)
+
+        # One hot-encode
+        for _r in range(len(un_resp)):
+            cat_responses[..., _r] = np.squeeze(responses[..., 0] == un_resp[_r])
+
+        # Force file dump, and then reload the encoded responses as the primary response
+        del responses, cat_responses
+        os.remove(response_memmap_file)
+        response_memmap_file = cat_response_memmap_file
+        responses = np.memmap(response_memmap_file, dtype=np.float32, mode='r+', shape=tuple(resp_shape))
+
+    for fold in range(config.n_folds):
+        np.save(config.feature_files[fold], features[fold_assignments == fold, ...])
+        np.save(config.response_files[fold], responses[fold_assignments == fold, ...])
+        np.save(config.weight_files[fold], weights[fold_assignments == fold, ...])
+
+    del features, responses, weights
+    if (config.data_build_category == 'ordered_categorical'):
+
+        features, responses, weights, success = open_memmap_files(config, writeable=True, override_success_file=True)
+        # TODO:  Phil:  it's currently possible for weights to be set to 0 in the entire loss window and then to have
+        #   samples with no weights for the loss function. If a sample is composed of all overweighted classes, this
+        #   could cause hard errors, but it seems like it's pretty suboptimal to waste any CPU/GPU cycles on samples
+        #   with no weights, right?
+        # FABINA - I don't understand how you could have an all-zero weight set, unless your max_nodata_fraction
+        # is 100%.  Can you clarify?
+        # Thinking through more, I see that this could occur if there are only values between the boundary and the
+        # interior window.  This best handled by modifying the read-chunk code to use the max_nodata_fraction
+        # within the interior window (for the responses), which was my original implemenation I believe (just didn't
+        # get ported over).  Is this what you were thinking of?
+        weights = calculate_categorical_weights(responses, weights, config)
+        del features, responses, weights
+
+    # clean up munge files
+    if (os.path.isfile(feature_memmap_file)):
+        os.remove(feature_memmap_file)
+    if (os.path.isfile(response_memmap_file)):
+        os.remove(response_memmap_file)
+    if (os.path.isfile(weight_memmap_file)):
+        os.remove(weight_memmap_file)
+
+    Path(config.successful_data_save_file).touch()
+    features, responses, weights, success = open_memmap_files(config, writeable=False)
     return features, responses, weights
