@@ -159,10 +159,10 @@ def get_proj(fname):
 
 def check_projections(a_files, b_files, c_files=[]):
     
-    loc_a_files = [item for sublist in l for item in a_files]
-    loc_b_files = [item for sublist in l for item in b_files]
+    loc_a_files = [item for sublist in a_files for item in sublist]
+    loc_b_files = [item for sublist in b_files for item in sublist]
     if ( len(c_files) > 0):
-        loc_c_files = [item for sublist in l for item in a_files]
+        loc_c_files = [item for sublist in c_files for item in sublist]
     else:
         loc_c_files = []
 
@@ -316,27 +316,10 @@ def calculate_categorical_weights(responses, weights, config, batch_size=100):
     return weights
 
 
-def get_data_section(ds, x, y, x_size, y_size):
-    dat = np.zeros((x_size, y_size, ds.RasterCount))
-    for _b in range(ds.RasterCount):
-        dat[..., _b] = ds.GetRasterBand(_b+1).ReadAsArray(x, y, x_size, y_size)
-    return dat
-
-
-def get_response_data_section(ds, x, y, x_size, y_size, config):
-    dat = get_data_section(ds, x, y, x_size, y_size)
-    dat = np.squeeze(dat)
-    if (config.response_min_value is not None):
-        dat[dat < config.response_min_value] = config.response_nodata_value
-    if (config.response_max_value is not None):
-        dat[dat > config.response_max_value] = config.response_nodata_value
-    return dat
-
-
-def read_segmentation_chunk(f_set,
-                            r_set,
-                            feature_upper_left,
-                            response_upper_left,
+def read_segmentation_chunk(f_sets,
+                            r_sets,
+                            feature_upper_lefts,
+                            response_upper_lefts,
                             config,
                             boundary_vector_file=None,
                             boundary_subset_geotransform=None,
@@ -359,46 +342,61 @@ def read_segmentation_chunk(f_set,
             return None, None
 
     # Next check to see if we have a response, if so read all
-    local_response = np.zeros((window_diameter, window_diameter, r_set.RasterCount))
-    for _b in range(r_set.RasterCount):
-        local_response[:, :, _b] = r_set.GetRasterBand(
-            _b+1).ReadAsArray(response_upper_left[0], response_upper_left[1], window_diameter, window_diameter)
-    local_response[local_response == config.response_nodata_value] = np.nan
-    # TODO:  isn't this just checking whether values are nan and then assigning them to nan again?
-    # FABINA - no, it's also checking for other non-nan non-finite numpy values, which can (and sometimes are) read
-    local_response[np.isfinite(local_response) is False] = np.nan
-    local_response[mask, :] = np.nan
+    local_responses = np.zeros((window_diameter, window_diameter, np.sum([r_set.RasterCount for r_set in r_sets])))
+    resp_idx = 0
+    for _file in range(len(r_sets)):
+        r_set = r_sets[_file]
+        response_upper_left = response_upper_lefts[_file]
+        file_response = np.zeros((window_diameter, window_diameter, r_set.RasterCount))
+        for _b in range(r_set.RasterCount):
+            file_response[:, :, _b] = r_set.GetRasterBand(
+                _b+1).ReadAsArray(response_upper_left[0], response_upper_left[1], window_diameter, window_diameter)
 
-    if (config.response_min_value is not None):
-        local_response[local_response < config.response_min_value] = np.nan
-    if (config.response_max_value is not None):
-        local_response[local_response > config.response_max_value] = np.nan
+        file_response[file_response == config.response_nodata_value] = np.nan
+        file_response[np.isfinite(file_response) is False] = np.nan
+        file_response[mask, :] = np.nan
 
-    if (np.all(np.isnan(local_response))):
-        return None, None
-    mask[np.any(np.isnan(local_response), axis=-1)] = True
+        if (config.response_min_value is not None):
+            file_response[file_response < config.response_min_value] = np.nan
+        if (config.response_max_value is not None):
+            file_response[file_response > config.response_max_value] = np.nan
+
+        mask[np.any(np.isnan(file_response), axis=-1)] = True
+        if np.all(mask):
+            return None, None
+        local_responses[...,resp_idx:resp_idx+file_response.shape[-1]] = file_response
+        resp_idx += file_response.shape[-1]
+
 
     # Last, read in features
-    local_feature = np.zeros((window_diameter, window_diameter, f_set.RasterCount))
-    for _b in range(0, f_set.RasterCount):
-        local_feature[:, :, _b] = f_set.GetRasterBand(
-            _b+1).ReadAsArray(feature_upper_left[0], feature_upper_left[1], window_diameter, window_diameter)
+    local_features = np.zeros((window_diameter, window_diameter, np.sum([f_set.RasterCount for f_set in f_sets])))
+    feat_idx = 0
+    for _file in range(len(f_sets)):
+        f_set = f_sets[_file]
+        feature_upper_left = feature_upper_lefts[_file]
+        file_feature = np.zeros((window_diameter, window_diameter, f_set.RasterCount))
+        for _b in range(0, f_set.RasterCount):
+            file_feature[:, :, _b] = f_set.GetRasterBand(
+                _b+1).ReadAsArray(feature_upper_left[0], feature_upper_left[1], window_diameter, window_diameter)
 
-    local_feature[local_feature == config.feature_nodata_value] = np.nan
-    local_feature[np.isfinite(local_feature) is False] = np.nan
-    local_feature[mask, :] = np.nan
-    if (np.all(np.isnan(local_feature))):
-        return None, None
+        file_feature[file_feature == config.feature_nodata_value] = np.nan
+        file_feature[np.isfinite(file_feature) is False] = np.nan
+        file_feature[mask, :] = np.nan
+        if (np.all(np.isnan(file_feature))):
+            return None, None
 
-    feature_nodata_fraction = np.sum(np.isnan(local_feature)) / np.prod(local_feature.shape)
-    # TODO:  as implemented, this only checks the feature nodata fraction, do we want to do responses too?
-    if feature_nodata_fraction > config.nodata_maximum_fraction:
-        return None, None
-    mask[np.any(np.isnan(local_response), axis=-1)] = True
+        feature_nodata_fraction = np.sum(np.isnan(file_feature)) / np.prod(file_feature.shape)
+        # TODO:  as implemented, this only checks the feature nodata fraction, do we want to do responses too?
+        if feature_nodata_fraction > config.nodata_maximum_fraction:
+            return None, None
 
-    # Final check, and return
-    # TODO:  haven't we already done these operations above?
-    # FABINA - no, since the mask has built as it's gone forward
+        mask[np.any(np.isnan(file_feature), axis=-1)] = True
+        if np.all(mask):
+            return None, None
+        local_features[...,feat_idx:feat_idx+file_feature.shape[-1]] = file_feature
+        feat_idx += file_feature.shape[-1]
+
+    # Final check (propogate mask forward), and return
     local_feature[mask, :] = np.nan
     local_response[mask, :] = np.nan
 
@@ -552,6 +550,45 @@ def upper_left_pixel(trans, interior_x, interior_y):
     y_ul = max((interior_y - trans[3])/trans[5], 0)
     return x_ul, y_ul
 
+def get_interior_rectangle(dataset_list_of_lists : List[List[tuple]]):
+    
+    # Convert list of lists or list for interior convenience
+    dataset_list =  [item for sublist in dataset_list_of_lists for item in sublist]
+    
+    # Get list of all gdal geotransforms
+    trans_list = []
+    for _d in range(len(dataset_list)):
+        trans_list.append(dataset_list[_d].GetGeoTransform())
+        
+    # Find the interior (UL) x,y coordinates in map-space
+    interior_x = np.nanmax([x[0] for x in trans_list])
+    interior_y = np.nanmin([x[1] for x in trans_list])
+
+    # calculate the UL coordinates in pixel-space
+    ul_list = []
+    for _d in range(len(dataset_list)):
+        ul_list.append(list(upper_lef_pixel(trans_list[_d],ul_list[_d][0],ul_list[d][1])))
+    
+    # calculate the size of the matched interior extent
+    x_len = np.min([dataset_list[_d].RasterXSize - ul_list[_d][0] for _d in range(len(dataset_list))])
+    y_len = np.min([dataset_list[_d].RasterYSize - ul_list[_d][1] for _d in range(len(dataset_list))])
+
+    # separate out into list of lists for return
+    return_ul_list = []
+    idx = 0
+    for _l in range(len(dataset_list_of_lists)):
+        local_list = []
+        for _d in range(len(dataset_list_of_lists[_l])):
+            local_list.append(ul_list[idx])
+            idx +=1
+        local_list = np.array(local_list)
+        return_ul_list.append(local_list)
+            
+    return return_ul_list, x_len, y_len
+
+
+
+
 
 def get_interior_rectangle(feature_set, response_set, boundary_set):
     f_trans = feature_set.GetGeoTransform()
@@ -631,29 +668,17 @@ def build_training_data_ordered(config: DataConfig, raw_feature_band_types, raw_
                           shape=(config.max_samples, config.window_radius*2, config.window_radius*2, response_set.RasterCount))
 
     sample_index = 0
-    for _i in range(0, len(config.raw_feature_file_list)):
+    for _site in range(0, len(config.raw_feature_file_list)):
 
         # open requisite datasets
-        feature_set = gdal.Open(config.raw_feature_file_list[_i], gdal.GA_ReadOnly)
-        response_set = gdal.Open(config.raw_response_file_list[_i], gdal.GA_ReadOnly)
-        boundary_set = None
-
-        # this boolean could be simplified to two levels pretty easily, maybe even just one, but then it could
-        # also be hidden in the above mentioned object
-        # FABINA - Fair, I've simplified it to two lines.  I don't think it can safely go to one, could be wrong.
-        if (len(config.boundary_file_list) > 0):
-            if (config.boundary_file_list[_i] is not None and config.boundary_as_vectors[_i]):
-                boundary_set = gdal.Open(config.boundary_file_list[_i], gdal.GA_ReadOnly)
-
-        f_trans = feature_set.GetGeoTransform()
-        r_trans = response_set.GetGeoTransform()
-        b_trans = None
-        if (boundary_set is not None):
-            b_trans = boundary_set.GetGeoTransform()
+        feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_feature_file_list[_site]]
+        response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_response_file_list[_site]]
+        boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) if loc_file is not None else None for loc_file in config.raw_boundary_file_list[_site]]
 
         # Calculate the interior space location and extent
-        f_ul, r_ul, b_ul, x_len, y_len = get_interior_rectangle(feature_set, response_set, boundary_set)
+        [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle([feature_set, response_set, boundary_set]) 
 
+        # Use interior space calculations to calculate pixel-based interior space offsets for data aquisition
         collist = [x for x in range(0,
                                     int(x_len - 2*config.window_radius),
                                     int(config.internal_window_radius*2))]
@@ -664,48 +689,37 @@ def build_training_data_ordered(config: DataConfig, raw_feature_band_types, raw_
         colrow = np.zeros((len(collist)*len(rowlist), 2)).astype(int)
         colrow[:, 0] = np.matlib.repmat(np.array(collist).reshape((-1, 1)), 1, len(rowlist)).flatten()
         colrow[:, 1] = np.matlib.repmat(np.array(rowlist).reshape((1, -1)), len(collist), 1).flatten()
-        # IF these operations happen in functions, you don't need to worry about manually deleting these objects
-        # because they're lost when the function exits, i.e., they're only in the local scope
-        # FABINA - While that is true, what we're doing here is trying to free back up memory, and deleting
-        # thee objects does help with that.
         del collist, rowlist
 
-        # There's a shuffle function that does this in np
-        # FABINA - probably...is there a problem with this implementation (or is this hard to read???)
         colrow = colrow[np.random.permutation(colrow.shape[0]), :]
 
+        ref_trans = feature_sets[0].GetGeoTransform()
         subset_geotransform = None
         if (len(config.boundary_file_list) > 0):
-            if (config.boundary_file_list[_i] is not None and config.boundary_as_vectors[_i]):
-                subset_geotransform = [f_trans[0], f_trans[1], 0, f_trans[3], 0, f_trans[5]]
+            if (config.boundary_file_list[_site] is not None and config.boundary_as_vectors[_site]):
+                subset_geotransform = [ref_trans[0], ref_trans[1], 0, ref_trans[3], 0, ref_trans[5]]
 
-        # same comments about turning nested content into a function, turning math into informatively named
-        # functions, etc
-        # FABINA - I can maybe follow you with the above....but for the below, it's alreayd broken out into a
-        # function....this loop is only assigning the appropriate option.  What would be a better way?
-        # Update - I've condensed the code below a bit to see if that helps at all.  Functionally the same, but
-        # not a bit tighter to read
         for _cr in tqdm(range(len(colrow)), ncols=80):
 
             # Determine local information about boundary file
             local_boundary_vector_file = None
             local_boundary_upper_left = None
-            if (boundary_set is not None):
+            if (boundary_sets[_site] is not None):
                 local_boundary_set = boundary_set
                 local_boundary_upper_left = b_ul + colrow[_cr, :]
             if (subset_geotransform is not None):
-                subset_geotransform[0] = f_trans[0] + (f_ul[0] + colrow[_cr, 0]) * f_trans[1]
-                subset_geotransform[3] = f_trans[3] + (f_ul[1] + colrow[_cr, 1]) * f_trans[5]
-                local_boundary_vector_file = config.boundary_file_list[_i]
+                subset_geotransform[0] = ref_trans[0] + (f_ul[0][0] + colrow[_cr, 0]) * ref_trans[1]
+                subset_geotransform[3] = ref_trans[3] + (f_ul[0][1] + colrow[_cr, 1]) * ref_trans[5]
+                local_boundary_vector_file = config.boundary_file_list[_site]
 
-            local_feature, local_response = read_segmentation_chunk(feature_set,
-                                                                    response_set,
+            local_feature, local_response = read_segmentation_chunk(feature_sets[_site],
+                                                                    response_sets[_site],
                                                                     f_ul + colrow[_cr, :],
                                                                     r_ul + colrow[_cr, :],
                                                                     config,
                                                                     boundary_vector_file=local_boundary_vector_file,
                                                                     boundary_upper_left=local_boundary_upper_left,
-                                                                    b_set=boundary_set,
+                                                                    b_set=local_boundary_set,
                                                                     boundary_subset_geotransform=subset_geotransform)
 
             if (local_feature is not None):
