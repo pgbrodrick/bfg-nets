@@ -57,18 +57,15 @@ global_options['raw_response_file_list'] = ['../global_cwc/dat/responses/resp_su
 
 
 data_config = rsCNN.data_management.DataConfig(**global_options)
-training_data.build_or_load_data(data_config)
-training_data.build_or_load_scalers(data_config)
 
-train_folds = [x for x in range(
-    data_config.n_folds) if x is not data_config.validation_fold and x is not data_config.test_fold]
+data_container = training_data.build_or_load_rawfile_data(data_config)
+data_container.build_or_load_scalers()
 
-training_sequence = sequences.build_memmapped_sequence(data_config, train_folds, batch_size=100)
-validation_sequence = sequences.build_memmapped_sequence(data_config, [data_config.validation_fold], batch_size=100)
+training_sequence = sequences.build_memmapped_sequence(data_container, data_container.train_folds, batch_size=100)
+validation_sequence = sequences.build_memmapped_sequence(data_container, [data_container.validation_fold], batch_size=100)
 
 # Move the inshape intot he build_or_load_model
-network_config = create_network_config(
-    inshape=(data_config.window_radius*2, data_config.window_radius*2, 3), **global_options)
+network_config = create_network_config(inshape=(data_config.window_radius*2, data_config.window_radius*2, 3), **global_options)
 
 experiment = Experiment(network_config, resume=True)
 experiment.build_or_load_model()

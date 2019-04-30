@@ -10,6 +10,8 @@ from rsCNN.utils import logging
 
 _logger = logging.get_child_logger(__name__)
 
+def check_scaler_exists(scaler_name):
+    assert scaler_name in sys.modules[__name__]
 
 def get_scaler(scaler_name, scaler_options):
     return getattr(sys.modules[__name__], scaler_name)(**scaler_options)
