@@ -6,33 +6,74 @@ import yaml
 
 FILENAME_CONFIG = 'config.yaml'
 
+# TODO:  improve names where necessary
+# TODO:  informative comments for each option
 
+# TODO:  expand on this
+# Data type from each feature.  R == Real, C == categorical
+# All Categorical bands will be one-hot-encoded...to keep them as
+# a single band, simply name them as real datatypes
+
+# Raw file configuration, information necessary to locate and parse the raw files
 field_defaults = [
-    ('dir_out', None),
-    ('verbosity', 1),
-    ('assert_gpu', False),
+    ('raw_feature_file_list', None),  # File list for raw feature rasters, prior to being built
+    ('raw_response_file_list', None),  # File list for raw response rasters, prior to being built
+    ('boundary_file_list', None),  # Optional list of boundary files, restricts built data to within these boundaries
+    ('feature_raw_band_type_input', None),  # See above note
+    ('response_raw_band_type_input', None),  # See above note
+    ('feature_nodata_value', -9999),  # Value that denotes missing data in feature files
+    ('response_nodata_value', -9999),  # Value that denotes missing data in response files
+    ('boundary_bad_value', None),  # Value that indicates pixels are out of bounds in a boundary raster file
+    ('ignore_projections', False),  # To ignore projection differences between feature/response sets, use with caution!
 ]
-Options = namedtuple('Options', [field for field, default in field_defaults])
-Options.__new__.__defaults__ = tuple([default for field, default in field_defaults])
+RawFiles = namedtuple('RawFiles', [field for field, default in field_defaults])
+RawFiles.__new__.__defaults__ = tuple([default for field, default in field_defaults])
+
+# Data build configuration, information necessary to structure and format the built data files
+field_defaults = [
+    ('dir_model_out', None),  # Location to either create new model files or load existing model files
+    ('response_data_format', 'FCN'),  # Either CNN or FCN right now
+    ('data_build_category', 'or'),  # TODO description
+    ('data_save_name', None),  # Location to save the built data, including potential prefix for names # TODO simplify
+    ('random_seed', None),  # Seed to set for reproducable data generation
+    ('max_samples', None),  # Maximum number of samples, sampling stops when data is fully crawled or maximum is reached
+    ('n_folds', 10),  # Number of training data folds
+    ('validation_fold', None),  # Which training data fold to use for validation
+    ('test_fold', None),  # Which training data fold to use for testing
+    ('window_radius', None),  # Determines image size as 2 * window_radius
+    ('internal_window_radius', None),  # Determines image subset included in model loss window, must contain responses
+    ('feature_nodata_maximum_fraction', 0),  # Only include samples where features have a lower nodata fraction
+    ('response_min_value', None),  # Responses below this value will be converted to the response_nodata_value
+    ('response_max_value', None),  # Responses above this value will be converted to the response_nodata_value
+    ('response_background_value', None),  # Samples containing only this response will be discarded
+]
+DataBuild = namedtuple('DataBuild', [field for field, default in field_defaults])
+DataBuild.__new__.__defaults__ = tuple([default for field, default in field_defaults])
+
+# Data sample configuration, information necessary to parse built data files and pass data to models during training
+field_defaults = [
+    ('apply_random_transformations', False),  # Whether to apply random rotations and flips to sample images
+    ('batch_size', 100),  # The sample batch size for images passed to the model
+    ('feature_scaler_names', None),  # Names of the scalers to use with each feature file
+    ('response_scaler_names', None),  # Names of the scalers to use with each response file
+    # TODO:  Phil:  should mean_centering be a list so that we have one item per file?
+    ('feature_mean_centering', False),  # Whether to mean center the features
+    ('feature_training_nodata_value', -10),  # The value for missing data, as models are not compatible with nans
+]
+DataSamples = namedtuple('DataSamples', [field for field, default in field_defaults])
+DataSamples.__new__.__defaults__ = tuple([default for field, default in field_defaults])
 
 field_defaults = [
+    ('dir_data_out', None),  # Location to either create new built data files or load existing data files
+    ('verbosity', 1),  # Verbosity value for keras library, either 0 or 1
+    ('assert_gpu', False),  # Asserts that model will run on GPU if True, exits with error if GPU is not available
     ('architecture', None),
-    ('inshape', None),
-    ('internal_window_radius', None),
     ('loss_metric', None),
-    ('n_classes', None),
+    ('max_epochs', 100),
+    ('n_classes', None),  # TODO:  get this from the data directly
+    ('optimizer', 'adam'),
     ('output_activation', None),
     ('weighted', False),
-]
-Architecture = namedtuple('Architecture', [field for field, default in field_defaults])
-Architecture.__new__.__defaults__ = tuple([default for field, default in field_defaults])
-
-field_defaults = [
-    ('apply_random_transformations', False),
-    ('max_epochs', 100),
-    ('optimizer', 'adam'),
-    ('batch_size', 100),
-    ('modelfit_nan_value', -100),
 ]
 ModelTraining = namedtuple('ModelTraining', [field for field, default in field_defaults])
 ModelTraining.__new__.__defaults__ = tuple([default for field, default in field_defaults])
@@ -112,8 +153,9 @@ def compare_network_configs_get_differing_items(config_a, config_b):
 
 
 class Config(object):
-    options = None
-    architecture = None
+    raw_files = None
+    data_build = None
+    data_samples = None
     model_training = None
     callback_general = None
     callback_tensorboard = None
@@ -122,8 +164,9 @@ class Config(object):
 
     def __init__(
             self,
-            options: Options = None,
-            architecture: Architecture = None,
+            raw_files: RawFiles = None,
+            data_build: DataBuild = None,
+            data_samples: DataSamples = None,
             model_training: ModelTraining = None,
             callback_general: CallbackGeneral = None,
             callback_tensorboard: CallbackTensorboard = None,
@@ -136,8 +179,9 @@ class Config(object):
         # more importantly, "config.architecture.w" will autocomplete to "config.architecture.weighted". Without this
         # autocomplete feature, the programmer is required to know the names of individual options and due to the
         # nature of scientific computing and the number of parameters that can be configured, this becomes burdensome.
-        self.options = options
-        self.architecture = architecture
+        self.raw_files = raw_files
+        self.data_build = data_build
+        self.data_sample = data_samples
         self.model_training = model_training
         self.callback_general = callback_general
         self.callback_tensorboard = callback_tensorboard
@@ -153,8 +197,8 @@ class ConfigFactory(object):
     def create_config(self, config_options: dict) -> Config:
         config_copy = copy.deepcopy(config_options)
         config_sections = [
-            Options, Architecture, ModelTraining, CallbackGeneral, CallbackTensorboard, CallbackEarlyStopping,
-            CallbackReducedLearningRate
+            RawFiles, DataBuild, DataSamples, ModelTraining, CallbackGeneral, CallbackTensorboard,
+            CallbackEarlyStopping, CallbackReducedLearningRate
         ]
         populated_sections = dict()
         for config_section in config_sections:
