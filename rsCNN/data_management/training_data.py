@@ -14,6 +14,7 @@ from rsCNN.data_management import scalers, DataConfig
 
 _logger = logging.get_child_logger(__name__)
 
+MAX_UNIQUE_RESPONSES=100
 
 def rasterize_vector(vector_file, geotransform, output_shape):
     """ Rasterizes an input vector directly into a numpy array.
@@ -45,8 +46,8 @@ def build_or_load_rawfile_data(config, rebuild=False):
     data_container = Dataset()
     check_input_files(config.raw_feature_file_list, config.raw_response_file_list, config.boundary_file_list)
 
-    data_container.feature_raw_band_types, = get_band_types(config.raw_feature_file_list, config.feature_raw_band_type_input)
-    data_container.response_raw_band_types, = get_band_types(config.raw_response_file_list, config.response_raw_band_type_input)
+    data_container.feature_raw_band_types = get_band_types(config.raw_feature_file_list, config.feature_raw_band_type_input)
+    data_container.response_raw_band_types = get_band_types(config.raw_response_file_list, config.response_raw_band_type_input)
 
     if (rebuild is False):
         features, responses, weights, read_success = open_memmap_files(config)
@@ -61,11 +62,11 @@ def build_or_load_rawfile_data(config, rebuild=False):
                                   config.boundary_file_list)
 
             if (config.response_data_format == 'FCN'):
-                features, responses, weights = build_training_data_ordered(config, 
+                features, responses, weights, response_band_types = build_training_data_ordered(config, 
                                                                            data_container.feature_raw_band_types, 
                                                                            data_container.response_raw_band_types)
             elif (config.response_data_format == 'CNN'):
-                features, responses, weights = build_training_data_from_response_points(config, 
+                features, responses, weights, response_band_types = build_training_data_from_response_points(config, 
                                                                                         data_container.feature_raw_band_types, 
                                                                                         data_container.response_raw_band_types)
             else:
@@ -74,6 +75,7 @@ def build_or_load_rawfile_data(config, rebuild=False):
     data_container.features = features
     data_container.responses = responses
     data_container.weights = weights
+    data_container.response_band_types = weights
 
     return data_container
 
@@ -413,6 +415,11 @@ class Dataset:
         responses = []
         weights = []
 
+        feature_band_types = None
+        response_band_types = None
+        feature_raw_band_types = None
+        response_raw_band_types = None
+
         feature_scalers = []
         response_scalers = []
 
@@ -540,6 +547,9 @@ class Dataset:
                     assert band_types[_file] in valid_band_types, 'Invalid band type at File {}'.format(_file)
                     output_raw_band_types.append([band_types[_file] for _band in range(num_bands_per_file[_file])])
             
+        # since it's more convenient, flatten this list of lists into a list before returning
+        output_raw_band_types =  [item for sublist in output_raw_band_types for item in sublist]
+
         return output_raw_band_types
 
 
@@ -748,18 +758,13 @@ def build_training_data_ordered(config: DataConfig, raw_feature_band_types, raw_
     responses = responses[perm, :]
     del perm
 
-    # Honestly, at this point my head is starting to hurt. I'm trying to remember what has happened in this
-    # function up until this point because I was trying to make a mental "table of contents", but I can't
-    # do that without really focusing and looking back.
-    # You can do this in one line with something like np.repeat, if this is doing what I think
-    # FABINA -Maybe/probably you can swap this with a different set of lines that do basically the same thing.  But
-    # this is trivial code to follow.....it's literally a division, and has appropriate names.  And is 3 lines.
     fold_assignments = np.zeros(responses.shape[0]).astype(int)
     for f in range(0, config.n_folds):
         idx_start = int(round(f / config.n_folds * len(fold_assignments)))
         idx_finish = int(round((f + 1) / config.n_folds * len(fold_assignments)))
         fold_assignments[idx_start:idx_finish] = f
 
+    # Set up initial weights....will add in class-balancing if appropriate later
     weights = np.memmap(weight_memmap_file,
                         dtype=np.float32,
                         mode='w+',
@@ -767,9 +772,6 @@ def build_training_data_ordered(config: DataConfig, raw_feature_band_types, raw_
     weights[:, :, :, :] = 1
     weights[np.isnan(responses[..., 0])] = 0
 
-    # TODO: Why not just set all weights to zeros initially, then do the internal window set to ones, then do anything
-    # isnan is zero? Would that be less code?
-    # FABINA - I think it would be basically the same
     if (config.internal_window_radius != config.window_radius):
         buf = config.window_radius - config.internal_window_radius
         weights[:, :buf, :, -1] = 0
@@ -781,16 +783,18 @@ def build_training_data_ordered(config: DataConfig, raw_feature_band_types, raw_
     _logger.debug('Response shape: {}'.format(responses.shape))
     _logger.debug('Weight shape: {}'.format(weights.shape))
 
-    #TODO - refactor based on the new info we have per band
-    if any('C' in sublist for sublist in response_raw_band_types):
-    if (config.data_build_category == 'ordered_categorical'):
-        # TODO:  Maybe we need a check here that un_resp not too long?
-        un_resp = np.unique(responses[np.isfinite(responses)])
+    cat_band_locations = [idx for idx, val in enumerate(response_raw_band_types) if val == 'C']
+    response_band_types = response_raw_band_types.copy()
+    for _c in reversed(range(len(cat_band_locations))):
+
+        un_resp = np.unique(responses[np.isfinite(responses)][...,cat_band_locations[_c]])
         un_resp = un_resp[un_resp != config.response_nodata_value]
+        assert len(un_resp) < MAX_UNIQUE_RESPONSES, 
+               'Too many ({}) unique responses found, suspected incorrect categorical specification'.format(len(un_resp))
         _logger.debug('Found {} categorical responses'.format(len(un_resp)))
 
         resp_shape = list(responses.shape)
-        resp_shape[-1] = len(un_resp)
+        resp_shape[-1] = len(un_resp) + responses.shape[-1] - 1
 
         cat_response_memmap_file = config.data_save_name + '_cat_response_munge_memmap.npy'
         cat_responses = np.memmap(cat_response_memmap_file,
@@ -798,15 +802,16 @@ def build_training_data_ordered(config: DataConfig, raw_feature_band_types, raw_
                                   mode='w+',
                                   shape=tuple(resp_shape))
 
-        # TODO:  Are you trying to iterate backwards? If so, it's clearer to write reversed(range(len(un_resp)))
-        # Also, I wonder whether there's an off-by-one error here? Should that really be len(un_resp) - 1?
-        # FABINA - yes, I was trying to iterate backwards, and no, there is no off-by-one erro, python being 0-based.
-        # Doesn't need to be reversed now, as I swapped in from being in-place, so I've removed (doesn't matter, but
-        # no need to confuse folks)
-
         # One hot-encode
-        for _r in range(len(un_resp)):
-            cat_responses[..., _r] = np.squeeze(responses[..., 0] == un_resp[_r])
+        for _r in range(resp.shape[-1]):
+            if (_r >= cat_band_locations[_c] and _r < len(un_resp)):
+                cat_responses[..., _r] = np.squeeze(responses[..., cat_band_locations[_c]] == un_resp[_r - cat_band_locations[_c]])
+            else:
+                if (_r < cat_band_locations[_c]):
+                    cat_responses[..., _r] = responses[..., _r] 
+                else
+                    cat_responses[..., _r] = responses[..., _r - len(un_resp) + 1] 
+
 
         # Force file dump, and then reload the encoded responses as the primary response
         del responses, cat_responses
@@ -814,25 +819,21 @@ def build_training_data_ordered(config: DataConfig, raw_feature_band_types, raw_
         response_memmap_file = cat_response_memmap_file
         responses = np.memmap(response_memmap_file, dtype=np.float32, mode='r+', shape=tuple(resp_shape))
 
+        response_band_types.pop(cat_band_locations[_c])
+        for _r in range(len(un_resp)):
+            response_band_types.insert(cat_band_locations[_c],'B' + str(int(_c)))
+
+
     for fold in range(config.n_folds):
         np.save(config.feature_files[fold], features[fold_assignments == fold, ...])
         np.save(config.response_files[fold], responses[fold_assignments == fold, ...])
         np.save(config.weight_files[fold], weights[fold_assignments == fold, ...])
 
     del features, responses, weights
-    if (config.data_build_category == 'ordered_categorical'):
-
+    if ('C' in response_raw_band_types ):
+        if (np.sum(np.array(response_raw_band_types) == 'C') > 1):
+            _logger.warning('Currently weighting is only enabled for one categorical response variable')
         features, responses, weights, success = open_memmap_files(config, writeable=True, override_success_file=True)
-        # TODO:  Phil:  it's currently possible for weights to be set to 0 in the entire loss window and then to have
-        #   samples with no weights for the loss function. If a sample is composed of all overweighted classes, this
-        #   could cause hard errors, but it seems like it's pretty suboptimal to waste any CPU/GPU cycles on samples
-        #   with no weights, right?
-        # FABINA - I don't understand how you could have an all-zero weight set, unless your max_nodata_fraction
-        # is 100%.  Can you clarify?
-        # Thinking through more, I see that this could occur if there are only values between the boundary and the
-        # interior window.  This best handled by modifying the read-chunk code to use the max_nodata_fraction
-        # within the interior window (for the responses), which was my original implemenation I believe (just didn't
-        # get ported over).  Is this what you were thinking of?
         weights = calculate_categorical_weights(responses, weights, config)
         del features, responses, weights
 
@@ -846,7 +847,7 @@ def build_training_data_ordered(config: DataConfig, raw_feature_band_types, raw_
 
     Path(config.successful_data_save_file).touch()
     features, responses, weights, success = open_memmap_files(config, writeable=False)
-    return features, responses, weights
+    return features, responses, weights, response_band_types
 
 
 
