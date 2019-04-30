@@ -52,18 +52,24 @@ def build_or_load_rawfile_data(config, rebuild=False):
         features, responses, weights, read_success = open_memmap_files(config)
 
     if (read_success is False or rebuild is True):
-        if (config.data_build_category in ['ordered_continuous', 'ordered_categorical']):
             assert config.raw_feature_file_list is not [], 'feature files to pull data from are required'
             assert config.raw_response_file_list is not [], 'response files to pull data from are required'
 
-            if (config.response_data_format == 'FCN'):
-                features, responses, weights = build_training_data_ordered(config)
-            if (config.response_data_format == 'CNN'):
-                features, responses, weights = build_training_from_response_points(config)
-            
+            if (config.ignore_projections is False): 
+                check_projections(config.raw_feature_file_list, 
+                                  config.raw_response_file_list, 
+                                  config.boundary_file_list)
 
-        else:
-            raise NotImplementedError('Unknown data_build_category')
+            if (config.response_data_format == 'FCN'):
+                features, responses, weights = build_training_data_ordered(config, 
+                                                                           data_container.feature_raw_band_types, 
+                                                                           data_container.response_raw_band_types)
+            elif (config.response_data_format == 'CNN'):
+                features, responses, weights = build_training_data_from_response_points(config, 
+                                                                                        data_container.feature_raw_band_types, 
+                                                                                        data_container.response_raw_band_types)
+            else:
+                raise NotImplementedError('Unknown response data format')
 
     data_container.features = features
     data_container.responses = responses
@@ -115,7 +121,7 @@ def open_memmap_files(config, writeable=False, override_success_file=False):
         return None, None, None, False
 
 
-def get_proj(fname, is_vector):
+def get_proj(fname):
     """ Get the projection of a raster/vector dataset.
     Arguments:
     fname - str
@@ -126,21 +132,62 @@ def get_proj(fname, is_vector):
     Returns:
     The projection of the input fname
     """
-    if (is_vector):
-        if (os.path.basename(fname).split('.')[-1] == 'shp'):
-            vset = ogr.GetDriverByName('ESRI Shapefile').Open(fname, gdal.GA_ReadOnly)
-        elif (os.path.basename(fname).split('.')[-1] == 'kml'):
-            vset = ogr.GetDriverByName('KML').Open(fname, gdal.GA_ReadOnly)
-        else:
-            raise Exception('unsupported vector file type from file ' + fname)
+    ds = gdal.Open(fname, gdal.GA_ReadOnly)
+    if (ds is not None):
+        b_proj = ds.GetProjection()
+        if (b_proj is not None):
+            return b_proj
 
-        b_proj = vset.GetLayer().GetSpatialRef()
+    if (os.path.basename(fname).split('.')[-1] == 'shp'):
+        vset = ogr.GetDriverByName('ESRI Shapefile').Open(fname, gdal.GA_ReadOnly)
+    elif (os.path.basename(fname).split('.')[-1] == 'kml'):
+        vset = ogr.GetDriverByName('KML').Open(fname, gdal.GA_ReadOnly)
     else:
-        b_proj = gdal.Open(fname, gdal.GA_ReadOnly).GetProjection()
+        raise Exception('Cannot find projection from file {}'.format(fname)
 
-    return re.sub('\W', '', str(b_proj))
+    if (vset is None):
+        raise Exception('Cannot find projection from file {}'.format(fname)
+    else:
+        b_proj = vset.GetLayer().GetSpatialRef()
+        if (b_proj is None):
+            raise Exception('Cannot find projection from file {}'.format(fname)
+        else:
+            b_proj = re.sub('\W', '', str(b_proj))
+    
+    return b_proj
 
 
+def check_projections(a_files, b_files, c_files=[]):
+    
+    loc_a_files = [item for sublist in l for item in a_files]
+    loc_b_files = [item for sublist in l for item in b_files]
+    if ( len(c_files) > 0):
+        loc_c_files = [item for sublist in l for item in a_files]
+    else:
+        loc_c_files = []
+
+    a_proj = []
+    b_proj = []
+    c_proj = []
+
+    if (_f in range(len(a_files))):
+        a_proj.append(get_proj(loc_a_files[_f]))
+        b_proj.append(get_proj(loc_b_files[_f]))
+        if (len(loc_c_files) > 0):
+            c_proj.append(get_proj(loc_c_files[_f]))
+    
+    for _p in range(len(a_proj)):
+        if (len(c_proj) > 0):
+            assert (a_proj[_p] != b_proj[_p] and a_proj != c_proj[_p]), 'Projection_mismatch between {}: {}, {}: {}, {}: {}'.
+                   format(a_proj[_p], loc_a_files[_p], b_proj[_p], loc_b_files[_p], c_proj[_p], loc_c_files[_p])
+        else:
+            assert (a_proj[_p] != b_proj[_p]), 'Projection_mismatch between {}: {}, {}: {}'.
+                   format(a_proj[_p], loc_a_files[_p], b_proj[_p], loc_b_files[_p])
+                
+            
+    
+
+# deprecated, keeping for potential future use
 def check_data_extents_and_projections(set_a, set_b, set_b_is_vector=False, set_c=[], set_c_is_vector=[], ignore_projections=False, ignore_extents=False):
     """ Check to see if two different gdal datasets have the same projection, geotransform, and extent.
     Arguments:
@@ -549,7 +596,7 @@ def get_interior_rectangle(feature_set, response_set, boundary_set):
 
 
 
-def build_training_data_ordered(config: DataConfig):
+def build_training_data_ordered(config: DataConfig, raw_feature_band_types, raw_response_band_types):
     """ Builds a set of training data based on the configuration input
         Arguments:
         config - object of type Data_Config with the requisite values for preparing training data (see __init__.py)
@@ -558,10 +605,6 @@ def build_training_data_ordered(config: DataConfig):
     
     if (config.random_seed is not None):
         np.random.seed(config.random_seed)
-
-    check_data_extents_and_projections(config.raw_feature_file_list, config.raw_response_file_list, False,
-                                       config.boundary_file_list, config.boundary_as_vectors, 
-                                       config.ignore_projections, ignore_extents=True)
 
     if (isinstance(config.max_samples, list)):
         if (len(config.max_samples) != len(config.raw_feature_file_list)):
@@ -725,6 +768,7 @@ def build_training_data_ordered(config: DataConfig):
     _logger.debug('Weight shape: {}'.format(weights.shape))
 
     #TODO - refactor based on the new info we have per band
+    if any('C' in sublist for sublist in response_raw_band_types):
     if (config.data_build_category == 'ordered_categorical'):
         # TODO:  Maybe we need a check here that un_resp not too long?
         un_resp = np.unique(responses[np.isfinite(responses)])
@@ -797,7 +841,7 @@ def build_training_data_ordered(config: DataConfig):
 
 
 
-def build_training_data_from_response_points(config: DataConfig):
+def build_training_data_from_response_points(config: DataConfig, feature_raw_band_types, response_raw_band_types):
     """ Builds a set of training data based on the configuration input
         Arguments:
         config - object of type Data_Config with the requisite values for preparing training data (see __init__.py)
@@ -806,11 +850,6 @@ def build_training_data_from_response_points(config: DataConfig):
     
     if (config.random_seed is not None):
         np.random.seed(config.random_seed)
-
-    check_data_extents_and_projections(config.raw_feature_file_list, config.raw_response_file_list, False,
-                                       config.boundary_file_list, config.boundary_as_vectors, 
-                                       config.ignore_projections, ignore_extents=True)
-
 
     colrow_per_file = []
     responses_per_file = []
@@ -945,6 +984,7 @@ def build_training_data_from_response_points(config: DataConfig):
     _logger.debug('Weight shape: {}'.format(weights.shape))
 
 
+    
     #TODO - refactor based on the new info we have per band
     if (config.data_build_category == 'ordered_categorical'):
         # TODO:  Maybe we need a check here that un_resp not too long?
