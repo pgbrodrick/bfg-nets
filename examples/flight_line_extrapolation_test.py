@@ -14,7 +14,7 @@ from rsCNN.data_management import training_data, sequences
 from rsCNN.utils import logging
 
 logger = logging.get_root_logger('debug_out.out')
-_LOG_LEVEL = 'DEBUG'  # 'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR'
+_LOG_LEVEL = 'DEBUG' # 'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR'
 
 logger.setLevel(_LOG_LEVEL)
 
@@ -62,12 +62,10 @@ data_container = training_data.build_or_load_rawfile_data(data_config)
 data_container.build_or_load_scalers()
 
 training_sequence = sequences.build_memmapped_sequence(data_container, data_container.train_folds, batch_size=100)
-validation_sequence = sequences.build_memmapped_sequence(
-    data_container, [data_container.validation_fold], batch_size=100)
+validation_sequence = sequences.build_memmapped_sequence(data_container, [data_container.validation_fold], batch_size=100)
 
 # Move the inshape intot he build_or_load_model
-network_config = create_network_config(
-    inshape=(data_config.window_radius*2, data_config.window_radius*2, 3), **global_options)
+network_config = create_network_config(inshape=(data_config.window_radius*2, data_config.window_radius*2, 3), **global_options)
 
 experiment = Experiment(network_config, resume=True)
 experiment.build_or_load_model()

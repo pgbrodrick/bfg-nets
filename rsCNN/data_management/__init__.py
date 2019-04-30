@@ -33,23 +33,24 @@ class DataConfig:
         self.boundary_file_list = kwargs.get('boundary_file_list', [])
 
         # Data type from each feature.  R == Real, C == categorical
-        # All Categorical bands will be one-hot-encoded...to keep them as
+        # All Categorical bands will be one-hot-encoded...to keep them as 
         # a single band, simply name them as real datatypes
-        self.feature_raw_band_type_input = kwargs.get('feature_raw_band_type_input', None)
-        self.response_raw_band_type_input = kwargs.get('response_raw_band_type_input', None)
+        self.feature_raw_band_type_input = kwargs.get('feature_raw_band_type_input',None)
+        self.response_raw_band_type_input = kwargs.get('response_raw_band_type_input',None)
 
         # A boolean indication of whether the boundary file type is a vector or a raster (True for vector).
-        self.boundary_as_vectors = [os.path.splitext(x) == 'kml' or os.path.splitext(
-            x) == 'shp' for x in self.boundary_file_list]
+        self.boundary_as_vectors = [os.path.splitext(x) == 'kml' or os.path.splitext(x) == 'shp' for x in self.boundary_file_list]
 
         # Value that indicates pixels that are 'out of bounds' in a boundary raster file
         self.boundary_bad_value = kwargs.get('boundary_bad_value', 0)
 
         # Response format
-        self.response_data_format = kwargs.get('response_data_format', 'FCN')
-        assert self.response_data_format in ['FCN', 'CNN'], 'Invalid response data format'
+        self.response_data_format = kwargs.get('response_data_format','FCN')
+        assert self.response_data_format in ['FCN','CNN'], 'Invalid response data format'
 
-        self.response_background_value = kwargs.get('response_background_value', None)
+        self.response_background_value = kwargs.get('response_background_value',None)
+
+
 
         # A string that tells us how to build the training data set.  Current options are:
         # ordered_continuous
@@ -186,9 +187,9 @@ class DataConfig:
                 scalers.check_scaler_exists(self.response_scaler_name[_s])
 
         # Data type from each feature.  R == Real, C == categorical
-        # All Categorical bands will be one-hot-encoded...to keep them as
+        # All Categorical bands will be one-hot-encoded...to keep them as 
         # a single band, simply name them as real datatypes
-        self.feature_band_types = kwargs.get('feature_band_types', 'R')
+        self.feature_band_types = kwargs.get('feature_band_types','R')
         if (type(self.feature_band_types) is list):
             assert len(self.feature_band_types)
 
@@ -202,3 +203,12 @@ class DataConfig:
 
         self.feature_scaler = None
         self.response_scaler = None
+
+
+
+
+
+
+
+
+
