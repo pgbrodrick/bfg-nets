@@ -318,6 +318,7 @@ def calculate_categorical_weights(responses, weights, config, batch_size=100):
 
     return weights
 
+def read_response_points(response_set, ul, y_len):
 
 def read_segmentation_chunk(f_sets,
                             r_sets,
@@ -642,15 +643,53 @@ def get_interior_rectangle(feature_set, response_set, boundary_set):
     return f_ul, r_ul, b_ul, x_len, y_len
 
 
+def one_hot_encode_array(raw_band_types, array, memmap_file):
+
+    cat_band_locations = [idx for idx, val in enumerate(raw_band_types) if val == 'C']
+    band_types = raw_band_types.copy()
+    for _c in reversed(range(len(cat_band_locations))):
+
+        un_array = np.unique(array[np.isfinite(array)][...,cat_band_locations[_c]])
+        assert len(un_array) < MAX_UNIQUE_RESPONSES,\
+               'Too many ({}) unique responses found, suspected incorrect categorical specification'.format(len(un_resp))
+        _logger.debug('Found {} categorical responses'.format(len(un_array)))
+
+        array_shape = list(array.shape)
+        array_shape[-1] = len(un_array) + array.shape[-1] - 1
+
+        cat_memmap_file = os.path.join(os.path.dirname(memmap_file), os.path.basename(memmap_file).split('.')[0] + '_cat.npy')
+        cat_array = np.memmap(cat_memmap_file,
+                              dtype=np.float32,
+                              mode='w+',
+                              shape=tuple(array_shape))
+
+        # One hot-encode
+        for _r in range(array_shape[-1]):
+            if (_r >= cat_band_locations[_c] and _r < len(un_array)):
+                cat_array[..., _r] = np.squeeze(array[..., cat_band_locations[_c]] == un_array[_r - cat_band_locations[_c]])
+            else:
+                if (_r < cat_band_locations[_c]):
+                    cat_array[..., _r] = array[..., _r]
+                else:
+                    cat_array[..., _r] = array[..., _r - len(un_array) + 1]
 
 
-def build_training_data_ordered(config: DataConfig, feature_raw_band_types, response_raw_band_types):
-    """ Builds a set of training data based on the configuration input
-        Arguments:
-        config - object of type Data_Config with the requisite values for preparing training data (see __init__.py)
+        # Force file dump, and then reload the encoded responses as the primary response
+        del array, cat_array
+        os.remove(cat_memmap_file)
+        memmap_file = cat_memmap_file
+        array = np.memmap(memmap_file, dtype=np.float32, mode='r+', shape=tuple(resp_shape))
 
-    """
-    
+        band_types.pop(cat_band_locations[_c])
+        for _r in range(len(un_array)):
+            band_types.insert(cat_band_locations[_c],'B' + str(int(_c)))
+    return array, band_types
+
+
+
+
+def build_training_data_ordered(config: DataConfig, feature_raw_band_types: list[list[str]], response_raw_band_types: list[list[str]]):
+
     if (config.random_seed is not None):
         np.random.seed(config.random_seed)
 
@@ -783,46 +822,8 @@ def build_training_data_ordered(config: DataConfig, feature_raw_band_types, resp
     _logger.debug('Response shape: {}'.format(responses.shape))
     _logger.debug('Weight shape: {}'.format(weights.shape))
 
-    cat_band_locations = [idx for idx, val in enumerate(response_raw_band_types) if val == 'C']
-    response_band_types = response_raw_band_types.copy()
-    for _c in reversed(range(len(cat_band_locations))):
-
-        un_resp = np.unique(responses[np.isfinite(responses)][...,cat_band_locations[_c]])
-        un_resp = un_resp[un_resp != config.response_nodata_value]
-        assert len(un_resp) < MAX_UNIQUE_RESPONSES,\
-               'Too many ({}) unique responses found, suspected incorrect categorical specification'.format(len(un_resp))
-        _logger.debug('Found {} categorical responses'.format(len(un_resp)))
-
-        resp_shape = list(responses.shape)
-        resp_shape[-1] = len(un_resp) + responses.shape[-1] - 1
-
-        cat_response_memmap_file = config.data_save_name + '_cat_response_munge_memmap.npy'
-        cat_responses = np.memmap(cat_response_memmap_file,
-                                  dtype=np.float32,
-                                  mode='w+',
-                                  shape=tuple(resp_shape))
-
-        # One hot-encode
-        for _r in range(resp_shape[-1]):
-            if (_r >= cat_band_locations[_c] and _r < len(un_resp)):
-                cat_responses[..., _r] = np.squeeze(responses[..., cat_band_locations[_c]] == un_resp[_r - cat_band_locations[_c]])
-            else:
-                if (_r < cat_band_locations[_c]):
-                    cat_responses[..., _r] = responses[..., _r] 
-                else:
-                    cat_responses[..., _r] = responses[..., _r - len(un_resp) + 1] 
-
-
-        # Force file dump, and then reload the encoded responses as the primary response
-        del responses, cat_responses
-        os.remove(response_memmap_file)
-        response_memmap_file = cat_response_memmap_file
-        responses = np.memmap(response_memmap_file, dtype=np.float32, mode='r+', shape=tuple(resp_shape))
-
-        response_band_types.pop(cat_band_locations[_c])
-        for _r in range(len(un_resp)):
-            response_band_types.insert(cat_band_locations[_c],'B' + str(int(_c)))
-
+    # one hot encode
+    responses, response_band_types = one_hot_encode_array(response_raw_band_types, responses, response_memmap_file)
 
     for fold in range(config.n_folds):
         np.save(config.feature_files[fold], features[fold_assignments == fold, ...])
@@ -840,8 +841,6 @@ def build_training_data_ordered(config: DataConfig, feature_raw_band_types, resp
     # clean up munge files
     if (os.path.isfile(feature_memmap_file)):
         os.remove(feature_memmap_file)
-    if (os.path.isfile(response_memmap_file)):
-        os.remove(response_memmap_file)
     if (os.path.isfile(weight_memmap_file)):
         os.remove(weight_memmap_file)
 
@@ -856,33 +855,28 @@ def build_training_data_ordered(config: DataConfig, feature_raw_band_types, resp
 
 
 
-def build_training_data_from_response_points(config: DataConfig, feature_raw_band_types, response_raw_band_types):
-    """ Builds a set of training data based on the configuration input
-        Arguments:
-        config - object of type Data_Config with the requisite values for preparing training data (see __init__.py)
+def build_training_data_from_response_points(config: DataConfig, feature_raw_band_types: list[list[str]], response_raw_band_types: list[list[str]]):
 
-    """
-    
     if (config.random_seed is not None):
         np.random.seed(config.random_seed)
 
-    colrow_per_file = []
-    responses_per_file = []
-    for _i in range(0, len(config.raw_response_file_list)):
+    colrow_per_site = []
+    responses_per_site = []
+    for _site in range(0, len(config.raw_feature_file_list)):
         # open requisite datasets
-        feature_set = gdal.Open(config.raw_feature_file_list[_i], gdal.GA_ReadOnly)
-        response_set = gdal.Open(config.raw_response_file_list[_i], gdal.GA_ReadOnly)
-        boundary_set = gdal.Open(config.boundary_file_list[_i], gdal.GA_ReadOnly)
+        feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_feature_file_list[_site]]
+        response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_response_file_list[_site]]
+        boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) if loc_file is not None else None for loc_file in config.raw_boundary_file_list[_site]]
 
         # Calculate the interior space location and extent
-        f_ul, r_ul, b_ul, x_len, y_len = get_interior_rectangle(feature_set, response_set, boundary_set)
+        [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle([feature_sets, response_sets, boundary_sets])
 
-        # Run through responses first
         collist = []
         rowlist = []
         responses = []
+        # Run through first response
         for _line in range(y_len):
-            line_dat = np.squeeze(response_set.ReadAsArray(r_ul[0], r_ul[1], x_len, 1).astype(np.float32))
+            line_dat = np.squeeze(response_sets[_site].ReadAsArray(r_ul[0][0], r_ul[0][1], x_len, 1).astype(np.float32))
             if (len (line_dat.shape) == 1):
                 line_dat = line_dat.reshape(-1,1)
 
@@ -899,8 +893,23 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
                 responses.append(line_dat[good_data,:])
 
         colrow = np.vstack([np.array(collist),np.array(rowlist)]).T
-        colrow_per_file.append(colrow)
-        responses_per_file.apend(np.vstack(responses))
+        responses = np.array(responses)
+        responses_per_file = [responses.copy()]
+
+        for _site in range(1, response_sets.shape[1]):
+            responses = np.zeros(responses_per_file[0].shape[0])
+            for _point in range(len(colrow)):
+                    responses[_point] = response_sets[_site].ReadAsArray(r_ul[_site][0], r_ul[_site][1], 1, 1).astype(np.float32)
+            responses_per_file.append(responses.copy())
+
+        responses_per_file = np.transpose(np.vstack(responses_per_files))
+
+        good_dat = np.all(responses_per_file != config.response_background_value,axis=1)
+        responses_per_file = responses_per_file[good_dat,:]
+        colrow = colrow[good_dat,:]
+
+        colrow_per_site.append(colrow)
+        responses_per_site.apend(np.vstack(responses))
 
     max_samples = 0
     for _i in range(0, len(responses_per_file)):
@@ -908,7 +917,7 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
 
     assert max_samples > 0, 'need more than 1 valid sample...'
 
-    n_features = gdal.Open(raw_response_file_list[0],gdal.GA_ReadAsArray).RasterCount
+    n_features = np.sum([len(feat_type) for feat_type in feature_raw_band_types])
 
     # TODO: fix max size issue, but force for now to prevent overly sized sets
     feature_memmap_file = config.data_save_name + '_feature_munge_memmap.npy'
@@ -919,20 +928,24 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
                          shape=(config.max_samples, config.window_radius*2, config.window_radius*2, n_features))
 
 
-    for _i in range(0, len(config.raw_response_file_list)):
-        feature_set = gdal.Open(config.raw_feature_file_list[_i], gdal.GA_ReadOnly)
-        response_set = gdal.Open(config.raw_response_file_list[_i], gdal.GA_ReadOnly)
-        boundary_set = gdal.Open(config.boundary_file_list[_i], gdal.GA_ReadOnly)
+    sample_index = 0
+    for _site in range(0, len(config.raw_feature_file_list)):
+
+        # open requisite datasets
+        feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_feature_file_list[_site]]
+        response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_response_file_list[_site]]
+        boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) if loc_file is not None else None for loc_file in config.raw_boundary_file_list[_site]]
 
         # Calculate the interior space location and extent
-        f_ul, r_ul, b_ul, x_len, y_len = get_interior_rectangle(feature_set, response_set, boundary_set)
+        [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle([feature_sets, response_sets, boundary_sets])
 
-        colrow = colrow_per_file[_i]
+        colrow = colrow_per_site[_site]
 
+        ref_trans = feature_sets[0].GetGeoTransform()
         subset_geotransform = None
         if (len(config.boundary_file_list) > 0):
-            if (config.boundary_file_list[_i] is not None and config.boundary_as_vectors[_i]):
-                subset_geotransform = [f_trans[0], f_trans[1], 0, f_trans[3], 0, f_trans[5]]
+            if (config.boundary_file_list[_site] is not None and config.boundary_as_vectors[_site]):
+                subset_geotransform = [ref_trans[0], ref_trans[1], 0, ref_trans[3], 0, ref_trans[5]]
 
 
         good_response_data = np.zeros(responses_per_file[_i].shape[0]).astype(bool)
@@ -942,12 +955,12 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
             # Determine local information about boundary file
             local_boundary_vector_file = None
             local_boundary_upper_left = None
-            if (boundary_set is not None):
-                local_boundary_set = boundary_set
+            if (boundary_sets[_site] is not None):
+                local_boundary_set = boundary_sets[_site]
                 local_boundary_upper_left = b_ul + colrow[_cr, :]
             if (subset_geotransform is not None):
-                subset_geotransform[0] = f_trans[0] + (f_ul[0] + colrow[_cr, 0]) * f_trans[1]
-                subset_geotransform[3] = f_trans[3] + (f_ul[1] + colrow[_cr, 1]) * f_trans[5]
+                subset_geotransform[0] = ref_trans[0] + (f_ul[0][0] + colrow[_cr, 0]) * ref_trans[1]
+                subset_geotransform[3] = ref_trans[3] + (f_ul[0][1] + colrow[_cr, 1]) * ref_trans[5]
                 local_boundary_vector_file = config.boundary_file_list[_i]
 
             local_feature = read_labeling_chunk(feature_set,
@@ -955,7 +968,7 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
                                                 config,
                                                 boundary_vector_file=local_boundary_vector_file,
                                                 boundary_upper_left=local_boundary_upper_left,
-                                                b_set=boundary_set,
+                                                b_set=local_boundary_set,
                                                 boundary_subset_geotransform=subset_geotransform)
 
             if (local_feature is not None):
@@ -998,39 +1011,8 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
     _logger.debug('Response shape: {}'.format(responses.shape))
     _logger.debug('Weight shape: {}'.format(weights.shape))
 
-
-    
-    #TODO - refactor based on the new info we have per band
-    if (config.data_build_category == 'ordered_categorical'):
-        # TODO:  Maybe we need a check here that un_resp not too long?
-        un_resp = np.unique(responses[np.isfinite(responses)])
-        un_resp = un_resp[un_resp != config.response_nodata_value]
-        _logger.debug('Found {} categorical responses'.format(len(un_resp)))
-
-        resp_shape = list(responses.shape)
-        resp_shape[-1] = len(un_resp)
-
-        cat_response_memmap_file = config.data_save_name + '_cat_response_munge_memmap.npy'
-        cat_responses = np.memmap(cat_response_memmap_file,
-                                  dtype=np.float32,
-                                  mode='w+',
-                                  shape=tuple(resp_shape))
-
-        # TODO:  Are you trying to iterate backwards? If so, it's clearer to write reversed(range(len(un_resp)))
-        # Also, I wonder whether there's an off-by-one error here? Should that really be len(un_resp) - 1?
-        # FABINA - yes, I was trying to iterate backwards, and no, there is no off-by-one erro, python being 0-based.
-        # Doesn't need to be reversed now, as I swapped in from being in-place, so I've removed (doesn't matter, but
-        # no need to confuse folks)
-
-        # One hot-encode
-        for _r in range(len(un_resp)):
-            cat_responses[..., _r] = np.squeeze(responses[..., 0] == un_resp[_r])
-
-        # Force file dump, and then reload the encoded responses as the primary response
-        del responses, cat_responses
-        os.remove(response_memmap_file)
-        response_memmap_file = cat_response_memmap_file
-        responses = np.memmap(response_memmap_file, dtype=np.float32, mode='r+', shape=tuple(resp_shape))
+    # one hot encode
+    responses, response_band_types = one_hot_encode_array(response_raw_band_types, responses, response_memmap_file)
 
     for fold in range(config.n_folds):
         np.save(config.feature_files[fold], features[fold_assignments == fold, ...])
@@ -1038,29 +1020,16 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
         np.save(config.weight_files[fold], weights[fold_assignments == fold, ...])
 
     del features, responses, weights
-    if (config.data_build_category == 'ordered_categorical'):
-
+    if ('C' in response_raw_band_types ):
+        if (np.sum(np.array(response_raw_band_types) == 'C') > 1):
+            _logger.warning('Currently weighting is only enabled for one categorical response variable')
         features, responses, weights, success = open_memmap_files(config, writeable=True, override_success_file=True)
-        # TODO:  Phil:  it's currently possible for weights to be set to 0 in the entire loss window and then to have
-        #   samples with no weights for the loss function. If a sample is composed of all overweighted classes, this
-        #   could cause hard errors, but it seems like it's pretty suboptimal to waste any CPU/GPU cycles on samples
-        #   with no weights, right?
-        # FABINA - I don't understand how you could have an all-zero weight set, unless your max_nodata_fraction
-        # is 100%.  Can you clarify?
-        # Thinking through more, I see that this could occur if there are only values between the boundary and the
-        # interior window.  This best handled by modifying the read-chunk code to use the max_nodata_fraction
-        # within the interior window (for the responses), which was my original implemenation I believe (just didn't
-        # get ported over).  Is this what you were thinking of?
         weights = calculate_categorical_weights(responses, weights, config)
         del features, responses, weights
 
     # clean up munge files
     if (os.path.isfile(feature_memmap_file)):
         os.remove(feature_memmap_file)
-    if (os.path.isfile(response_memmap_file)):
-        os.remove(response_memmap_file)
-    if (os.path.isfile(weight_memmap_file)):
-        os.remove(weight_memmap_file)
 
     Path(config.successful_data_save_file).touch()
     features, responses, weights, success = open_memmap_files(config, writeable=False)
