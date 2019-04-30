@@ -1,54 +1,18 @@
-from collections import namedtuple
 import copy
 import re
 from typing import List
 import yaml
+
+from rsCNN.data_management import scalers
 
 
 FILENAME_CONFIG = 'config.yaml'
 
 # TODO:  improve names where necessary
 # TODO:  informative comments for each option
-
-
-
-# TODO:  these go somewhere else OR can we just calculate on the fly downstream? depends how often its used
-# A boolean indication of whether the boundary file type is a vector or a raster (True for vector).
-boundary_as_vectors = [os.path.splitext(x) == 'kml' or os.path.splitext(x) == 'shp' for x in self.boundary_file_list]
-# A boolean indication of whether the response type is a vector or a raster (True for vector).
-# TODO:  Implement option
-#self.response_as_vectors = kwargs.get('response_as_vectors', False)
-
-# TODO:  put these checks somewhere else
-self.feature_scaler_name = kwargs.get('feature_scaler_name', 'NullScaler')
-if (type(self.feature_scaler_name) is list):
-    assert len(self.feature_scaler_name) == len(self.raw_feature_file_list)
-    for _s in range(len(self.feature_scaler_name)):
-        scalers.check_scaler_exists(self.feature_scaler_name[_s])
-
-self.response_scaler_name = kwargs.get('response_scaler_name', 'NullScaler')
-if (type(self.response_scaler_name) is list):
-    assert len(self.response_scaler_name) == len(self.raw_response_file_list)
-    for _s in range(len(self.response_scaler_name)):
-        scalers.check_scaler_exists(self.response_scaler_name[_s])
-self.feature_mean_centering = kwargs.get('feature_mean_centering', False)
-
-# TODO:  calculate this elsewhere, not par tof the config
-assert self.data_save_name is not None, 'current workflow requires a data save name'
-if (self.data_save_name is not None):
-    # TODO:  Phil:  is there a reason we don't just make the directory?
-    if not os.path.exists(os.path.dirname(self.data_save_name)):
-        os.makedirs(os.path.dirname(self.data_save_name))
-    #assert os.path.isdir(os.path.dirname(self.data_save_name)), 'Invalid path for data_save_name'
-    self.response_files = [self.data_save_name + '_responses_' +
-                           str(fold) + '.npy' for fold in range(self.n_folds)]
-    self.feature_files = [self.data_save_name + '_features_' +
-                          str(fold) + '.npy' for fold in range(self.n_folds)]
-    self.weight_files = [self.data_save_name + '_weights_' + str(fold) + '.npy' for fold in range(self.n_folds)]
-assert self.response_data_format in ['FCN', 'CNN'], 'Invalid response data format'
-
-# TODO: add successful_data_save_file as constant in some script
-#  TODO:  data_save_name changed to dir_model_out
+# TODO:  check downstream that len raw filename lists match len scalers if len scalers > 1
+# TODO:  add successful_data_save_file as constant in some script
+# TODO:  data_save_name changed to dir_model_out
 
 
 class ConfigSection(object):
@@ -160,14 +124,19 @@ class DataBuild(ConfigSection):
     def check_config_validity(self) -> List[str]:
         errors = super().check_config_validity()
         # TODO
+        response_data_format_options = ('FCN', 'CNN')
+        if self.response_data_format not in response_data_format_options:
+            errors.append('response_data_format is invalid option ({}), must be one of the following:  {}'.format(
+                self.response_data_format, ','.join(response_data_format_options)
+            ))
         return errors
 
 
 class DataSamples(ConfigSection):
     apply_random_transformations = None
     batch_size = None
-    feature_scaler_names = None
-    response_scaler_names = None
+    feature_scaler_names_list = None
+    response_scaler_names_list = None
     # TODO:  Phil:  should mean_centering be a list so that we have one item per file?
     feature_mean_centering = None
     feature_training_nodata_value = None
@@ -175,8 +144,8 @@ class DataSamples(ConfigSection):
     field_defaults = [
         ('apply_random_transformations', False, bool),  # Whether to apply random rotations and flips to sample images
         ('batch_size', 100, int),  # The sample batch size for images passed to the model
-        ('feature_scaler_names', None, str),  # Names of the scalers to use with each feature file
-        ('response_scaler_names', None, str),  # Names of the scalers to use with each response file
+        ('feature_scaler_names_list', None, list),  # Names of the scalers to use with each feature file
+        ('response_scaler_names_list', None, list),  # Names of the scalers to use with each response file
         # TODO:  Phil:  should mean_centering be a list so that we have one item per file?
         ('feature_mean_centering', False, bool),  # Whether to mean center the features
         ('feature_training_nodata_value', -10.0, float),  # The missing data value for models, not compatible with nans
@@ -185,6 +154,14 @@ class DataSamples(ConfigSection):
     def check_config_validity(self) -> List[str]:
         errors = super().check_config_validity()
         # TODO
+        for scaler_name in self.feature_scaler_names_list:
+            if not scalers.check_scaler_exists(scaler_name):
+                errors.append('feature_scaler_names_list contains a scaler name that does not exist:  {}'.format(
+                    scaler_name))
+        for scaler_name in self.response_scaler_names_list:
+            if not scalers.check_scaler_exists(scaler_name):
+                errors.append('response_scaler_names_list contains a scaler name that does not exist:  {}'.format(
+                    scaler_name))
         return errors
 
 
@@ -228,7 +205,7 @@ class CallbackGeneral(ConfigSection):
     ]
 
 
-class CallBackTensorboard(ConfigSection):
+class CallbackTensorboard(ConfigSection):
     use_tensorboard = None
     dirname_prefix_tensorboard = None
     update_freq = None
