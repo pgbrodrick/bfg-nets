@@ -90,7 +90,7 @@ def save_config_to_file(config: 'Config', filepath: str) -> None:
 
 
 def compare_network_configs_get_differing_items(config_a, config_b):
-    # TODO:  update
+    # TODO:  update for new classes
     differing_items = list()
     all_sections = set(list(config_a.keys()) + list(config_b.keys()))
     for section in all_sections:
