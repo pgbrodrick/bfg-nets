@@ -96,7 +96,7 @@ def _plot_sample_feature_progression(
             if (_iii == 0):
                 plt.xlabel(layer_names[_l])
 
-    tit = 'Network Feature Progression Visualization {}'.format(idx_sample)
+    tit = 'Network Feature Progression Visualization ({} sequence {})'.format(sampled.data_sequence_label, idx_sample)
     if (compact):
         tit = 'Compact ' + tit
     ax = fig.add_axes([0.5, top + image_size/2., 0.01, 0.01], zorder=100)

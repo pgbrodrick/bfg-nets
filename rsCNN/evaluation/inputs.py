@@ -18,7 +18,7 @@ def plot_raw_and_transformed_input_samples(
         sampled, _plot_inputs_page, max_pages, max_samples_per_page, max_features_per_page, max_responses_per_page
     )
     for idx, figure in enumerate(figures):
-        figure.suptitle('Input Example Plots (page {})'.format(idx))
+        figure.suptitle('{} Sequence Input Samples (page {})'.format(sampled.data_sequence_label or '', idx + 1))
     return figures
 
 
