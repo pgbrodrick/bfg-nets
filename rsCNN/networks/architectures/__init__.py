@@ -10,7 +10,13 @@ _architecture_names = (
 )
 
 
-def create_model_from_options(
+def get_architecture_options(architecture_name: str) -> shared.BaseArchitectureOptions:
+    assert check_architecture_exists(architecture_name), \
+        'Architecture does not exist ({}) in options: {}'.format(architecture_name, ', '.join(_architecture_names))
+    return globals()[architecture_name].ArchitectureOptions()
+
+
+def create_model_from_architecture_options(
         architecture_name: str, architecture_options: shared.BaseArchitectureOptions
 ) -> keras.models.Model:
     assert check_architecture_exists(architecture_name), \

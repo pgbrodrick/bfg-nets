@@ -4,6 +4,7 @@ from typing import List
 import yaml
 
 from rsCNN.data_management import scalers
+from rsCNN.networks import architectures
 
 
 FILENAME_CONFIG = 'config.yaml'
@@ -181,7 +182,7 @@ class ModelTraining(BaseConfigSection):
         ('dir_model_out', None, str),  # Location to either create new model files or load existing model files
         ('verbosity', 1, int),  # Verbosity value for keras library, either 0 or 1
         ('assert_gpu', False, bool),  # Asserts GPU available before model training if True
-        ('architecture', None, str),
+        ('architecture_name', None, str),
         ('loss_metric', None, str),
         ('max_epochs', 100, int),
         ('weighted', False, bool),
@@ -292,14 +293,22 @@ class ConfigFactory(object):
             RawFiles, DataBuild, DataSamples, ModelTraining, CallbackGeneral, CallbackTensorboard,
             CallbackEarlyStopping, CallbackReducedLearningRate
         ]
+        config_copy = copy.deepcopy(config_options)  # Use a copy because config options are popped from the dict
+        # Population config sections with the provided configuration options, tracking errors
         populated_sections = dict()
         errors = list()
-        config_copy = copy.deepcopy(config_options)
         for config_section in config_sections:
             section_name = self._convert_camelcase_to_snakecase(config_section.__name__)
             populated_section = self._create_config_section_from_options(config_copy, config_section)
             populated_sections[section_name] = populated_section
             errors.extend(populated_section.check_config_validity())
+        # Populate architecture options given architecture name
+        architecture_name = populated_sections['model_training']['architecture_name']
+        architecture_options = architectures.get_architecture_options(architecture_name)
+        architecture_options.set_config_options(config_copy)
+        errors.extend(architecture_options.check_config_validity())
+        populated_sections['architecture_options'] = architecture_options
+        # Report errors if necessary
         if len(config_copy) > 0:
             errors.append('The configuration has unused options:  {}'.format(', '.join(list(config_copy.keys()))))
         assert len(errors) == 0, \
@@ -326,6 +335,7 @@ class Config(object):
     data_build = None
     data_samples = None
     model_training = None
+    architecture_options = None
     callback_general = None
     callback_tensorboard = None
     callback_early_stopping = None
@@ -337,21 +347,24 @@ class Config(object):
             data_build: DataBuild = None,
             data_samples: DataSamples = None,
             model_training: ModelTraining = None,
+            architecture_options: architectures.shared.BaseArchitectureOptions = None,
             callback_general: CallbackGeneral = None,
             callback_tensorboard: CallbackTensorboard = None,
             callback_early_stopping: CallbackEarlyStopping = None,
             callback_reduced_learning_rate: CallbackReducedLearningRate = None
     ) -> None:
-        # Note:  it's undesireable to have so many parameters passed to the __init__ method, but I've chosen to write
-        # it this way because we can use Python typing and modern IDEs to autocomplete all of the attributes and
-        # subattributes in downstream scripts. For example, "config.a" will autocomplete to "config.architecture" and,
-        # more importantly, "config.architecture.w" will autocomplete to "config.architecture.weighted". Without this
-        # autocomplete feature, the programmer is required to know the names of individual options and due to the
-        # nature of scientific computing and the number of parameters that can be configured, this becomes burdensome.
+        # Note:  it's undesireable to have so many parameters passed to the __init__ method and have so much boilerplate
+        # code, but I've chosen to write it this way because we can use Python typing and modern IDEs to autocomplete
+        # all of the attributes and subattributes in downstream scripts. For example, "config.a" will autocomplete to
+        # "config.architecture" and, more importantly, "config.architecture.w" will autocomplete to
+        # "config.architecture.weighted". Without this autocomplete feature, the programmer is required to know the
+        # names of individual options and due to the nature of scientific computing and the number of parameters that
+        # can be configured, this becomes burdensome.
         self.raw_files = raw_files
         self.data_build = data_build
         self.data_sample = data_samples
         self.model_training = model_training
+        self.architecture_options = architecture_options
         self.callback_general = callback_general
         self.callback_tensorboard = callback_tensorboard
         self.callback_early_stopping = callback_early_stopping
