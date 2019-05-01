@@ -318,19 +318,8 @@ def calculate_categorical_weights(responses, weights, config, batch_size=100):
 
     return weights
 
-def read_response_points(response_set, ul, y_len):
 
-def read_segmentation_chunk(f_sets,
-                            r_sets,
-                            feature_upper_lefts,
-                            response_upper_lefts,
-                            config,
-                            boundary_vector_file=None,
-                            boundary_subset_geotransform=None,
-                            b_set=None,
-                            boundary_upper_left=None):
-    window_diameter = config.window_radius * 2
-
+def read_mask_chunk(boundary_vector_file: str, boundary_subset_geotransform: tuple, b_set: tuple, boundary_upper_left: list, window_diameter: int, boundary_bad_value: float):
     # Start by checking if we're inside boundary, if there is one
     mask = None
     if (boundary_vector_file is not None):
@@ -341,71 +330,118 @@ def read_segmentation_chunk(f_sets,
     if mask is None:
         mask = np.zeros((window_diameter, window_diameter)).astype(bool)
     else:
-        mask = mask == config.boundary_bad_value
-        if np.all(mask):
-            return None, None
+        mask = mask == boundary_bad_value
 
+    return mask
+
+
+def read_map_chunk(datasets: list, upper_lefts: list[list[int]], window_diameter: int, mask, nodata_value):
     # Next check to see if we have a response, if so read all
-    local_response = np.zeros((window_diameter, window_diameter, np.sum([r_set.RasterCount for r_set in r_sets])))
-    resp_idx = 0
-    for _file in range(len(r_sets)):
-        r_set = r_sets[_file]
-        response_upper_left = response_upper_lefts[_file]
-        file_response = np.zeros((window_diameter, window_diameter, r_set.RasterCount))
+    local_array = np.zeros((window_diameter, window_diameter, np.sum([set.RasterCount for set in datasets])))
+    idx = 0
+    for _file in range(len(datasets)):
+        r_set = datasets[_file]
+        response_upper_left = upper_lefts[_file]
+        file_array = np.zeros((window_diameter, window_diameter, r_set.RasterCount))
         for _b in range(r_set.RasterCount):
-            file_response[:, :, _b] = r_set.GetRasterBand(
+            file_array[:, :, _b] = r_set.GetRasterBand(
                 _b+1).ReadAsArray(response_upper_left[0], response_upper_left[1], window_diameter, window_diameter)
 
-        file_response[file_response == config.response_nodata_value] = np.nan
-        file_response[np.isfinite(file_response) is False] = np.nan
-        file_response[mask, :] = np.nan
+        file_array[file_array== nodata_value] = np.nan
+        file_array[np.isfinite(file_array) is False] = np.nan
+        file_array[mask, :] = np.nan
 
-        if (config.response_min_value is not None):
-            file_response[file_response < config.response_min_value] = np.nan
-        if (config.response_max_value is not None):
-            file_response[file_response > config.response_max_value] = np.nan
-
-        mask[np.any(np.isnan(file_response), axis=-1)] = True
+        mask[np.any(np.isnan(file_array), axis=-1)] = True
         if np.all(mask):
             return None, None
-        local_response[...,resp_idx:resp_idx+file_response.shape[-1]] = file_response
-        resp_idx += file_response.shape[-1]
+        local_array[...,idx:idx+file_array.shape[-1]] = file_array
+        idx += file_array.shape[-1]
+
+    return local_array, mask
 
 
-    # Last, read in features
-    local_feature = np.zeros((window_diameter, window_diameter, np.sum([f_set.RasterCount for f_set in f_sets])))
-    feat_idx = 0
-    for _file in range(len(f_sets)):
-        f_set = f_sets[_file]
-        feature_upper_left = feature_upper_lefts[_file]
-        file_feature = np.zeros((window_diameter, window_diameter, f_set.RasterCount))
-        for _b in range(0, f_set.RasterCount):
-            file_feature[:, :, _b] = f_set.GetRasterBand(
-                _b+1).ReadAsArray(feature_upper_left[0], feature_upper_left[1], window_diameter, window_diameter)
+def read_labeling_chunk(f_sets: list[tuple],
+                        feature_upper_lefts: list[list[int]],
+                        config: DataConfig,
+                        boundary_vector_file: str = None,
+                        boundary_subset_geotransform: tuple = None,
+                        b_set=None,
+                        boundary_upper_left: list[int] = None):
 
-        file_feature[file_feature == config.feature_nodata_value] = np.nan
-        file_feature[np.isfinite(file_feature) is False] = np.nan
-        file_feature[mask, :] = np.nan
-        if (np.all(np.isnan(file_feature))):
-            return None, None
+    window_diameter = config.window_radius * 2
 
-        feature_nodata_fraction = np.sum(np.isnan(file_feature)) / np.prod(file_feature.shape)
-        # TODO:  as implemented, this only checks the feature nodata fraction, do we want to do responses too?
-        if feature_nodata_fraction > config.nodata_maximum_fraction:
-            return None, None
+    mask = read_mask_chunk(boundary_vector_file,
+                           boundary_subset_geotransform,
+                           b_set,
+                           boundary_upper_left,
+                           window_diameter,
+                           config.boundary_bad_value)
 
-        mask[np.any(np.isnan(file_feature), axis=-1)] = True
-        if np.all(mask):
-            return None, None
-        local_feature[...,feat_idx:feat_idx+file_feature.shape[-1]] = file_feature
-        feat_idx += file_feature.shape[-1]
+    nodata_fraction = np.sum(mask) / np.prod(mask.shape)
+    if nodata_fraction > config.nodata_maximum_fraction:
+        return None, None
+
+    nodata_fraction = np.sum(mask) / np.prod(mask.shape)
+    if nodata_fraction > config.nodata_maximum_fraction:
+        return None, None
+
+    local_feature, mask = read_map_chunk(f_sets, feature_upper_lefts, window_diameter, mask, config.feature_nodata_value)
+
+    nodata_fraction = np.sum(mask) / np.prod(mask.shape)
+    if nodata_fraction > config.nodata_maximum_fraction:
+        return None, None
+
+    # Final check (propogate mask forward), and return
+    local_feature[mask, :] = np.nan
+
+    return local_feature
+
+
+def read_segmentation_chunk(f_sets: list[tuple],
+                            r_sets: list[tuple],
+                            feature_upper_lefts: list[list[int]],
+                            response_upper_lefts: list[list[int]],
+                            config: DataConfig,
+                            boundary_vector_file: str = None,
+                            boundary_subset_geotransform: tuple = None,
+                            b_set=None,
+                            boundary_upper_left: list[int] = None):
+    window_diameter = config.window_radius * 2
+
+    mask = read_mask_chunk(boundary_vector_file,
+                           boundary_subset_geotransform,
+                           b_set,
+                           boundary_upper_left,
+                           window_diameter,
+                           config.boundary_bad_value)
+
+    nodata_fraction = np.sum(mask) / np.prod(mask.shape)
+    if nodata_fraction > config.nodata_maximum_fraction:
+        return None, None
+
+    local_response, mask = read_map_chunk(r_sets, response_upper_lefts, window_diameter, mask, config.response_nodata_value)
+
+    if (config.response_min_value is not None):
+        local_response[local_response < config.response_min_value] = np.nan
+    if (config.response_max_value is not None):
+        local_response[local_response > config.response_max_value] = np.nan
+    mask[np.any(np.isnan(local_response), axis=-1)] = True
+
+    nodata_fraction = np.sum(mask) / np.prod(mask.shape)
+    if nodata_fraction > config.nodata_maximum_fraction:
+        return None, None
+
+    local_feature, mask = read_map_chunk(f_sets, feature_upper_lefts, window_diameter, mask, config.feature_nodata_value)
+
+    nodata_fraction = np.sum(mask) / np.prod(mask.shape)
+    if nodata_fraction > config.nodata_maximum_fraction:
+        return None, None
 
     # Final check (propogate mask forward), and return
     local_feature[mask, :] = np.nan
     local_response[mask, :] = np.nan
 
     return local_feature, local_response
-
 
 
 class Dataset:
@@ -651,7 +687,7 @@ def one_hot_encode_array(raw_band_types, array, memmap_file):
 
         un_array = np.unique(array[np.isfinite(array)][...,cat_band_locations[_c]])
         assert len(un_array) < MAX_UNIQUE_RESPONSES,\
-               'Too many ({}) unique responses found, suspected incorrect categorical specification'.format(len(un_resp))
+               'Too many ({}) unique responses found, suspected incorrect categorical specification'.format(len(un_array))
         _logger.debug('Found {} categorical responses'.format(len(un_array)))
 
         array_shape = list(array.shape)
@@ -678,14 +714,12 @@ def one_hot_encode_array(raw_band_types, array, memmap_file):
         del array, cat_array
         os.remove(cat_memmap_file)
         memmap_file = cat_memmap_file
-        array = np.memmap(memmap_file, dtype=np.float32, mode='r+', shape=tuple(resp_shape))
+        array = np.memmap(memmap_file, dtype=np.float32, mode='r+', shape=tuple(array_shape))
 
         band_types.pop(cat_band_locations[_c])
         for _r in range(len(un_array)):
             band_types.insert(cat_band_locations[_c],'B' + str(int(_c)))
     return array, band_types
-
-
 
 
 def build_training_data_ordered(config: DataConfig, feature_raw_band_types: list[list[str]], response_raw_band_types: list[list[str]]):
@@ -722,7 +756,7 @@ def build_training_data_ordered(config: DataConfig, feature_raw_band_types: list
         # open requisite datasets
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_feature_file_list[_site]]
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_response_file_list[_site]]
-        boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) if loc_file is not None else None for loc_file in config.raw_boundary_file_list[_site]]
+        boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) if loc_file is not None else None for loc_file in config.boundary_file_list[_site]]
 
         # Calculate the interior space location and extent
         [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle([feature_sets, response_sets, boundary_sets])
@@ -849,12 +883,6 @@ def build_training_data_ordered(config: DataConfig, feature_raw_band_types: list
     return features, responses, weights, response_band_types
 
 
-
-
-
-
-
-
 def build_training_data_from_response_points(config: DataConfig, feature_raw_band_types: list[list[str]], response_raw_band_types: list[list[str]]):
 
     if (config.random_seed is not None):
@@ -902,18 +930,18 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
                     responses[_point] = response_sets[_site].ReadAsArray(r_ul[_site][0], r_ul[_site][1], 1, 1).astype(np.float32)
             responses_per_file.append(responses.copy())
 
-        responses_per_file = np.transpose(np.vstack(responses_per_files))
+        responses_per_file = np.transpose(np.vstack(responses_per_file))
 
         good_dat = np.all(responses_per_file != config.response_background_value,axis=1)
         responses_per_file = responses_per_file[good_dat,:]
         colrow = colrow[good_dat,:]
 
         colrow_per_site.append(colrow)
-        responses_per_site.apend(np.vstack(responses))
+        responses_per_site.append(np.vstack(responses))
 
     max_samples = 0
-    for _i in range(0, len(responses_per_file)):
-        max_samples += responses_per_file[_i].shape[0]
+    for _i in range(0, len(responses_per_site)):
+        max_samples += responses_per_site[_i].shape[0]
 
     assert max_samples > 0, 'need more than 1 valid sample...'
 
@@ -921,12 +949,12 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
 
     # TODO: fix max size issue, but force for now to prevent overly sized sets
     feature_memmap_file = config.data_save_name + '_feature_munge_memmap.npy'
+    response_memmap_file = config.data_save_name + '_response_munge_memmap.npy'
     assert(max_samples * (config.window_radius*2)**2 * n_features / 1024.**3 < 10, 'max_samples too large')
     features = np.memmap(feature_memmap_file,
                          dtype=np.float32,
                          mode='w+',
                          shape=(config.max_samples, config.window_radius*2, config.window_radius*2, n_features))
-
 
     sample_index = 0
     for _site in range(0, len(config.raw_feature_file_list)):
@@ -934,7 +962,7 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
         # open requisite datasets
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_feature_file_list[_site]]
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_response_file_list[_site]]
-        boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) if loc_file is not None else None for loc_file in config.raw_boundary_file_list[_site]]
+        boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) if loc_file is not None else None for loc_file in config.boundary_file_list[_site]]
 
         # Calculate the interior space location and extent
         [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle([feature_sets, response_sets, boundary_sets])
@@ -947,8 +975,7 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
             if (config.boundary_file_list[_site] is not None and config.boundary_as_vectors[_site]):
                 subset_geotransform = [ref_trans[0], ref_trans[1], 0, ref_trans[3], 0, ref_trans[5]]
 
-
-        good_response_data = np.zeros(responses_per_file[_i].shape[0]).astype(bool)
+        good_response_data = np.zeros(responses_per_site[_i].shape[0]).astype(bool)
         # Now read in features
         for _cr in tqdm(range(len(colrow)), ncols=80):
 
@@ -963,7 +990,7 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
                 subset_geotransform[3] = ref_trans[3] + (f_ul[0][1] + colrow[_cr, 1]) * ref_trans[5]
                 local_boundary_vector_file = config.boundary_file_list[_i]
 
-            local_feature = read_labeling_chunk(feature_set,
+            local_feature = read_labeling_chunk(feature_sets[_site],
                                                 f_ul + colrow[_cr, :],
                                                 config,
                                                 boundary_vector_file=local_boundary_vector_file,
@@ -975,16 +1002,15 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
                 features[sample_index, ...] = local_feature.copy()
                 good_response_data[_i] = True
                 sample_index += 1
-        responses_per_file[_i] = responses_per_file[_i][good_response_data,:]
+        responses_per_site[_i] = responses_per_site[_i][good_response_data,:]
     
     # transform responses
-    responses = np.vstack(responses_per_file)
-    del responses_per_file
+    responses = np.vstack(responses_per_site)
+    del responses_per_site
 
     # Get the feature shapes for re-reading (modified ooc resize)
     feat_shape = list(features.shape)
     feat_shape[0] = sample_index
-
 
     # Delete and reload feauters, as a hard and fast way to force data dump to disc and reload
     # with a modified size....IE, an ooc resize
@@ -997,7 +1023,6 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
     features = features[perm, :]
     responses = responses[perm, :]
     del perm
-
 
     fold_assignments = np.zeros(responses.shape[0]).astype(int)
     for f in range(0, config.n_folds):
