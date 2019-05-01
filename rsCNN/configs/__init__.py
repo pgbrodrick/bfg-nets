@@ -184,9 +184,6 @@ class ModelTraining(BaseConfigSection):
         ('architecture', None, str),
         ('loss_metric', None, str),
         ('max_epochs', 100, int),
-        ('n_classes', None, int),  # TODO:  get this from the data directly
-        ('optimizer', 'adam', str),
-        ('output_activation', None, str),
         ('weighted', False, bool),
     ]
 
