@@ -3,28 +3,19 @@ from typing import Tuple
 import keras
 from keras.layers import BatchNormalization, Conv2D
 
-
-DEFAULT_BLOCK_STRUCTURE = (2, 2, 2, 2)
-DEFAULT_DILATION_RATE = 2
-DEFAULT_FILTERS = 64
-DEFAULT_KERNEL_SIZE = (3, 3)
-DEFAULT_PADDING = 'same'
-DEFAULT_USE_BATCH_NORM = True
-DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER = False
+from rsCNN.networks.architectures.shared import BaseArchitectureOptions
 
 
-def parse_architecture_options(**kwargs):
-    return {
-        'block_structure': kwargs.get('block_structure', DEFAULT_BLOCK_STRUCTURE),
-        'dilation_rate': kwargs.get('dilation_rate', DEFAULT_DILATION_RATE),
-        'filters': kwargs.get('filters', DEFAULT_FILTERS),
-        'kernel_size': kwargs.get('kernel_size', DEFAULT_KERNEL_SIZE),
-        'padding': kwargs.get('padding', DEFAULT_PADDING),
-        'use_batch_norm': kwargs.get('use_batch_norm', DEFAULT_USE_BATCH_NORM),
-        'use_initial_colorspace_transformation_layer':
-            kwargs.get('use_initial_colorspace_transformation_layer',
-                       DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER)
-    }
+class ArchitectureOptions(BaseArchitectureOptions):
+    block_structure = None
+    dilation_rate = None
+
+    def __init__(self):
+        self._field_defaults.extend([
+            ('block_structure', (2, 2, 2, 2), tuple),
+            ('dilation_rate', 2, int),
+        ])
+        super().__init__()
 
 
 def create_model(

@@ -1,30 +1,13 @@
 from typing import List, Tuple, Union
 
 import keras
+from keras.layers import BatchNormalization, Conv2D
 
-from keras.layers.convolutional import Conv2D
-from keras.layers.normalization import BatchNormalization
-
-
-DEFAULT_FILTERS = 64
-DEFAULT_KERNEL_SIZE = (3, 3)
-DEFAULT_NUM_LAYERS = 8
-DEFAULT_PADDING = 'same'
-DEFAULT_USE_BATCH_NORM = True
-DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER = False
+from rsCNN.networks.architectures.shared import BaseArchitectureOptions
 
 
-def parse_architecture_options(**kwargs):
-    return {
-        'filters': kwargs.get('filters', DEFAULT_FILTERS),
-        'kernel_size': kwargs.get('kernel_size', DEFAULT_KERNEL_SIZE),
-        'num_layers': kwargs.get('num_layers', DEFAULT_NUM_LAYERS),
-        'padding': kwargs.get('padding', DEFAULT_PADDING),
-        'use_batch_norm': kwargs.get('use_batch_norm', DEFAULT_USE_BATCH_NORM),
-        'use_initial_colorspace_transformation_layer':
-            kwargs.get('use_initial_colorspace_transformation_layer',
-                       DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER)
-    }
+class ArchitectureOptions(BaseArchitectureOptions):
+    pass
 
 
 def create_model(
