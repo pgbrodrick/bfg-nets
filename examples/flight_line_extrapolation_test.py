@@ -52,8 +52,8 @@ args = parser.parse_args()
 assert os.path.isfile(args.settings_file), 'Settings file: ' + args.settings_file + ' does not exist'
 global_options = yaml.load(open(args.settings_file, 'r'))
 
-global_options['raw_feature_file_list'] = ['../global_cwc/dat/features/feat_subset.tif']
-global_options['raw_response_file_list'] = ['../global_cwc/dat/responses/resp_subset.tif']
+global_options['raw_feature_file_list'] = [['../global_cwc/dat/features/feat_subset.tif']]
+global_options['raw_response_file_list'] = [['../global_cwc/dat/responses/resp_subset.tif']]
 
 
 data_config = rsCNN.data_management.DataConfig(**global_options)
@@ -62,7 +62,7 @@ data_container = training_data.build_or_load_rawfile_data(data_config)
 data_container.build_or_load_scalers()
 
 training_sequence = sequences.build_memmapped_sequence(data_container, data_container.train_folds, batch_size=100)
-validation_sequence = sequences.build_memmapped_sequence(data_container, [data_container.validation_fold], batch_size=100)
+validation_sequence = sequences.build_memmapped_sequence(data_container, [data_container.config.validation_fold], batch_size=100)
 
 # Move the inshape intot he build_or_load_model
 network_config = create_network_config(inshape=(data_config.window_radius*2, data_config.window_radius*2, 3), **global_options)

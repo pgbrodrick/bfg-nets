@@ -34,8 +34,8 @@ def build_memmapped_sequence(data_container : Dataset, fold_indices, batch_size=
                                       data_container.response_scaler,
                                       batch_size,
                                       apply_random_transforms=data_container.config.apply_random_transformations,
-                                      feature_mean_centering=data_config.config.feature_mean_centering,
-                                      nan_replacement_value=data_config.feature_training_nodata_value)
+                                      feature_mean_centering=data_container.config.feature_mean_centering,
+                                      nan_replacement_value=data_container.config.feature_training_nodata_value)
     return data_sequence
 
 
