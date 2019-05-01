@@ -47,12 +47,12 @@ def create_model_report(
         # Plot model summary
         _add_figures(networks.print_model_summary(model), pdf)
         # Plot training sequence figures
-        sampled = samples.Samples(train_sequence, model, network_config)
-        figures_overview = list()
+        sampled = samples.Samples(train_sequence, model, network_config, data_sequence_label='Training')
         if network_config['architecture_options']['output_activation'] == 'softmax':
             _add_figures(results.print_classification_report(sampled), pdf)
             _add_figures(results.plot_confusion_matrix(sampled), pdf)
         _add_figures(inputs.plot_raw_and_transformed_input_samples(sampled), pdf)
+        _add_figures(results.single_sequence_prediction_histogram(sampled), pdf)
         _add_figures(results.plot_raw_and_transformed_prediction_samples(sampled), pdf)
         _add_figures(networks.plot_network_feature_progression(sampled, compact=True), pdf)
         _add_figures(networks.plot_network_feature_progression(sampled, compact=False), pdf)
@@ -62,11 +62,12 @@ def create_model_report(
             _add_figures(results.plot_spatial_regression_error(sampled), pdf)
         # Plot validation sequence figures
         if validation_sequence is not None:
-            sampled = samples.Samples(validation_sequence, model, network_config)
+            sampled = samples.Samples(validation_sequence, model, network_config, data_sequence_label='Validation')
             if network_config['architecture_options']['output_activation'] == 'softmax':
                 _add_figures(results.print_classification_report(sampled), pdf)
                 _add_figures(results.plot_confusion_matrix(sampled), pdf)
             _add_figures(inputs.plot_raw_and_transformed_input_samples(sampled), pdf)
+            _add_figures(results.single_sequence_prediction_histogram(sampled), pdf)
             _add_figures(results.plot_raw_and_transformed_prediction_samples(sampled), pdf)
             _add_figures(networks.plot_network_feature_progression(sampled, compact=True), pdf)
             _add_figures(networks.plot_network_feature_progression(sampled, compact=False), pdf)
@@ -74,11 +75,6 @@ def create_model_report(
                 _add_figures(results.plot_spatial_categorical_error(sampled), pdf)
             else:
                 _add_figures(results.plot_spatial_regression_error(sampled), pdf)
-        # TODO:  histograms are currently broken for categorical data, turning off here so I don't need to remember
-        #  to always comment it out before running
-        # _add_figures(results.single_sequence_prediction_histogram(model, train_sequence, 'Training'), pdf)
-        # if validation_sequence is not None:
-        #     _add_figures(results.single_sequence_prediction_histogram(model, validation_sequence, 'Validation'), pdf)
         # Model history
         if history:
             _add_figures(plot_history(history), pdf)
@@ -101,17 +97,15 @@ def create_preliminary_model_report(
         # Plot model summary
         _add_figures(networks.print_model_summary(model), pdf)
         # Plot training sequence figures
-        sampled = samples.Samples(train_sequence, model, network_config)
+        sampled = samples.Samples(train_sequence, model, network_config, data_sequence_label='Training')
         _add_figures(inputs.plot_raw_and_transformed_input_samples(sampled), pdf)
-        # TODO:  histograms are currently broken for categorical data, turning off here so I don't need to remember
-        #  to always comment it out before running
-        # _add_figures(results.single_sequence_prediction_histogram(model, train_sequence, 'Training'), pdf)
+        _add_figures(results.single_sequence_prediction_histogram(sampled), pdf)
         del sampled
         # Plot validation sequence figures
         if validation_sequence is not None:
-            sampled = samples.Samples(train_sequence, model, network_config)
+            sampled = samples.Samples(train_sequence, model, network_config, data_sequence_label='Validation')
             _add_figures(inputs.plot_raw_and_transformed_input_samples(sampled), pdf)
-            # TODO:  histogram here too after fixing
+            _add_figures(results.single_sequence_prediction_histogram(sampled), pdf)
             del sampled
 
 
