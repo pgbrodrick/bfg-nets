@@ -3,17 +3,21 @@ from typing import Tuple
 import keras
 from keras.layers import BatchNormalization, Conv2D
 
-from rsCNN.networks.architectures.shared import BaseArchitectureOptions
+from rsCNN.networks.architectures import shared
 
 
-class ArchitectureOptions(BaseArchitectureOptions):
+DEFAULT_BLOCK_STRUCTURE = (2, 2, 2, 2)
+DEFAULT_DILATION_RATE = 2
+
+
+class ArchitectureOptions(shared.BaseArchitectureOptions):
     block_structure = None
     dilation_rate = None
 
     def __init__(self):
         self._field_defaults.extend([
-            ('block_structure', (2, 2, 2, 2), tuple),
-            ('dilation_rate', 2, int),
+            ('block_structure', DEFAULT_BLOCK_STRUCTURE, tuple),
+            ('dilation_rate', DEFAULT_DILATION_RATE, int),
         ])
         super().__init__()
 
@@ -24,11 +28,11 @@ def create_model(
         output_activation: str,
         block_structure: Tuple[int, ...] = DEFAULT_BLOCK_STRUCTURE,
         dilation_rate: int = DEFAULT_DILATION_RATE,
-        filters: int = DEFAULT_FILTERS,
-        kernel_size: Tuple[int, int] = DEFAULT_KERNEL_SIZE,
-        padding: str = DEFAULT_PADDING,
-        use_batch_norm: bool = DEFAULT_USE_BATCH_NORM,
-        use_initial_colorspace_transformation_layer: bool = DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
+        filters: int = shared.DEFAULT_FILTERS,
+        kernel_size: Tuple[int, int] = shared.DEFAULT_KERNEL_SIZE,
+        padding: str = shared.DEFAULT_PADDING,
+        use_batch_norm: bool = shared.DEFAULT_USE_BATCH_NORM,
+        use_initial_colorspace_transformation_layer: bool = shared.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
 ) -> keras.models.Model:
 
     # Initial convolution

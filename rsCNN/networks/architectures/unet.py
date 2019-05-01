@@ -3,10 +3,16 @@ from typing import Tuple
 import keras
 from keras.layers import BatchNormalization, Concatenate, Conv2D, MaxPooling2D, UpSampling2D
 
-from rsCNN.networks.architectures.shared import BaseArchitectureOptions
+from rsCNN.networks.architectures import shared
 
 
-class ArchitectureOptions(BaseArchitectureOptions):
+DEFAULT_BLOCK_STRUCTURE = (2, 2, 2, 2)
+DEFAULT_MIN_CONV_WIDTH = 8
+DEFAULT_POOL_SIZE = (2, 2)
+DEFAULT_USE_GROWTH = False
+
+
+class ArchitectureOptions(shared.BaseArchitectureOptions):
     block_structure = None
     min_conv_width = None
     pool_size = None
@@ -14,10 +20,10 @@ class ArchitectureOptions(BaseArchitectureOptions):
 
     def __init__(self):
         self._field_defaults.extend([
-            ('block_structure', (2, 2, 2, 2), tuple),
-            ('min_conv_width', 8, int),
-            ('pool_size', (2, 2), tuple),
-            ('use_growth', False, bool),
+            ('block_structure', DEFAULT_BLOCK_STRUCTURE, tuple),
+            ('min_conv_width', DEFAULT_MIN_CONV_WIDTH, int),
+            ('pool_size', DEFAULT_POOL_SIZE, tuple),
+            ('use_growth', DEFAULT_USE_GROWTH, bool),
         ])
         super().__init__()
 
@@ -27,14 +33,14 @@ def create_model(
         n_classes: int,
         output_activation: str,
         block_structure: Tuple[int, ...] = DEFAULT_BLOCK_STRUCTURE,
-        filters: int = DEFAULT_FILTERS,
-        kernel_size: Tuple[int, int] = DEFAULT_KERNEL_SIZE,
+        filters: int = shared.DEFAULT_FILTERS,
+        kernel_size: Tuple[int, int] = shared.DEFAULT_KERNEL_SIZE,
         min_conv_width: int = DEFAULT_MIN_CONV_WIDTH,
-        padding: str = DEFAULT_PADDING,
+        padding: str = shared.DEFAULT_PADDING,
         pool_size: Tuple[int, int] = DEFAULT_POOL_SIZE,
-        use_batch_norm: bool = DEFAULT_USE_BATCH_NORM,
-        use_growth: bool = False,
-        use_initial_colorspace_transformation_layer: bool = DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
+        use_batch_norm: bool = shared.DEFAULT_USE_BATCH_NORM,
+        use_growth: bool = DEFAULT_USE_GROWTH,
+        use_initial_colorspace_transformation_layer: bool = shared.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
 ) -> keras.models.Model:
     """ Construct a U-net style network with flexible shape
 
