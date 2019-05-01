@@ -9,6 +9,7 @@ from rsCNN.networks import architectures
 
 FILENAME_CONFIG = 'config.yaml'
 
+# TODO:  add documentation for how to handle this file
 # TODO:  improve names where necessary
 # TODO:  informative comments for each option
 # TODO:  check downstream that len raw filename lists match len scalers if len scalers > 1
@@ -23,7 +24,7 @@ class BaseConfigSection(object):
         return
 
     def set_config_options(self, config_options: dict) -> None:
-        for field_name, field_default in self._field_defaults:
+        for field_name, field_default, _ in self._field_defaults:
             setattr(self, field_name, config_options.pop(field_name) or field_default)
         return
 
@@ -66,7 +67,7 @@ class RawFiles(BaseConfigSection):
     ]
 
     def check_config_validity(self) -> List[str]:
-        errors = list()
+        errors = super().check_config_validity()
         if type(self.raw_feature_file_list) is list and type(self.raw_response_file_list) is list:
             if len(self.raw_feature_file_list) == 0:
                 errors.append('raw_feature_file_list must have more than one file')
