@@ -335,7 +335,7 @@ def read_mask_chunk(boundary_vector_file: str, boundary_subset_geotransform: tup
     return mask
 
 
-def read_map_chunk(datasets: list, upper_lefts: list[list[int]], window_diameter: int, mask, nodata_value):
+def read_map_chunk(datasets, upper_lefts: list[list[int]], window_diameter: int, mask, nodata_value):
     # Next check to see if we have a response, if so read all
     local_array = np.zeros((window_diameter, window_diameter, np.sum([set.RasterCount for set in datasets])))
     idx = 0
@@ -566,7 +566,7 @@ class Dataset:
                 output_raw_band_types.append(['R' for _band in range(num_bands_per_file[_file])])
 
         else:
-            assert(type(band_types) is list, 'band_types must be None or a list')
+            assert type(band_types) is list, 'band_types must be None or a list'
 
             # List of lists, option 3 from above - just check components
             if (type(band_types[0]) is list):
@@ -739,7 +739,7 @@ def build_training_data_ordered(config: DataConfig, feature_raw_band_types: list
     weight_memmap_file = config.data_save_name + '_weight_munge_memmap.npy'
 
     # TODO: fix max size issue, but force for now to prevent overly sized sets
-    assert(config.max_samples * (config.window_radius*2)**2 * n_features / 1024.**3 < 10, 'max_samples too large')
+    assert config.max_samples * (config.window_radius*2)**2 * n_features / 1024.**3 < 10, 'max_samples too large'
     features = np.memmap(feature_memmap_file,
                          dtype=np.float32,
                          mode='w+',
@@ -950,7 +950,7 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
     # TODO: fix max size issue, but force for now to prevent overly sized sets
     feature_memmap_file = config.data_save_name + '_feature_munge_memmap.npy'
     response_memmap_file = config.data_save_name + '_response_munge_memmap.npy'
-    assert(max_samples * (config.window_radius*2)**2 * n_features / 1024.**3 < 10, 'max_samples too large')
+    assert max_samples * (config.window_radius*2)**2 * n_features / 1024.**3 < 10, 'max_samples too large'
     features = np.memmap(feature_memmap_file,
                          dtype=np.float32,
                          mode='w+',
