@@ -1,5 +1,6 @@
 from rsCNN.networks.architectures \
-    import change_detection, dilation_net, flat_net, residual_dilation_net, residual_flat_net, residual_unet, unet
+    import alex_net, change_detection, dilation_net, flat_net, residual_dilation_net, residual_flat_net, \
+    residual_unet, unet
 
 
 def get_architecture_creator(architecture_name):
