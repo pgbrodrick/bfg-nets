@@ -63,6 +63,10 @@ def build_or_load_rawfile_data(config, rebuild=False):
                                   config.raw_response_file_list, 
                                   config.boundary_file_list)
 
+            #TODO: deal with boundary file list here as well if it exists
+            check_resolutions(config.raw_feature_file_list, 
+                              config.raw_response_file_list)
+
             if (config.response_data_format == 'FCN'):
                 features, responses, weights, response_band_types = build_training_data_ordered(config, 
                                                                            data_container.feature_raw_band_types, 
@@ -185,8 +189,35 @@ def check_projections(a_files, b_files, c_files=[]):
             assert (a_proj[_p] == b_proj[_p] and a_proj == c_proj[_p]), 'Projection_mismatch between\n{}: {},\n{}: {},\n{}: {}'.\
                    format(a_proj[_p], loc_a_files[_p], b_proj[_p], loc_b_files[_p], c_proj[_p], loc_c_files[_p])
         else:
-            assert (a_proj[_p] == b_proj[_p]), 'Projection_mismatch between\n{}: {}\n {}: {}'.\
+            assert (a_proj[_p] == b_proj[_p]), 'Projection_mismatch between\n{}: {}\n{}: {}'.\
                    format(a_proj[_p], loc_a_files[_p], b_proj[_p], loc_b_files[_p])
+                
+def check_resolutions(a_files, b_files, c_files=[]):
+    
+    loc_a_files = [item for sublist in a_files for item in sublist]
+    loc_b_files = [item for sublist in b_files for item in sublist]
+    if ( len(c_files) > 0):
+        loc_c_files = [item for sublist in c_files for item in sublist]
+    else:
+        loc_c_files = []
+
+    a_res = []
+    b_res = []
+    c_res = []
+
+    for _f in range(len(loc_a_files)):
+        a_res.append(np.array(gdal.Open(loc_a_files[_f], gdal.GA_ReadOnly).GetGeoTransform())[[1,5]])
+        b_res.append(np.array(gdal.Open(loc_b_files[_f], gdal.GA_ReadOnly).GetGeoTransform())[[1,5]])
+        if (len(loc_c_files) > 0):
+            c_res.append(np.array(gdal.Open(loc_c_files[_f], gdal.GA_ReadOnly).GetGeoTransform())[[1,5]])
+    
+    for _p in range(len(a_res)):
+        if (len(c_res) > 0):
+            assert (np.all(a_res[_p] == b_res[_p]) and np.all(a_res == c_res[_p])), 'Resolution mismatch between\n{}: {},\n{}: {},\n{}: {}'.\
+                   format(a_res[_p], loc_a_files[_p], b_res[_p], loc_b_files[_p], c_res[_p], loc_c_files[_p])
+        else:
+            assert (np.all(a_res[_p] == b_res[_p])), 'Resolution mimatch between\n{}: {}\n{}: {}'.\
+                   format(a_res[_p], loc_a_files[_p], b_res[_p], loc_b_files[_p])
                 
             
     
@@ -360,6 +391,15 @@ def read_map_chunk(datasets: List, upper_lefts: List[List[int]], window_diameter
 
     return local_array, mask
 
+def insufficient_mask_data(mask, max_nodata_fraction):
+    if (mask is None):
+        return True
+    nodata_fraction = np.sum(mask) / np.prod(mask.shape)
+    if (nodata_fraction > max_nodata_fraction):
+        return True
+    else:
+        return False
+        
 
 def read_labeling_chunk(f_sets: List[tuple],
                         feature_upper_lefts: List[List[int]],
@@ -378,15 +418,13 @@ def read_labeling_chunk(f_sets: List[tuple],
                            window_diameter,
                            config.boundary_bad_value)
 
-    nodata_fraction = np.sum(mask) / np.prod(mask.shape)
-    if nodata_fraction > config.nodata_maximum_fraction or mask is None:
-        return None, None
+    if insufficient_mask_data(mask, config.nodata_maximum_fraction):
+        return None
 
     local_feature, mask = read_map_chunk(f_sets, feature_upper_lefts, window_diameter, mask, config.feature_nodata_value)
 
-    nodata_fraction = np.sum(mask) / np.prod(mask.shape)
-    if nodata_fraction > config.nodata_maximum_fraction or mask is None:
-        return None, None
+    if insufficient_mask_data(mask, config.nodata_maximum_fraction):
+        return None
 
     # Final check (propogate mask forward), and return
     local_feature[mask, :] = np.nan
@@ -413,12 +451,11 @@ def read_segmentation_chunk(f_sets: List[tuple],
                            config.boundary_bad_value)
     mv = [np.sum(mask)]
 
-    nodata_fraction = np.sum(mask) / np.prod(mask.shape)
-    if nodata_fraction > config.nodata_maximum_fraction or mask is None:
+    if insufficient_mask_data(mask, config.nodata_maximum_fraction):
         return None, None
 
     local_response, mask = read_map_chunk(r_sets, response_upper_lefts, window_diameter, mask, config.response_nodata_value)
-    if nodata_fraction > config.nodata_maximum_fraction or mask is None:
+    if insufficient_mask_data(mask, config.nodata_maximum_fraction):
         return None, None
     mv.append(np.sum(mask))
 
@@ -429,15 +466,15 @@ def read_segmentation_chunk(f_sets: List[tuple],
     mask[np.any(np.isnan(local_response), axis=-1)] = True
     mv.append(np.sum(mask))
 
-    nodata_fraction = np.sum(mask) / np.prod(mask.shape)
-    if nodata_fraction > config.nodata_maximum_fraction or mask is None:
+    if (mask is None):
+        return None, None
+    if insufficient_mask_data(mask, config.nodata_maximum_fraction):
         return None, None
 
     local_feature, mask = read_map_chunk(f_sets, feature_upper_lefts, window_diameter, mask, config.feature_nodata_value)
     mv.append(np.sum(mask))
 
-    nodata_fraction = np.sum(mask) / np.prod(mask.shape)
-    if nodata_fraction > config.nodata_maximum_fraction:
+    if insufficient_mask_data(mask, config.nodata_maximum_fraction):
         return None, None
 
     # Final check (propogate mask forward), and return
@@ -621,8 +658,8 @@ def get_interior_rectangle(dataset_list_of_lists : List[List[tuple]]):
         ul_list.append(list(upper_left_pixel(trans_list[_d], interior_x, interior_y)))
     
     # calculate the size of the matched interior extent
-    x_len = np.min([dataset_list[_d].RasterXSize - ul_list[_d][0] for _d in range(len(dataset_list))])
-    y_len = np.min([dataset_list[_d].RasterYSize - ul_list[_d][1] for _d in range(len(dataset_list))])
+    x_len = int(np.floor(np.min([dataset_list[_d].RasterXSize - ul_list[_d][0] for _d in range(len(dataset_list))])))
+    y_len = int(np.floor(np.min([dataset_list[_d].RasterYSize - ul_list[_d][1] for _d in range(len(dataset_list))])))
 
     # separate out into list of lists for return
     return_ul_list = []
@@ -839,7 +876,6 @@ def build_training_data_ordered(config: DataConfig, feature_raw_band_types: List
         fold_assignments[idx_start:idx_finish] = f
 
     # Set up initial weights....will add in class-balancing if appropriate later
-    print(features.shape)
     weights = np.memmap(weight_memmap_file,
                         dtype=np.float32,
                         mode='w+',
@@ -901,40 +937,45 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_response_file_list[_site]]
 
         # Calculate the interior space location and extent
-        [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle([feature_sets, response_sets, [boundary_sets[_site]]])
+        [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle([feature_sets, response_sets, [bs for bs in boundary_sets if bs is not None ]])
 
         collist = []
         rowlist = []
         responses = []
         # Run through first response
         for _line in range(y_len):
-            line_dat = np.squeeze(response_sets[_site].ReadAsArray(r_ul[0][0], r_ul[0][1], x_len, 1).astype(np.float32))
+            line_dat = np.squeeze(response_sets[_site].ReadAsArray(r_ul[0][0], r_ul[0][1] + _line, x_len, 1))
             if (len (line_dat.shape) == 1):
                 line_dat = line_dat.reshape(-1,1)
 
             if (config.response_background_value is not None):
                 good_data = np.all(line_dat != config.response_background_value,axis=1)
+            else:
+                good_data = np.ones(line_dat.shape[0]).astype(bool)
+
+            if (config.response_nodata_value is not None):
+                good_data[np.any(line_dat == config.response_nodata_value,axis=1)] = False
 
             if (np.sum(good_data) > 0):
                 line_x = np.arange(x_len)
-                line_y = np.arange(y_len)
+                line_y = line_x.copy()
+                line_y[:] = _line
 
                 collist.extend(line_x[good_data].tolist())
                 rowlist.extend(line_y[good_data].tolist())
-
                 responses.append(line_dat[good_data,:])
 
         colrow = np.vstack([np.array(collist),np.array(rowlist)]).T
-        responses = np.array(responses)
+        responses = np.vstack(responses).astype(np.float32)
         responses_per_file = [responses.copy()]
 
-        for _site in range(1, response_sets.shape[1]):
+        for _file in range(1, len(response_sets)):
             responses = np.zeros(responses_per_file[0].shape[0])
             for _point in range(len(colrow)):
-                    responses[_point] = response_sets[_site].ReadAsArray(r_ul[_site][0], r_ul[_site][1], 1, 1).astype(np.float32)
+                    responses[_point] = response_sets[_file].ReadAsArray(r_ul[_file][0], r_ul[_file][1], 1, 1).astype(np.float32)
             responses_per_file.append(responses.copy())
 
-        responses_per_file = np.transpose(np.vstack(responses_per_file))
+        responses_per_file = np.hstack(responses_per_file)
 
         good_dat = np.all(responses_per_file != config.response_background_value,axis=1)
         responses_per_file = responses_per_file[good_dat,:]
@@ -943,25 +984,40 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
         colrow_per_site.append(colrow)
         responses_per_site.append(np.vstack(responses))
 
-    max_samples = 0
+    total_samples = 0
     for _i in range(0, len(responses_per_site)):
-        max_samples += responses_per_site[_i].shape[0]
+        total_samples += responses_per_site[_i].shape[0]
 
-    assert max_samples > 0, 'need more than 1 valid sample...'
+    assert config.max_samples > 0, 'need more than 1 valid sample...'
+
+    _logger.debug('total samples: {}'.format(total_samples))
+    if (total_samples > config.max_samples):
+        for _i in range(0, len(responses_per_site)):
+            perm = np.random.permutation(len(responses_per_site[_i]))[:int(config.max_samples*len(responses_per_site[_i])/float(total_samples))]
+            responses_per_site[_i] = responses_per_site[_i][perm,:]
+            colrow_per_site[_i] = colrow_per_site[_i][perm,:]
+            _logger.debug('perm len: {}'.format(len(perm)))
+        
+    total_samples = 0
+    for _i in range(0, len(responses_per_site)):
+        total_samples += responses_per_site[_i].shape[0]
+    _logger.debug('total samples after trim: {}'.format(total_samples))
 
     n_features = np.sum([len(feat_type) for feat_type in feature_raw_band_types])
 
     # TODO: fix max size issue, but force for now to prevent overly sized sets
     feature_memmap_file = config.data_save_name + '_feature_munge_memmap.npy'
     response_memmap_file = config.data_save_name + '_response_munge_memmap.npy'
-    assert max_samples * (config.window_radius*2)**2 * n_features / 1024.**3 < 10, 'max_samples too large'
+    assert total_samples * (config.window_radius*2)**2 * n_features / 1024.**3 < 10, 'max_samples too large'
     features = np.memmap(feature_memmap_file,
                          dtype=np.float32,
                          mode='w+',
-                         shape=(config.max_samples, config.window_radius*2, config.window_radius*2, n_features))
+                         shape=(total_samples, config.window_radius*2, config.window_radius*2, n_features))
 
     sample_index = 0
     boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) if loc_file is not None else None for loc_file in config.boundary_file_list]
+    if (len(boundary_sets) == 0):
+        boundary_sets = [None for i in range(len(config.raw_feature_file_list))]
     for _site in range(0, len(config.raw_feature_file_list)):
 
         # open requisite datasets
@@ -1005,6 +1061,7 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
                 features[sample_index, ...] = local_feature.copy()
                 good_response_data[_i] = True
                 sample_index += 1
+        print('good response data: {}'.format(np.sum(good_response_data)))
         responses_per_site[_i] = responses_per_site[_i][good_response_data,:]
     
     # transform responses
@@ -1023,6 +1080,9 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
     # Shuffle the data one last time (in case the fold-assignment would otherwise be biased beacuase of
     # the feature/response file order
     perm = np.random.permutation(features.shape[0])
+    print(perm.shape)
+    print(features.shape)
+    print(responses.shape)
     features = features[perm, :]
     responses = responses[perm, :]
     del perm
