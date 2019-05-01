@@ -1,12 +1,10 @@
 from typing import List
 
-import keras
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
 import sklearn.metrics
 
-from rsCNN.data_management.sequences import BaseSequence
 from rsCNN.evaluation import samples, shared
 
 
@@ -19,6 +17,7 @@ def print_classification_report(sampled: samples.Samples) -> List[plt.Figure]:
     fig, ax = plt.subplots(figsize=(8.5, 11), nrows=1, ncols=1)
     ax.text(0, 0, report, **{'fontsize': 8, 'fontfamily': 'monospace'})
     ax.axis('off')
+    fig.suptitle('{} Sequence Classification Report'.format(sampled.data_sequence_label))
     return [fig]
 
 
@@ -47,6 +46,7 @@ def plot_confusion_matrix(sampled: samples.Samples) -> [plt.Figure]:
             for j in range(matrix.shape[1]):
                 ax.text(j, i, format(matrix[i, j], value_format), ha='center', va='center',
                         color='white' if matrix[i, j] > max_ / 2. else 'black')
+    fig.suptitle('{} Sequence Confusion Matrix'.format(sampled.data_sequence_label or ''))
     return [fig]
 
 
@@ -71,7 +71,7 @@ def plot_raw_and_transformed_prediction_samples(
         sampled, _plot_predictions_page, max_pages, max_samples_per_page, max_features_per_page, max_responses_per_page
     )
     for idx, figure in enumerate(figures):
-        figure.suptitle('Prediction Example Plots (page {})'.format(idx))
+        figure.suptitle('{} Sequence Prediction Samples (page {})'.format(sampled.data_sequence_label or '', idx + 1))
     return figures
 
 
@@ -122,44 +122,24 @@ def _plot_predictions_page(
 
 
 def single_sequence_prediction_histogram(
-        model: keras.Model,
-        data_sequence: BaseSequence,
-        seq_str: str = ''
+        sampled: samples.Samples,
+        max_responses_per_page: int = 5
 ):
-
-        # TODO: deal with more than one batch....
-    features, responses = data_sequence.__getitem__(0)
-    pred_responses = model.predict(features)
-    features = features[0]
-    responses = responses[0]
-    responses, weights = responses[..., :-1], responses[..., -1]
-
-    responses[weights == 0, :] = np.nan
-    pred_responses[weights == 0, :] = np.nan
-
-    invtrans_responses = data_sequence.response_scaler.inverse_transform(responses)
-    invtrans_pred_responses = data_sequence.response_scaler.inverse_transform(pred_responses)
-
-    responses = responses.reshape((-1, responses.shape[-1]))
-    pred_responses = pred_responses.reshape((-1, pred_responses.shape[-1]))
-    invtrans_responses = invtrans_responses.reshape((-1, invtrans_responses.shape[-1]))
-    invtrans_pred_responses = invtrans_pred_responses.reshape((-1, invtrans_pred_responses.shape[-1]))
-
-    max_resp_per_page = min(8, responses.shape[-1])
+    max_responses_per_page = min(max_responses_per_page, sampled.num_responses)
     _response_ind = 0
 
     # Training Raw Space
     fig_list = []
-    while _response_ind < responses.shape[-1]:
+    while _response_ind < sampled.num_responses:
 
-        fig = plt.figure(figsize=(6 * max_resp_per_page, 10))
-        gs1 = gridspec.GridSpec(4, max_resp_per_page)
-        for _r in range(_response_ind, min(_response_ind+max_resp_per_page, responses.shape[-1])):
+        fig = plt.figure(figsize=(6 * max_responses_per_page, 10))
+        gs1 = gridspec.GridSpec(4, max_responses_per_page)
+        for _r in range(_response_ind, min(_response_ind+max_responses_per_page, sampled.num_responses)):
             ax = plt.subplot(gs1[0, _r])
-            b, h = _get_lhist(responses[..., _r])
-            plt.plot(h, b, color='black')
-            b, h = _get_lhist(pred_responses[..., _r])
-            plt.plot(h, b, color='green')
+            b, h = _get_lhist(sampled.trans_responses[..., _r])
+            ax.plot(h, b, color='black')
+            b, h = _get_lhist(sampled.trans_predictions[..., _r])
+            ax.plot(h, b, color='green')
 
             if (_r == _response_ind):
                 plt.ylabel('Raw')
@@ -167,17 +147,17 @@ def single_sequence_prediction_histogram(
 
             ax = plt.subplot(gs1[1, _r])
 
-            b, h = _get_lhist(invtrans_responses[..., _r])
-            plt.plot(h, b, color='black')
-            b, h = _get_lhist(invtrans_pred_responses[..., _r])
-            plt.plot(h, b, color='green')
+            b, h = _get_lhist(sampled.raw_responses[..., _r])
+            ax.plot(h, b, color='black')
+            b, h = _get_lhist(sampled.raw_predictions[..., _r])
+            ax.plot(h, b, color='green')
 
             if (_r == _response_ind):
                 plt.ylabel('Transformed')
 
-        _response_ind += max_resp_per_page
-        plt.suptitle(seq_str + ' Response Histogram Page ' + str((len(fig_list))))
+        _response_ind += max_responses_per_page
         fig_list.append(fig)
+        fig.suptitle('{} Sequence Response Histogram (page {})'.format(sampled.data_sequence_label, len(fig_list)))
     return fig_list
 
 
@@ -274,6 +254,6 @@ def _plot_spatial_error(
                 break
         figures.append(fig)
         idx_page += 1
-    for fig in figures:
-        fig.suptitle('Response Spatial Deviation {}'.format(idx_page))
+        fig.suptitle('{} Sequence Response Spatial Deviation (page {})'.format(
+            sampled.data_sequence_label or '', idx_page + 1))
     return figures
