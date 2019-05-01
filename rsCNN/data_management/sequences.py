@@ -6,6 +6,7 @@ import numpy as np
 
 from rsCNN.data_management.scalers import BaseGlobalScaler
 from rsCNN.utils import logging
+from rsCNN.data_management.training_data import Dataset
 
 
 _logger = logging.get_child_logger(__name__)
