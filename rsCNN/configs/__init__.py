@@ -15,7 +15,7 @@ FILENAME_CONFIG = 'config.yaml'
 # TODO:  data_save_name changed to dir_model_out
 
 
-class ConfigSection(object):
+class BaseConfigSection(object):
     _field_defaults = NotImplemented
 
     def __init__(self) -> None:
@@ -36,7 +36,7 @@ class ConfigSection(object):
         return errors
 
 
-class RawFiles(ConfigSection):
+class RawFiles(BaseConfigSection):
     """
     Raw file configuration, information necessary to locate and parse the raw files.
     """
@@ -84,7 +84,7 @@ class RawFiles(ConfigSection):
         return errors
 
 
-class DataBuild(ConfigSection):
+class DataBuild(BaseConfigSection):
     """
     Data build configuration, information necessary to structure and format the built data files
     """
@@ -132,7 +132,7 @@ class DataBuild(ConfigSection):
         return errors
 
 
-class DataSamples(ConfigSection):
+class DataSamples(BaseConfigSection):
     apply_random_transformations = None
     batch_size = None
     feature_scaler_names_list = None
@@ -165,7 +165,7 @@ class DataSamples(ConfigSection):
         return errors
 
 
-class ModelTraining(ConfigSection):
+class ModelTraining(BaseConfigSection):
     dir_model_out = None
     verbosity = None
     assert_gpu = None
@@ -196,7 +196,7 @@ class ModelTraining(ConfigSection):
         return errors
 
 
-class CallbackGeneral(ConfigSection):
+class CallbackGeneral(BaseConfigSection):
     checkpoint_periods = None
     use_terminate_on_nan = None
     field_defaults = [
@@ -205,7 +205,7 @@ class CallbackGeneral(ConfigSection):
     ]
 
 
-class CallbackTensorboard(ConfigSection):
+class CallbackTensorboard(BaseConfigSection):
     use_tensorboard = None
     dirname_prefix_tensorboard = None
     update_freq = None
@@ -224,7 +224,7 @@ class CallbackTensorboard(ConfigSection):
     ]
 
 
-class CallbackEarlyStopping(ConfigSection):
+class CallbackEarlyStopping(BaseConfigSection):
     use_early_stopping = None
     min_delta = None
     patience = None
@@ -235,7 +235,7 @@ class CallbackEarlyStopping(ConfigSection):
     ]
 
 
-class CallbackReducedLearningRate(ConfigSection):
+class CallbackReducedLearningRate(BaseConfigSection):
     use_reduced_learning_rate = None
     factor = None
     min_delta = None
@@ -309,12 +309,13 @@ class ConfigFactory(object):
             '{} errors were found while building configuration:\n  {}'.format(len(errors), '\n'.join(errors))
         return Config(**populated_sections)
 
-    def _create_config_section_from_options(self, config_options: dict, config_section: ConfigSection) -> ConfigSection:
+    def _create_config_section_from_options(self, config_options: dict, config_section: BaseConfigSection) \
+            -> BaseConfigSection:
         values = dict()
         for field_name, _ in config_section._field_defaults:
             if field_name in config_options:
                 values[field_name] = config_options.pop(field_name)
-        config_section = ConfigSection()
+        config_section = config_section()
         config_section.set_config_options(config_options)
         return config_section
 

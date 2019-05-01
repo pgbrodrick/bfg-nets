@@ -3,32 +3,23 @@ from typing import Tuple
 import keras
 from keras.layers import BatchNormalization, Concatenate, Conv2D, MaxPooling2D, UpSampling2D
 
-
-DEFAULT_BLOCK_STRUCTURE = (1, 1, 1, 1)
-DEFAULT_USE_BATCH_NORM = True
-DEFAULT_FILTERS = 64
-DEFAULT_KERNEL_SIZE = (3, 3)
-DEFAULT_MIN_CONV_WIDTH = 8
-DEFAULT_PADDING = 'same'
-DEFAULT_POOL_SIZE = (2, 2)
-DEFAULT_USE_GROWTH = False
-DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER = False
+from rsCNN.networks.architectures.shared import BaseArchitectureOptions
 
 
-def parse_architecture_options(**kwargs):
-    return {
-        'block_structure': kwargs.get('block_structure', DEFAULT_BLOCK_STRUCTURE),
-        'filters': kwargs.get('filters', DEFAULT_FILTERS),
-        'kernel_size': kwargs.get('kernel_size', DEFAULT_KERNEL_SIZE),
-        'min_conv_width': kwargs.get('min_conv_width', DEFAULT_MIN_CONV_WIDTH),
-        'padding': kwargs.get('padding', DEFAULT_PADDING),
-        'pool_size': kwargs.get('pool_size', DEFAULT_POOL_SIZE),
-        'use_batch_norm': kwargs.get('use_batch_norm', DEFAULT_USE_BATCH_NORM),
-        'use_growth': kwargs.get('use_growth', DEFAULT_USE_GROWTH),
-        'use_initial_colorspace_transformation_layer':
-            kwargs.get('use_initial_colorspace_transformation_layer',
-                       DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER)
-    }
+class ArchitectureOptions(BaseArchitectureOptions):
+    block_structure = None
+    min_conv_width = None
+    pool_size = None
+    use_growth = None
+
+    def __init__(self):
+        self._field_defaults.extend([
+            ('block_structure', (2, 2, 2, 2), tuple),
+            ('min_conv_width', 8, int),
+            ('pool_size', (2, 2), tuple),
+            ('use_growth', False, bool),
+        ])
+        super().__init__()
 
 
 def create_model(
