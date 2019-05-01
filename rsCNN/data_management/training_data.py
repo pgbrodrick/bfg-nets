@@ -45,11 +45,11 @@ _logger = logging.get_child_logger(__name__)
 
 def build_or_load_rawfile_data(config, rebuild=False):
 
-    data_container = Dataset()
+    data_container = Dataset(config)
     data_container.check_input_files(config.raw_feature_file_list, config.raw_response_file_list, config.boundary_file_list)
 
-    data_container.feature_raw_band_types = get_band_types(config.raw_feature_file_list, config.feature_raw_band_type_input)
-    data_container.response_raw_band_types = get_band_types(config.raw_response_file_list, config.response_raw_band_type_input)
+    data_container.feature_raw_band_types = data_container.get_band_types(config.raw_feature_file_list, config.feature_raw_band_type_input)
+    data_container.response_raw_band_types = data_container.get_band_types(config.raw_response_file_list, config.response_raw_band_type_input)
 
     if (rebuild is False):
         features, responses, weights, read_success = open_memmap_files(config)
@@ -182,10 +182,10 @@ def check_projections(a_files, b_files, c_files=[]):
     
     for _p in range(len(a_proj)):
         if (len(c_proj) > 0):
-            assert (a_proj[_p] != b_proj[_p] and a_proj != c_proj[_p]), 'Projection_mismatch between {}: {}, {}: {}, {}: {}'.\
+            assert (a_proj[_p] == b_proj[_p] and a_proj == c_proj[_p]), 'Projection_mismatch between\n{}: {},\n{}: {},\n{}: {}'.\
                    format(a_proj[_p], loc_a_files[_p], b_proj[_p], loc_b_files[_p], c_proj[_p], loc_c_files[_p])
         else:
-            assert (a_proj[_p] != b_proj[_p]), 'Projection_mismatch between {}: {}, {}: {}'.\
+            assert (a_proj[_p] == b_proj[_p]), 'Projection_mismatch between\n{}: {}\n {}: {}'.\
                    format(a_proj[_p], loc_a_files[_p], b_proj[_p], loc_b_files[_p])
                 
             
@@ -338,7 +338,7 @@ def read_mask_chunk(boundary_vector_file: str, boundary_subset_geotransform: tup
 
 def read_map_chunk(datasets: List, upper_lefts: List[List[int]], window_diameter: int, mask, nodata_value):
     # Next check to see if we have a response, if so read all
-    local_array = np.zeros((window_diameter, window_diameter, np.sum([set.RasterCount for set in datasets])))
+    local_array = np.zeros((window_diameter, window_diameter, np.sum([lset.RasterCount for lset in datasets])))
     idx = 0
     for _file in range(len(datasets)):
         r_set = datasets[_file]
@@ -379,17 +379,13 @@ def read_labeling_chunk(f_sets: List[tuple],
                            config.boundary_bad_value)
 
     nodata_fraction = np.sum(mask) / np.prod(mask.shape)
-    if nodata_fraction > config.nodata_maximum_fraction:
-        return None, None
-
-    nodata_fraction = np.sum(mask) / np.prod(mask.shape)
-    if nodata_fraction > config.nodata_maximum_fraction:
+    if nodata_fraction > config.nodata_maximum_fraction or mask is None:
         return None, None
 
     local_feature, mask = read_map_chunk(f_sets, feature_upper_lefts, window_diameter, mask, config.feature_nodata_value)
 
     nodata_fraction = np.sum(mask) / np.prod(mask.shape)
-    if nodata_fraction > config.nodata_maximum_fraction:
+    if nodata_fraction > config.nodata_maximum_fraction or mask is None:
         return None, None
 
     # Final check (propogate mask forward), and return
@@ -415,24 +411,30 @@ def read_segmentation_chunk(f_sets: List[tuple],
                            boundary_upper_left,
                            window_diameter,
                            config.boundary_bad_value)
+    mv = [np.sum(mask)]
 
     nodata_fraction = np.sum(mask) / np.prod(mask.shape)
-    if nodata_fraction > config.nodata_maximum_fraction:
+    if nodata_fraction > config.nodata_maximum_fraction or mask is None:
         return None, None
 
     local_response, mask = read_map_chunk(r_sets, response_upper_lefts, window_diameter, mask, config.response_nodata_value)
+    if nodata_fraction > config.nodata_maximum_fraction or mask is None:
+        return None, None
+    mv.append(np.sum(mask))
 
     if (config.response_min_value is not None):
         local_response[local_response < config.response_min_value] = np.nan
     if (config.response_max_value is not None):
         local_response[local_response > config.response_max_value] = np.nan
     mask[np.any(np.isnan(local_response), axis=-1)] = True
+    mv.append(np.sum(mask))
 
     nodata_fraction = np.sum(mask) / np.prod(mask.shape)
-    if nodata_fraction > config.nodata_maximum_fraction:
+    if nodata_fraction > config.nodata_maximum_fraction or mask is None:
         return None, None
 
     local_feature, mask = read_map_chunk(f_sets, feature_upper_lefts, window_diameter, mask, config.feature_nodata_value)
+    mv.append(np.sum(mask))
 
     nodata_fraction = np.sum(mask) / np.prod(mask.shape)
     if nodata_fraction > config.nodata_maximum_fraction:
@@ -467,9 +469,9 @@ class Dataset:
         self.config = config
 
 
-    def build_or_load_scalers(self, data_container, rebuild=False):
+    def build_or_load_scalers(self, rebuild=False):
 
-        data_config = data_container.config
+        data_config = self.config
 
         feat_scaler_atr = {'savename_base': data_config.data_save_name + '_feature_scaler'}
         feature_scaler = scalers.get_scaler(data_config.feature_scaler_name, feat_scaler_atr)
@@ -482,15 +484,15 @@ class Dataset:
     
         if (feature_scaler.is_fitted is False or rebuild is True):
             # TODO: do better
-            feature_scaler.fit(data_config.features[self.train_folds[0]])
+            feature_scaler.fit(self.features[self.train_folds[0]])
             feature_scaler.save()
         if (response_scaler.is_fitted is False or rebuild is True):
             # TODO: do better
-            response_scaler.fit(data_config.responses[self.train_folds[0]])
+            response_scaler.fit(self.responses[self.train_folds[0]])
             response_scaler.save()
 
-        data_container.feature_scaler = feature_scaler
-        data_container.response_scaler = response_scaler
+        self.feature_scaler = feature_scaler
+        self.response_scaler = response_scaler
 
 
     def check_input_files(self, f_file_list, r_file_list, b_file_list):
@@ -548,7 +550,7 @@ class Dataset:
                        'Inconsistent number of response bands in site {}, file {}'.format(_site,_band)
 
 
-    def get_band_types(file_list, band_types):
+    def get_band_types(self, file_list, band_types):
 
         valid_band_types = ['R','C']
         # 3 options are available for specifying band_types:
@@ -599,7 +601,7 @@ def upper_left_pixel(trans, interior_x, interior_y):
     y_ul = max((interior_y - trans[3])/trans[5], 0)
     return x_ul, y_ul
 
-def get_interior_rectangle(dataset_list_of_lists : list[list[tuple]]):
+def get_interior_rectangle(dataset_list_of_lists : List[List[tuple]]):
     
     # Convert list of lists or list for interior convenience
     dataset_list =  [item for sublist in dataset_list_of_lists for item in sublist]
@@ -611,12 +613,12 @@ def get_interior_rectangle(dataset_list_of_lists : list[list[tuple]]):
         
     # Find the interior (UL) x,y coordinates in map-space
     interior_x = np.nanmax([x[0] for x in trans_list])
-    interior_y = np.nanmin([x[1] for x in trans_list])
+    interior_y = np.nanmin([x[3] for x in trans_list])
 
     # calculate the UL coordinates in pixel-space
     ul_list = []
     for _d in range(len(dataset_list)):
-        ul_list.append(list(upper_left_pixel(trans_list[_d], ul_list[_d][0], ul_list[_d][1])))
+        ul_list.append(list(upper_left_pixel(trans_list[_d], interior_x, interior_y)))
     
     # calculate the size of the matched interior extent
     x_len = np.min([dataset_list[_d].RasterXSize - ul_list[_d][0] for _d in range(len(dataset_list))])
@@ -636,48 +638,45 @@ def get_interior_rectangle(dataset_list_of_lists : list[list[tuple]]):
     return return_ul_list, x_len, y_len
 
 
-
-
-
-def get_interior_rectangle(feature_set, response_set, boundary_set):
-    f_trans = feature_set.GetGeoTransform()
-    r_trans = response_set.GetGeoTransform()
-    b_trans = None
-    if (boundary_set is not None):
-        b_trans = boundary_set.GetGeoTransform()
-
-    # Calculate the interior space location and extent
-
-    # Find the interior (UL) x,y coordinates in map-space
-    interior_x = max(r_trans[0], f_trans[0])
-    interior_y = min(r_trans[3], f_trans[3])
-    if (b_trans is not None):
-        interior_x = max(interior_x, b_trans[0])
-        interior_y = max(interior_y, b_trans[3])
-
-    # calculate the feature and response UL coordinates in pixel-space
-    f_x_ul, f_y_ul = upper_left_pixel(f_trans, interior_x, interior_y)
-    r_x_ul, r_y_ul = upper_left_pixel(r_trans, interior_x, interior_y)
-
-    # calculate the size of the matched interior extent
-    x_len = min(feature_set.RasterXSize - f_x_ul, response_set.RasterXSize - r_x_ul)
-    y_len = min(feature_set.RasterYSize - f_y_ul, response_set.RasterYSize - r_y_ul)
-
-    # update the UL location, and the interior extent, if there is a boundary
-    if (b_trans is not None):
-        b_x_ul, b_y_ul = upper_left_pixel(b_trans, interior_x, interior_y)
-        x_len = min(x_len, boundary_set.RasterXSize - b_x_ul)
-        y_len = min(y_len, boundary_set.RasterYSize - b_y_ul)
-
-    # convert these UL coordinates to an array for easy addition later
-    f_ul = np.array([f_x_ul, f_y_ul])
-    r_ul = np.array([r_x_ul, r_y_ul])
-    if (b_trans is not None):
-        b_ul = np.array([b_x_ul, b_y_ul])
-    else:
-        b_ul = None
-
-    return f_ul, r_ul, b_ul, x_len, y_len
+#def get_interior_rectangle(feature_set, response_set, boundary_set):
+#    f_trans = feature_set.GetGeoTransform()
+#    r_trans = response_set.GetGeoTransform()
+#    b_trans = None
+#    if (boundary_set is not None):
+#        b_trans = boundary_set.GetGeoTransform()
+#
+#    # Calculate the interior space location and extent
+#
+#    # Find the interior (UL) x,y coordinates in map-space
+#    interior_x = max(r_trans[0], f_trans[0])
+#    interior_y = min(r_trans[3], f_trans[3])
+#    if (b_trans is not None):
+#        interior_x = max(interior_x, b_trans[0])
+#        interior_y = max(interior_y, b_trans[3])
+#
+#    # calculate the feature and response UL coordinates in pixel-space
+#    f_x_ul, f_y_ul = upper_left_pixel(f_trans, interior_x, interior_y)
+#    r_x_ul, r_y_ul = upper_left_pixel(r_trans, interior_x, interior_y)
+#
+#    # calculate the size of the matched interior extent
+#    x_len = min(feature_set.RasterXSize - f_x_ul, response_set.RasterXSize - r_x_ul)
+#    y_len = min(feature_set.RasterYSize - f_y_ul, response_set.RasterYSize - r_y_ul)
+#
+#    # update the UL location, and the interior extent, if there is a boundary
+#    if (b_trans is not None):
+#        b_x_ul, b_y_ul = upper_left_pixel(b_trans, interior_x, interior_y)
+#        x_len = min(x_len, boundary_set.RasterXSize - b_x_ul)
+#        y_len = min(y_len, boundary_set.RasterYSize - b_y_ul)
+#
+#    # convert these UL coordinates to an array for easy addition later
+#    f_ul = np.array([f_x_ul, f_y_ul])
+#    r_ul = np.array([r_x_ul, r_y_ul])
+#    if (b_trans is not None):
+#        b_ul = np.array([b_x_ul, b_y_ul])
+#    else:
+#        b_ul = None
+#
+#    return f_ul, r_ul, b_ul, x_len, y_len
 
 
 def one_hot_encode_array(raw_band_types, array, memmap_file):
@@ -723,7 +722,7 @@ def one_hot_encode_array(raw_band_types, array, memmap_file):
     return array, band_types
 
 
-def build_training_data_ordered(config: DataConfig, feature_raw_band_types: list[list[str]], response_raw_band_types: list[list[str]]):
+def build_training_data_ordered(config: DataConfig, feature_raw_band_types: List[List[str]], response_raw_band_types: List[List[str]]):
 
     if (config.random_seed is not None):
         np.random.seed(config.random_seed)
@@ -752,15 +751,17 @@ def build_training_data_ordered(config: DataConfig, feature_raw_band_types: list
                           shape=(config.max_samples, config.window_radius*2, config.window_radius*2, n_responses))
 
     sample_index = 0
+    boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) if loc_file is not None else None for loc_file in config.boundary_file_list]
+    if (len(boundary_sets) == 0):
+        boundary_sets = [None for i in range(len(config.raw_feature_file_list))]
     for _site in range(0, len(config.raw_feature_file_list)):
 
         # open requisite datasets
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_feature_file_list[_site]]
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_response_file_list[_site]]
-        boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) if loc_file is not None else None for loc_file in config.boundary_file_list[_site]]
 
         # Calculate the interior space location and extent
-        [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle([feature_sets, response_sets, boundary_sets])
+        [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle([feature_sets, response_sets, [bs for bs in boundary_sets if bs is not None ]])
 
         # Use interior space calculations to calculate pixel-based interior space offsets for data aquisition
         collist = [x for x in range(0,
@@ -789,21 +790,20 @@ def build_training_data_ordered(config: DataConfig, feature_raw_band_types: list
             local_boundary_vector_file = None
             local_boundary_upper_left = None
             if (boundary_sets[_site] is not None):
-                local_boundary_set = boundary_sets[_site]
                 local_boundary_upper_left = b_ul + colrow[_cr, :]
             if (subset_geotransform is not None):
                 subset_geotransform[0] = ref_trans[0] + (f_ul[0][0] + colrow[_cr, 0]) * ref_trans[1]
                 subset_geotransform[3] = ref_trans[3] + (f_ul[0][1] + colrow[_cr, 1]) * ref_trans[5]
                 local_boundary_vector_file = config.boundary_file_list[_site]
 
-            local_feature, local_response = read_segmentation_chunk(feature_sets[_site],
-                                                                    response_sets[_site],
+            local_feature, local_response = read_segmentation_chunk(feature_sets,
+                                                                    response_sets,
                                                                     f_ul + colrow[_cr, :],
                                                                     r_ul + colrow[_cr, :],
                                                                     config,
                                                                     boundary_vector_file=local_boundary_vector_file,
                                                                     boundary_upper_left=local_boundary_upper_left,
-                                                                    b_set=local_boundary_set,
+                                                                    b_set=boundary_sets[_site],
                                                                     boundary_subset_geotransform=subset_geotransform)
 
             if (local_feature is not None):
@@ -839,6 +839,7 @@ def build_training_data_ordered(config: DataConfig, feature_raw_band_types: list
         fold_assignments[idx_start:idx_finish] = f
 
     # Set up initial weights....will add in class-balancing if appropriate later
+    print(features.shape)
     weights = np.memmap(weight_memmap_file,
                         dtype=np.float32,
                         mode='w+',
@@ -884,21 +885,23 @@ def build_training_data_ordered(config: DataConfig, feature_raw_band_types: list
     return features, responses, weights, response_band_types
 
 
-def build_training_data_from_response_points(config: DataConfig, feature_raw_band_types: list[list[str]], response_raw_band_types: list[list[str]]):
+def build_training_data_from_response_points(config: DataConfig, feature_raw_band_types: List[List[str]], response_raw_band_types: List[List[str]]):
 
     if (config.random_seed is not None):
         np.random.seed(config.random_seed)
 
     colrow_per_site = []
     responses_per_site = []
+    boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) if loc_file is not None else None for loc_file in config.boundary_file_list]
+    if (len(boundary_sets) == 0):
+        boundary_sets = [None for i in range(len(config.raw_feature_file_list))]
     for _site in range(0, len(config.raw_feature_file_list)):
         # open requisite datasets
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_feature_file_list[_site]]
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_response_file_list[_site]]
-        boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) if loc_file is not None else None for loc_file in config.raw_boundary_file_list[_site]]
 
         # Calculate the interior space location and extent
-        [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle([feature_sets, response_sets, boundary_sets])
+        [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle([feature_sets, response_sets, [boundary_sets[_site]]])
 
         collist = []
         rowlist = []
@@ -958,15 +961,15 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
                          shape=(config.max_samples, config.window_radius*2, config.window_radius*2, n_features))
 
     sample_index = 0
+    boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) if loc_file is not None else None for loc_file in config.boundary_file_list]
     for _site in range(0, len(config.raw_feature_file_list)):
 
         # open requisite datasets
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_feature_file_list[_site]]
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_response_file_list[_site]]
-        boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) if loc_file is not None else None for loc_file in config.boundary_file_list[_site]]
 
         # Calculate the interior space location and extent
-        [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle([feature_sets, response_sets, boundary_sets])
+        [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle([feature_sets, response_sets, [bs for bs in boundary_sets if bs is not None ]])
 
         colrow = colrow_per_site[_site]
 
@@ -984,19 +987,18 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
             local_boundary_vector_file = None
             local_boundary_upper_left = None
             if (boundary_sets[_site] is not None):
-                local_boundary_set = boundary_sets[_site]
                 local_boundary_upper_left = b_ul + colrow[_cr, :]
             if (subset_geotransform is not None):
                 subset_geotransform[0] = ref_trans[0] + (f_ul[0][0] + colrow[_cr, 0]) * ref_trans[1]
                 subset_geotransform[3] = ref_trans[3] + (f_ul[0][1] + colrow[_cr, 1]) * ref_trans[5]
                 local_boundary_vector_file = config.boundary_file_list[_i]
 
-            local_feature = read_labeling_chunk(feature_sets[_site],
+            local_feature = read_labeling_chunk(feature_sets,
                                                 f_ul + colrow[_cr, :],
                                                 config,
                                                 boundary_vector_file=local_boundary_vector_file,
                                                 boundary_upper_left=local_boundary_upper_left,
-                                                b_set=local_boundary_set,
+                                                b_set=boundary_sets[_site],
                                                 boundary_subset_geotransform=subset_geotransform)
 
             if (local_feature is not None):
