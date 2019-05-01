@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import re
 from tqdm import tqdm
+from typing import List
 
 import fiona
 import numpy as np
@@ -319,7 +320,7 @@ def calculate_categorical_weights(responses, weights, config, batch_size=100):
     return weights
 
 
-def read_mask_chunk(boundary_vector_file: str, boundary_subset_geotransform: tuple, b_set: tuple, boundary_upper_left: list, window_diameter: int, boundary_bad_value: float):
+def read_mask_chunk(boundary_vector_file: str, boundary_subset_geotransform: tuple, b_set: tuple, boundary_upper_left: List, window_diameter: int, boundary_bad_value: float):
     # Start by checking if we're inside boundary, if there is one
     mask = None
     if (boundary_vector_file is not None):
@@ -335,7 +336,7 @@ def read_mask_chunk(boundary_vector_file: str, boundary_subset_geotransform: tup
     return mask
 
 
-def read_map_chunk(datasets, upper_lefts: list[list[int]], window_diameter: int, mask, nodata_value):
+def read_map_chunk(datasets: List, upper_lefts: List[List[int]], window_diameter: int, mask, nodata_value):
     # Next check to see if we have a response, if so read all
     local_array = np.zeros((window_diameter, window_diameter, np.sum([set.RasterCount for set in datasets])))
     idx = 0
@@ -360,13 +361,13 @@ def read_map_chunk(datasets, upper_lefts: list[list[int]], window_diameter: int,
     return local_array, mask
 
 
-def read_labeling_chunk(f_sets: list[tuple],
-                        feature_upper_lefts: list[list[int]],
+def read_labeling_chunk(f_sets: List[tuple],
+                        feature_upper_lefts: List[List[int]],
                         config: DataConfig,
                         boundary_vector_file: str = None,
                         boundary_subset_geotransform: tuple = None,
                         b_set=None,
-                        boundary_upper_left: list[int] = None):
+                        boundary_upper_left: List[int] = None):
 
     window_diameter = config.window_radius * 2
 
@@ -397,15 +398,15 @@ def read_labeling_chunk(f_sets: list[tuple],
     return local_feature
 
 
-def read_segmentation_chunk(f_sets: list[tuple],
-                            r_sets: list[tuple],
-                            feature_upper_lefts: list[list[int]],
-                            response_upper_lefts: list[list[int]],
+def read_segmentation_chunk(f_sets: List[tuple],
+                            r_sets: List[tuple],
+                            feature_upper_lefts: List[List[int]],
+                            response_upper_lefts: List[List[int]],
                             config: DataConfig,
                             boundary_vector_file: str = None,
                             boundary_subset_geotransform: tuple = None,
                             b_set=None,
-                            boundary_upper_left: list[int] = None):
+                            boundary_upper_left: List[int] = None):
     window_diameter = config.window_radius * 2
 
     mask = read_mask_chunk(boundary_vector_file,
