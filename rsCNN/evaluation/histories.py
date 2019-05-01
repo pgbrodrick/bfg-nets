@@ -39,5 +39,5 @@ def plot_history(history: dict) -> [plt.Figure]:
     ax.set_ylabel('Learning rate')
 
     # Add figure title
-    plt.suptitle('Training History')
+    plt.suptitle('Model Training History')
     return [fig]
