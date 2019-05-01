@@ -123,7 +123,7 @@ def _plot_predictions_page(
 
 def single_sequence_prediction_histogram(
         sampled: samples.Samples,
-        max_responses_per_page: int = 5
+        max_responses_per_page: int = 15
 ):
     max_responses_per_page = min(max_responses_per_page, sampled.num_responses)
     _response_ind = 0
