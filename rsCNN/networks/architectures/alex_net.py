@@ -47,12 +47,12 @@ def create_model(
 ) -> keras.models.Model:
 
     input_width = inshape[0]
-    minimum_width = input_width / 2 ** len(block_structure)
-    assert minimum_width >= min_conv_width, \
-        'The convolution width in the last encoding block ({}) is less than '.format(minimum_width) + \
-        'the minimum specified width ({}). Either reduce '.format(min_conv_width) + \
-        'the number of blocks in block_structure (currently {}) or '.format(len(block_structure)) + \
-        'the value of min_conv_width.'
+    #minimum_width = input_width / 2 ** len(block_structure)
+    #assert minimum_width >= min_conv_width, \
+    #    'The convolution width in the last encoding block ({}) is less than '.format(minimum_width) + \
+    #    'the minimum specified width ({}). Either reduce '.format(min_conv_width) + \
+    #    'the number of blocks in block_structure (currently {}) or '.format(len(block_structure)) + \
+    #    'the value of min_conv_width.'
 
     layers_pass_through = list()
 
@@ -82,6 +82,7 @@ def create_model(
         if use_growth:
             filters *= 2
 
+    encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(encoder)
     output_layer = Flatten()(encoder)
     output_layer = Dense(units=filters)(output_layer)
     output_layer = Dense(units=filters)(output_layer)
