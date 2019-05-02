@@ -315,10 +315,7 @@ def calculate_categorical_weights(responses, weights, config, batch_size=100):
 
     # find upper and lower boud
     lb = config.window_radius - config.internal_window_radius
-    if (lb == 0):
-        ub = responses[0].shape[1]
-    else:
-        ub = -lb
+    ub = -lb
 
     # get response/total counts (batch-wise)
     response_counts = np.zeros(responses[0].shape[-1])
@@ -326,7 +323,10 @@ def calculate_categorical_weights(responses, weights, config, batch_size=100):
     for _array in range(len(responses)):
         if (_array is not config.validation_fold and _array is not config.test_fold):
             for ind in range(0, responses[_array].shape[0], batch_size):
-                lr = (responses[_array])[ind:ind+batch_size, lb:ub, lb:ub, :]
+                if (lb == 0):
+                    lr = (responses[_array])[ind:ind+batch_size, ...]
+                else:
+                    lr = (responses[_array])[ind:ind+batch_size, lb:ub, lb:ub, :]
                 lr[lr == config.response_nodata_value] = np.nan
                 total_valid_count += np.sum(np.isfinite(lr))
                 for _r in range(0, len(response_counts)):
@@ -337,16 +337,22 @@ def calculate_categorical_weights(responses, weights, config, batch_size=100):
         for ind in range(0, responses[_array].shape[0], batch_size):
 
             lr = (responses[_array])[ind:ind+batch_size, ...]
-            lw = np.zeros((lr.shape[0], lr.shape[1], lr.shape[2]))
+            lrs = list(lr.shape)
+            lrs.pop(-1)
+            lw = np.zeros((lrs))
             for _r in range(0, len(response_counts)):
                 lw[lr[..., _r] == 1] = total_valid_count / response_counts[_r]
 
-            lw[:, :lb, :] = 0
-            lw[:, ub:, :] = 0
-            lw[:, :, :lb] = 0
-            lw[:, :, ub:] = 0
+            if (lb != 0):
+                lw[:, :lb, :] = 0
+                lw[:, ub:, :] = 0
+                lw[:, :, :lb] = 0
+                lw[:, :, ub:] = 0
 
-            weights[_array][ind:ind+batch_size, :, :, 0] = lw
+            lws = list(lw.shape)
+            lws.extend([1])
+            lw = lw.reshape(lws)
+            weights[_array][ind:ind+batch_size, ...] = lw
 
     return weights
 
@@ -724,7 +730,6 @@ def one_hot_encode_array(raw_band_types, array, memmap_file):
         
         un_array = array[...,cat_band_locations[_c]]
         un_array = np.unique(un_array[np.isfinite(un_array)])
-        print('Cat response: {}'.format(un_array))
         assert len(un_array) < MAX_UNIQUE_RESPONSES,\
                'Too many ({}) unique responses found, suspected incorrect categorical specification'.format(len(un_array))
         _logger.debug('Found {} categorical responses'.format(len(un_array)))
@@ -732,7 +737,6 @@ def one_hot_encode_array(raw_band_types, array, memmap_file):
 
         array_shape = list(array.shape)
         array_shape[-1] = len(un_array) + array.shape[-1] - 1
-        print(array_shape)
 
         cat_memmap_file = os.path.join(os.path.dirname(memmap_file), os.path.basename(memmap_file).split('.')[0] + '_cat.npy')
         cat_array = np.memmap(cat_memmap_file,
@@ -749,8 +753,6 @@ def one_hot_encode_array(raw_band_types, array, memmap_file):
                     cat_array[..., _r] = array[..., _r]
                 else:
                     cat_array[..., _r] = array[..., _r - len(un_array) + 1]
-        print(cat_band_locations[_c])
-        print(cat_array.shape)
 
 
         # Force file dump, and then reload the encoded responses as the primary response
@@ -1068,7 +1070,6 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
                 features[sample_index, ...] = local_feature.copy()
                 good_response_data[_cr] = True
                 sample_index += 1
-        print('good response data: {}'.format(np.sum(good_response_data)))
         responses_per_site[_site] = responses_per_site[_site][good_response_data,:]
     
     # transform responses
@@ -1087,9 +1088,6 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
     # Shuffle the data one last time (in case the fold-assignment would otherwise be biased beacuase of
     # the feature/response file order
     perm = np.random.permutation(features.shape[0])
-    print(perm.shape)
-    print(features.shape)
-    print(responses.shape)
     features = features[perm, :]
     responses = responses[perm, :]
     del perm
@@ -1103,11 +1101,7 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
     weights = np.ones((responses.shape[0],1))
 
     # one hot encode
-    print(response_raw_band_types)
-    print(responses.shape)
-    print(np.unique(responses))
     responses, response_band_types = one_hot_encode_array(response_raw_band_types, responses, response_memmap_file)
-    print(response_band_types)
 
     _logger.debug('Feature shape: {}'.format(features.shape))
     _logger.debug('Response shape: {}'.format(responses.shape))
