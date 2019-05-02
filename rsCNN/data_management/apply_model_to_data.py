@@ -11,7 +11,7 @@ from rsCNN.utils.general import *
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
 
-def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, make_png=False, make_tif=True, feature_transformer=None, response_transformer=None):
+def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, make_png=False, make_tif=True, feature_transformer=None, response_transformer=None, CNN_MODE=False):
     """ Apply a trained model to a raster file.
 
       Arguments:
@@ -59,11 +59,15 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
     cr = [0, feature.shape[1]]
     rr = [0, feature.shape[0]]
 
-    collist = [x for x in range(cr[0]+data_config.window_radius, cr[1] -
-                                data_config.window_radius, data_config.internal_window_radius*2)]
+    if (CNN_MODE):
+        collist = [x for x in range(cr[0]+data_config.window_radius, cr[1] - data_config.window_radius)]
+        rowlist = [x for x in range(rr[0]+data_config.window_radius, rr[1] - data_config.window_radius)]
+    else:
+        collist = [x for x in range(cr[0]+data_config.window_radius, cr[1] -
+                                    data_config.window_radius, data_config.internal_window_radius*2)]
+        rowlist = [x for x in range(rr[0]+data_config.window_radius, rr[1] -
+                                    data_config.window_radius, data_config.internal_window_radius*2)]
     collist.append(cr[1]-data_config.window_radius)
-    rowlist = [x for x in range(rr[0]+data_config.window_radius, rr[1] -
-                                data_config.window_radius, data_config.internal_window_radius*2)]
     rowlist.append(rr[1]-data_config.window_radius)
 
     for _c in tqdm(range(len(collist)), ncols=80):
@@ -84,9 +88,11 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
 
         if (feature_transformer is not None):
             images = feature_transformer.transform(images)
+        
+        images[np.isnan(images)] = data_config.feature_training_nodata_value
 
         pred_y = cnn.predict(images)
-        nd_set = np.any(np.isnan(images), axis=(1, 2, 3))
+        nd_set = np.all(np.isnan(images), axis=(1, 2, 3)) 
         pred_y[nd_set, ...] = data_config.response_nodata_value
 
         _i = 0
