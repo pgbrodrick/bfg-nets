@@ -985,22 +985,22 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
         responses_per_site.append(np.vstack(responses))
 
     total_samples = 0
-    for _i in range(0, len(responses_per_site)):
-        total_samples += responses_per_site[_i].shape[0]
+    for _site in range(0, len(responses_per_site)):
+        total_samples += responses_per_site[_site].shape[0]
 
     assert config.max_samples > 0, 'need more than 1 valid sample...'
 
     _logger.debug('total samples: {}'.format(total_samples))
     if (total_samples > config.max_samples):
-        for _i in range(0, len(responses_per_site)):
-            perm = np.random.permutation(len(responses_per_site[_i]))[:int(config.max_samples*len(responses_per_site[_i])/float(total_samples))]
-            responses_per_site[_i] = responses_per_site[_i][perm,:]
-            colrow_per_site[_i] = colrow_per_site[_i][perm,:]
+        for _site in range(0, len(responses_per_site)):
+            perm = np.random.permutation(len(responses_per_site[_site]))[:int(config.max_samples*len(responses_per_site[_site])/float(total_samples))]
+            responses_per_site[_site] = responses_per_site[_site][perm,:]
+            colrow_per_site[_site] = colrow_per_site[_site][perm,:]
             _logger.debug('perm len: {}'.format(len(perm)))
         
     total_samples = 0
-    for _i in range(0, len(responses_per_site)):
-        total_samples += responses_per_site[_i].shape[0]
+    for _site in range(0, len(responses_per_site)):
+        total_samples += responses_per_site[_site].shape[0]
     _logger.debug('total samples after trim: {}'.format(total_samples))
 
     n_features = np.sum([len(feat_type) for feat_type in feature_raw_band_types])
@@ -1035,7 +1035,7 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
             if (config.boundary_file_list[_site] is not None and config.boundary_as_vectors[_site]):
                 subset_geotransform = [ref_trans[0], ref_trans[1], 0, ref_trans[3], 0, ref_trans[5]]
 
-        good_response_data = np.zeros(responses_per_site[_i].shape[0]).astype(bool)
+        good_response_data = np.zeros(responses_per_site[_site].shape[0]).astype(bool)
         # Now read in features
         for _cr in tqdm(range(len(colrow)), ncols=80):
 
@@ -1047,7 +1047,7 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
             if (subset_geotransform is not None):
                 subset_geotransform[0] = ref_trans[0] + (f_ul[0][0] + colrow[_cr, 0]) * ref_trans[1]
                 subset_geotransform[3] = ref_trans[3] + (f_ul[0][1] + colrow[_cr, 1]) * ref_trans[5]
-                local_boundary_vector_file = config.boundary_file_list[_i]
+                local_boundary_vector_file = config.boundary_file_list[_site]
 
             local_feature = read_labeling_chunk(feature_sets,
                                                 f_ul + colrow[_cr, :],
@@ -1059,10 +1059,10 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
 
             if (local_feature is not None):
                 features[sample_index, ...] = local_feature.copy()
-                good_response_data[_i] = True
+                good_response_data[_cr] = True
                 sample_index += 1
         print('good response data: {}'.format(np.sum(good_response_data)))
-        responses_per_site[_i] = responses_per_site[_i][good_response_data,:]
+        responses_per_site[_site] = responses_per_site[_site][good_response_data,:]
     
     # transform responses
     responses = np.vstack(responses_per_site)
@@ -1121,4 +1121,4 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
 
     Path(config.successful_data_save_file).touch()
     features, responses, weights, success = open_memmap_files(config, writeable=False)
-    return features, responses, weights
+    return features, responses, weights, response_band_types
