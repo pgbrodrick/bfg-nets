@@ -721,11 +721,14 @@ def one_hot_encode_array(raw_band_types, array, memmap_file):
     cat_band_locations = [idx for idx, val in enumerate(raw_band_types) if val == 'C']
     band_types = raw_band_types.copy()
     for _c in reversed(range(len(cat_band_locations))):
-
-        un_array = np.unique(array[np.isfinite(array)][...,cat_band_locations[_c]])
+        
+        un_array = array[...,cat_band_locations[_c]]
+        un_array = np.unique(un_array[np.isfinite(un_array)])
+        print('Cat response: {}'.format(un_array))
         assert len(un_array) < MAX_UNIQUE_RESPONSES,\
                'Too many ({}) unique responses found, suspected incorrect categorical specification'.format(len(un_array))
         _logger.debug('Found {} categorical responses'.format(len(un_array)))
+        _logger.debug('Cat response: {}'.format(un_array))
 
         array_shape = list(array.shape)
         array_shape[-1] = len(un_array) + array.shape[-1] - 1
@@ -1101,6 +1104,8 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
 
     # one hot encode
     print(response_raw_band_types)
+    print(responses.shape)
+    print(np.unique(responses))
     responses, response_band_types = one_hot_encode_array(response_raw_band_types, responses, response_memmap_file)
     print(response_band_types)
 
