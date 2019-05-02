@@ -729,6 +729,7 @@ def one_hot_encode_array(raw_band_types, array, memmap_file):
 
         array_shape = list(array.shape)
         array_shape[-1] = len(un_array) + array.shape[-1] - 1
+        print(array_shape)
 
         cat_memmap_file = os.path.join(os.path.dirname(memmap_file), os.path.basename(memmap_file).split('.')[0] + '_cat.npy')
         cat_array = np.memmap(cat_memmap_file,
@@ -745,11 +746,14 @@ def one_hot_encode_array(raw_band_types, array, memmap_file):
                     cat_array[..., _r] = array[..., _r]
                 else:
                     cat_array[..., _r] = array[..., _r - len(un_array) + 1]
+        print(cat_band_locations[_c])
+        print(cat_array.shape)
 
 
         # Force file dump, and then reload the encoded responses as the primary response
         del array, cat_array
-        os.remove(cat_memmap_file)
+        if (os.path.isfile(memmap_file)):
+            os.remove(memmap_file)
         memmap_file = cat_memmap_file
         array = np.memmap(memmap_file, dtype=np.float32, mode='r+', shape=tuple(array_shape))
 
@@ -1093,14 +1097,16 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
         idx_finish = int(round((f + 1) / config.n_folds * len(fold_assignments)))
         fold_assignments[idx_start:idx_finish] = f
 
-    weights = np.ones(responses.shape[0])
+    weights = np.ones((responses.shape[0],1))
+
+    # one hot encode
+    print(response_raw_band_types)
+    responses, response_band_types = one_hot_encode_array(response_raw_band_types, responses, response_memmap_file)
+    print(response_band_types)
 
     _logger.debug('Feature shape: {}'.format(features.shape))
     _logger.debug('Response shape: {}'.format(responses.shape))
     _logger.debug('Weight shape: {}'.format(weights.shape))
-
-    # one hot encode
-    responses, response_band_types = one_hot_encode_array(response_raw_band_types, responses, response_memmap_file)
 
     for fold in range(config.n_folds):
         np.save(config.feature_files[fold], features[fold_assignments == fold, ...])
