@@ -11,8 +11,10 @@ import numpy.matlib
 import ogr
 import rasterio.features
 from rsCNN.utils import logging
+# TODO:  remove * imports
 from rsCNN.utils.general import *
 from rsCNN.data_management import scalers, DataConfig
+
 
 _logger = logging.get_child_logger(__name__)
 
@@ -39,9 +41,6 @@ def rasterize_vector(vector_file, geotransform, output_shape):
     for n in range(0, len(ds)):
         rasterio.features.rasterize([ds[n]['geometry']], transform=geotransform, default_value=1, out=mask)
     return mask
-
-
-_logger = logging.get_child_logger(__name__)
 
 
 def build_or_load_rawfile_data(config, rebuild=False):
@@ -402,14 +401,12 @@ def read_map_chunk(datasets: List, upper_lefts: List[List[int]], window_diameter
     return local_array, mask
 
 
-def insufficient_mask_data(mask, max_nodata_fraction):
-    if (mask is None):
-        return True
-    nodata_fraction = np.sum(mask) / np.prod(mask.shape)
-    if (nodata_fraction > max_nodata_fraction):
-        return True
-    else:
-        return False
+def insufficient_mask_data(mask: np.array, max_nodata_fraction: float) -> bool:
+    if mask is not None:
+        nodata_fraction = np.sum(mask) / np.prod(mask.shape)
+        if nodata_fraction <= max_nodata_fraction:
+            return False
+    return True
 
 
 def read_labeling_chunk(f_sets: List[tuple],
