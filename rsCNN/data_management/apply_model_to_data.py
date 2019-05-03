@@ -88,9 +88,7 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
         images = []
 
         write_ul = []
-        for _r in rowlist:
-            row = rowlist[_r]
-
+        for row in rowlist:
             d = read_feature_chunk(feature_set, [row, col], 
                                    data_config.window_radius*2, data_config.feature_nodata_value)
 
@@ -117,8 +115,6 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
 
         #nd_set = np.all(np.isnan(images), axis=-1)
         #pred_y[nd_set, ...] = data_config.response_nodata_value
-
-        print(pred_y.shape)
 
         for _b in range(0, n_classes):
             for _i in range(len(images)):
