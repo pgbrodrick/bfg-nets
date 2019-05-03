@@ -88,11 +88,11 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
 
         if (feature_transformer is not None):
             images = feature_transformer.transform(images)
-        
+
         images[np.isnan(images)] = data_config.feature_training_nodata_value
 
         pred_y = cnn.predict(images)
-        nd_set = np.all(np.isnan(images), axis=(1, 2, 3)) 
+        nd_set = np.all(np.isnan(images), axis=(1, 2, 3))
         pred_y[nd_set, ...] = data_config.response_nodata_value
 
         _i = 0

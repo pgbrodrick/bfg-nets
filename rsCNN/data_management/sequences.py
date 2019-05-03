@@ -13,7 +13,7 @@ _logger = logging.get_child_logger(__name__)
 
 
 # TODO: this is almost certainly the wrong place for this
-def build_memmapped_sequence(data_container : Dataset, fold_indices, batch_size=100, rebuild=False):
+def build_memmapped_sequence(data_container: Dataset, fold_indices, batch_size=100, rebuild=False):
     """
         This function does the following, considering the rebuild parameter at each step:
             2) load/initialize/fit scalers
