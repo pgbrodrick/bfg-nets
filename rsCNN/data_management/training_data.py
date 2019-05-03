@@ -381,12 +381,12 @@ def read_map_subset(datasets: List, upper_lefts: List[List[int]], window_diamete
     local_array = np.zeros((window_diameter, window_diameter, np.sum([lset.RasterCount for lset in datasets])))
     idx = 0
     for _file in range(len(datasets)):
-        r_set = datasets[_file]
-        response_upper_left = upper_lefts[_file]
+        file_set = datasets[_file]
+        file_upper_left = upper_lefts[_file]
         file_array = np.zeros((window_diameter, window_diameter, r_set.RasterCount))
-        for _b in range(r_set.RasterCount):
-            file_array[:, :, _b] = r_set.GetRasterBand(
-                _b+1).ReadAsArray(response_upper_left[0], response_upper_left[1], window_diameter, window_diameter)
+        for _b in range(file_set.RasterCount):
+            file_array[:, :, _b] = file_set.GetRasterBand(
+                _b+1).ReadAsArray(file_upper_left[0], file_upper_left[1], window_diameter, window_diameter)
 
         file_array[file_array == nodata_value] = np.nan
         file_array[np.isfinite(file_array) is False] = np.nan
@@ -411,10 +411,13 @@ def read_labeling_chunk(f_sets: List[tuple],
 
     for _f in range(len(feature_upper_lefts)):
         if (np.any(feature_upper_lefts[_f] < config.window_radius)):
+            _logger.trace('Feature read OOB')
             return None
         if (feature_upper_lefts[_f][0] > f_sets[_f].RasterXSize - config.window_radius):
+            _logger.trace('Feature read OOB')
             return None
         if (feature_upper_lefts[_f][1] > f_sets[_f].RasterYSize - config.window_radius):
+            _logger.trace('Feature read OOB')
             return None
 
     window_diameter = config.window_radius * 2
@@ -427,12 +430,14 @@ def read_labeling_chunk(f_sets: List[tuple],
                            config.boundary_bad_value)
 
     if not _check_mask_data_sufficient(mask, config.nodata_maximum_fraction):
+        _logger.trace('Insufficient mask data')
         return None
 
     local_feature, mask = read_map_subset(f_sets, feature_upper_lefts,
                                          window_diameter, mask, config.feature_nodata_value)
 
     if not _check_mask_data_sufficient(mask, config.nodata_maximum_fraction):
+        _logger.trace('Insufficient feature data')
         return None
 
     # Final check (propogate mask forward), and return

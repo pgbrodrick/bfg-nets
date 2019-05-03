@@ -11,6 +11,18 @@ from rsCNN.utils.general import *
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
 
+def read_feature_chunk(feature_set, ul, window_size, nodata_value):
+    
+    subset = np.zeros((window_size,window_size,feature_set.RasterCount))
+    for _b in range(feature_set.RasterCount):
+        subset[...,_b] = feature_set.GetRasterBand(_b+1).ReadAsArray(int(ul[0]),int(ul[1]),int(window_size),int(window_size))
+
+    subset[subset == nodata_value] = np.nan
+    subset[np.logical_not(np.isfinite(subset))] = np.nan
+
+    return subset
+
+
 def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, make_png=False, make_tif=True, feature_transformer=None, response_transformer=None, CNN_MODE=False):
     """ Apply a trained model to a raster file.
 
@@ -37,51 +49,58 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
 
     assert os.path.dirname(destination_basename), 'Output directory does not exist'
 
-    dataset = gdal.Open(feature_file, gdal.GA_ReadOnly)
-
-    # TODO: implement an out-of core version here (IE, apply and write on the fly)
-    feature = np.zeros((dataset.RasterYSize, dataset.RasterXSize, dataset.RasterCount))
-    for n in range(0, dataset.RasterCount):
-        feature[:, :, n] = dataset.GetRasterBand(n+1).ReadAsArray()
-
-    if (not dataset.GetRasterBand(1).GetNoDataValue() is None):
-        feature[feature == dataset.GetRasterBand(1).GetNoDataValue()] = data_config.feature_nodata_value
-    feature[np.isnan(feature)] = data_config.feature_nodata_value
-    feature[np.isinf(feature)] = data_config.feature_nodata_value
-
-    feature[feature == data_config.feature_nodata_value] = np.nan
-
+    # Open feature dataset and establish n_classes
+    feature_set = gdal.Open(feature_file, gdal.GA_ReadOnly)
     n_classes = cnn.predict(
-        (np.zeros((1, data_config.window_radius*2, data_config.window_radius*2, feature.shape[-1])))).shape[-1]
+        (np.zeros((1, data_config.window_radius*2, data_config.window_radius*2, feature_set.RasterCount)))).shape[-1]
 
-    output = np.zeros((feature.shape[0], feature.shape[1], n_classes)) + data_config.response_nodata_value
 
-    cr = [0, feature.shape[1]]
-    rr = [0, feature.shape[0]]
 
+    ###### Initialize Output Dataset
+    driver = gdal.GetDriverByName('GTiff')
+    driver.Register()
+
+    outDataset = driver.Create(destination_basename + '.tif',
+                               feature_set.RasterYSize, 
+                               feature_set.RasterXSize, 
+                               n_classes, 
+                               gdal.GDT_Float32)
+
+    outDataset.SetProjection(feature_set.GetProjection())
+    outDataset.SetGeoTransform(feature_set.GetGeoTransform())
+
+
+    step_size = data_config.internal_window_radius*2
     if (CNN_MODE):
-        collist = [x for x in range(cr[0]+data_config.window_radius, cr[1] - data_config.window_radius)]
-        rowlist = [x for x in range(rr[0]+data_config.window_radius, rr[1] - data_config.window_radius)]
-    else:
-        collist = [x for x in range(cr[0]+data_config.window_radius, cr[1] -
-                                    data_config.window_radius, data_config.internal_window_radius*2)]
-        rowlist = [x for x in range(rr[0]+data_config.window_radius, rr[1] -
-                                    data_config.window_radius, data_config.internal_window_radius*2)]
-    collist.append(cr[1]-data_config.window_radius)
-    rowlist.append(rr[1]-data_config.window_radius)
+        step_size = 1
+
+    # Find the UL indicies of all prediction locations
+    cr = [0, feature_set.RasterXSize]
+    rr = [0, feature_set.RasterYSize]
+
+    collist = [x for x in range(cr[0], cr[1] - 2*data_config.window_radius, step_size)]
+    rowlist = [x for x in range(rr[0], rr[1] - 2*data_config.window_radius, step_size)]
+    collist.append(cr[1]-2*data_config.window_radius)
+    rowlist.append(rr[1]-2*data_config.window_radius)
 
     for _c in tqdm(range(len(collist)), ncols=80):
         col = collist[_c]
         images = []
-        for n in rowlist:
-            d = feature[n-data_config.window_radius:n+data_config.window_radius,
-                        col-data_config.window_radius:col+data_config.window_radius].copy()
+
+        write_ul = []
+        for _r in rowlist:
+            row = rowlist[_r]
+
+            d = read_feature_chunk(feature_set, [row, col], 
+                                   data_config.window_radius*2, data_config.feature_nodata_value)
+
             if(d.shape[0] == data_config.window_radius*2 and d.shape[1] == data_config.window_radius*2):
                 # TODO: consider having this as an option
                 # d = fill_nearest_neighbor(d)
                 images.append(d)
+                write_ul.append([row,col])
         images = np.stack(images)
-        images = images.reshape((images.shape[0], images.shape[1], images.shape[2], dataset.RasterCount))
+        images = images.reshape((images.shape[0], images.shape[1], images.shape[2], feature_set.RasterCount))
 
         if (data_config.feature_mean_centering is True):
             images -= np.nanmean(images, axis=(1, 2))[:, np.newaxis, np.newaxis, :]
@@ -90,54 +109,38 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
             images = feature_transformer.transform(images)
 
         images[np.isnan(images)] = data_config.feature_training_nodata_value
-
         pred_y = cnn.predict(images)
-        nd_set = np.all(np.isnan(images), axis=(1, 2, 3))
-        pred_y[nd_set, ...] = data_config.response_nodata_value
+        if (response_transformer is not None):
+            pred_y = response_transformer.inverse_transform(pred_y)
 
-        _i = 0
-        for n in rowlist:
-            p = pred_y[_i, ...]
-            if (data_config.internal_window_radius < data_config.window_radius):
-                mm = int(round(data_config.window_radius - data_config.internal_window_radius))
-                p = p[mm:-mm, mm:-mm, :]
-            output[n-data_config.internal_window_radius:n+data_config.internal_window_radius, col -
-                   data_config.internal_window_radius:col+data_config.internal_window_radius, :] = p
-            _i += 1
-            if (_i >= len(images)):
-                break
+        pred_y[np.logical_not(np.isfinite(pred_y))] = data_config.response_nodata_value
 
-    # TODO: think through if this order of operations screws things up if response_nodata_value != feature_nodata_value
-    if (feature_transformer is not None):
-        output = response_transformer.inverse_transform(output)
+        #nd_set = np.all(np.isnan(images), axis=-1)
+        #pred_y[nd_set, ...] = data_config.response_nodata_value
 
-    output[np.all(np.isnan(feature), axis=-1), :] = data_config.response_nodata_value
+        print(pred_y.shape)
 
-    if (make_png):
-        output[output == data_config.response_nodata_value] = np.nan
-        feature[feature == data_config.response_nodata_value] = np.nan
-        gs1 = gridspec.GridSpec(1, n_classes+1)
-        for n in range(0, n_classes):
-            ax = plt.subplot(gs1[0, n])
-            im = plt.imshow(output[:, :, n], vmin=0, vmax=1)
-            plt.axis('off')
+        for _b in range(0, n_classes):
+            for _i in range(len(images)):
+                if CNN_MODE:
+                    outDataset.GetRasterBand(_b+1).WriteArray(pred_y[_i,_b].reshape((1,1)), write_ul[_i][0], write_ul[_i][1])
+                else:
+                    outDataset.GetRasterBand(_b+1).WriteArray(pred_y[_i,:,:,_b], write_ul[_i][0], write_ul[_i][1])
+        outDataset.FlushCache()
 
-        ax = plt.subplot(gs1[0, n_classes])
-        im = plt.imshow(np.squeeze(feature[..., 0]))
-        plt.axis('off')
-        plt.savefig(destination_basename + '.png', dpi=png_dpi, bbox_inches='tight')
-        plt.clf()
 
-    if (make_tif):
-        driver = gdal.GetDriverByName('GTiff')
-        driver.Register()
-        output[np.isnan(output)] = data_config.response_nodata_value
+    #if (make_png):
+    #    output[output == data_config.response_nodata_value] = np.nan
+    #    feature[feature == data_config.response_nodata_value] = np.nan
+    #    gs1 = gridspec.GridSpec(1, n_classes+1)
+    #    for n in range(0, n_classes):
+    #        ax = plt.subplot(gs1[0, n])
+    #        im = plt.imshow(output[:, :, n], vmin=0, vmax=1)
+    #        plt.axis('off')
 
-        outDataset = driver.Create(destination_basename + '.tif',
-                                   output.shape[1], output.shape[0], n_classes, gdal.GDT_Float32)
-        outDataset.SetProjection(dataset.GetProjection())
-        outDataset.SetGeoTransform(dataset.GetGeoTransform())
-        for n in range(0, n_classes):
-            outDataset.GetRasterBand(n+1).WriteArray(np.squeeze(output[:, :, n]), 0, 0)
-        del outDataset
-    del dataset
+    #    ax = plt.subplot(gs1[0, n_classes])
+    #    im = plt.imshow(np.squeeze(feature[..., 0]))
+    #    plt.axis('off')
+    #    plt.savefig(destination_basename + '.png', dpi=png_dpi, bbox_inches='tight')
+    #    plt.clf()
+
