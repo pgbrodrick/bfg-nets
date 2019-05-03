@@ -401,14 +401,6 @@ def read_map_chunk(datasets: List, upper_lefts: List[List[int]], window_diameter
     return local_array, mask
 
 
-def insufficient_mask_data(mask: np.array, max_nodata_fraction: float) -> bool:
-    if mask is not None:
-        nodata_fraction = np.sum(mask) / np.prod(mask.shape)
-        if nodata_fraction <= max_nodata_fraction:
-            return False
-    return True
-
-
 def read_labeling_chunk(f_sets: List[tuple],
                         feature_upper_lefts: List[List[int]],
                         config: DataConfig,
@@ -426,13 +418,13 @@ def read_labeling_chunk(f_sets: List[tuple],
                            window_diameter,
                            config.boundary_bad_value)
 
-    if insufficient_mask_data(mask, config.nodata_maximum_fraction):
+    if not _check_mask_data_sufficient(mask, config.nodata_maximum_fraction):
         return None
 
     local_feature, mask = read_map_chunk(f_sets, feature_upper_lefts,
                                          window_diameter, mask, config.feature_nodata_value)
 
-    if insufficient_mask_data(mask, config.nodata_maximum_fraction):
+    if not _check_mask_data_sufficient(mask, config.nodata_maximum_fraction):
         return None
 
     # Final check (propogate mask forward), and return
@@ -460,12 +452,12 @@ def read_segmentation_chunk(f_sets: List[tuple],
                            config.boundary_bad_value)
     mv = [np.sum(mask)]
 
-    if insufficient_mask_data(mask, config.nodata_maximum_fraction):
+    if not _check_mask_data_sufficient(mask, config.nodata_maximum_fraction):
         return None, None
 
     local_response, mask = read_map_chunk(r_sets, response_upper_lefts,
                                           window_diameter, mask, config.response_nodata_value)
-    if insufficient_mask_data(mask, config.nodata_maximum_fraction):
+    if not _check_mask_data_sufficient(mask, config.nodata_maximum_fraction):
         return None, None
     mv.append(np.sum(mask))
 
@@ -478,14 +470,14 @@ def read_segmentation_chunk(f_sets: List[tuple],
 
     if (mask is None):
         return None, None
-    if insufficient_mask_data(mask, config.nodata_maximum_fraction):
+    if not _check_mask_data_sufficient(mask, config.nodata_maximum_fraction):
         return None, None
 
     local_feature, mask = read_map_chunk(f_sets, feature_upper_lefts,
                                          window_diameter, mask, config.feature_nodata_value)
     mv.append(np.sum(mask))
 
-    if insufficient_mask_data(mask, config.nodata_maximum_fraction):
+    if not _check_mask_data_sufficient(mask, config.nodata_maximum_fraction):
         return None, None
 
     # Final check (propogate mask forward), and return
@@ -1144,3 +1136,19 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
     Path(config.successful_data_save_file).touch()
     features, responses, weights, success = open_memmap_files(config, writeable=False)
     return features, responses, weights, response_band_types
+
+
+def _check_mask_data_sufficient(mask: np.array, max_nodata_fraction: float) -> bool:
+    if mask is not None:
+        nodata_fraction = np.sum(mask) / np.prod(mask.shape)
+        if nodata_fraction <= max_nodata_fraction:
+            _logger.trace('Data mask has sufficient data, missing data proportion: {}'.format(nodata_fraction))
+            return True
+        else:
+            _logger.trace('Data mask has insufficient data, missing data proportion: {}'.format(nodata_fraction))
+            return False
+    else:
+        _logger.trace('Data mask is None')
+        return False
+
+
