@@ -89,7 +89,7 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
 
         write_ul = []
         for row in rowlist:
-            d = read_feature_chunk(feature_set, [row, col], 
+            d = read_feature_chunk(feature_set, [col, row], 
                                    data_config.window_radius*2, data_config.feature_nodata_value)
 
             if(d.shape[0] == data_config.window_radius*2 and d.shape[1] == data_config.window_radius*2):
