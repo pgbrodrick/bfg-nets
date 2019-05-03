@@ -376,17 +376,17 @@ def read_mask_chunk(boundary_vector_file: str, boundary_subset_geotransform: tup
     return mask
 
 
-def read_map_chunk(datasets: List, upper_lefts: List[List[int]], window_diameter: int, mask, nodata_value):
+def read_map_subset(datasets: List, upper_lefts: List[List[int]], window_diameter: int, mask, nodata_value):
     # Next check to see if we have a response, if so read all
     local_array = np.zeros((window_diameter, window_diameter, np.sum([lset.RasterCount for lset in datasets])))
     idx = 0
     for _file in range(len(datasets)):
-        r_set = datasets[_file]
-        response_upper_left = upper_lefts[_file]
-        file_array = np.zeros((window_diameter, window_diameter, r_set.RasterCount))
-        for _b in range(r_set.RasterCount):
-            file_array[:, :, _b] = r_set.GetRasterBand(
-                _b+1).ReadAsArray(response_upper_left[0], response_upper_left[1], window_diameter, window_diameter)
+        file_set = datasets[_file]
+        file_upper_left = upper_lefts[_file]
+        file_array = np.zeros((window_diameter, window_diameter, file_set.RasterCount))
+        for _b in range(file_set.RasterCount):
+            file_array[:, :, _b] = file_set.GetRasterBand(
+                _b+1).ReadAsArray(file_upper_left[0], file_upper_left[1], window_diameter, window_diameter)
 
         file_array[file_array == nodata_value] = np.nan
         file_array[np.isfinite(file_array) is False] = np.nan
@@ -409,6 +409,17 @@ def read_labeling_chunk(f_sets: List[tuple],
                         b_set=None,
                         boundary_upper_left: List[int] = None):
 
+    for _f in range(len(feature_upper_lefts)):
+        if (np.any(feature_upper_lefts[_f] < config.window_radius)):
+            _logger.trace('Feature read OOB')
+            return None
+        if (feature_upper_lefts[_f][0] > f_sets[_f].RasterXSize - config.window_radius):
+            _logger.trace('Feature read OOB')
+            return None
+        if (feature_upper_lefts[_f][1] > f_sets[_f].RasterYSize - config.window_radius):
+            _logger.trace('Feature read OOB')
+            return None
+
     window_diameter = config.window_radius * 2
 
     mask = read_mask_chunk(boundary_vector_file,
@@ -419,12 +430,14 @@ def read_labeling_chunk(f_sets: List[tuple],
                            config.boundary_bad_value)
 
     if not _check_mask_data_sufficient(mask, config.nodata_maximum_fraction):
+        _logger.trace('Insufficient mask data')
         return None
 
-    local_feature, mask = read_map_chunk(f_sets, feature_upper_lefts,
+    local_feature, mask = read_map_subset(f_sets, feature_upper_lefts,
                                          window_diameter, mask, config.feature_nodata_value)
 
     if not _check_mask_data_sufficient(mask, config.nodata_maximum_fraction):
+        _logger.trace('Insufficient feature data')
         return None
 
     # Final check (propogate mask forward), and return
@@ -455,7 +468,7 @@ def read_segmentation_chunk(f_sets: List[tuple],
     if not _check_mask_data_sufficient(mask, config.nodata_maximum_fraction):
         return None, None
 
-    local_response, mask = read_map_chunk(r_sets, response_upper_lefts,
+    local_response, mask = read_map_subset(r_sets, response_upper_lefts,
                                           window_diameter, mask, config.response_nodata_value)
     if not _check_mask_data_sufficient(mask, config.nodata_maximum_fraction):
         return None, None
@@ -473,7 +486,7 @@ def read_segmentation_chunk(f_sets: List[tuple],
     if not _check_mask_data_sufficient(mask, config.nodata_maximum_fraction):
         return None, None
 
-    local_feature, mask = read_map_chunk(f_sets, feature_upper_lefts,
+    local_feature, mask = read_map_subset(f_sets, feature_upper_lefts,
                                          window_diameter, mask, config.feature_nodata_value)
     mv.append(np.sum(mask))
 
@@ -732,7 +745,7 @@ def one_hot_encode_array(raw_band_types, array, memmap_file):
         un_array = np.unique(un_array[np.isfinite(un_array)])
         assert len(un_array) < MAX_UNIQUE_RESPONSES,\
             'Too many ({}) unique responses found, suspected incorrect categorical specification'.format(len(un_array))
-        _logger.debug('Found {} categorical responses'.format(len(un_array)))
+        _logger.info('Found {} categorical responses'.format(len(un_array)))
         _logger.debug('Cat response: {}'.format(un_array))
 
         array_shape = list(array.shape)
@@ -902,9 +915,9 @@ def build_training_data_ordered(config: DataConfig, feature_raw_band_types: List
         weights[:, :, :buf, -1] = 0
         weights[:, :, -buf:, -1] = 0
 
-    _logger.debug('Feature shape: {}'.format(features.shape))
-    _logger.debug('Response shape: {}'.format(responses.shape))
-    _logger.debug('Weight shape: {}'.format(weights.shape))
+    _logger.info('Feature shape: {}'.format(features.shape))
+    _logger.info('Response shape: {}'.format(responses.shape))
+    _logger.info('Weight shape: {}'.format(weights.shape))
 
     # one hot encode
     responses, response_band_types = one_hot_encode_array(response_raw_band_types, responses, response_memmap_file)
@@ -1045,7 +1058,9 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
         [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle(
             [feature_sets, response_sets, [bs for bs in boundary_sets if bs is not None]])
 
-        colrow = colrow_per_site[_site]
+        # colrow is current the response cetners, but we need to use the pixel ULs.  So subtract
+        # out the corresponding feature radius
+        colrow = colrow_per_site[_site] - config.window_radius
 
         ref_trans = feature_sets[0].GetGeoTransform()
         subset_geotransform = None
@@ -1112,9 +1127,9 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
     # one hot encode
     responses, response_band_types = one_hot_encode_array(response_raw_band_types, responses, response_memmap_file)
 
-    _logger.debug('Feature shape: {}'.format(features.shape))
-    _logger.debug('Response shape: {}'.format(responses.shape))
-    _logger.debug('Weight shape: {}'.format(weights.shape))
+    _logger.info('Feature shape: {}'.format(features.shape))
+    _logger.info('Response shape: {}'.format(responses.shape))
+    _logger.info('Weight shape: {}'.format(weights.shape))
 
     for fold in range(config.n_folds):
         np.save(config.feature_files[fold], features[fold_assignments == fold, ...])
