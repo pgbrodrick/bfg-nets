@@ -192,93 +192,6 @@ def check_resolutions(a_files, b_files, c_files=[]):
                 format(a_res[_p], loc_a_files[_p], b_res[_p], loc_b_files[_p])
 
 
-# TODO:  the wonderful thing about git is that we can delete this stuff and still recover!
-# deprecated, keeping for potential future use
-def check_data_extents_and_projections(set_a, set_b, set_b_is_vector=False, set_c=[], set_c_is_vector=[], ignore_projections=False, ignore_extents=False):
-    """ Check to see if two different gdal datasets have the same projection, geotransform, and extent.
-    Arguments:
-    set_a - list
-      First list of gdal datasets to check.
-    set_b - list
-      Second list of gdal datasets (or vectors) to check.
-
-    Keyword Arguments:
-    set_b_is_vector - boolean
-      Flag to indicate if set_b is a vector, as opposed to a gdal_dataset.
-    set_c - list
-      A third (optional) list of gdal datasets to check.
-    set_c_is_vector - list
-      List of flags to indicate if set_c is a vector, as opposed to a gdal_dataset.
-    ignore_projections - boolean
-      A flag to ignore projection differences between feature and response sets - use only if you 
-      are sure the projections are really the same.
-
-
-    Return: 
-    None, simply throw error if the check fails
-    """
-    # TODO:  this should confirm that the input is actually a list
-    if (len(set_a) != len(set_b)):
-        raise Exception('different number of training features and responses')
-    if (len(set_c) > 0):
-        if (len(set_a) != len(set_c)):
-            raise Exception('different number of training features and boundary files - give None for blank boundary')
-
-    for n in range(0, len(set_a)):
-        a_proj = get_proj(set_a[n], False)
-        b_proj = get_proj(set_b[n], set_b_is_vector)
-
-        if (a_proj != b_proj and ignore_projections is False):
-            raise Exception(('projection mismatch between', set_a[n], 'and', set_b[n]))
-
-        if (len(set_c) > 0):
-            if (set_c[n] is not None):
-                c_proj = get_proj(set_c[n], set_c_is_vector)
-            else:
-                c_proj = b_proj
-
-            if (a_proj != c_proj and ignore_projections is False):
-                raise Exception(('projection mismatch between', set_a[n], 'and', set_c[n]))
-
-        if (set_b_is_vector == False):
-            dataset_a = gdal.Open(set_a[n], gdal.GA_ReadOnly)
-            dataset_b = gdal.Open(set_b[n], gdal.GA_ReadOnly)
-            a_trans = dataset_a.GetGeoTransform()
-            b_trans = dataset_b.GetGeoTransform()
-
-            if (dataset_a.GetProjection() != dataset_b.GetProjection() and ignore_projections is False):
-                raise Exception(('projection mismatch between', set_a[n], 'and', set_b[n]))
-
-            if (a_trans[1] != b_trans[1] or a_trans[5] != b_trans[5]):
-                raise Exception(('resolution mismatch between', set_a[n], 'and', set_b[n]))
-
-            if (ignore_extents is False):
-                if (a_trans[0] != b_trans[0] or a_trans[3] != b_trans[3]):
-                    raise Exception(('upper left mismatch between', set_a[n], 'and', set_b[n]))
-
-                if (dataset_a.RasterXSize != dataset_b.RasterXSize or dataset_a.RasterYSize != dataset_b.RasterYSize):
-                    raise Exception(('extent mismatch between', set_a[n], 'and', set_b[n]))
-
-        if (len(set_c) > 0):
-            if (set_c[n] is not None and set_c_is_vector[n] is False):
-                dataset_a = gdal.Open(set_a[n], gdal.GA_ReadOnly)
-                dataset_c = gdal.Open(set_c[n], gdal.GA_ReadOnly)
-                a_trans = dataset_a.GetGeoTransform()
-                c_trans = dataset_c.GetGeoTransform()
-
-                if (dataset_a.GetProjection() != dataset_c.GetProjection() and ignore_projections == False):
-                    raise Exception(('projection mismatch between', set_a[n], 'and', set_c[n]))
-
-                if (a_trans[1] != c_trans[1] or a_trans[5] != c_trans[5]):
-                    raise Exception(('resolution mismatch between', set_a[n], 'and', set_c[n]))
-
-                if (ignore_extents is False):
-                    if (a_trans[0] != c_trans[0] or a_trans[3] != c_trans[3]):
-                        raise Exception(('upper left mismatch between', set_a[n], 'and', set_c[n]))
-
-                    if (dataset_a.RasterXSize != dataset_c.RasterXSize or dataset_a.RasterYSize != dataset_c.RasterYSize):
-                        raise Exception(('extent mismatch between', set_a[n], 'and', set_c[n]))
-
 # Calculates categorical weights for a single response
 
 def calculate_categorical_weights(
@@ -777,7 +690,8 @@ def build_training_data_ordered(config: configs.Config, feature_raw_band_types: 
     weight_memmap_file = config.data_build.data_save_name + '_weight_munge_memmap.npy'
 
     # TODO: fix max size issue, but force for now to prevent overly sized sets
-    assert config.data_build.max_samples * (config.data_build.window_radius*2)**2 * n_features / 1024.**3 < 10, 'max_samples too large'
+    assert config.data_build.max_samples * (config.data_build.window_radius*2)**2 * \
+        n_features / 1024.**3 < 10, 'max_samples too large'
     features = np.memmap(feature_memmap_file,
                          dtype=np.float32,
                          mode='w+',
@@ -796,7 +710,8 @@ def build_training_data_ordered(config: configs.Config, feature_raw_band_types: 
     for _site in range(0, len(config.raw_files.raw_feature_file_list)):
 
         # open requisite datasets
-        feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.raw_feature_file_list[_site]]
+        feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
+                        for loc_file in config.raw_files.raw_feature_file_list[_site]]
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_response_file_list[_site]]
 
         # Calculate the interior space location and extent
@@ -938,7 +853,8 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
         boundary_sets = [None for i in range(len(config.raw_files.raw_feature_file_list))]
     for _site in range(0, len(config.raw_files.raw_feature_file_list)):
         # open requisite datasets
-        feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.raw_feature_file_list[_site]]
+        feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
+                        for loc_file in config.raw_files.raw_feature_file_list[_site]]
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_response_file_list[_site]]
 
         # Calculate the interior space location and extent
@@ -1030,7 +946,8 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
     for _site in range(0, len(config.raw_files.raw_feature_file_list)):
 
         # open requisite datasets
-        feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.raw_feature_file_list[_site]]
+        feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
+                        for loc_file in config.raw_files.raw_feature_file_list[_site]]
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_response_file_list[_site]]
 
         # Calculate the interior space location and extent
