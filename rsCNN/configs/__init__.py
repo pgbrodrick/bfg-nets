@@ -57,6 +57,7 @@ class RawFiles(BaseConfigSection):
     response_raw_band_type_input = None
     feature_nodata_value = None
     response_nodata_value = None
+    response_data_format = None
     boundary_bad_value = None
     ignore_projections = None
     # TODO:  expand on this
@@ -70,6 +71,7 @@ class RawFiles(BaseConfigSection):
         ('response_raw_band_type_input', None, str),  # See above note
         ('feature_nodata_value', -9999, float),  # Value that denotes missing data in feature files
         ('response_nodata_value', -9999, float),  # Value that denotes missing data in response files
+        ('response_data_format', None, str),  # TODO:  explain why FCN or CNN, perhaps change name more informative?
         ('boundary_bad_value', None, float),  # Value that indicates pixels are out of bounds in a boundary raster file
         ('ignore_projections', False, bool),  # Ignore projection differences between feature/response, use with caution
     ]
@@ -109,6 +111,8 @@ class DataBuild(BaseConfigSection):
     test_fold = None
     window_radius = None
     internal_window_radius = None
+    # TODO:  Phil:  should mean_centering be a list so that we have one item per file?
+    feature_mean_centering = None
     feature_nodata_maximum_fraction = None
     response_min_value = None
     response_max_value = None
@@ -125,6 +129,8 @@ class DataBuild(BaseConfigSection):
         ('test_fold', None, int),  # Which training data fold to use for testing
         ('window_radius', None, int),  # Determines image size as 2 * window_radius
         ('internal_window_radius', None, int),  # Determines size of model loss window, must contain responses
+        # TODO:  Phil:  should mean_centering be a list so that we have one item per file?
+        ('feature_mean_centering', False, bool),  # Whether to mean center the features
         ('feature_nodata_maximum_fraction', 0.0, float),  # Only include samples where features have fewer nodata values
         ('response_min_value', None, float),  # Responses below this value are converted to the response_nodata_value
         ('response_max_value', None, float),  # Responses above this value are converted to the response_nodata_value
@@ -147,8 +153,6 @@ class DataSamples(BaseConfigSection):
     batch_size = None
     feature_scaler_names_list = None
     response_scaler_names_list = None
-    # TODO:  Phil:  should mean_centering be a list so that we have one item per file?
-    feature_mean_centering = None
     feature_training_nodata_value = None
     # Data sample configuration, information necessary to parse built data files and pass data to models during training
     field_defaults = [
@@ -156,8 +160,6 @@ class DataSamples(BaseConfigSection):
         ('batch_size', 100, int),  # The sample batch size for images passed to the model
         ('feature_scaler_names_list', None, list),  # Names of the scalers to use with each feature file
         ('response_scaler_names_list', None, list),  # Names of the scalers to use with each response file
-        # TODO:  Phil:  should mean_centering be a list so that we have one item per file?
-        ('feature_mean_centering', False, bool),  # Whether to mean center the features
         ('feature_training_nodata_value', -10.0, float),  # The missing data value for models, not compatible with nans
     ]
 
@@ -390,7 +392,7 @@ class Config(object):
         # can be configured, this becomes burdensome.
         self.raw_files = raw_files
         self.data_build = data_build
-        self.data_sample = data_samples
+        self.data_samples = data_samples
         self.model_training = model_training
         self.architecture_options = architecture_options
         self.callback_general = callback_general

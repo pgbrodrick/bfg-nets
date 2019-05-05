@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from tqdm import tqdm
 
+from rsCNN import configs
 from rsCNN.utils.general import *
 
 
@@ -24,7 +25,7 @@ def read_feature_chunk(feature_set, ul, window_size, nodata_value):
     return subset
 
 
-def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, make_png=False, make_tif=True, feature_transformer=None, response_transformer=None, CNN_MODE=False):
+def apply_model_to_raster(cnn, config: configs.Config, feature_file, destination_basename, make_png=False, make_tif=True, feature_transformer=None, response_transformer=None, CNN_MODE=False):
     """ Apply a trained model to a raster file.
 
       Arguments:
@@ -53,7 +54,7 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
     # Open feature dataset and establish n_classes
     feature_set = gdal.Open(feature_file, gdal.GA_ReadOnly)
     n_classes = cnn.predict(
-        (np.zeros((1, data_config.window_radius*2, data_config.window_radius*2, feature_set.RasterCount)))).shape[-1]
+        np.zeros((1, config.data_build.window_radius*2, config.data_build.window_radius*2, feature_set.RasterCount))).shape[-1]
 
     # Initialize Output Dataset
     driver = gdal.GetDriverByName('GTiff')
@@ -68,7 +69,7 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
     outDataset.SetProjection(feature_set.GetProjection())
     outDataset.SetGeoTransform(feature_set.GetGeoTransform())
 
-    step_size = data_config.internal_window_radius*2
+    step_size = config.data_build.internal_window_radius*2
     if (CNN_MODE):
         step_size = 1
 
@@ -76,10 +77,10 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
     cr = [0, feature_set.RasterXSize]
     rr = [0, feature_set.RasterYSize]
 
-    collist = [x for x in range(cr[0], cr[1] - 2*data_config.window_radius, step_size)]
-    rowlist = [x for x in range(rr[0], rr[1] - 2*data_config.window_radius, step_size)]
-    collist.append(cr[1]-2*data_config.window_radius)
-    rowlist.append(rr[1]-2*data_config.window_radius)
+    collist = [x for x in range(cr[0], cr[1] - 2*config.data_build.window_radius, step_size)]
+    rowlist = [x for x in range(rr[0], rr[1] - 2*config.data_build.window_radius, step_size)]
+    collist.append(cr[1]-2*config.data_build.window_radius)
+    rowlist.append(rr[1]-2*config.data_build.window_radius)
 
     for _c in tqdm(range(len(collist)), ncols=80):
         col = collist[_c]
@@ -88,9 +89,9 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
         write_ul = []
         for row in rowlist:
             d = read_feature_chunk(feature_set, [col, row],
-                                   data_config.window_radius*2, data_config.feature_nodata_value)
+                                   config.data_build.window_radius*2, config.data_build.feature_nodata_value)
 
-            if(d.shape[0] == data_config.window_radius*2 and d.shape[1] == data_config.window_radius*2):
+            if(d.shape[0] == config.data_build.window_radius*2 and d.shape[1] == config.data_build.window_radius*2):
                 # TODO: consider having this as an option
                 # d = fill_nearest_neighbor(d)
                 images.append(d)
@@ -98,18 +99,18 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
         images = np.stack(images)
         images = images.reshape((images.shape[0], images.shape[1], images.shape[2], feature_set.RasterCount))
 
-        if (data_config.feature_mean_centering is True):
+        if (config.data_build.feature_mean_centering is True):
             images -= np.nanmean(images, axis=(1, 2))[:, np.newaxis, np.newaxis, :]
 
         if (feature_transformer is not None):
             images = feature_transformer.transform(images)
 
-        images[np.isnan(images)] = data_config.feature_training_nodata_value
+        images[np.isnan(images)] = config.data_samples.feature_training_nodata_value
         pred_y = cnn.predict(images)
         if (response_transformer is not None):
             pred_y = response_transformer.inverse_transform(pred_y)
 
-        pred_y[np.logical_not(np.isfinite(pred_y))] = data_config.response_nodata_value
+        pred_y[np.logical_not(np.isfinite(pred_y))] = config.raw_files.response_nodata_value
 
         #nd_set = np.all(np.isnan(images), axis=-1)
         #pred_y[nd_set, ...] = data_config.response_nodata_value
