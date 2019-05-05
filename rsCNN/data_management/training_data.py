@@ -1153,6 +1153,12 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
     return features, responses, weights, response_band_types
 
 
+# TODO: Phil:  sorry, I'm reorganizing the script to follow the Python conventions:  more nested or specialized
+#  functions later in the script, higher level or main functions earlier, leading underscores for functions that
+#  are "protected" or "private", that shouldn't be used outside of the module. This also helps because we can add
+#  testing (eventually) for the lowest level functions and we'll know which ones are easiest to catch first.
+
+
 def _check_mask_data_sufficient(mask: np.array, max_nodata_fraction: float) -> bool:
     if mask is not None:
         nodata_fraction = np.sum(mask) / np.prod(mask.shape)
