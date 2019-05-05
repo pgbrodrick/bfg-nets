@@ -28,9 +28,6 @@ _FILENAME_WEIGHTS_SUFFIX = 'weights_{}.npy'
 _VECTORIZED_FILENAMES = ('kml', 'shp')
 
 
-
-
-
 def rasterize_vector(vector_file, geotransform, output_shape):
     """ Rasterizes an input vector directly into a numpy array.
     Arguments:
@@ -1211,4 +1208,6 @@ def _check_mask_data_sufficient(mask: np.array, max_nodata_fraction: float) -> b
     else:
         _logger.trace('Data mask is None')
         return False
->>>>>>> fabina/debug
+
+
+>>>>>> > fabina/debug
