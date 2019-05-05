@@ -15,6 +15,7 @@ def check_scaler_exists(scaler_name):
     assert scaler_name in sys.modules[__name__], 'Scaler with name {} does not exist'.format(scaler_name)
 
 
+
 def get_scaler(scaler_name, scaler_options):
     check_scaler_exists(scaler_name)
     return getattr(sys.modules[__name__], scaler_name)(**scaler_options)
@@ -92,7 +93,10 @@ class BaseSklearnScaler(BaseGlobalScaler):
     def _reshape_image_array(self, image_array):
         # The second dimension is image_array.shape[-1] which is the num_channels, so the first dimension is
         # image width x image height
-        return image_array.reshape(-1, image_array.shape[-1])
+        if (len(image_array.shape) > 2):
+            return image_array.reshape(-1, image_array.shape[-1])
+        else:
+            return image_array
 
     def save(self):
         joblib.dump(self.scaler, self.savename)

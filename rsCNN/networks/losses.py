@@ -34,7 +34,7 @@ def cropped_loss(loss_type: str, outer_width: int, inner_width: int, weighted: b
 
         if weighted:
             weights = y_true[..., -1]
-            y_true = y_true[..., :-1]
+        y_true = y_true[..., :-1]
 
         if (loss_type == 'cc' or loss_type == 'categorical_crossentropy'):
             loss = keras.backend.categorical_crossentropy(y_true, y_pred)

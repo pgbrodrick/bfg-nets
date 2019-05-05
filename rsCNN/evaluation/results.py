@@ -123,7 +123,7 @@ def _plot_predictions_page(
 
 def single_sequence_prediction_histogram(
         sampled: samples.Samples,
-        max_responses_per_page: int = 5
+        max_responses_per_page: int = 15
 ):
     # TODO:  there is an indexing error in this function when you have more responses than fit on a single page
     max_responses_per_page = min(max_responses_per_page, sampled.num_responses)

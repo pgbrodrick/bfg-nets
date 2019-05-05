@@ -29,7 +29,7 @@ def plot_network_feature_progression(
         max_filters: int = 10
 ) -> List[plt.Figure]:
     return [_plot_sample_feature_progression(sampled, idx_sample, compact, max_filters)
-            for idx_sample in range(min(max_pages, sampled.num_samples))]
+            for idx_sample in range(3)]  # range(min(max_pages, sampled.num_samples))]
 
 
 def _plot_sample_feature_progression(

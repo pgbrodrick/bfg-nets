@@ -6,13 +6,14 @@ import numpy as np
 
 from rsCNN.data_management.scalers import BaseGlobalScaler
 from rsCNN.utils import logging
+from rsCNN.data_management.training_data import Dataset
 
 
 _logger = logging.get_child_logger(__name__)
 
 
 # TODO: this is almost certainly the wrong place for this
-def build_memmapped_sequence(data_container : Dataset, fold_indices, batch_size=100, rebuild=False):
+def build_memmapped_sequence(data_container: Dataset, fold_indices, batch_size=100, rebuild=False):
     """
         This function does the following, considering the rebuild parameter at each step:
             2) load/initialize/fit scalers
@@ -33,8 +34,8 @@ def build_memmapped_sequence(data_container : Dataset, fold_indices, batch_size=
                                       data_container.response_scaler,
                                       batch_size,
                                       apply_random_transforms=data_container.config.apply_random_transformations,
-                                      feature_mean_centering=data_config.config.feature_mean_centering,
-                                      nan_replacement_value=data_config.feature_training_nodata_value)
+                                      feature_mean_centering=data_container.config.feature_mean_centering,
+                                      nan_replacement_value=data_container.config.feature_training_nodata_value)
     return data_sequence
 
 
