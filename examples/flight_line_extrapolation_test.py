@@ -19,7 +19,6 @@ _LOG_LEVEL = 'DEBUG'  # 'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR'
 logger.setLevel(_LOG_LEVEL)
 
 
-
 parser = argparse.ArgumentParser(description='Example spatial extrapolation application')
 parser.add_argument('settings_file')
 parser.add_argument('key')
