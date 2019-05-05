@@ -20,9 +20,9 @@ def build_memmapped_sequence(data_container: Dataset, fold_indices, batch_size=1
             3) initiate train/validation/test sequences as components of Experiment
     """
 
-    assert data_container.features is not None, 'data config must have loaded feature numpy files'
-    assert data_container.responses is not None, 'data config must have loaded responses numpy files'
-    assert data_container.weights is not None, 'data config must have loaded weight numpy files'
+    assert data_container.features is not None, 'data_container must have loaded feature numpy files'
+    assert data_container.responses is not None, 'data_container must have loaded responses numpy files'
+    assert data_container.weights is not None, 'data_container must have loaded weight numpy files'
 
     assert data_container.feature_scaler is not None, 'Feature scaler must be defined'
     assert data_container.response_scaler is not None, 'Response scaler must be defined'
