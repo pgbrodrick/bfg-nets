@@ -1,12 +1,15 @@
 import copy
+import os
 import re
 from typing import List
+
 import yaml
 
 from rsCNN.data_management import scalers
 from rsCNN.networks import architectures
 
 
+DEFAULT_REQUIRED_VALUE = 'REQUIRED'
 FILENAME_CONFIG = 'config.yaml'
 
 # TODO:  add documentation for how to handle this file
@@ -23,9 +26,14 @@ class BaseConfigSection(object):
     def __init__(self) -> None:
         return
 
-    def set_config_options(self, config_options: dict) -> None:
+    def set_config_options(self, config_options: dict, highlight_required: bool) -> None:
+        # TODO:  I expect an error here when reading in a config file and trying to parse that, we might need to
+        #  automatically read the structure from different config sections and nestedness
         for field_name, field_default, _ in self._field_defaults:
-            setattr(self, field_name, config_options.pop(field_name) or field_default)
+            field_value = config_options.pop(field_name) or field_default
+            if field_value is None and highlight_required:
+                field_value = DEFAULT_REQUIRED_VALUE
+            setattr(self, field_name, field_value)
         return
 
     def check_config_validity(self) -> List[str]:
@@ -171,7 +179,7 @@ class ModelTraining(BaseConfigSection):
     dir_model_out = None
     verbosity = None
     assert_gpu = None
-    architecture = None
+    architecture_name = None
     loss_metric = None
     max_epochs = None
     n_classes = None
@@ -186,6 +194,9 @@ class ModelTraining(BaseConfigSection):
         ('architecture_name', None, str),
         ('loss_metric', None, str),
         ('max_epochs', 100, int),
+        ('n_classes', None, int),  # TODO:  automatically calculate?
+        ('optimizer', 'adam', str),
+        ('output_activation', None, str),
         ('weighted', False, bool),
     ]
 
@@ -247,23 +258,26 @@ class CallbackReducedLearningRate(BaseConfigSection):
     ]
 
 
-def create_config_from_file(filepath: str) -> 'Config':
+def create_config_from_file(dir_config: str, filename: str) -> 'Config':
+    filepath = os.path.join(dir_config, filename or FILENAME_CONFIG)
+    assert os.path.exists(filepath), 'No config file found at {}'.format(filepath)
     with open(filepath) as file_:
         raw_config = yaml.safe_load(file_)
     config_factory = ConfigFactory()
     return config_factory.create_config(raw_config)
 
 
-def create_config_template(filepath: str) -> None:
+def create_config_template(architecture_name: str, dir_config: str, filename: str = None) -> None:
     config_factory = ConfigFactory()
-    config = config_factory.create_config(dict())
-    save_config_to_file(config, filepath)
+    config = config_factory.create_config_template(architecture_name)
+    save_config_to_file(config, dir_config, filename)
 
 
-def save_config_to_file(config: 'Config', filepath: str) -> None:
+def save_config_to_file(config: 'Config', dir_config: str, filename: str = None) -> None:
     config_out = dict()
     for section_name, config_section in config.__dict__.items():
         config_out[section_name] = {field: getattr(config_section, field) for field in config_section._fields}
+    filepath = os.path.join(dir_config, filename or FILENAME_CONFIG)
     with open(filepath, 'w') as file_:
         yaml.dump(config_out, file_, default_flow_style=False)
 
@@ -290,6 +304,13 @@ class ConfigFactory(object):
         return
 
     def create_config(self, config_options: dict) -> 'Config':
+        return self._create_config(config_options, is_template=False)
+
+    def create_config_template(self, architecture_name: str) -> 'Config':
+        config_options = {'architecture_name': architecture_name}
+        return self._create_config(config_options, is_template=True)
+
+    def _create_config(self, config_options: dict, is_template: bool) -> 'Config':
         config_sections = [
             RawFiles, DataBuild, DataSamples, ModelTraining, CallbackGeneral, CallbackTensorboard,
             CallbackEarlyStopping, CallbackReducedLearningRate
@@ -300,30 +321,36 @@ class ConfigFactory(object):
         errors = list()
         for config_section in config_sections:
             section_name = self._convert_camelcase_to_snakecase(config_section.__name__)
-            populated_section = self._create_config_section_from_options(config_copy, config_section)
+            populated_section = self._create_config_section_from_options(config_copy, config_section(), is_template)
             populated_sections[section_name] = populated_section
-            errors.extend(populated_section.check_config_validity())
+            if not is_template:
+                errors.extend(populated_section.check_config_validity())
         # Populate architecture options given architecture name
         architecture_name = populated_sections['model_training']['architecture_name']
         architecture_options = architectures.get_architecture_options(architecture_name)
         architecture_options.set_config_options(config_copy)
-        errors.extend(architecture_options.check_config_validity())
+        if not is_template:
+            errors.extend(architecture_options.check_config_validity())
         populated_sections['architecture_options'] = architecture_options
         # Report errors if necessary
-        if len(config_copy) > 0:
-            errors.append('The configuration has unused options:  {}'.format(', '.join(list(config_copy.keys()))))
-        assert len(errors) == 0, \
-            '{} errors were found while building configuration:\n  {}'.format(len(errors), '\n'.join(errors))
+        if not is_template:
+            if len(config_copy) > 0:
+                errors.append('The configuration has unused options:  {}'.format(', '.join(list(config_copy.keys()))))
+            assert len(errors) == 0, \
+                '{} errors were found while building configuration:\n  {}'.format(len(errors), '\n'.join(errors))
         return Config(**populated_sections)
 
-    def _create_config_section_from_options(self, config_options: dict, config_section: BaseConfigSection) \
-            -> BaseConfigSection:
+    def _create_config_section_from_options(
+            self,
+            config_options: dict,
+            config_section: BaseConfigSection,
+            is_template: bool
+    ) -> BaseConfigSection:
         values = dict()
         for field_name, _ in config_section._field_defaults:
             if field_name in config_options:
                 values[field_name] = config_options.pop(field_name)
-        config_section = config_section()
-        config_section.set_config_options(config_options)
+        config_section.set_config_options(config_options, highlight_required=is_template)
         return config_section
 
     def _convert_camelcase_to_snakecase(self, string: str) -> str:

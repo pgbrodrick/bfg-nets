@@ -1,3 +1,5 @@
+from typing import List
+
 import keras
 
 from rsCNN.networks.architectures \
@@ -6,9 +8,13 @@ from rsCNN.networks.architectures \
 from rsCNN.networks.architectures import shared
 
 
-_architecture_names = (
-    'dilation_net', 'flat_net', 'residual_dilation_net', 'residual_flat_net', 'residual_unet', 'unet'
-)
+_architecture_names = [
+    'alex_net', 'dilation_net', 'flat_net', 'residual_dilation_net', 'residual_flat_net', 'residual_unet', 'unet'
+]
+
+
+def get_available_architectures() -> List[str]:
+    return _architecture_names
 
 
 def get_architecture_options(architecture_name: str) -> shared.BaseArchitectureOptions:
