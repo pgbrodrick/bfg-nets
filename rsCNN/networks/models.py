@@ -7,7 +7,7 @@ import keras
 FILENAME_MODEL = 'model.h5'
 
 
-def load_model(dir_model: str, custom_objects: dict, filename: str = None) -> Union[keras.models.Model, None]:
+def load_model(dir_model: str, custom_objects: dict = None, filename: str = None) -> Union[keras.models.Model, None]:
     filepath = os.path.join(dir_model, filename or FILENAME_MODEL)
     if not os.path.exists(filepath):
         return None

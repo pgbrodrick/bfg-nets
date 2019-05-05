@@ -1,11 +1,11 @@
-import configparser
 import datetime
 import os
 from typing import List
 
 import keras
 
-from rsCNN.networks import histories
+from rsCNN.configs import Config
+from rsCNN.networks import histories, models
 from rsCNN.utils import logging
 
 
@@ -90,52 +90,52 @@ class HistoryCheckpoint(keras.callbacks.Callback):
         histories.save_history(combined_history, self.dir_out)
 
 
-def get_callbacks(network_config: configparser.ConfigParser, existing_history: dict) -> List[keras.callbacks.Callback]:
+def get_callbacks(config: Config, existing_history: dict) -> List[keras.callbacks.Callback]:
     callbacks = [
         HistoryCheckpoint(
-            dir_out=network_config['model']['dir_out'],
+            dir_out=config.model_training.dir_model_out,
             existing_history=existing_history,
-            period=network_config['callbacks_general']['checkpoint_periods'],
-            verbose=network_config['model']['verbosity']
+            period=config.callback_general.checkpoint_periods,
+            verbose=config.model_training.verbosity,
         ),
         keras.callbacks.ModelCheckpoint(
-            os.path.join(network_config['model']['dir_out'], 'model.h5'),
-            period=network_config['callbacks_general']['checkpoint_periods'],
-            verbose=network_config['model']['verbosity']
+            os.path.join(config.model_training.dir_model_out, models.FILENAME_MODEL),
+            period=config.callback_general.checkpoint_periods,
+            verbose=config.model_training.verbosity,
         ),
     ]
-    if network_config['callbacks_early_stopping']['use_early_stopping']:
+    if config.callback_early_stopping.use_early_stopping:
         callbacks.append(
             keras.callbacks.EarlyStopping(
                 monitor='loss',
-                min_delta=network_config['callbacks_early_stopping']['es_min_delta'],
-                patience=network_config['callbacks_early_stopping']['es_patience']
+                min_delta=config.callback_early_stopping.min_delta,
+                patience=config.callback_early_stopping.patience,
             ),
         )
-    if network_config['callbacks_reduced_learning_rate']['use_reduced_learning_rate']:
+    if config.callback_reduced_learning_rate.use_reduced_learning_rate:
         callbacks.append(
             keras.callbacks.ReduceLROnPlateau(
                 monitor='loss',
-                factor=network_config['callbacks_reduced_learning_rate']['rlr_factor'],
-                min_delta=network_config['callbacks_reduced_learning_rate']['rlr_min_delta'],
-                patience=network_config['callbacks_reduced_learning_rate']['rlr_patience']
+                factor=config.callback_reduced_learning_rate.factor,
+                min_delta=config.callback_reduced_learning_rate.min_delta,
+                patience=config.callback_reduced_learning_rate.patience,
             ),
         )
-    if network_config['callbacks_tensorboard']['use_tensorboard']:
+    if config.callback_tensorboard.use_tensorboard:
         dir_out = os.path.join(
-            network_config['model']['dir_out'],
-            network_config['callbacks_tensorboard']['dirname_prefix_tensorboard']
+            config.model_training.dir_model_out,
+            config.callback_tensorboard.dirname_prefix_tensorboard
         )
         callbacks.append(
             keras.callbacks.TensorBoard(
                 dir_out,
-                histogram_freq=network_config['callbacks_tensorboard']['t_histogram_freq'],
-                write_graph=network_config['callbacks_tensorboard']['t_write_graph'],
-                write_grads=network_config['callbacks_tensorboard']['t_write_grads'],
-                write_images=network_config['callbacks_tensorboard']['t_write_images'],
-                update_freq=network_config['callbacks_tensorboard']['t_update_freq']
+                histogram_freq=config.callback_tensorboard.histogram_freq,
+                write_graph=config.callback_tensorboard.write_graph,
+                write_grads=config.callback_tensorboard.write_grads,
+                write_images=config.callback_tensorboard.write_images,
+                update_freq=config.callback_tensorboard.update_freq,
             ),
         )
-    if network_config['callbacks_general']['use_terminate_on_nan']:
+    if config.callback_general.use_terminate_on_nan:
         callbacks.append(keras.callbacks.TerminateOnNaN())
     return callbacks
