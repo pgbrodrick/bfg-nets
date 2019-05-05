@@ -1,7 +1,8 @@
 import keras
 
 from rsCNN.networks.architectures \
-    import change_detection, dilation_net, flat_net, residual_dilation_net, residual_flat_net, residual_unet, unet
+    import alex_net, change_detection, dilation_net, flat_net, residual_dilation_net, residual_flat_net, \
+    residual_unet, unet
 from rsCNN.networks.architectures import shared
 
 
