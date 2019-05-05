@@ -434,7 +434,7 @@ def read_labeling_chunk(f_sets: List[tuple],
         return None
 
     local_feature, mask = read_map_subset(f_sets, feature_upper_lefts,
-                                         window_diameter, mask, config.feature_nodata_value)
+                                          window_diameter, mask, config.feature_nodata_value)
 
     if not _check_mask_data_sufficient(mask, config.nodata_maximum_fraction):
         _logger.trace('Insufficient feature data')
@@ -469,7 +469,7 @@ def read_segmentation_chunk(f_sets: List[tuple],
         return None, None
 
     local_response, mask = read_map_subset(r_sets, response_upper_lefts,
-                                          window_diameter, mask, config.response_nodata_value)
+                                           window_diameter, mask, config.response_nodata_value)
     if not _check_mask_data_sufficient(mask, config.nodata_maximum_fraction):
         return None, None
     mv.append(np.sum(mask))
@@ -487,7 +487,7 @@ def read_segmentation_chunk(f_sets: List[tuple],
         return None, None
 
     local_feature, mask = read_map_subset(f_sets, feature_upper_lefts,
-                                         window_diameter, mask, config.feature_nodata_value)
+                                          window_diameter, mask, config.feature_nodata_value)
     mv.append(np.sum(mask))
 
     if not _check_mask_data_sufficient(mask, config.nodata_maximum_fraction):
@@ -1165,5 +1165,3 @@ def _check_mask_data_sufficient(mask: np.array, max_nodata_fraction: float) -> b
     else:
         _logger.trace('Data mask is None')
         return False
-
-

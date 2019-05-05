@@ -12,10 +12,11 @@ plt.switch_backend('Agg')  # Needed for remote server plotting
 
 
 def read_feature_chunk(feature_set, ul, window_size, nodata_value):
-    
-    subset = np.zeros((window_size,window_size,feature_set.RasterCount))
+
+    subset = np.zeros((window_size, window_size, feature_set.RasterCount))
     for _b in range(feature_set.RasterCount):
-        subset[...,_b] = feature_set.GetRasterBand(_b+1).ReadAsArray(int(ul[0]),int(ul[1]),int(window_size),int(window_size))
+        subset[..., _b] = feature_set.GetRasterBand(
+            _b+1).ReadAsArray(int(ul[0]), int(ul[1]), int(window_size), int(window_size))
 
     subset[subset == nodata_value] = np.nan
     subset[np.logical_not(np.isfinite(subset))] = np.nan
@@ -54,21 +55,18 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
     n_classes = cnn.predict(
         (np.zeros((1, data_config.window_radius*2, data_config.window_radius*2, feature_set.RasterCount)))).shape[-1]
 
-
-
-    ###### Initialize Output Dataset
+    # Initialize Output Dataset
     driver = gdal.GetDriverByName('GTiff')
     driver.Register()
 
     outDataset = driver.Create(destination_basename + '.tif',
-                               feature_set.RasterYSize, 
-                               feature_set.RasterXSize, 
-                               n_classes, 
+                               feature_set.RasterYSize,
+                               feature_set.RasterXSize,
+                               n_classes,
                                gdal.GDT_Float32)
 
     outDataset.SetProjection(feature_set.GetProjection())
     outDataset.SetGeoTransform(feature_set.GetGeoTransform())
-
 
     step_size = data_config.internal_window_radius*2
     if (CNN_MODE):
@@ -89,14 +87,14 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
 
         write_ul = []
         for row in rowlist:
-            d = read_feature_chunk(feature_set, [col, row], 
+            d = read_feature_chunk(feature_set, [col, row],
                                    data_config.window_radius*2, data_config.feature_nodata_value)
 
             if(d.shape[0] == data_config.window_radius*2 and d.shape[1] == data_config.window_radius*2):
                 # TODO: consider having this as an option
                 # d = fill_nearest_neighbor(d)
                 images.append(d)
-                write_ul.append([row,col])
+                write_ul.append([row, col])
         images = np.stack(images)
         images = images.reshape((images.shape[0], images.shape[1], images.shape[2], feature_set.RasterCount))
 
@@ -119,13 +117,13 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
         for _b in range(0, n_classes):
             for _i in range(len(images)):
                 if CNN_MODE:
-                    outDataset.GetRasterBand(_b+1).WriteArray(pred_y[_i,_b].reshape((1,1)), write_ul[_i][0], write_ul[_i][1])
+                    outDataset.GetRasterBand(
+                        _b+1).WriteArray(pred_y[_i, _b].reshape((1, 1)), write_ul[_i][0], write_ul[_i][1])
                 else:
-                    outDataset.GetRasterBand(_b+1).WriteArray(pred_y[_i,:,:,_b], write_ul[_i][0], write_ul[_i][1])
+                    outDataset.GetRasterBand(_b+1).WriteArray(pred_y[_i, :, :, _b], write_ul[_i][0], write_ul[_i][1])
         outDataset.FlushCache()
 
-
-    #if (make_png):
+    # if (make_png):
     #    output[output == data_config.response_nodata_value] = np.nan
     #    feature[feature == data_config.response_nodata_value] = np.nan
     #    gs1 = gridspec.GridSpec(1, n_classes+1)
@@ -139,4 +137,3 @@ def apply_model_to_raster(cnn, data_config, feature_file, destination_basename, 
     #    plt.axis('off')
     #    plt.savefig(destination_basename + '.png', dpi=png_dpi, bbox_inches='tight')
     #    plt.clf()
-
