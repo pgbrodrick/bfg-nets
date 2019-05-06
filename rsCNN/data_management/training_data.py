@@ -246,13 +246,12 @@ def calculate_categorical_weights(
     return weights
 
 
-def read_mask_chunk(boundary_vector_file: str, boundary_subset_geotransform: tuple, b_set: tuple, boundary_upper_left: List, window_diameter: int, boundary_bad_value: float):
+def read_mask_chunk(boundary_vector_file: str, boundary_subset_geotransform: tuple, b_set: gdal.Dataset, boundary_upper_left: List, window_diameter: int, boundary_bad_value: float):
     # Start by checking if we're inside boundary, if there is one
     mask = None
     if (boundary_vector_file is not None):
         mask = rasterize_vector(boundary_vector_file, boundary_subset_geotransform, (window_diameter, window_diameter))
     if (b_set is not None):
-        # TODO:  this is an error if b_set is really a tuple
         mask = b_set.ReadAsArray(boundary_upper_left[0], boundary_upper_left[1], window_diameter, window_diameter)
 
     if mask is None:
@@ -288,7 +287,7 @@ def read_map_subset(datasets: List, upper_lefts: List[List[int]], window_diamete
     return local_array, mask
 
 
-def read_labeling_chunk(f_sets: List[tuple],
+def read_labeling_chunk(f_sets: List[gdal.Dataset],
                         feature_upper_lefts: List[List[int]],
                         config: configs.Config,
                         boundary_vector_file: str = None,
@@ -297,7 +296,6 @@ def read_labeling_chunk(f_sets: List[tuple],
                         boundary_upper_left: List[int] = None):
 
     for _f in range(len(feature_upper_lefts)):
-        # TODO:  the references to f_sets.RasterSize are errors if f_sets is a list of tuples
         if (np.any(feature_upper_lefts[_f] < config.data_build.window_radius)):
             _logger.trace('Feature read OOB')
             return None
@@ -546,7 +544,7 @@ def upper_left_pixel(trans, interior_x, interior_y):
     return x_ul, y_ul
 
 
-def get_interior_rectangle(dataset_list_of_lists: List[List[tuple]]):
+def get_interior_rectangle(dataset_list_of_lists: List[List[gdal.Dataset]]):
 
     # Convert list of lists or list for interior convenience
     dataset_list = [item for sublist in dataset_list_of_lists for item in sublist]
@@ -554,7 +552,6 @@ def get_interior_rectangle(dataset_list_of_lists: List[List[tuple]]):
     # Get list of all gdal geotransforms
     trans_list = []
     for _d in range(len(dataset_list)):
-        # TODO:  assuming typing is correct, this is going to fail
         trans_list.append(dataset_list[_d].GetGeoTransform())
 
     # Find the interior (UL) x,y coordinates in map-space
@@ -567,7 +564,6 @@ def get_interior_rectangle(dataset_list_of_lists: List[List[tuple]]):
         ul_list.append(list(upper_left_pixel(trans_list[_d], interior_x, interior_y)))
 
     # calculate the size of the matched interior extent
-    # TODO:  assuming typing is correct, this is going to fail
     x_len = int(np.floor(np.min([dataset_list[_d].RasterXSize - ul_list[_d][0] for _d in range(len(dataset_list))])))
     y_len = int(np.floor(np.min([dataset_list[_d].RasterYSize - ul_list[_d][1] for _d in range(len(dataset_list))])))
 
