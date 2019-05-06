@@ -27,15 +27,17 @@ def build_memmapped_sequence(data_container: Dataset, fold_indices, batch_size=1
     assert data_container.feature_scaler is not None, 'Feature scaler must be defined'
     assert data_container.response_scaler is not None, 'Response scaler must be defined'
 
-    data_sequence = MemmappedSequence([data_container.features[_f] for _f in fold_indices],
-                                      [data_container.responses[_r] for _r in fold_indices],
-                                      [data_container.weights[_w] for _w in fold_indices],
-                                      data_container.feature_scaler,
-                                      data_container.response_scaler,
-                                      batch_size,
-                                      apply_random_transforms=data_container.config.apply_random_transformations,
-                                      feature_mean_centering=data_container.config.feature_mean_centering,
-                                      nan_replacement_value=data_container.config.feature_training_nodata_value)
+    data_sequence = MemmappedSequence(
+        [data_container.features[_f] for _f in fold_indices],
+        [data_container.responses[_r] for _r in fold_indices],
+        [data_container.weights[_w] for _w in fold_indices],
+        data_container.feature_scaler,
+        data_container.response_scaler,
+        batch_size,
+        apply_random_transforms=data_container.config.data_samples.apply_random_transformations,
+        feature_mean_centering=data_container.config.data_build.feature_mean_centering,
+        nan_replacement_value=data_container.config.data_samples.feature_training_nodata_value
+    )
     return data_sequence
 
 
