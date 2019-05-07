@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import re
 from typing import Dict, List
 
@@ -22,7 +23,7 @@ class BaseConfigSection(object):
         return snake_case_converter.sub(r'_\1', cls.__name__).lower()
 
     def get_config_options_as_dict(self) -> Dict[str, Dict[str, any]]:
-        config_options = dict()
+        config_options = OrderedDict()
         for field in self.get_fields():
             value = getattr(self, field)
             if type(value) is tuple:
