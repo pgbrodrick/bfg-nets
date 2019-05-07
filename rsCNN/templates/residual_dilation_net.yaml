@@ -10,9 +10,9 @@ raw_files:
   ignore_projections: false
 data_build:
   dir_data_out: REQUIRED
+  filename_prefix_data_out: REQUIRED
   response_data_format: FCN
   data_build_category: or
-  data_save_name: REQUIRED
   random_seed: REQUIRED
   max_samples: REQUIRED
   n_folds: 10
