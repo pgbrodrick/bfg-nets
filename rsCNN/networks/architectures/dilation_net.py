@@ -29,7 +29,7 @@ def create_model(
         dilation_rate: int = DEFAULT_DILATION_RATE,
         filters: int = shared.DEFAULT_FILTERS,
         kernel_size: Union[Tuple[int, int], List[Tuple[int, int]]] = shared.DEFAULT_KERNEL_SIZE,
-        num_layers: int = shared.DEFAULT_NUM_LAYERS,
+        num_layers: int = DEFAULT_NUM_LAYERS,
         padding: str = shared.DEFAULT_PADDING,
         use_batch_norm: bool = shared.DEFAULT_USE_BATCH_NORM,
         use_initial_colorspace_transformation_layer: bool = shared.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER

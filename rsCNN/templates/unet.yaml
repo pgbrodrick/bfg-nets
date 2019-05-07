@@ -1,0 +1,65 @@
+raw_files:
+  boundary_bad_value: REQUIRED
+  boundary_file_list: REQUIRED
+  feature_nodata_value: -9999
+  feature_raw_band_type_input: REQUIRED
+  ignore_projections: false
+  raw_feature_file_list: REQUIRED
+  raw_response_file_list: REQUIRED
+  response_data_format: REQUIRED
+  response_nodata_value: -9999
+  response_raw_band_type_input: REQUIRED
+data_build:
+  data_build_category: or
+  data_save_name: REQUIRED
+  dir_data_out: REQUIRED
+  feature_mean_centering: false
+  feature_nodata_maximum_fraction: 0.0
+  internal_window_radius: REQUIRED
+  max_samples: REQUIRED
+  n_folds: 10
+  random_seed: REQUIRED
+  response_background_value: REQUIRED
+  response_data_format: FCN
+  response_max_value: REQUIRED
+  response_min_value: REQUIRED
+  test_fold: REQUIRED
+  validation_fold: REQUIRED
+  window_radius: REQUIRED
+data_samples:
+  apply_random_transformations: false
+  batch_size: 100
+  feature_scaler_names_list: REQUIRED
+  feature_training_nodata_value: -10.0
+  response_scaler_names_list: REQUIRED
+model_training:
+  architecture_name: unet
+  assert_gpu: false
+  dir_model_out: REQUIRED
+  loss_metric: REQUIRED
+  max_epochs: 100
+  n_classes: REQUIRED
+  optimizer: adam
+  output_activation: REQUIRED
+  verbosity: 1
+  weighted: false
+callback_general:
+  checkpoint_periods: 5
+  use_terminate_on_nan: true
+callback_tensorboard:
+  dirname_prefix_tensorboard: tensorboard
+  histogram_freq: 0
+  update_freq: epoch
+  use_tensorboard: true
+  write_grads: false
+  write_graph: true
+  write_images: true
+callback_early_stopping:
+  min_delta: 0.0001
+  patience: 50
+  use_early_stopping: true
+callback_reduced_learning_rate:
+  factor: 0.5
+  min_delta: 0.0001
+  patience: 10
+  use_reduced_learning_rate: true
