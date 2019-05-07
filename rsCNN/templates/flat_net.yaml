@@ -38,9 +38,7 @@ model_training:
   architecture_name: flat_net
   loss_metric: REQUIRED
   max_epochs: 100
-  n_classes: REQUIRED
   optimizer: adam
-  output_activation: REQUIRED
   weighted: false
 architecture_options:
   block_structure: [1, 1, 1, 1]
