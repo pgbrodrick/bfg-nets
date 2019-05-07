@@ -31,7 +31,6 @@ class RawFiles(BaseConfigSection):
     response_raw_band_type_input = None
     feature_nodata_value = None
     response_nodata_value = None
-    response_data_format = None
     boundary_bad_value = None
     ignore_projections = None
     # TODO:  expand on this
@@ -45,7 +44,6 @@ class RawFiles(BaseConfigSection):
         ('response_raw_band_type_input', None, str),  # See above note
         ('feature_nodata_value', -9999, float),  # Value that denotes missing data in feature files
         ('response_nodata_value', -9999, float),  # Value that denotes missing data in response files
-        ('response_data_format', None, str),  # TODO:  explain why FCN or CNN, perhaps change name more informative?
         ('boundary_bad_value', None, float),  # Value that indicates pixels are out of bounds in a boundary raster file
         ('ignore_projections', False, bool),  # Ignore projection differences between feature/response, use with caution
     ]
@@ -253,8 +251,11 @@ def save_config_to_file(config: 'Config', dir_config: str, filename: str = None)
     def _represent_dictionary_order(self, dict_data):
         # via https://stackoverflow.com/questions/31605131/dumping-a-dictionary-to-a-yaml-file-while-preserving-order
         return self.represent_mapping('tag:yaml.org,2002:map', dict_data.items())
+    def _represent_list_inline(self, list_data):
+        return self.represent_sequence('tag:yaml.org,2002:seq', list_data, flow_style=True)
 
     yaml.add_representer(OrderedDict, _represent_dictionary_order)
+    yaml.add_representer(list, _represent_list_inline)
     config_out = config.get_config_as_dict()
     filepath = os.path.join(dir_config, filename or FILENAME_CONFIG)
     with open(filepath, 'w') as file_:
@@ -369,4 +370,5 @@ class Config(object):
             section_name = config_section.get_config_name_as_snake_case()
             populated_section = getattr(self, section_name)
             config[section_name] = populated_section.get_config_options_as_dict()
+        config['architecture_options'] = self.architecture_options.get_config_options_as_dict()
         return config
