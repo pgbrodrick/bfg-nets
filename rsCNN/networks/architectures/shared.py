@@ -36,5 +36,6 @@ class BaseArchitectureOptions(BaseConfigSection):
     ]
 
     def __init__(self):
+        # We need to reorder field defaults given that child ArchitectureOptions will be adding field defaults
         self._field_defaults = sorted(self._field_defaults)
         super().__init__()

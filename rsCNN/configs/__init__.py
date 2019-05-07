@@ -73,9 +73,9 @@ class DataBuild(BaseConfigSection):
     Data build configuration, information necessary to structure and format the built data files
     """
     dir_data_out = None
+    filename_prefix_data_out = None
     response_data_format = None
     data_build_category = None
-    data_save_name = None
     random_seed = None
     max_samples = None
     n_folds = None
@@ -91,9 +91,9 @@ class DataBuild(BaseConfigSection):
     response_background_value = None
     _field_defaults = [
         ('dir_data_out', None, str),  # Location to either create new built data files or load existing data files
+        ('filename_prefix_data_out', None, str),  # Prefix for output data for organizational purposes
         ('response_data_format', 'FCN', str),  # Either CNN or FCN right now
         ('data_build_category', 'or', str),  # TODO description
-        ('data_save_name', None, str),  # Location to save the built data # TODO simplify
         ('random_seed', None, int),  # Seed to set for reproducable data generation
         ('max_samples', None, int),  # Max number of samples, sampling stops when data fully crawled or max is reached
         ('n_folds', 10, int),  # Number of training data folds
