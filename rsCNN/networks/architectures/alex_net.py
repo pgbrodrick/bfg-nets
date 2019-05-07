@@ -35,7 +35,7 @@ def create_model(
         kernel_size: Tuple[int, int] = shared.DEFAULT_KERNEL_SIZE,
         min_conv_width: int = DEFAULT_MIN_CONV_WIDTH,
         padding: str = shared.DEFAULT_PADDING,
-        pool_size: Tuple[int, int] = shared.DEFAULT_POOL_SIZE,
+        pool_size: Tuple[int, int] = DEFAULT_POOL_SIZE,
         use_batch_norm: bool = shared.DEFAULT_USE_BATCH_NORM,
         use_growth: bool = DEFAULT_USE_GROWTH,
         use_initial_colorspace_transformation_layer: bool = shared.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER

@@ -1,15 +1,15 @@
+from collections import OrderedDict
 import copy
 import os
-import re
 from typing import List
 
 import yaml
 
+from rsCNN.configs.shared import BaseConfigSection
 from rsCNN.data_management import scalers
 from rsCNN.networks import architectures
 
 
-DEFAULT_REQUIRED_VALUE = 'REQUIRED'
 FILENAME_CONFIG = 'config.yaml'
 
 # TODO:  add documentation for how to handle this file
@@ -18,32 +18,6 @@ FILENAME_CONFIG = 'config.yaml'
 # TODO:  check downstream that len raw filename lists match len scalers if len scalers > 1
 # TODO:  add successful_data_save_file as constant in some script
 # TODO:  data_save_name changed to dir_model_out
-
-
-class BaseConfigSection(object):
-    _field_defaults = NotImplemented
-
-    def __init__(self) -> None:
-        return
-
-    def set_config_options(self, config_options: dict, highlight_required: bool) -> None:
-        # TODO:  I expect an error here when reading in a config file and trying to parse that, we might need to
-        #  automatically read the structure from different config sections and nestedness
-        for field_name, field_default, _ in self._field_defaults:
-            field_value = config_options.pop(field_name) or field_default
-            if field_value is None and highlight_required:
-                field_value = DEFAULT_REQUIRED_VALUE
-            setattr(self, field_name, field_value)
-        return
-
-    def check_config_validity(self) -> List[str]:
-        errors = list()
-        for field_name, field_default, field_type in self._field_defaults:
-            value_provided = getattr(self, field_name)
-            if type(value_provided) is not field_type:
-                errors.append('The value for {} must be an {} but a {} was provided:  {}'.format(
-                    field_name, field_type, type(value_provided), value_provided))
-        return errors
 
 
 class RawFiles(BaseConfigSection):
@@ -117,7 +91,7 @@ class DataBuild(BaseConfigSection):
     response_min_value = None
     response_max_value = None
     response_background_value = None
-    field_defaults = [
+    _field_defaults = [
         ('dir_data_out', None, str),  # Location to either create new built data files or load existing data files
         ('response_data_format', 'FCN', str),  # Either CNN or FCN right now
         ('data_build_category', 'or', str),  # TODO description
@@ -155,7 +129,7 @@ class DataSamples(BaseConfigSection):
     response_scaler_names_list = None
     feature_training_nodata_value = None
     # Data sample configuration, information necessary to parse built data files and pass data to models during training
-    field_defaults = [
+    _field_defaults = [
         ('apply_random_transformations', False, bool),  # Whether to apply random rotations and flips to sample images
         ('batch_size', 100, int),  # The sample batch size for images passed to the model
         ('feature_scaler_names_list', None, list),  # Names of the scalers to use with each feature file
@@ -189,7 +163,7 @@ class ModelTraining(BaseConfigSection):
     output_activation = None
     weighted = None
     # Model training configuration, information necessary to train models from start to finish
-    field_defaults = [
+    _field_defaults = [
         ('dir_model_out', None, str),  # Location to either create new model files or load existing model files
         ('verbosity', 1, int),  # Verbosity value for keras library, either 0 or 1
         ('assert_gpu', False, bool),  # Asserts GPU available before model training if True
@@ -211,7 +185,7 @@ class ModelTraining(BaseConfigSection):
 class CallbackGeneral(BaseConfigSection):
     checkpoint_periods = None
     use_terminate_on_nan = None
-    field_defaults = [
+    _field_defaults = [
         ('checkpoint_periods', 5, int),
         ('use_terminate_on_nan', True, bool),
     ]
@@ -241,9 +215,9 @@ class CallbackEarlyStopping(BaseConfigSection):
     min_delta = None
     patience = None
     _field_defaults = [
-        ('use_early_stopping', True),
-        ('min_delta', 0.0001),
-        ('patience', 50),
+        ('use_early_stopping', True, bool),
+        ('min_delta', 0.0001, float),
+        ('patience', 50, int),
     ]
 
 
@@ -276,9 +250,12 @@ def create_config_template(architecture_name: str, dir_config: str, filename: st
 
 
 def save_config_to_file(config: 'Config', dir_config: str, filename: str = None) -> None:
-    config_out = dict()
-    for section_name, config_section in config.__dict__.items():
-        config_out[section_name] = {field: getattr(config_section, field) for field in config_section._fields}
+    def _represent_dictionary_order(self, dict_data):
+        # via https://stackoverflow.com/questions/31605131/dumping-a-dictionary-to-a-yaml-file-while-preserving-order
+        return self.represent_mapping('tag:yaml.org,2002:map', dict_data.items())
+
+    yaml.add_representer(OrderedDict, _represent_dictionary_order)
+    config_out = config.get_config_as_dict()
     filepath = os.path.join(dir_config, filename or FILENAME_CONFIG)
     with open(filepath, 'w') as file_:
         yaml.dump(config_out, file_, default_flow_style=False)
@@ -300,6 +277,12 @@ def compare_network_configs_get_differing_items(config_a, config_b):
     return differing_items
 
 
+_CONFIG_SECTIONS = [
+    RawFiles, DataBuild, DataSamples, ModelTraining, CallbackGeneral, CallbackTensorboard, CallbackEarlyStopping,
+    CallbackReducedLearningRate
+]
+
+
 class ConfigFactory(object):
 
     def __init__(self) -> None:
@@ -313,24 +296,21 @@ class ConfigFactory(object):
         return self._create_config(config_options, is_template=True)
 
     def _create_config(self, config_options: dict, is_template: bool) -> 'Config':
-        config_sections = [
-            RawFiles, DataBuild, DataSamples, ModelTraining, CallbackGeneral, CallbackTensorboard,
-            CallbackEarlyStopping, CallbackReducedLearningRate
-        ]
         config_copy = copy.deepcopy(config_options)  # Use a copy because config options are popped from the dict
         # Population config sections with the provided configuration options, tracking errors
         populated_sections = dict()
         errors = list()
-        for config_section in config_sections:
-            section_name = self._convert_camelcase_to_snakecase(config_section.__name__)
-            populated_section = self._create_config_section_from_options(config_copy, config_section(), is_template)
+        for config_section in _CONFIG_SECTIONS:
+            section_name = config_section.get_config_name_as_snake_case()
+            populated_section = config_section()
+            populated_section.set_config_options(config_copy, is_template)
             populated_sections[section_name] = populated_section
             if not is_template:
                 errors.extend(populated_section.check_config_validity())
         # Populate architecture options given architecture name
-        architecture_name = populated_sections['model_training']['architecture_name']
+        architecture_name = populated_sections['model_training'].architecture_name
         architecture_options = architectures.get_architecture_options(architecture_name)
-        architecture_options.set_config_options(config_copy)
+        architecture_options.set_config_options(config_copy, is_template)
         if not is_template:
             errors.extend(architecture_options.check_config_validity())
         populated_sections['architecture_options'] = architecture_options
@@ -341,23 +321,6 @@ class ConfigFactory(object):
             assert len(errors) == 0, \
                 '{} errors were found while building configuration:\n  {}'.format(len(errors), '\n'.join(errors))
         return Config(**populated_sections)
-
-    def _create_config_section_from_options(
-            self,
-            config_options: dict,
-            config_section: BaseConfigSection,
-            is_template: bool
-    ) -> BaseConfigSection:
-        values = dict()
-        for field_name, _ in config_section._field_defaults:
-            if field_name in config_options:
-                values[field_name] = config_options.pop(field_name)
-        config_section.set_config_options(config_options, highlight_required=is_template)
-        return config_section
-
-    def _convert_camelcase_to_snakecase(self, string: str) -> str:
-        snake_case_converter = re.compile('((?<=[a-z0-9])[A-Z]|(?!^)[A-Z](?=[a-z]))')
-        return snake_case_converter.sub(r'_\1', string).lower()
 
 
 class Config(object):
@@ -399,3 +362,11 @@ class Config(object):
         self.callback_tensorboard = callback_tensorboard
         self.callback_early_stopping = callback_early_stopping
         self.callback_reduced_learning_rate = callback_reduced_learning_rate
+
+    def get_config_as_dict(self) -> dict:
+        config = OrderedDict()
+        for config_section in _CONFIG_SECTIONS:
+            section_name = config_section.get_config_name_as_snake_case()
+            populated_section = getattr(self, section_name)
+            config[section_name] = populated_section.get_config_options_as_dict()
+        return config
