@@ -6,7 +6,6 @@ raw_files:
   response_raw_band_type_input: REQUIRED
   feature_nodata_value: -9999
   response_nodata_value: -9999
-  response_data_format: REQUIRED
   boundary_bad_value: REQUIRED
   ignore_projections: false
 data_build:
@@ -63,3 +62,17 @@ callback_reduced_learning_rate:
   factor: 0.5
   min_delta: 0.0001
   patience: 10
+architecture_options:
+  filters: 64
+  inshape: REQUIRED
+  kernel_size: [3, 3]
+  n_classes: REQUIRED
+  optimizer: adam
+  output_activation: REQUIRED
+  padding: same
+  use_batch_norm: true
+  use_initial_colorspaced_transformation_layer: false
+  block_structure: [1, 1, 1, 1]
+  min_conv_width: 8
+  pool_size: [2, 2]
+  use_growth: false
