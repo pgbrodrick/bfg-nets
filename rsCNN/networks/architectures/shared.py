@@ -34,3 +34,7 @@ class BaseArchitectureOptions(BaseConfigSection):
         ('use_batch_norm', DEFAULT_USE_BATCH_NORM, bool),
         ('use_initial_colorspaced_transformation_layer', DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER, bool),
     ]
+
+    def __init__(self):
+        self._field_defaults = sorted(self._field_defaults)
+        super().__init__()
