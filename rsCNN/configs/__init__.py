@@ -251,6 +251,7 @@ def save_config_to_file(config: 'Config', dir_config: str, filename: str = None)
     def _represent_dictionary_order(self, dict_data):
         # via https://stackoverflow.com/questions/31605131/dumping-a-dictionary-to-a-yaml-file-while-preserving-order
         return self.represent_mapping('tag:yaml.org,2002:map', dict_data.items())
+
     def _represent_list_inline(self, list_data):
         return self.represent_sequence('tag:yaml.org,2002:seq', list_data, flow_style=True)
 
@@ -370,5 +371,7 @@ class Config(object):
             section_name = config_section.get_config_name_as_snake_case()
             populated_section = getattr(self, section_name)
             config[section_name] = populated_section.get_config_options_as_dict()
-        config['architecture_options'] = self.architecture_options.get_config_options_as_dict()
+            if config_section is ModelTraining:
+                # Given ordered output, architecture options make the most sense after model training options
+                config['architecture_options'] = self.architecture_options.get_config_options_as_dict()
         return config

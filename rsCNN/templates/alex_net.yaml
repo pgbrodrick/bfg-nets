@@ -42,6 +42,20 @@ model_training:
   optimizer: adam
   output_activation: REQUIRED
   weighted: false
+architecture_options:
+  filters: 64
+  inshape: REQUIRED
+  kernel_size: [3, 3]
+  n_classes: REQUIRED
+  optimizer: adam
+  output_activation: REQUIRED
+  padding: same
+  use_batch_norm: true
+  use_initial_colorspaced_transformation_layer: false
+  block_structure: [1, 1, 1, 1]
+  min_conv_width: 8
+  pool_size: [2, 2]
+  use_growth: false
 callback_general:
   checkpoint_periods: 5
   use_terminate_on_nan: true
@@ -62,17 +76,3 @@ callback_reduced_learning_rate:
   factor: 0.5
   min_delta: 0.0001
   patience: 10
-architecture_options:
-  filters: 64
-  inshape: REQUIRED
-  kernel_size: [3, 3]
-  n_classes: REQUIRED
-  optimizer: adam
-  output_activation: REQUIRED
-  padding: same
-  use_batch_norm: true
-  use_initial_colorspaced_transformation_layer: false
-  block_structure: [1, 1, 1, 1]
-  min_conv_width: 8
-  pool_size: [2, 2]
-  use_growth: false
