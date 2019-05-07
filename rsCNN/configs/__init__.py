@@ -156,9 +156,7 @@ class ModelTraining(BaseConfigSection):
     architecture_name = None
     loss_metric = None
     max_epochs = None
-    n_classes = None
     optimizer = None
-    output_activation = None
     weighted = None
     # Model training configuration, information necessary to train models from start to finish
     _field_defaults = [
@@ -168,9 +166,7 @@ class ModelTraining(BaseConfigSection):
         ('architecture_name', None, str),
         ('loss_metric', None, str),
         ('max_epochs', 100, int),
-        ('n_classes', None, int),  # TODO:  automatically calculate?
         ('optimizer', 'adam', str),
-        ('output_activation', None, str),
         ('weighted', False, bool),
     ]
 
