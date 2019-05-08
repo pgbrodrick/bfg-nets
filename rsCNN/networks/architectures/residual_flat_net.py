@@ -3,6 +3,7 @@ from typing import Tuple
 import keras
 from keras.layers import BatchNormalization, Conv2D
 
+from rsCNN.configs.shared import ConfigOption
 from rsCNN.networks.architectures import shared
 
 
@@ -13,8 +14,8 @@ class ArchitectureOptions(shared.BaseArchitectureOptions):
     block_structure = None
 
     def __init__(self):
-        self._field_defaults.extend([
-            ('block_structure', (2, 2, 2, 2), tuple),
+        self._config_options.extend([
+            ConfigOption('block_structure', (2, 2, 2, 2), tuple),
         ])
         super().__init__()
 

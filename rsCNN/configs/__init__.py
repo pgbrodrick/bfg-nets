@@ -5,7 +5,7 @@ from typing import List
 
 import yaml
 
-from rsCNN.configs.shared import BaseConfigSection
+from rsCNN.configs.shared import BaseConfigSection, ConfigOption
 from rsCNN.data_management import scalers
 from rsCNN.networks import architectures
 
@@ -13,22 +13,19 @@ from rsCNN.networks import architectures
 FILENAME_CONFIG = 'config.yaml'
 
 # TODO:  add documentation for how to handle this file
-# TODO:  improve names where necessary
-# TODO:  informative comments for each option
 # TODO:  check downstream that len raw filename lists match len scalers if len scalers > 1
-# TODO:  add successful_data_save_file as constant in some script
-# TODO:  data_save_name changed to dir_model_out
+# TODO:  add functions like get_available_architectures to get available options for all config options
 
 
 class RawFiles(BaseConfigSection):
     """
     Raw file configuration, information necessary to locate and parse the raw files.
     """
-    raw_feature_file_list = None
-    raw_response_file_list = None
-    boundary_file_list = None
-    feature_raw_band_type_input = None
-    response_raw_band_type_input = None
+    feature_files = None
+    response_files = None
+    boundary_files = None
+    feature_data_type = None
+    response_data_type = None
     feature_nodata_value = None
     response_nodata_value = None
     boundary_bad_value = None
@@ -36,35 +33,38 @@ class RawFiles(BaseConfigSection):
     # TODO:  expand on this
     # Data type from each feature.  R == Real, C == categorical
     # All Categorical bands will be one-hot-encoded...to keep them as a single band, simply name them as real datatypes
-    _field_defaults = [
-        ('raw_feature_file_list', None, list),  # File list for raw feature rasters, prior to being built
-        ('raw_response_file_list', None, list),  # File list for raw response rasters, prior to being built
-        ('boundary_file_list', None, list),  # Optional file list of boundaries, restricts footprint of built data
-        ('feature_raw_band_type_input', None, str),  # See above note
-        ('response_raw_band_type_input', None, str),  # See above note
-        ('feature_nodata_value', -9999, float),  # Value that denotes missing data in feature files
-        ('response_nodata_value', -9999, float),  # Value that denotes missing data in response files
-        ('boundary_bad_value', None, float),  # Value that indicates pixels are out of bounds in a boundary raster file
-        ('ignore_projections', False, bool),  # Ignore projection differences between feature/response, use with caution
+    _config_options = [
+        ConfigOption('feature_files', None, list, 'List of filepaths to raw feature rasters.'),
+        ConfigOption('response_files', None, list, 'List of filepaths to raw response rasters.'),
+        ConfigOption('boundary_files', None, list,
+                     'Optional list of filepaths to boundaries. Data is built or sampled within the boundaries.'),
+        ConfigOption('feature_data_type', None, str),  # See above note
+        ConfigOption('response_data_type', None, str),  # See above note
+        ConfigOption('feature_nodata_value', -9999, float, 'Value that denotes missing data in feature files.'),
+        ConfigOption('response_nodata_value', -9999, float, 'Value that denotes missing data in response files.'),
+        ConfigOption('boundary_bad_value', None, float, 'Value that denotes out-of-bounds areas in boundary files.'),
+        ConfigOption('ignore_projections', False, bool,
+                     'Should projection differences between feature and response files be ignored? This option ' +
+                     'should only be true if the user is confident that projections are identical despite encodings.'),
     ]
 
     def check_config_validity(self) -> List[str]:
         errors = super().check_config_validity()
-        if type(self.raw_feature_file_list) is list and type(self.raw_response_file_list) is list:
-            if len(self.raw_feature_file_list) == 0:
-                errors.append('raw_feature_file_list must have more than one file')
-            if len(self.raw_response_file_list) == 0:
-                errors.append('raw_response_file_list must have more than one file')
-            if len(self.raw_feature_file_list) != len(self.raw_response_file_list):
-                errors.append('raw_feature_file_list and raw_response_file_list must have corresponding files and ' +
+        if type(self.feature_files) is list and type(self.response_files) is list:
+            if len(self.feature_files) == 0:
+                errors.append('feature_files must have more than one file')
+            if len(self.response_files) == 0:
+                errors.append('response_files must have more than one file')
+            if len(self.feature_files) != len(self.response_files):
+                errors.append('feature_files and response_files must have corresponding files and ' +
                               'be the same length')
-        if self.raw_feature_file_list is None:
-            errors.append('raw_feature_file_list must be provided')
-        if self.raw_response_file_list is None:
-            errors.append('raw_response_file_list must be provided')
-        if type(self.boundary_file_list) is list:
+        if self.feature_files is None:
+            errors.append('feature_files must be provided')
+        if self.response_files is None:
+            errors.append('response_files must be provided')
+        if type(self.boundary_files) is list:
             if self.boundary_bad_value is None:
-                errors.append('boundary_bad_value must be provided if boundary_file_list is provided')
+                errors.append('boundary_bad_value must be provided if boundary_files is provided')
         return errors
 
 
@@ -72,41 +72,57 @@ class DataBuild(BaseConfigSection):
     """
     Data build configuration, information necessary to structure and format the built data files
     """
-    dir_data_out = None
-    filename_prefix_data_out = None
+    dir_out = None
+    filename_prefix_out = None
     response_data_format = None
     data_build_category = None
     random_seed = None
     max_samples = None
-    n_folds = None
+    number_folds = None
     validation_fold = None
     test_fold = None
     window_radius = None
-    internal_window_radius = None
+    loss_window_radius = None
     # TODO:  Phil:  should mean_centering be a list so that we have one item per file?
     feature_mean_centering = None
     feature_nodata_maximum_fraction = None
     response_min_value = None
     response_max_value = None
     response_background_value = None
-    _field_defaults = [
-        ('dir_data_out', None, str),  # Location to either create new built data files or load existing data files
-        ('filename_prefix_data_out', None, str),  # Prefix for output data for organizational purposes
-        ('response_data_format', 'FCN', str),  # Either CNN or FCN right now
-        ('data_build_category', 'or', str),  # TODO description
-        ('random_seed', None, int),  # Seed to set for reproducable data generation
-        ('max_samples', None, int),  # Max number of samples, sampling stops when data fully crawled or max is reached
-        ('n_folds', 10, int),  # Number of training data folds
-        ('validation_fold', None, int),  # Which training data fold to use for validation
-        ('test_fold', None, int),  # Which training data fold to use for testing
-        ('window_radius', None, int),  # Determines image size as 2 * window_radius
-        ('internal_window_radius', None, int),  # Determines size of model loss window, must contain responses
+    _config_options = [
+        ConfigOption('random_seed', None, int, 'Random seed for reproducible data generation.'),
+        ConfigOption('dir_out', None, str, 'Directory to which built data files are saved.'),
+        ConfigOption('filename_prefix_out', None, str,
+                     'Optional prefix for built data filenames, useful for organizing or tracking built data files ' +
+                     'from different build strategies.'),
+        # TODO:  rename the following?
+        ConfigOption('response_data_format', 'FCN', str,
+                     'Either CNN for convolutional neural network or FCN for fully convolutional network.'),
+        ConfigOption('data_build_category', 'or', str),  # TODO rename and description
+        ConfigOption('max_samples', None, int, 'Maximum number of built data samples to draw from the raw data ' +
+                     'files. Sampling stops when the raw data files are fully crawled or the maximum samples are ' +
+                     'reached.'),
+        ConfigOption('window_radius', None, int,
+                     'Window radius determines the full image size as 2x the window radius'),
+        ConfigOption('loss_window_radius', None, int,
+                     'Loss window radius determines the internal image window to use for loss calculations during ' +
+                     'model training.'),
+        ConfigOption('number_folds', 10, int, 'Number of training data folds.'),
+        ConfigOption('validation_fold', 0, int, 'Index of fold to use for validation.'),
+        ConfigOption('test_fold', 1, int, 'Index of fold to use for testing.'),
         # TODO:  Phil:  should mean_centering be a list so that we have one item per file?
-        ('feature_mean_centering', False, bool),  # Whether to mean center the features
-        ('feature_nodata_maximum_fraction', 0.0, float),  # Only include samples where features have fewer nodata values
-        ('response_min_value', None, float),  # Responses below this value are converted to the response_nodata_value
-        ('response_max_value', None, float),  # Responses above this value are converted to the response_nodata_value
-        ('response_background_value', None, float),  # Samples containing only this response will be discarded
+        ConfigOption('feature_mean_centering', False, bool, 'Should features be mean centered?'),
+        ConfigOption('feature_nodata_maximum_fraction', 0.0, float,
+                     'Only include built data samples with a lower proportion of missing feature data values.'),
+        # TODO:  First, I remember we talked about whether this was necessary and you convinced me that it's important
+        #  to keep, but I'm wondering how this works for multiple response types.
+        ConfigOption('response_min_value', None, float,
+                     'Response values below this minimum are converted to missing data.'),
+        ConfigOption('response_max_value', None, float,
+                     'Response values above this maximum are converted to missing data.'),
+        ConfigOption('response_background_value', None, float,
+                     'Built data samples containing only this response are discarded and not included in the final ' +
+                     'built data files.'),
     ]
 
     def check_config_validity(self) -> List[str]:
@@ -121,36 +137,46 @@ class DataBuild(BaseConfigSection):
 
 
 class DataSamples(BaseConfigSection):
+    """
+    Data sample configuration, information necessary to parse built data files and pass data to models during training
+    """
     apply_random_transformations = None
     batch_size = None
-    feature_scaler_names_list = None
-    response_scaler_names_list = None
-    feature_training_nodata_value = None
-    # Data sample configuration, information necessary to parse built data files and pass data to models during training
-    _field_defaults = [
-        ('apply_random_transformations', False, bool),  # Whether to apply random rotations and flips to sample images
-        ('batch_size', 100, int),  # The sample batch size for images passed to the model
-        ('feature_scaler_names_list', None, list),  # Names of the scalers to use with each feature file
-        ('response_scaler_names_list', None, list),  # Names of the scalers to use with each response file
-        ('feature_training_nodata_value', -10.0, float),  # The missing data value for models, not compatible with nans
+    feature_scaler_names = None
+    response_scaler_names = None
+    feature_nodata_encoding = None
+    _config_options = [
+        ConfigOption('apply_random_transformations', False, bool,
+                     'Should random transformations, including rotations and flips, be applied to sample images.'),
+        ConfigOption('batch_size', 100, int, 'The sample batch size for images passed to the model.'),
+        ConfigOption('feature_scaler_names', None, list,
+                     'Names of the scalers which are applied to each feature file.'),
+        ConfigOption('response_scaler_names', None, list,
+                     'Names of the scalers which are applied to each response file.'),
+        ConfigOption('feature_nodata_encoding', -10.0, float,
+                     'The encoding for missing data values passed to the model, given that neural networks are ' +
+                     'sensitive to nans.'),
     ]
 
     def check_config_validity(self) -> List[str]:
         errors = super().check_config_validity()
         # TODO
-        for scaler_name in self.feature_scaler_names_list:
+        for scaler_name in self.feature_scaler_names:
             if not scalers.check_scaler_exists(scaler_name):
-                errors.append('feature_scaler_names_list contains a scaler name that does not exist:  {}'.format(
+                errors.append('feature_scaler_names contains a scaler name that does not exist:  {}'.format(
                     scaler_name))
-        for scaler_name in self.response_scaler_names_list:
+        for scaler_name in self.response_scaler_names:
             if not scalers.check_scaler_exists(scaler_name):
-                errors.append('response_scaler_names_list contains a scaler name that does not exist:  {}'.format(
+                errors.append('response_scaler_names contains a scaler name that does not exist:  {}'.format(
                     scaler_name))
         return errors
 
 
 class ModelTraining(BaseConfigSection):
-    dir_model_out = None
+    """
+    Model training configuration, information necessary to train models from start to finish
+    """
+    dir_out = None
     verbosity = None
     assert_gpu = None
     architecture_name = None
@@ -158,16 +184,18 @@ class ModelTraining(BaseConfigSection):
     max_epochs = None
     optimizer = None
     weighted = None
-    # Model training configuration, information necessary to train models from start to finish
-    _field_defaults = [
-        ('dir_model_out', None, str),  # Location to either create new model files or load existing model files
-        ('verbosity', 1, int),  # Verbosity value for keras library, either 0 or 1
-        ('assert_gpu', False, bool),  # Asserts GPU available before model training if True
-        ('architecture_name', None, str),
-        ('loss_metric', None, str),
-        ('max_epochs', 100, int),
-        ('optimizer', 'adam', str),
-        ('weighted', False, bool),
+    _config_options = [
+        ConfigOption('dir_out', None, str,
+                     'Directory to which new model files are saved and from which existing model files are loaded.'),
+        ConfigOption('verbosity', 1, int, 'Verbosity value for keras library. Either 0 for silent or 1 for verbose.'),
+        ConfigOption('assert_gpu', False, bool, 'Assert, i.e., fail if GPUs are required and not available.'),
+        ConfigOption('architecture_name', None, str,
+                     'Architecture name from existing options:  {}.'.format(
+                         ', '.join(architectures.get_available_architectures()))),
+        ConfigOption('loss_metric', None, str, 'Loss metric to use for model training.'),
+        ConfigOption('max_epochs', 100, int, 'Maximum number of epochs to run model training.'),
+        ConfigOption('optimizer', 'adam', str, 'Optimizer to use during model training.'),
+        ConfigOption('weighted', False, bool, 'Should underrepresented classes be overweighted during model training'),
     ]
 
     def check_config_validity(self) -> List[str]:
@@ -179,52 +207,52 @@ class ModelTraining(BaseConfigSection):
 class CallbackGeneral(BaseConfigSection):
     checkpoint_periods = None
     use_terminate_on_nan = None
-    _field_defaults = [
-        ('checkpoint_periods', 5, int),
-        ('use_terminate_on_nan', True, bool),
+    _config_options = [
+        ConfigOption('checkpoint_periods', 5, int,
+                     'Number of periods of model training between model state and history saves.'),
+        ConfigOption('use_terminate_on_nan', True, 'Terminate model training if nans are observed.'),
     ]
 
 
 class CallbackTensorboard(BaseConfigSection):
-    use_tensorboard = None
-    dirname_prefix_tensorboard = None
+    use_callback = None
     update_freq = None
     histogram_freq = None
     write_graph = None
     write_grads = None
     write_images = None
-    _field_defaults = [
-        ('use_tensorboard', True, bool),
-        ('dirname_prefix_tensorboard', 'tensorboard', str),
-        ('update_freq', 'epoch', str),
-        ('histogram_freq', 0, int),
-        ('write_graph', True, bool),
-        ('write_grads', False, bool),
-        ('write_images', True, bool),
+    _config_options = [
+        ConfigOption('use_callback', True, bool,
+                     'Use the Tensorboard callback to enable Tensorboard by saving necessary data.'),
+        ConfigOption('update_freq', 'epoch', str, 'See keras documentation.'),
+        ConfigOption('histogram_freq', 0, int, 'See keras documentation.'),
+        ConfigOption('write_graph', True, bool, 'See keras documentation.'),
+        ConfigOption('write_grads', False, bool, 'See keras documentation.'),
+        ConfigOption('write_images', True, bool, 'See keras documentation.'),
     ]
 
 
 class CallbackEarlyStopping(BaseConfigSection):
-    use_early_stopping = None
+    use_callback = None
     min_delta = None
     patience = None
-    _field_defaults = [
-        ('use_early_stopping', True, bool),
-        ('min_delta', 0.0001, float),
-        ('patience', 50, int),
+    _config_options = [
+        ConfigOption('use_callback', True, bool, 'See keras documentation.'),
+        ConfigOption('min_delta', 0.0001, float, 'See keras documentation.'),
+        ConfigOption('patience', 50, int, 'See keras documentation.'),
     ]
 
 
 class CallbackReducedLearningRate(BaseConfigSection):
-    use_reduced_learning_rate = None
+    use_callback = None
     factor = None
     min_delta = None
     patience = None
-    _field_defaults = [
-        ('use_reduced_learning_rate', True, bool),
-        ('factor', 0.5, float),
-        ('min_delta', 0.0001, float),
-        ('patience', 10, int),
+    _config_options = [
+        ConfigOption('use_callback', True, bool, 'See keras documentation.'),
+        ConfigOption('factor', 0.5, float, 'See keras documentation.'),
+        ConfigOption('min_delta', 0.0001, float, 'See keras documentation.'),
+        ConfigOption('patience', 10, int, 'See keras documentation.'),
     ]
 
 

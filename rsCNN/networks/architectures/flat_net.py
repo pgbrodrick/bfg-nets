@@ -3,6 +3,7 @@ from typing import List, Tuple, Union
 import keras
 from keras.layers import BatchNormalization, Conv2D
 
+from rsCNN.configs.shared import ConfigOption
 from rsCNN.networks.architectures import shared
 
 
@@ -14,8 +15,8 @@ class ArchitectureOptions(shared.BaseArchitectureOptions):
     num_layers = None
 
     def __init__(self):
-        self._field_defaults.extend([
-            ('num_layers', DEFAULT_NUM_LAYERS, int),
+        self._config_options.extend([
+            ConfigOption('num_layers', DEFAULT_NUM_LAYERS, int),
         ])
         super().__init__()
 

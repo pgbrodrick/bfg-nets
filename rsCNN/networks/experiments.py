@@ -27,8 +27,8 @@ class Experiment(object):
         self.config = config
         self.resume = resume
 
-        if os.path.exists(self.config.model_training.dir_model_out):
-            if histories.load_history(self.config.model_training.dir_model_out):
+        if os.path.exists(self.config.model_training.dir_out):
+            if histories.load_history(self.config.model_training.dir_out):
                 assert self.resume, 'Resume must be true to continue training an existing model'
             # TODO:  do we need to assert that the configs are the same still?
             #original_config = network_configs.load_network_config(self.network_config['model']['dir_out'])
@@ -38,22 +38,22 @@ class Experiment(object):
             #    'Provided network config differs from network config for existing, trained model:  {}'.format(
             #        differing_items)
         else:
-            os.makedirs(self.config.model_training.dir_model_out)
-            configs.save_config_to_file(self.config, self.config.model_training.dir_model_out)
+            os.makedirs(self.config.model_training.dir_out)
+            configs.save_config_to_file(self.config, self.config.model_training.dir_out)
 
     def build_or_load_model(self):
         _logger.info('Building or loading model')
         loss_function = losses.cropped_loss(
             self.config.model_training.loss_metric,
             self.config.architecture_options.inshape[0],
-            2 * self.config.data_build.internal_window_radius,
+            2 * self.config.data_build.loss_window_radius,
             self.config.model_training.weighted
         )
-        self.history = histories.load_history(self.config.model_training.dir_model_out) or dict()
+        self.history = histories.load_history(self.config.model_training.dir_out) or dict()
         if self.history:
             _logger.debug('History exists in out directory, loading model from same location')
             self.model = models.load_model(
-                self.config.model_training.dir_model_out, custom_objects={'_cropped_loss': loss_function})
+                self.config.model_training.dir_out, custom_objects={'_cropped_loss': loss_function})
             if 'lr' in self.history:
                 _logger.debug('Setting learning rate to value from last training epoch')
                 K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
@@ -63,7 +63,7 @@ class Experiment(object):
             self.model = architectures.create_model_from_architecture_options(
                 self.config.model_training.architecture_name, self.config.architecture_options)
             self.model.compile(loss=loss_function, optimizer=self.config.model_training.optimizer)
-            self.history['model_name'] = self.config.model_training.dir_model_out
+            self.history['model_name'] = self.config.model_training.dir_out
         # TODO:  reimplement multiple GPUs
         #n_gpu_avail = gpus.get_count_available_gpus()
         #_logger.debug('Using multiple GPUs with {} available'.format(n_gpu_avail))
@@ -127,5 +127,5 @@ class Experiment(object):
             initial_epoch=len(self.history.get('lr', list())),
         )
         self.history = histories.combine_histories(self.history, new_history.history)
-        histories.save_history(self.history, self.config.model_training.dir_model_out)
-        models.save_model(self.model, self.config.model_training.dir_model_out)
+        histories.save_history(self.history, self.config.model_training.dir_out)
+        models.save_model(self.model, self.config.model_training.dir_out)

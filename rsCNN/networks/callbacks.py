@@ -12,6 +12,9 @@ from rsCNN.utils import logging
 _logger = logging.get_child_logger(__name__)
 
 
+_DIR_TENSORBOARD = 'tensorboard'
+
+
 class HistoryCheckpoint(keras.callbacks.Callback):
     # TODO:  review logged logs from the below methods to determine what should be logged
 
@@ -93,18 +96,18 @@ class HistoryCheckpoint(keras.callbacks.Callback):
 def get_callbacks(config: Config, existing_history: dict) -> List[keras.callbacks.Callback]:
     callbacks = [
         HistoryCheckpoint(
-            dir_out=config.model_training.dir_model_out,
+            dir_out=config.model_training.dir_out,
             existing_history=existing_history,
             period=config.callback_general.checkpoint_periods,
             verbose=config.model_training.verbosity,
         ),
         keras.callbacks.ModelCheckpoint(
-            os.path.join(config.model_training.dir_model_out, models.FILENAME_MODEL),
+            os.path.join(config.model_training.dir_out, models.FILENAME_MODEL),
             period=config.callback_general.checkpoint_periods,
             verbose=config.model_training.verbosity,
         ),
     ]
-    if config.callback_early_stopping.use_early_stopping:
+    if config.callback_early_stopping.use_callback:
         callbacks.append(
             keras.callbacks.EarlyStopping(
                 monitor='loss',
@@ -112,7 +115,7 @@ def get_callbacks(config: Config, existing_history: dict) -> List[keras.callback
                 patience=config.callback_early_stopping.patience,
             ),
         )
-    if config.callback_reduced_learning_rate.use_reduced_learning_rate:
+    if config.callback_reduced_learning_rate.use_callback:
         callbacks.append(
             keras.callbacks.ReduceLROnPlateau(
                 monitor='loss',
@@ -121,11 +124,8 @@ def get_callbacks(config: Config, existing_history: dict) -> List[keras.callback
                 patience=config.callback_reduced_learning_rate.patience,
             ),
         )
-    if config.callback_tensorboard.use_tensorboard:
-        dir_out = os.path.join(
-            config.model_training.dir_model_out,
-            config.callback_tensorboard.dirname_prefix_tensorboard
-        )
+    if config.callback_tensorboard.use_callback:
+        dir_out = os.path.join(config.model_training.dir_out, _DIR_TENSORBOARD)
         callbacks.append(
             keras.callbacks.TensorBoard(
                 dir_out,

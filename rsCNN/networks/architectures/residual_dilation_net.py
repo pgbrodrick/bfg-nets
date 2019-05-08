@@ -3,6 +3,7 @@ from typing import Tuple
 import keras
 from keras.layers import BatchNormalization, Conv2D
 
+from rsCNN.configs.shared import ConfigOption
 from rsCNN.networks.architectures import shared
 
 
@@ -15,9 +16,9 @@ class ArchitectureOptions(shared.BaseArchitectureOptions):
     dilation_rate = None
 
     def __init__(self):
-        self._field_defaults.extend([
-            ('block_structure', DEFAULT_BLOCK_STRUCTURE, tuple),
-            ('dilation_rate', DEFAULT_DILATION_RATE, int),
+        self._config_options.extend([
+            ConfigOption('block_structure', DEFAULT_BLOCK_STRUCTURE, tuple),
+            ConfigOption('dilation_rate', DEFAULT_DILATION_RATE, int),
         ])
         super().__init__()
 
