@@ -424,7 +424,7 @@ class Dataset:
         response_scaler.load()
 
         self.trainumber_folds = [x for x in range(self.config.data_build.number_folds)
-                            if x not in (self.config.data_build.validation_fold, self.config.data_build.test_fold)]
+                                 if x not in (self.config.data_build.validation_fold, self.config.data_build.test_fold)]
 
         if (feature_scaler.is_fitted is False or rebuild is True):
             # TODO: do better
