@@ -69,7 +69,7 @@ def apply_model_to_raster(cnn, config: configs.Config, feature_file, destination
     outDataset.SetProjection(feature_set.GetProjection())
     outDataset.SetGeoTransform(feature_set.GetGeoTransform())
 
-    step_size = config.data_build.internal_window_radius*2
+    step_size = config.data_build.loss_window_radius*2
     if (CNN_MODE):
         step_size = 1
 
@@ -105,7 +105,7 @@ def apply_model_to_raster(cnn, config: configs.Config, feature_file, destination
         if (feature_transformer is not None):
             images = feature_transformer.transform(images)
 
-        images[np.isnan(images)] = config.data_samples.feature_training_nodata_value
+        images[np.isnan(images)] = config.data_samples.feature_nodata_encoding
         pred_y = cnn.predict(images)
         if (response_transformer is not None):
             pred_y = response_transformer.inverse_transform(pred_y)

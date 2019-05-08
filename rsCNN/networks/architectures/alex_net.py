@@ -3,6 +3,7 @@ from typing import Tuple
 import keras
 from keras.layers import BatchNormalization, Conv2D, Dense, Flatten, MaxPooling2D
 
+from rsCNN.configs.shared import ConfigOption
 from rsCNN.networks.architectures import shared
 
 
@@ -17,11 +18,11 @@ class ArchitectureOptions(shared.BaseArchitectureOptions):
     num_layers = None
 
     def __init__(self):
-        self._field_defaults.extend([
-            ('block_structure', DEFAULT_BLOCK_STRUCTURE, tuple),
-            ('min_conv_width', DEFAULT_MIN_CONV_WIDTH, int),
-            ('pool_size', DEFAULT_POOL_SIZE, tuple),
-            ('use_growth', DEFAULT_USE_GROWTH, bool),
+        self._config_options.extend([
+            ConfigOption('block_structure', DEFAULT_BLOCK_STRUCTURE, tuple),
+            ConfigOption('min_conv_width', DEFAULT_MIN_CONV_WIDTH, int),
+            ConfigOption('pool_size', DEFAULT_POOL_SIZE, tuple),
+            ConfigOption('use_growth', DEFAULT_USE_GROWTH, bool),
         ])
         super().__init__()
 

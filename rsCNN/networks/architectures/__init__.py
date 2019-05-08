@@ -29,7 +29,7 @@ def create_model_from_architecture_options(
     assert check_architecture_exists(architecture_name), \
         'Architecture does not exist ({}) in options: {}'.format(architecture_name, ', '.join(_architecture_names))
     kwargs = {field_name: getattr(architecture_options, field_name)
-              for field_name, _, _ in architecture_options._field_defaults}
+              for field_name, _, _ in architecture_options._config_options}
     return globals()[architecture_name].create_model(**kwargs)
 
 

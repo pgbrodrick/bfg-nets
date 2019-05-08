@@ -1,4 +1,4 @@
-from rsCNN.configs import BaseConfigSection
+from rsCNN.configs import BaseConfigSection, ConfigOption
 
 
 DEFAULT_FILTERS = 64
@@ -22,20 +22,20 @@ class BaseArchitectureOptions(BaseConfigSection):
     padding = None
     use_batch_norm = None
     use_initial_colorspace_transformation_layer = None
-    # TODO:  document
-    _field_defaults = [
-        ('filters', DEFAULT_FILTERS, int),
-        ('inshape', None, tuple),
-        ('kernel_size', DEFAULT_KERNEL_SIZE, tuple),
-        ('n_classes', None, int),
-        ('optimizer', DEFAULT_OPTIMIZER, str),
-        ('output_activation', None, str),
-        ('padding', DEFAULT_PADDING, str),
-        ('use_batch_norm', DEFAULT_USE_BATCH_NORM, bool),
-        ('use_initial_colorspaced_transformation_layer', DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER, bool),
+    _config_options = [
+        ConfigOption('filters', DEFAULT_FILTERS, int),
+        ConfigOption('inshape', None, tuple),
+        ConfigOption('kernel_size', DEFAULT_KERNEL_SIZE, tuple),
+        ConfigOption('n_classes', None, int),
+        ConfigOption('optimizer', DEFAULT_OPTIMIZER, str),
+        ConfigOption('output_activation', None, str),
+        ConfigOption('padding', DEFAULT_PADDING, str),
+        ConfigOption('use_batch_norm', DEFAULT_USE_BATCH_NORM, bool),
+        ConfigOption(
+            'use_initial_colorspaced_transformation_layer', DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER, bool),
     ]
 
     def __init__(self):
         # We need to reorder field defaults given that child ArchitectureOptions will be adding field defaults
-        self._field_defaults = sorted(self._field_defaults)
+        self._config_options = sorted(self._config_options, key=lambda x: x.key)
         super().__init__()
