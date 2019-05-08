@@ -30,16 +30,20 @@ class RawFiles(BaseConfigSection):
     response_nodata_value = None
     boundary_bad_value = None
     ignore_projections = None
-    # TODO:  expand on this
-    # Data type from each feature.  R == Real, C == categorical
-    # All Categorical bands will be one-hot-encoded...to keep them as a single band, simply name them as real datatypes
+
+
+    data_type_str = 'Data type from each input feature band.  R for
+                     Real, C for Categorical.  All C bands will be one-hot encoded. Can be
+                     provided as a single string value (e.g. \'C\') or as a list of lists
+                     corresponding to each band from each file in the raw input files list.'
+
     _config_options = [
         ConfigOption('feature_files', None, list, 'List of filepaths to raw feature rasters.'),
         ConfigOption('response_files', None, list, 'List of filepaths to raw response rasters.'),
         ConfigOption('boundary_files', None, list,
                      'Optional list of filepaths to boundaries. Data is built or sampled within the boundaries.'),
-        ConfigOption('feature_data_type', None, str),  # See above note
-        ConfigOption('response_data_type', None, str),  # See above note
+        ConfigOption('feature_data_type', None, str, data_type_str),  # See above note
+        ConfigOption('response_data_type', None, str, data_type_str),  # See above note
         ConfigOption('feature_nodata_value', -9999, float, 'Value that denotes missing data in feature files.'),
         ConfigOption('response_nodata_value', -9999, float, 'Value that denotes missing data in response files.'),
         ConfigOption('boundary_bad_value', None, float, 'Value that denotes out-of-bounds areas in boundary files.'),
@@ -114,12 +118,14 @@ class DataBuild(BaseConfigSection):
         ConfigOption('feature_mean_centering', False, bool, 'Should features be mean centered?'),
         ConfigOption('feature_nodata_maximum_fraction', 0.0, float,
                      'Only include built data samples with a lower proportion of missing feature data values.'),
-        # TODO:  First, I remember we talked about whether this was necessary and you convinced me that it's important
-        #  to keep, but I'm wondering how this works for multiple response types.
+
+        # TODO: expand to multiple response values
         ConfigOption('response_min_value', None, float,
-                     'Response values below this minimum are converted to missing data.'),
+                     'Response values below this minimum are converted to missing data. Currently
+                     applied to all response value uniformly.'),
         ConfigOption('response_max_value', None, float,
-                     'Response values above this maximum are converted to missing data.'),
+                     'Response values above this maximum are converted to missing data. Currently
+                     applied to all response value uniformly.'),
         ConfigOption('response_background_value', None, float,
                      'Built data samples containing only this response are discarded and not included in the final ' +
                      'built data files.'),
