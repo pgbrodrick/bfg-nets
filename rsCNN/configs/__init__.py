@@ -31,11 +31,10 @@ class RawFiles(BaseConfigSection):
     boundary_bad_value = None
     ignore_projections = None
 
-
-    data_type_str = 'Data type from each input feature band.  R for
-                     Real, C for Categorical.  All C bands will be one-hot encoded. Can be
-                     provided as a single string value (e.g. \'C\') or as a list of lists
-                     corresponding to each band from each file in the raw input files list.'
+    data_type_str = \
+        'Data type from each input feature band.  R for Real, C for Categorical.  All C bands will be one-hot ' + \
+        'encoded. Can be provided as a single string value(e.g. \'C\') or as a list of lists corresponding to each ' + \
+        'band from each file in the raw input files list.'
 
     _config_options = [
         ConfigOption('feature_files', None, list, 'List of filepaths to raw feature rasters.'),
@@ -121,11 +120,11 @@ class DataBuild(BaseConfigSection):
 
         # TODO: expand to multiple response values
         ConfigOption('response_min_value', None, float,
-                     'Response values below this minimum are converted to missing data. Currently
-                     applied to all response value uniformly.'),
+                     'Response values below this minimum are converted to missing data. Currently applied to all ' +
+                     'response values uniformly.'),
         ConfigOption('response_max_value', None, float,
-                     'Response values above this maximum are converted to missing data. Currently
-                     applied to all response value uniformly.'),
+                     'Response values above this maximum are converted to missing data. Currently applied to all ' +
+                     'response values uniformly.'),
         ConfigOption('response_background_value', None, float,
                      'Built data samples containing only this response are discarded and not included in the final ' +
                      'built data files.'),
