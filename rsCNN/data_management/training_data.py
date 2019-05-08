@@ -52,7 +52,6 @@ def rasterize_vector(vector_file, geotransform, output_shape):
     return mask
 
 
-# TODO:  typing
 def build_or_load_rawfile_data(config: configs.Config, rebuild: bool = False):
 
     data_container = Dataset(config)
@@ -80,8 +79,9 @@ def build_or_load_rawfile_data(config: configs.Config, rebuild: bool = False):
                 config.raw_files.boundary_files
             )
 
-        # TODO: deal with boundary file list here as well if it exists
-        check_resolutions(config.raw_files.feature_files, config.raw_files.response_files)
+        boundary_files = [loc_file for loc_file in config.raw_files.boundary_files
+                          if gdal.Open(loc_file, gdal.GA_ReadOnly) is not None]
+        check_resolutions(config.raw_files.feature_files, config.raw_files.response_files, boundary_files)
 
         if (config.raw_files.response_data_format == 'FCN'):
             features, responses, weights, response_band_types = build_training_data_ordered(
