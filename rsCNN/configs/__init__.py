@@ -8,7 +8,10 @@ import yaml
 from rsCNN.configs.shared import BaseConfigSection, ConfigOption
 from rsCNN.data_management import scalers
 from rsCNN.networks import architectures
+from rsCNN.utils import logging
 
+
+_logger = logging.get_child_logger(__name__)
 
 FILENAME_CONFIG = 'config.yaml'
 
@@ -194,9 +197,8 @@ class ModelTraining(BaseConfigSection):
                      'Directory to which new model files are saved and from which existing model files are loaded.'),
         ConfigOption('verbosity', 1, int, 'Verbosity value for keras library. Either 0 for silent or 1 for verbose.'),
         ConfigOption('assert_gpu', False, bool, 'Assert, i.e., fail if GPUs are required and not available.'),
-        ConfigOption('architecture_name', None, str,
-                     'Architecture name from existing options:  {}.'.format(
-                         ', '.join(architectures.get_available_architectures()))),
+        # TODO:  get imports working so you can autofill
+        ConfigOption('architecture_name', None, str, 'Architecture name from existing options:  TODO.'),
         ConfigOption('loss_metric', None, str, 'Loss metric to use for model training.'),
         ConfigOption('max_epochs', 100, int, 'Maximum number of epochs to run model training.'),
         ConfigOption('optimizer', 'adam', str, 'Optimizer to use during model training.'),
@@ -264,6 +266,7 @@ class CallbackReducedLearningRate(BaseConfigSection):
 def create_config_from_file(dir_config: str, filename: str) -> 'Config':
     filepath = os.path.join(dir_config, filename or FILENAME_CONFIG)
     assert os.path.exists(filepath), 'No config file found at {}'.format(filepath)
+    _logger.debug('Loading config file from {}'.format(filepath))
     with open(filepath) as file_:
         raw_config = yaml.safe_load(file_)
     config_factory = ConfigFactory()
@@ -271,6 +274,8 @@ def create_config_from_file(dir_config: str, filename: str) -> 'Config':
 
 
 def create_config_template(architecture_name: str, dir_config: str, filename: str = None) -> None:
+    _logger.debug('Creating config template for architecture {} at {}'.format(
+        architecture_name, os.path.join(dir_config, filename)))
     config_factory = ConfigFactory()
     config = config_factory.create_config_template(architecture_name)
     save_config_to_file(config, dir_config, filename)
@@ -288,6 +293,7 @@ def save_config_to_file(config: 'Config', dir_config: str, filename: str = None)
     yaml.add_representer(list, _represent_list_inline)
     config_out = config.get_config_as_dict()
     filepath = os.path.join(dir_config, filename or FILENAME_CONFIG)
+    _logger.debug('Saving config file to {}'.format(filepath))
     with open(filepath, 'w') as file_:
         yaml.dump(config_out, file_, default_flow_style=False)
 
@@ -360,7 +366,7 @@ class Config(object):
             data_build: DataBuild = None,
             data_samples: DataSamples = None,
             model_training: ModelTraining = None,
-            architecture_options: architectures.shared.BaseArchitectureOptions = None,
+            architecture_options: 'BaseArchitectureOptions' = None,
             callback_general: CallbackGeneral = None,
             callback_tensorboard: CallbackTensorboard = None,
             callback_early_stopping: CallbackEarlyStopping = None,

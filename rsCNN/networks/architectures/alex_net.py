@@ -16,15 +16,12 @@ DEFAULT_USE_GROWTH = False
 class ArchitectureOptions(shared.BaseArchitectureOptions):
     dilation_rate = None
     num_layers = None
-
-    def __init__(self):
-        self._config_options.extend([
-            ConfigOption('block_structure', DEFAULT_BLOCK_STRUCTURE, tuple),
-            ConfigOption('min_conv_width', DEFAULT_MIN_CONV_WIDTH, int),
-            ConfigOption('pool_size', DEFAULT_POOL_SIZE, tuple),
-            ConfigOption('use_growth', DEFAULT_USE_GROWTH, bool),
-        ])
-        super().__init__()
+    _config_options_extra = [
+        ConfigOption('block_structure', DEFAULT_BLOCK_STRUCTURE, tuple),
+        ConfigOption('min_conv_width', DEFAULT_MIN_CONV_WIDTH, int),
+        ConfigOption('pool_size', DEFAULT_POOL_SIZE, tuple),
+        ConfigOption('use_growth', DEFAULT_USE_GROWTH, bool),
+    ]
 
 
 def create_model(

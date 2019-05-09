@@ -46,15 +46,11 @@ architecture_options:
   filters: 64
   inshape: REQUIRED
   kernel_size: [3, 3]
-  min_conv_width: 8
   n_classes: REQUIRED
-  num_layers: 8
   optimizer: adam
   output_activation: REQUIRED
   padding: same
-  pool_size: [2, 2]
   use_batch_norm: true
-  use_growth: false
   use_initial_colorspaced_transformation_layer: false
 callback_general:
   checkpoint_periods: 5

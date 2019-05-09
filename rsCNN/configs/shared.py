@@ -61,10 +61,12 @@ class BaseConfigSection(object):
         for config_option in self._config_options:
             if config_option.key in config_options:
                 option_value = config_options.pop(config_option.key)
+                _logger.trace('Setting option "{}" to provided value "{}"'.format(config_option.key, option_value))
             else:
                 option_value = config_option.default
                 if option_value is None and highlight_required:
                     option_value = DEFAULT_REQUIRED_VALUE
+                _logger.trace('Setting option "{}" to default value "{}"'.format(config_option.key, option_value))
             setattr(self, config_option.key, option_value)
         return
 
