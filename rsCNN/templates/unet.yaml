@@ -9,7 +9,7 @@ raw_files:
   boundary_bad_value: REQUIRED
   ignore_projections: false
 data_build:
-  random_seed: REQUIRED
+  random_seed: 0
   dir_out: REQUIRED
   filename_prefix_out: REQUIRED
   response_data_format: FCN

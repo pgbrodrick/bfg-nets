@@ -323,34 +323,23 @@ class ConfigFactory(object):
         return self._create_config(config_options, is_template=False)
 
     def create_config_template(self, architecture_name: str) -> 'Config':
-        config_options = {'architecture_name': architecture_name}
+        config_options = {'model_training': {'architecture_name': architecture_name}}
         return self._create_config(config_options, is_template=True)
 
     def _create_config(self, config_options: dict, is_template: bool) -> 'Config':
         config_copy = copy.deepcopy(config_options)  # Use a copy because config options are popped from the dict
         # Population config sections with the provided configuration options, tracking errors
         populated_sections = dict()
-        errors = list()
         for config_section in _CONFIG_SECTIONS:
             section_name = config_section.get_config_name_as_snake_case()
             populated_section = config_section()
-            populated_section.set_config_options(config_copy[section_name], is_template)
+            populated_section.set_config_options(config_copy.get(section_name, dict()), is_template)
             populated_sections[section_name] = populated_section
-            if not is_template:
-                errors.extend(populated_section.check_config_validity())
         # Populate architecture options given architecture name
         architecture_name = populated_sections['model_training'].architecture_name
         architecture_options = architectures.get_architecture_options(architecture_name)
         architecture_options.set_config_options(config_copy, is_template)
-        if not is_template:
-            errors.extend(architecture_options.check_config_validity())
         populated_sections['architecture_options'] = architecture_options
-        # Report errors if necessary
-        if not is_template:
-            if len(config_copy) > 0:
-                errors.append('The configuration has unused options:  {}'.format(', '.join(list(config_copy.keys()))))
-            assert len(errors) == 0, \
-                '{} errors were found while building configuration:\n  {}'.format(len(errors), '\n'.join(errors))
         return Config(**populated_sections)
 
 
@@ -404,3 +393,18 @@ class Config(object):
                 # Given ordered output, architecture options make the most sense after model training options
                 config['architecture_options'] = self.architecture_options.get_config_options_as_dict()
         return config
+
+    def check_config_validity(self) -> bool:
+        if self.get_config_errors():
+            return False
+        return True
+
+    def get_config_errors(self) -> list:
+        errors = list()
+        for config_section in _CONFIG_SECTIONS:
+            section_name = config_section.get_config_name_as_snake_case()
+            populated_section = getattr(self, section_name)
+            errors.extend(populated_section.check_config_validity())
+            if config_section is ModelTraining:
+                errors.extend(self.architecture_options.check_config_validity())
+        return errors
