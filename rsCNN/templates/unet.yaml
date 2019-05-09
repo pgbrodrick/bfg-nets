@@ -42,13 +42,11 @@ model_training:
   weighted: false
 architecture_options:
   block_structure: [2, 2, 2, 2]
-  dilation_rate: 2
   filters: 64
   inshape: REQUIRED
   kernel_size: [3, 3]
   min_conv_width: 8
   n_classes: REQUIRED
-  num_layers: 8
   optimizer: adam
   output_activation: REQUIRED
   padding: same

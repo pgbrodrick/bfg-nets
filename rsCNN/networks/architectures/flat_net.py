@@ -13,12 +13,9 @@ DEFAULT_NUM_LAYERS = 8
 class ArchitectureOptions(shared.BaseArchitectureOptions):
     dilation_rate = None
     num_layers = None
-
-    def __init__(self):
-        self._config_options.extend([
-            ConfigOption('num_layers', DEFAULT_NUM_LAYERS, int),
-        ])
-        super().__init__()
+    _config_options_extra = [
+        ConfigOption('num_layers', DEFAULT_NUM_LAYERS, int),
+    ]
 
 
 def create_model(

@@ -14,13 +14,10 @@ DEFAULT_DILATION_RATE = 2
 class ArchitectureOptions(shared.BaseArchitectureOptions):
     block_structure = None
     dilation_rate = None
-
-    def __init__(self):
-        self._config_options.extend([
-            ConfigOption('block_structure', DEFAULT_BLOCK_STRUCTURE, tuple),
-            ConfigOption('dilation_rate', DEFAULT_DILATION_RATE, int),
-        ])
-        super().__init__()
+    _config_options_extra = [
+        ConfigOption('block_structure', DEFAULT_BLOCK_STRUCTURE, tuple),
+        ConfigOption('dilation_rate', DEFAULT_DILATION_RATE, int),
+    ]
 
 
 def create_model(

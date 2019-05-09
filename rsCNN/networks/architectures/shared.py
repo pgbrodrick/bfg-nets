@@ -34,8 +34,10 @@ class BaseArchitectureOptions(BaseConfigSection):
         ConfigOption(
             'use_initial_colorspaced_transformation_layer', DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER, bool),
     ]
+    _config_options_extra = list()
 
     def __init__(self):
         # We need to reorder field defaults given that child ArchitectureOptions will be adding field defaults
+        self._config_options = self._config_options + self._config_options_extra
         self._config_options = sorted(self._config_options, key=lambda x: x.key)
         super().__init__()

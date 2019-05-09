@@ -12,12 +12,9 @@ DEFAULT_BLOCK_STRUCTURE = (2, 2, 2, 2)
 
 class ArchitectureOptions(shared.BaseArchitectureOptions):
     block_structure = None
-
-    def __init__(self):
-        self._config_options.extend([
-            ConfigOption('block_structure', (2, 2, 2, 2), tuple),
-        ])
-        super().__init__()
+    _config_options_extra = [
+        ConfigOption('block_structure', (2, 2, 2, 2), tuple),
+    ]
 
 
 def create_model(
