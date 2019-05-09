@@ -93,7 +93,7 @@ class DataBuild(BaseConfigSection):
     response_max_value = None
     response_background_value = None
     _config_options = [
-        ConfigOption('random_seed', None, int, 'Random seed for reproducible data generation.'),
+        ConfigOption('random_seed', 0, int, 'Random seed for reproducible data generation.'),
         ConfigOption('dir_out', None, str, 'Directory to which built data files are saved.'),
         ConfigOption('filename_prefix_out', None, str,
                      'Optional prefix for built data filenames, useful for organizing or tracking built data files ' +
@@ -334,7 +334,7 @@ class ConfigFactory(object):
         for config_section in _CONFIG_SECTIONS:
             section_name = config_section.get_config_name_as_snake_case()
             populated_section = config_section()
-            populated_section.set_config_options(config_copy, is_template)
+            populated_section.set_config_options(config_copy[section_name], is_template)
             populated_sections[section_name] = populated_section
             if not is_template:
                 errors.extend(populated_section.check_config_validity())
