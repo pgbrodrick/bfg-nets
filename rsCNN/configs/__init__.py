@@ -344,7 +344,7 @@ class ConfigFactory(object):
         # Populate architecture options given architecture name
         architecture_name = populated_sections['model_training'].architecture_name
         architecture_options = architectures.get_architecture_options(architecture_name)
-        architecture_options.set_config_options(config_copy, is_template)
+        architecture_options.set_config_options(config_copy.get('architecture_options', dict()), is_template)
         populated_sections['architecture_options'] = architecture_options
         return Config(**populated_sections)
 

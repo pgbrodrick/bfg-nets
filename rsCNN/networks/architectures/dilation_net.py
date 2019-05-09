@@ -15,8 +15,8 @@ class ArchitectureOptions(shared.BaseArchitectureOptions):
     dilation_rate = None
     num_layers = None
     _config_options_extra = [
-            ConfigOption('dilation_rate', DEFAULT_DILATION_RATE, int),
-            ConfigOption('num_layers', DEFAULT_NUM_LAYERS, int),
+        ConfigOption('dilation_rate', DEFAULT_DILATION_RATE, int),
+        ConfigOption('num_layers', DEFAULT_NUM_LAYERS, int),
     ]
 
 
