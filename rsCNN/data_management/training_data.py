@@ -1,1011 +1,1013 @@
-import os
-from pathlib import Path
-import re
-from typing import List, Tuple
+    import os
+    from pathlib import Path
+    import re
+    from typing import List, Tuple
 
-import fiona
-import gdal
-import numpy as np
-import numpy.matlib
-import ogr
-import rasterio.features
-from tqdm import tqdm
+    import fiona
+    import gdal
+    import numpy as np
+    import numpy.matlib
+    import ogr
+    import rasterio.features
+    from tqdm import tqdm
 
-from rsCNN import configs
-from rsCNN.data_management import scalers
-# TODO:  remove * imports
-from rsCNN.utils.general import *
-from rsCNN.utils import logging
-
-
-_logger = logging.get_child_logger(__name__)
-
-MAX_UNIQUE_RESPONSES = 100
+    from rsCNN import configs
+    from rsCNN.data_management import scalers
+    # TODO:  remove * imports
+    from rsCNN.utils.general import *
+    from rsCNN.utils import logging
 
 
-_FILENAME_BUILD_SUCCESS = 'success'
-_FILENAME_RESPONSES_SUFFIX = 'responses_{}.npy'
-_FILENAME_FEATURES_SUFFIX = 'features_{}.npy'
-_FILENAME_WEIGHTS_SUFFIX = 'weights_{}.npy'
-_VECTORIZED_FILENAMES = ('kml', 'shp')
+    _logger = logging.get_child_logger(__name__)
+
+    MAX_UNIQUE_RESPONSES = 100
 
 
-def rasterize_vector(vector_file, geotransform, output_shape):
-    """ Rasterizes an input vector directly into a numpy array.
-    Arguments:
-    vector_file - str
-      Input vector file to be rasterized.
-    geotransform - list
-      A gdal style geotransform.
-    output_shape - tuple
-      The shape of the output file to be generated.
-
-    Return:
-    A rasterized 2-d numpy array.
-    """
-    ds = fiona.open(vector_file, 'r')
-    geotransform = [geotransform[1], geotransform[2], geotransform[0],
-                    geotransform[4], geotransform[5], geotransform[3]]
-    mask = np.zeros(output_shape)
-    for n in range(0, len(ds)):
-        rasterio.features.rasterize([ds[n]['geometry']], transform=geotransform, default_value=1, out=mask)
-    return mask
+    _FILENAME_BUILD_SUCCESS = 'success'
+    _FILENAME_RESPONSES_SUFFIX = 'responses_{}.npy'
+    _FILENAME_FEATURES_SUFFIX = 'features_{}.npy'
+    _FILENAME_WEIGHTS_SUFFIX = 'weights_{}.npy'
+    _VECTORIZED_FILENAMES = ('kml', 'shp')
 
 
-def build_or_load_rawfile_data(config: configs.Config, rebuild: bool = False):
+    def rasterize_vector(vector_file, geotransform, output_shape):
+        """ Rasterizes an input vector directly into a numpy array.
+        Arguments:
+        vector_file - str
+          Input vector file to be rasterized.
+        geotransform - list
+          A gdal style geotransform.
+        output_shape - tuple
+          The shape of the output file to be generated.
 
-    data_container = Dataset(config)
-    data_container.check_input_files(
-        config.raw_files.feature_files, config.raw_files.response_files,
-        config.raw_files.boundary_files
-    )
+        Return:
+        A rasterized 2-d numpy array.
+        """
+        ds = fiona.open(vector_file, 'r')
+        geotransform = [geotransform[1], geotransform[2], geotransform[0],
+                        geotransform[4], geotransform[5], geotransform[3]]
+        mask = np.zeros(output_shape)
+        for n in range(0, len(ds)):
+            rasterio.features.rasterize([ds[n]['geometry']], transform=geotransform, default_value=1, out=mask)
+        return mask
 
-    data_container.feature_raw_band_types = data_container.get_band_types(
-        config.raw_files.feature_files, config.raw_files.feature_data_type)
-    data_container.response_raw_band_types = data_container.get_band_types(
-        config.raw_files.response_files, config.raw_files.response_data_type)
 
-    if rebuild is False:
-        assert _check_built_data_files_exist(config, do_assert=True)
-        features, responses, weights = _load_built_data_files(config)
+    def build_or_load_rawfile_data(config: configs.Config, rebuild: bool = False):
 
-    else:
-        assert config.raw_files.feature_files is not [], 'feature files to pull data from are required'
-        assert config.raw_files.response_files is not [], 'response files to pull data from are required'
+        data_container = Dataset(config)
+        data_container.check_input_files(
+            config.raw_files.feature_files, config.raw_files.response_files,
+            config.raw_files.boundary_files
+        )
 
-        if (config.raw_files.ignore_projections is False):
-            check_projections(
-                config.raw_files.feature_files, config.raw_files.response_files,
-                config.raw_files.boundary_files
-            )
+        data_container.feature_raw_band_types = data_container.get_band_types(
+            config.raw_files.feature_files, config.raw_files.feature_data_type)
+        data_container.response_raw_band_types = data_container.get_band_types(
+            config.raw_files.response_files, config.raw_files.response_data_type)
 
-        boundary_files = [loc_file for loc_file in config.raw_files.boundary_files
-                          if gdal.Open(loc_file, gdal.GA_ReadOnly) is not None]
-        check_resolutions(config.raw_files.feature_files, config.raw_files.response_files, boundary_files)
+        if rebuild is False:
+            assert _check_built_data_files_exist(config, do_assert=True)
+            features, responses, weights = _load_built_data_files(config)
 
-        if (config.raw_files.response_data_format == 'FCN'):
-            features, responses, weights, response_band_types = build_training_data_ordered(
-                config, data_container.feature_raw_band_types, data_container.response_raw_band_types)
-        elif (config.raw_files.response_data_format == 'CNN'):
-            features, responses, weights, response_band_types = build_training_data_from_response_points(
-                config, data_container.feature_raw_band_types, data_container.response_raw_band_types)
         else:
-            raise NotImplementedError('Unknown response data format')
+            assert config.raw_files.feature_files is not [], 'feature files to pull data from are required'
+            assert config.raw_files.response_files is not [], 'response files to pull data from are required'
 
-    data_container.features = features
-    data_container.responses = responses
-    data_container.weights = weights
-    data_container.response_band_types = weights
+            if (config.raw_files.ignore_projections is False):
+                check_projections(
+                    config.raw_files.feature_files, config.raw_files.response_files,
+                    config.raw_files.boundary_files
+                )
 
-    return data_container
+            boundary_files = [loc_file for loc_file in config.raw_files.boundary_files
+                              if gdal.Open(loc_file, gdal.GA_ReadOnly) is not None]
+            check_resolutions(config.raw_files.feature_files, config.raw_files.response_files, boundary_files)
+
+            if (config.raw_files.response_data_format == 'FCN'):
+                features, responses, weights, feature_band_types, response_band_types = build_training_data_ordered(
+                    config, data_container.feature_raw_band_types, data_container.response_raw_band_types)
+            elif (config.raw_files.response_data_format == 'CNN'):
+                features, responses, weights, feature_band_types, response_band_types = build_training_data_from_response_points(
+                    config, data_container.feature_raw_band_types, data_container.response_raw_band_types)
+            else:
+                raise NotImplementedError('Unknown response data format')
+
+        data_container.features = features
+        data_container.responses = responses
+        data_container.weights = weights
+        data_container.feature_band_types = feature_band_types
+        data_container.response_band_types = response_band_types
+
+        return data_container
 
 
-def get_proj(fname):
-    """ Get the projection of a raster/vector dataset.
-    Arguments:
-    fname - str
-      Name of input file.
-    is_vector - boolean
-      Boolean indication of whether the file is a vector or a raster.
+    def get_proj(fname):
+        """ Get the projection of a raster/vector dataset.
+        Arguments:
+        fname - str
+          Name of input file.
+        is_vector - boolean
+          Boolean indication of whether the file is a vector or a raster.
 
-    Returns:
-    The projection of the input fname
-    """
-    ds = gdal.Open(fname, gdal.GA_ReadOnly)
-    if (ds is not None):
-        b_proj = ds.GetProjection()
-        if (b_proj is not None):
-            return b_proj
+        Returns:
+        The projection of the input fname
+        """
+        ds = gdal.Open(fname, gdal.GA_ReadOnly)
+        if (ds is not None):
+            b_proj = ds.GetProjection()
+            if (b_proj is not None):
+                return b_proj
 
-    if (os.path.basename(fname).split('.')[-1] == 'shp'):
-        vset = ogr.GetDriverByName('ESRI Shapefile').Open(fname, gdal.GA_ReadOnly)
-    elif (os.path.basename(fname).split('.')[-1] == 'kml'):
-        vset = ogr.GetDriverByName('KML').Open(fname, gdal.GA_ReadOnly)
-    else:
-        raise Exception('Cannot find projection from file {}'.format(fname))
+        if (os.path.basename(fname).split('.')[-1] == 'shp'):
+            vset = ogr.GetDriverByName('ESRI Shapefile').Open(fname, gdal.GA_ReadOnly)
+        elif (os.path.basename(fname).split('.')[-1] == 'kml'):
+            vset = ogr.GetDriverByName('KML').Open(fname, gdal.GA_ReadOnly)
+        else:
+            raise Exception('Cannot find projection from file {}'.format(fname))
 
-    if (vset is None):
-        raise Exception('Cannot find projection from file {}'.format(fname))
-    else:
-        b_proj = vset.GetLayer().GetSpatialRef()
-        if (b_proj is None):
+        if (vset is None):
             raise Exception('Cannot find projection from file {}'.format(fname))
         else:
-            b_proj = re.sub('\W', '', str(b_proj))
-
-    return b_proj
-
-
-def check_projections(a_files, b_files, c_files=[]):
-
-    loc_a_files = [item for sublist in a_files for item in sublist]
-    loc_b_files = [item for sublist in b_files for item in sublist]
-    if (len(c_files) > 0):
-        loc_c_files = [item for sublist in c_files for item in sublist]
-    else:
-        loc_c_files = []
-
-    a_proj = []
-    b_proj = []
-    c_proj = []
-
-    for _f in range(len(loc_a_files)):
-        a_proj.append(get_proj(loc_a_files[_f]))
-        b_proj.append(get_proj(loc_b_files[_f]))
-        if (len(loc_c_files) > 0):
-            c_proj.append(get_proj(loc_c_files[_f]))
-
-    for _p in range(len(a_proj)):
-        if (len(c_proj) > 0):
-            assert (a_proj[_p] == b_proj[_p] and a_proj == c_proj[_p]), 'Projection_mismatch between\n{}: {},\n{}: {},\n{}: {}'.\
-                format(a_proj[_p], loc_a_files[_p], b_proj[_p], loc_b_files[_p], c_proj[_p], loc_c_files[_p])
-        else:
-            assert (a_proj[_p] == b_proj[_p]), 'Projection_mismatch between\n{}: {}\n{}: {}'.\
-                format(a_proj[_p], loc_a_files[_p], b_proj[_p], loc_b_files[_p])
-
-
-def check_resolutions(a_files, b_files, c_files=[]):
-
-    loc_a_files = [item for sublist in a_files for item in sublist]
-    loc_b_files = [item for sublist in b_files for item in sublist]
-    if (len(c_files) > 0):
-        loc_c_files = [item for sublist in c_files for item in sublist]
-    else:
-        loc_c_files = []
-
-    a_res = []
-    b_res = []
-    c_res = []
-
-    for _f in range(len(loc_a_files)):
-        a_res.append(np.array(gdal.Open(loc_a_files[_f], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]])
-        b_res.append(np.array(gdal.Open(loc_b_files[_f], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]])
-        if (len(loc_c_files) > 0):
-            c_res.append(np.array(gdal.Open(loc_c_files[_f], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]])
-
-    for _p in range(len(a_res)):
-        if (len(c_res) > 0):
-            assert (np.all(a_res[_p] == b_res[_p]) and np.all(a_res == c_res[_p])), 'Resolution mismatch between\n{}: {},\n{}: {},\n{}: {}'.\
-                format(a_res[_p], loc_a_files[_p], b_res[_p], loc_b_files[_p], c_res[_p], loc_c_files[_p])
-        else:
-            assert (np.all(a_res[_p] == b_res[_p])), 'Resolution mimatch between\n{}: {}\n{}: {}'.\
-                format(a_res[_p], loc_a_files[_p], b_res[_p], loc_b_files[_p])
-
-
-# Calculates categorical weights for a single response
-
-def calculate_categorical_weights(
-        responses: List[np.array],
-        weights: List[np.array],
-        config: configs.Config,
-        batch_size: int = 100
-) -> List[np.array]:
-
-    # find upper and lower boud
-    lb = config.data_build.window_radius - config.data_build.loss_window_radius
-    ub = -lb
-
-    # get response/total counts (batch-wise)
-    response_counts = np.zeros(responses[0].shape[-1])
-    total_valid_count = 0
-    for idx_array, response_array in enumerate(responses):
-        if idx_array in (config.data_build.validation_fold, config.data_build.test_fold):
-            continue
-        for ind in range(0, response_array.shape[0], batch_size):
-            if (lb == 0):
-                lr = response_array[ind:ind+batch_size, ...]
+            b_proj = vset.GetLayer().GetSpatialRef()
+            if (b_proj is None):
+                raise Exception('Cannot find projection from file {}'.format(fname))
             else:
-                lr = response_array[ind:ind+batch_size, lb:ub, lb:ub, :]
-            lr[lr == config.raw_files.response_nodata_value] = np.nan
-            total_valid_count += np.sum(np.isfinite(lr))
-            for _r in range(0, len(response_counts)):
-                response_counts[_r] += np.nansum(lr[..., _r] == 1)
+                b_proj = re.sub('\W', '', str(b_proj))
 
-    # assign_weights
-    for _array in range(len(responses)):
-        for ind in range(0, responses[_array].shape[0], batch_size):
-
-            lr = (responses[_array])[ind:ind+batch_size, ...]
-            lrs = list(lr.shape)
-            lrs.pop(-1)
-            lw = np.zeros((lrs))
-            for _r in range(0, len(response_counts)):
-                lw[lr[..., _r] == 1] = total_valid_count / response_counts[_r]
-
-            if (lb != 0):
-                lw[:, :lb, :] = 0
-                lw[:, ub:, :] = 0
-                lw[:, :, :lb] = 0
-                lw[:, :, ub:] = 0
-
-            lws = list(lw.shape)
-            lws.extend([1])
-            lw = lw.reshape(lws)
-            weights[_array][ind:ind+batch_size, ...] = lw
-
-    return weights
+        return b_proj
 
 
-def read_mask_chunk(boundary_vector_file: str, boundary_subset_geotransform: tuple, b_set: gdal.Dataset, boundary_upper_left: List, window_diameter: int, boundary_bad_value: float):
-    # Start by checking if we're inside boundary, if there is one
-    mask = None
-    if (boundary_vector_file is not None):
-        mask = rasterize_vector(boundary_vector_file, boundary_subset_geotransform, (window_diameter, window_diameter))
-    if (b_set is not None):
-        mask = b_set.ReadAsArray(boundary_upper_left[0], boundary_upper_left[1], window_diameter, window_diameter)
+    def check_projections(a_files, b_files, c_files=[]):
 
-    if mask is None:
-        mask = np.zeros((window_diameter, window_diameter)).astype(bool)
-    else:
-        mask = mask == boundary_bad_value
+        loc_a_files = [item for sublist in a_files for item in sublist]
+        loc_b_files = [item for sublist in b_files for item in sublist]
+        if (len(c_files) > 0):
+            loc_c_files = [item for sublist in c_files for item in sublist]
+        else:
+            loc_c_files = []
 
-    return mask
+        a_proj = []
+        b_proj = []
+        c_proj = []
 
+        for _f in range(len(loc_a_files)):
+            a_proj.append(get_proj(loc_a_files[_f]))
+            b_proj.append(get_proj(loc_b_files[_f]))
+            if (len(loc_c_files) > 0):
+                c_proj.append(get_proj(loc_c_files[_f]))
 
-def read_map_subset(datasets: List, upper_lefts: List[List[int]], window_diameter: int, mask, nodata_value):
-    # Next check to see if we have a response, if so read all
-    local_array = np.zeros((window_diameter, window_diameter, np.sum([lset.RasterCount for lset in datasets])))
-    idx = 0
-    for _file in range(len(datasets)):
-        file_set = datasets[_file]
-        file_upper_left = upper_lefts[_file]
-        file_array = np.zeros((window_diameter, window_diameter, file_set.RasterCount))
-        for _b in range(file_set.RasterCount):
-            file_array[:, :, _b] = file_set.GetRasterBand(
-                _b+1).ReadAsArray(file_upper_left[0], file_upper_left[1], window_diameter, window_diameter)
-
-        file_array[file_array == nodata_value] = np.nan
-        file_array[np.isfinite(file_array) is False] = np.nan
-        file_array[mask, :] = np.nan
-
-        mask[np.any(np.isnan(file_array), axis=-1)] = True
-        if np.all(mask):
-            return None, None
-        local_array[..., idx:idx+file_array.shape[-1]] = file_array
-        idx += file_array.shape[-1]
-
-    return local_array, mask
+        for _p in range(len(a_proj)):
+            if (len(c_proj) > 0):
+                assert (a_proj[_p] == b_proj[_p] and a_proj == c_proj[_p]), 'Projection_mismatch between\n{}: {},\n{}: {},\n{}: {}'.\
+                    format(a_proj[_p], loc_a_files[_p], b_proj[_p], loc_b_files[_p], c_proj[_p], loc_c_files[_p])
+            else:
+                assert (a_proj[_p] == b_proj[_p]), 'Projection_mismatch between\n{}: {}\n{}: {}'.\
+                    format(a_proj[_p], loc_a_files[_p], b_proj[_p], loc_b_files[_p])
 
 
-def read_labeling_chunk(f_sets: List[gdal.Dataset],
-                        feature_upper_lefts: List[List[int]],
-                        config: configs.Config,
-                        boundary_vector_file: str = None,
-                        boundary_subset_geotransform: tuple = None,
-                        b_set=None,
-                        boundary_upper_left: List[int] = None):
+    def check_resolutions(a_files, b_files, c_files=[]):
 
-    for _f in range(len(feature_upper_lefts)):
-        if (np.any(feature_upper_lefts[_f] < config.data_build.window_radius)):
-            _logger.trace('Feature read OOB')
-            return None
-        if (feature_upper_lefts[_f][0] > f_sets[_f].RasterXSize - config.data_build.window_radius):
-            _logger.trace('Feature read OOB')
-            return None
-        if (feature_upper_lefts[_f][1] > f_sets[_f].RasterYSize - config.data_build.window_radius):
-            _logger.trace('Feature read OOB')
-            return None
+        loc_a_files = [item for sublist in a_files for item in sublist]
+        loc_b_files = [item for sublist in b_files for item in sublist]
+        if (len(c_files) > 0):
+            loc_c_files = [item for sublist in c_files for item in sublist]
+        else:
+            loc_c_files = []
 
-    window_diameter = config.data_build.window_radius * 2
+        a_res = []
+        b_res = []
+        c_res = []
 
-    mask = read_mask_chunk(boundary_vector_file,
-                           boundary_subset_geotransform,
-                           b_set,
-                           boundary_upper_left,
-                           window_diameter,
-                           config.raw_files.boundary_bad_value)
+        for _f in range(len(loc_a_files)):
+            a_res.append(np.array(gdal.Open(loc_a_files[_f], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]])
+            b_res.append(np.array(gdal.Open(loc_b_files[_f], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]])
+            if (len(loc_c_files) > 0):
+                c_res.append(np.array(gdal.Open(loc_c_files[_f], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]])
 
-    if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
-        _logger.trace('Insufficient mask data')
-        return None
-
-    local_feature, mask = read_map_subset(f_sets, feature_upper_lefts,
-                                          window_diameter, mask, config.raw_files.feature_nodata_value)
-
-    if not _check_mask_data_sufficient(mask, config.data_build.nodata_maximum_fraction):
-        _logger.trace('Insufficient feature data')
-        return None
-
-    # Final check (propogate mask forward), and return
-    local_feature[mask, :] = np.nan
-
-    return local_feature
+        for _p in range(len(a_res)):
+            if (len(c_res) > 0):
+                assert (np.all(a_res[_p] == b_res[_p]) and np.all(a_res == c_res[_p])), 'Resolution mismatch between\n{}: {},\n{}: {},\n{}: {}'.\
+                    format(a_res[_p], loc_a_files[_p], b_res[_p], loc_b_files[_p], c_res[_p], loc_c_files[_p])
+            else:
+                assert (np.all(a_res[_p] == b_res[_p])), 'Resolution mimatch between\n{}: {}\n{}: {}'.\
+                    format(a_res[_p], loc_a_files[_p], b_res[_p], loc_b_files[_p])
 
 
-def read_segmentation_chunk(f_sets: List[tuple],
-                            r_sets: List[tuple],
+    # Calculates categorical weights for a single response
+
+    def calculate_categorical_weights(
+            responses: List[np.array],
+            weights: List[np.array],
+            config: configs.Config,
+            batch_size: int = 100
+    ) -> List[np.array]:
+
+        # find upper and lower boud
+        lb = config.data_build.window_radius - config.data_build.loss_window_radius
+        ub = -lb
+
+        # get response/total counts (batch-wise)
+        response_counts = np.zeros(responses[0].shape[-1])
+        total_valid_count = 0
+        for idx_array, response_array in enumerate(responses):
+            if idx_array in (config.data_build.validation_fold, config.data_build.test_fold):
+                continue
+            for ind in range(0, response_array.shape[0], batch_size):
+                if (lb == 0):
+                    lr = response_array[ind:ind+batch_size, ...]
+                else:
+                    lr = response_array[ind:ind+batch_size, lb:ub, lb:ub, :]
+                lr[lr == config.raw_files.response_nodata_value] = np.nan
+                total_valid_count += np.sum(np.isfinite(lr))
+                for _r in range(0, len(response_counts)):
+                    response_counts[_r] += np.nansum(lr[..., _r] == 1)
+
+        # assign_weights
+        for _array in range(len(responses)):
+            for ind in range(0, responses[_array].shape[0], batch_size):
+
+                lr = (responses[_array])[ind:ind+batch_size, ...]
+                lrs = list(lr.shape)
+                lrs.pop(-1)
+                lw = np.zeros((lrs))
+                for _r in range(0, len(response_counts)):
+                    lw[lr[..., _r] == 1] = total_valid_count / response_counts[_r]
+
+                if (lb != 0):
+                    lw[:, :lb, :] = 0
+                    lw[:, ub:, :] = 0
+                    lw[:, :, :lb] = 0
+                    lw[:, :, ub:] = 0
+
+                lws = list(lw.shape)
+                lws.extend([1])
+                lw = lw.reshape(lws)
+                weights[_array][ind:ind+batch_size, ...] = lw
+
+        return weights
+
+
+    def read_mask_chunk(boundary_vector_file: str, boundary_subset_geotransform: tuple, b_set: gdal.Dataset, boundary_upper_left: List, window_diameter: int, boundary_bad_value: float):
+        # Start by checking if we're inside boundary, if there is one
+        mask = None
+        if (boundary_vector_file is not None):
+            mask = rasterize_vector(boundary_vector_file, boundary_subset_geotransform, (window_diameter, window_diameter))
+        if (b_set is not None):
+            mask = b_set.ReadAsArray(boundary_upper_left[0], boundary_upper_left[1], window_diameter, window_diameter)
+
+        if mask is None:
+            mask = np.zeros((window_diameter, window_diameter)).astype(bool)
+        else:
+            mask = mask == boundary_bad_value
+
+        return mask
+
+
+    def read_map_subset(datasets: List, upper_lefts: List[List[int]], window_diameter: int, mask, nodata_value):
+        # Next check to see if we have a response, if so read all
+        local_array = np.zeros((window_diameter, window_diameter, np.sum([lset.RasterCount for lset in datasets])))
+        idx = 0
+        for _file in range(len(datasets)):
+            file_set = datasets[_file]
+            file_upper_left = upper_lefts[_file]
+            file_array = np.zeros((window_diameter, window_diameter, file_set.RasterCount))
+            for _b in range(file_set.RasterCount):
+                file_array[:, :, _b] = file_set.GetRasterBand(
+                    _b+1).ReadAsArray(file_upper_left[0], file_upper_left[1], window_diameter, window_diameter)
+
+            file_array[file_array == nodata_value] = np.nan
+            file_array[np.isfinite(file_array) is False] = np.nan
+            file_array[mask, :] = np.nan
+
+            mask[np.any(np.isnan(file_array), axis=-1)] = True
+            if np.all(mask):
+                return None, None
+            local_array[..., idx:idx+file_array.shape[-1]] = file_array
+            idx += file_array.shape[-1]
+
+        return local_array, mask
+
+
+    def read_labeling_chunk(f_sets: List[gdal.Dataset],
                             feature_upper_lefts: List[List[int]],
-                            response_upper_lefts: List[List[int]],
                             config: configs.Config,
                             boundary_vector_file: str = None,
                             boundary_subset_geotransform: tuple = None,
                             b_set=None,
                             boundary_upper_left: List[int] = None):
-    window_diameter = config.data_build.window_radius * 2
 
-    mask = read_mask_chunk(boundary_vector_file,
-                           boundary_subset_geotransform,
-                           b_set,
-                           boundary_upper_left,
-                           window_diameter,
-                           config.raw_files.boundary_bad_value)
-    mv = [np.sum(mask)]
+        for _f in range(len(feature_upper_lefts)):
+            if (np.any(feature_upper_lefts[_f] < config.data_build.window_radius)):
+                _logger.trace('Feature read OOB')
+                return None
+            if (feature_upper_lefts[_f][0] > f_sets[_f].RasterXSize - config.data_build.window_radius):
+                _logger.trace('Feature read OOB')
+                return None
+            if (feature_upper_lefts[_f][1] > f_sets[_f].RasterYSize - config.data_build.window_radius):
+                _logger.trace('Feature read OOB')
+                return None
 
-    if not _check_mask_data_sufficient(mask, config.data_build.nodata_maximum_fraction):
-        return None, None
+        window_diameter = config.data_build.window_radius * 2
 
-    local_response, mask = read_map_subset(r_sets, response_upper_lefts,
-                                           window_diameter, mask, config.raw_files.response_nodata_value)
-    if not _check_mask_data_sufficient(mask, config.data_build.nodata_maximum_fraction):
-        return None, None
-    mv.append(np.sum(mask))
+        mask = read_mask_chunk(boundary_vector_file,
+                               boundary_subset_geotransform,
+                               b_set,
+                               boundary_upper_left,
+                               window_diameter,
+                               config.raw_files.boundary_bad_value)
 
-    if (config.data_build.response_min_value is not None):
-        local_response[local_response < config.data_build.response_min_value] = np.nan
-    if (config.data_build.response_max_value is not None):
-        local_response[local_response > config.data_build.response_max_value] = np.nan
-    mask[np.any(np.isnan(local_response), axis=-1)] = True
-    mv.append(np.sum(mask))
+        if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
+            _logger.trace('Insufficient mask data')
+            return None
 
-    if (mask is None):
-        return None, None
-    if not _check_mask_data_sufficient(mask, config.data_build.nodata_maximum_fraction):
-        return None, None
+        local_feature, mask = read_map_subset(f_sets, feature_upper_lefts,
+                                              window_diameter, mask, config.raw_files.feature_nodata_value)
 
-    local_feature, mask = read_map_subset(f_sets, feature_upper_lefts,
-                                          window_diameter, mask, config.raw_files.feature_nodata_value)
-    mv.append(np.sum(mask))
+        if not _check_mask_data_sufficient(mask, config.data_build.nodata_maximum_fraction):
+            _logger.trace('Insufficient feature data')
+            return None
 
-    if not _check_mask_data_sufficient(mask, config.data_build.nodata_maximum_fraction):
-        return None, None
+        # Final check (propogate mask forward), and return
+        local_feature[mask, :] = np.nan
 
-    # Final check (propogate mask forward), and return
-    local_feature[mask, :] = np.nan
-    local_response[mask, :] = np.nan
-
-    return local_feature, local_response
+        return local_feature
 
 
-class Dataset:
+    def read_segmentation_chunk(f_sets: List[tuple],
+                                r_sets: List[tuple],
+                                feature_upper_lefts: List[List[int]],
+                                response_upper_lefts: List[List[int]],
+                                config: configs.Config,
+                                boundary_vector_file: str = None,
+                                boundary_subset_geotransform: tuple = None,
+                                b_set=None,
+                                boundary_upper_left: List[int] = None):
+        window_diameter = config.data_build.window_radius * 2
 
-    """ A container class that holds all sorts of data objects
-    """
+        mask = read_mask_chunk(boundary_vector_file,
+                               boundary_subset_geotransform,
+                               b_set,
+                               boundary_upper_left,
+                               window_diameter,
+                               config.raw_files.boundary_bad_value)
+        mv = [np.sum(mask)]
 
-    def __init__(self, config: configs.Config):
-        self.features = []
-        self.responses = []
-        self.weights = []
+        if not _check_mask_data_sufficient(mask, config.data_build.nodata_maximum_fraction):
+            return None, None
 
-        self.feature_band_types = None
-        self.response_band_types = None
-        self.feature_raw_band_types = None
-        self.response_raw_band_types = None
+        local_response, mask = read_map_subset(r_sets, response_upper_lefts,
+                                               window_diameter, mask, config.raw_files.response_nodata_value)
+        if not _check_mask_data_sufficient(mask, config.data_build.nodata_maximum_fraction):
+            return None, None
+        mv.append(np.sum(mask))
 
-        self.feature_scalers = []
-        self.response_scalers = []
+        if (config.data_build.response_min_value is not None):
+            local_response[local_response < config.data_build.response_min_value] = np.nan
+        if (config.data_build.response_max_value is not None):
+            local_response[local_response > config.data_build.response_max_value] = np.nan
+        mask[np.any(np.isnan(local_response), axis=-1)] = True
+        mv.append(np.sum(mask))
 
-        self.trainumber_folds = None
+        if (mask is None):
+            return None, None
+        if not _check_mask_data_sufficient(mask, config.data_build.nodata_maximum_fraction):
+            return None, None
 
-        self.config = config
+        local_feature, mask = read_map_subset(f_sets, feature_upper_lefts,
+                                              window_diameter, mask, config.raw_files.feature_nodata_value)
+        mv.append(np.sum(mask))
 
-    def build_or_load_scalers(self, rebuild=False):
+        if not _check_mask_data_sufficient(mask, config.data_build.nodata_maximum_fraction):
+            return None, None
 
-        # TODO:  I think this worked only if feature_scaler_name was a string, but it was also possible to be a list
-        #  according to the DataConfig, in which case it would error out. This needs to be updated for multiple scalers.
-        #  Specifically, the feature_scaler and response_scaler assignments need to be vectorized.
-        basename = _get_built_data_basename(
-            self.config.data_build.dir_out, self.config.data_build.filename_prefix_out)
+        # Final check (propogate mask forward), and return
+        local_feature[mask, :] = np.nan
+        local_response[mask, :] = np.nan
 
-        feat_scaler_atr = {'savename_base': basename + '_feature_scaler'}
-        feature_scaler = scalers.get_scaler(self.config.data_samples.feature_scaler_names, feat_scaler_atr)
-        resp_scaler_atr = {'savename_base': basename + '_response_scaler'}
-        response_scaler = scalers.get_scaler(self.config.data_samples.response_scaler_names, resp_scaler_atr)
-        feature_scaler.load()
-        response_scaler.load()
+        return local_feature, local_response
 
-        self.trainumber_folds = [x for x in range(self.config.data_build.number_folds)
-                                 if x not in (self.config.data_build.validation_fold, self.config.data_build.test_fold)]
 
-        if (feature_scaler.is_fitted is False or rebuild is True):
-            # TODO: do better
-            feature_scaler.fit(self.features[self.trainumber_folds[0]])
-            feature_scaler.save()
-        if (response_scaler.is_fitted is False or rebuild is True):
-            # TODO: do better
-            response_scaler.fit(self.responses[self.trainumber_folds[0]])
-            response_scaler.save()
+    class Dataset:
 
-        self.feature_scaler = feature_scaler
-        self.response_scaler = response_scaler
+        """ A container class that holds all sorts of data objects
+        """
 
-    def check_input_files(self, f_file_list, r_file_list, b_file_list):
+        def __init__(self, config: configs.Config):
+            self.features = []
+            self.responses = []
+            self.weights = []
 
-        # f = feature, r = response, b = boundary
+            self.feature_band_types = None
+            self.response_band_types = None
+            self.feature_raw_band_types = None
+            self.response_raw_band_types = None
 
-        # file lists r and f are expected a list of lists.  The outer list is a series of sites (location a, b, etc.).
-        # The inner list is a series of files associated with that site (band x, y, z).  Each site must have the
-        # same number of files, and each file from each site must have the same number of bands, in the same order.
-        # file list b is a list for each site, with one boundary file expected to be the interior boundary for all bands.
+            self.feature_scalers = []
+            self.response_scalers = []
 
-        # Check that feature and response files are lists
-        assert type(f_file_list) is list, 'Feature files must be a list of lists'
-        assert type(r_file_list) is list, 'Response files must be a list of lists'
+            self.trainumber_folds = None
 
-        # Checks on the matching numbers of sites
-        assert len(f_file_list) == len(r_file_list), 'Feature and response site lists must be the same length'
-        assert len(f_file_list) > 0, 'At least one feature and response site is required'
-        if (len(b_file_list) > 0):
-            assert len(b_file_list) == len(f_file_list), 'Boundary and feature site lists must be the same length'
+            self.config = config
 
-        # Checks that we have lists of lists for f and r
-        for _f in range(len(f_file_list)):
-            assert type(f_file_list[_f]) is list, 'Features at site {} are not as a list'.format(_f)
-            assert type(r_file_list[_f]) is list, 'Responses at site {} are not as a list'.format(_f)
+        def build_or_load_scalers(self, rebuild=False):
 
-        # Checks that all files can be opened by gdal
-        for _site in range(len(f_file_list)):
-            assert type(f_file_list[_site]) is list, 'Features at site {} are not as a list'.format(_site)
-            assert type(r_file_list[_site]) is list, 'Responses at site {} are not as a list'.format(_site)
-            for _band in range(len(f_file_list[_site])):
-                assert gdal.Open(f_file_list[_site][_band], gdal.GA_ReadOnly) is not None,\
-                    'Could not open feature site {}, file {}'.format(_site, _band)
-            for _band in range(len(r_file_list[_site])):
-                assert gdal.Open(r_file_list[_site][_band], gdal.GA_ReadOnly) is not None,\
-                    'Could not open response site {}, file {}'.format(_site, _band)
+            # TODO:  I think this worked only if feature_scaler_name was a string, but it was also possible to be a list
+            #  according to the DataConfig, in which case it would error out. This needs to be updated for multiple scalers.
+            #  Specifically, the feature_scaler and response_scaler assignments need to be vectorized.
+            basename = _get_built_data_basename(
+                self.config.data_build.dir_out, self.config.data_build.filename_prefix_out)
 
-        # Checks on the number of files per site
-        num_f_files_per_site = len(f_file_list[0])
-        num_r_files_per_site = len(r_file_list[0])
-        for _site in range(len(f_file_list)):
-            assert len(
-                f_file_list[_site]) == num_f_files_per_site, 'Inconsistent number of feature files at site {}'.format(_site)
-            assert len(
-                r_file_list[_site]) == num_r_files_per_site, 'Inconsistent number of response files at site {}'.format(_site)
+            feat_scaler_atr = {'savename_base': basename + '_feature_scaler'}
+            feature_scaler = scalers.get_scaler(self.config.data_samples.feature_scaler_names, feat_scaler_atr)
+            resp_scaler_atr = {'savename_base': basename + '_response_scaler'}
+            response_scaler = scalers.get_scaler(self.config.data_samples.response_scaler_names, resp_scaler_atr)
+            feature_scaler.load()
+            response_scaler.load()
 
-        # Checks on the number of bands per file
-        num_f_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in f_file_list[0]]
-        num_r_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in r_file_list[0]]
-        for _site in range(len(f_file_list)):
-            for _file in range(len(f_file_list[_site])):
-                assert gdal.Open(f_file_list[_site][_file], gdal.GA_ReadOnly).RasterCount == num_f_bands_per_file[_file],\
-                    'Inconsistent number of feature bands in site {}, file {}'.format(_site, _band)
+            self.trainumber_folds = [x for x in range(self.config.data_build.number_folds)
+                                     if x not in (self.config.data_build.validation_fold, self.config.data_build.test_fold)]
 
-            for _file in range(len(r_file_list[_site])):
-                assert gdal.Open(r_file_list[_site][_file], gdal.GA_ReadOnly).RasterCount == num_r_bands_per_file[_file],\
-                    'Inconsistent number of response bands in site {}, file {}'.format(_site, _band)
+            if (feature_scaler.is_fitted is False or rebuild is True):
+                # TODO: do better
+                feature_scaler.fit(self.features[self.trainumber_folds[0]])
+                feature_scaler.save()
+            if (response_scaler.is_fitted is False or rebuild is True):
+                # TODO: do better
+                response_scaler.fit(self.responses[self.trainumber_folds[0]])
+                response_scaler.save()
 
-    def get_band_types(self, file_list, band_types):
+            self.feature_scaler = feature_scaler
+            self.response_scaler = response_scaler
 
-        valid_band_types = ['R', 'C']
-        # 3 options are available for specifying band_types:
-        # 1) band_types is None - assume all bands are real
-        # 2) band_types is a list of strings within valid_band_types - assume each band from the associated file is the specified type,
-        #    requires len(band_types) == len(file_list[0])
-        # 3) band_types is list of lists (of strings, contained in valid_band_types), with the outer list referring to
-        #    files and the inner list referring to bands
+        def check_input_files(self, f_file_list, r_file_list, b_file_list):
 
-        num_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in file_list[0]]
+            # f = feature, r = response, b = boundary
 
-        # Nonetype, option 1 from above, auto-generate
-        if (band_types is None):
-            for _file in range(len(file_list[0])):
-                output_raw_band_types = []
-                output_raw_band_types.append(['R' for _band in range(num_bands_per_file[_file])])
+            # file lists r and f are expected a list of lists.  The outer list is a series of sites (location a, b, etc.).
+            # The inner list is a series of files associated with that site (band x, y, z).  Each site must have the
+            # same number of files, and each file from each site must have the same number of bands, in the same order.
+            # file list b is a list for each site, with one boundary file expected to be the interior boundary for all bands.
 
-        else:
-            assert type(band_types) is list, 'band_types must be None or a list'
+            # Check that feature and response files are lists
+            assert type(f_file_list) is list, 'Feature files must be a list of lists'
+            assert type(r_file_list) is list, 'Response files must be a list of lists'
 
-            # List of lists, option 3 from above - just check components
-            if (type(band_types[0]) is list):
-                for _file in range(len(band_types)):
-                    assert type(
-                        band_types[_file]) is list, 'If one element of band_types is a list, all elements must be lists'
-                    assert len(
-                        band_types[_file]) == num_bands_per_file[_file], 'File {} has wrong number of band types'.format(_file)
-                    for _band in range(len(band_types[_file])):
-                        assert band_types[_file][_band] in valid_band_types, 'Invalid band types at file {}, band {}'.format(
-                            _file, _band)
+            # Checks on the matching numbers of sites
+            assert len(f_file_list) == len(r_file_list), 'Feature and response site lists must be the same length'
+            assert len(f_file_list) > 0, 'At least one feature and response site is required'
+            if (len(b_file_list) > 0):
+                assert len(b_file_list) == len(f_file_list), 'Boundary and feature site lists must be the same length'
 
-                output_raw_band_types = band_types
+            # Checks that we have lists of lists for f and r
+            for _f in range(len(f_file_list)):
+                assert type(f_file_list[_f]) is list, 'Features at site {} are not as a list'.format(_f)
+                assert type(r_file_list[_f]) is list, 'Responses at site {} are not as a list'.format(_f)
+
+            # Checks that all files can be opened by gdal
+            for _site in range(len(f_file_list)):
+                assert type(f_file_list[_site]) is list, 'Features at site {} are not as a list'.format(_site)
+                assert type(r_file_list[_site]) is list, 'Responses at site {} are not as a list'.format(_site)
+                for _band in range(len(f_file_list[_site])):
+                    assert gdal.Open(f_file_list[_site][_band], gdal.GA_ReadOnly) is not None,\
+                        'Could not open feature site {}, file {}'.format(_site, _band)
+                for _band in range(len(r_file_list[_site])):
+                    assert gdal.Open(r_file_list[_site][_band], gdal.GA_ReadOnly) is not None,\
+                        'Could not open response site {}, file {}'.format(_site, _band)
+
+            # Checks on the number of files per site
+            num_f_files_per_site = len(f_file_list[0])
+            num_r_files_per_site = len(r_file_list[0])
+            for _site in range(len(f_file_list)):
+                assert len(
+                    f_file_list[_site]) == num_f_files_per_site, 'Inconsistent number of feature files at site {}'.format(_site)
+                assert len(
+                    r_file_list[_site]) == num_r_files_per_site, 'Inconsistent number of response files at site {}'.format(_site)
+
+            # Checks on the number of bands per file
+            num_f_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in f_file_list[0]]
+            num_r_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in r_file_list[0]]
+            for _site in range(len(f_file_list)):
+                for _file in range(len(f_file_list[_site])):
+                    assert gdal.Open(f_file_list[_site][_file], gdal.GA_ReadOnly).RasterCount == num_f_bands_per_file[_file],\
+                        'Inconsistent number of feature bands in site {}, file {}'.format(_site, _band)
+
+                for _file in range(len(r_file_list[_site])):
+                    assert gdal.Open(r_file_list[_site][_file], gdal.GA_ReadOnly).RasterCount == num_r_bands_per_file[_file],\
+                        'Inconsistent number of response bands in site {}, file {}'.format(_site, _band)
+
+        def get_band_types(self, file_list, band_types):
+
+            valid_band_types = ['R', 'C']
+            # 3 options are available for specifying band_types:
+            # 1) band_types is None - assume all bands are real
+            # 2) band_types is a list of strings within valid_band_types - assume each band from the associated file is the specified type,
+            #    requires len(band_types) == len(file_list[0])
+            # 3) band_types is list of lists (of strings, contained in valid_band_types), with the outer list referring to
+            #    files and the inner list referring to bands
+
+            num_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in file_list[0]]
+
+            # Nonetype, option 1 from above, auto-generate
+            if (band_types is None):
+                for _file in range(len(file_list[0])):
+                    output_raw_band_types = []
+                    output_raw_band_types.append(['R' for _band in range(num_bands_per_file[_file])])
 
             else:
-                # List of values valid_band_types, option 2 from above - convert to list of lists
-                output_raw_band_types = []
-                for _file in range(len(band_types)):
-                    assert band_types[_file] in valid_band_types, 'Invalid band type at File {}'.format(_file)
-                    output_raw_band_types.append([band_types[_file] for _band in range(num_bands_per_file[_file])])
+                assert type(band_types) is list, 'band_types must be None or a list'
 
-        # since it's more convenient, flatten this list of lists into a list before returning
-        output_raw_band_types = [item for sublist in output_raw_band_types for item in sublist]
+                # List of lists, option 3 from above - just check components
+                if (type(band_types[0]) is list):
+                    for _file in range(len(band_types)):
+                        assert type(
+                            band_types[_file]) is list, 'If one element of band_types is a list, all elements must be lists'
+                        assert len(
+                            band_types[_file]) == num_bands_per_file[_file], 'File {} has wrong number of band types'.format(_file)
+                        for _band in range(len(band_types[_file])):
+                            assert band_types[_file][_band] in valid_band_types, 'Invalid band types at file {}, band {}'.format(
+                                _file, _band)
 
-        return output_raw_band_types
+                    output_raw_band_types = band_types
 
+                else:
+                    # List of values valid_band_types, option 2 from above - convert to list of lists
+                    output_raw_band_types = []
+                    for _file in range(len(band_types)):
+                        assert band_types[_file] in valid_band_types, 'Invalid band type at File {}'.format(_file)
+                        output_raw_band_types.append([band_types[_file] for _band in range(num_bands_per_file[_file])])
 
-def upper_left_pixel(trans, interior_x, interior_y):
-    x_ul = max((trans[0] - interior_x)/trans[1], 0)
-    y_ul = max((interior_y - trans[3])/trans[5], 0)
-    return x_ul, y_ul
+            # since it's more convenient, flatten this list of lists into a list before returning
+            output_raw_band_types = [item for sublist in output_raw_band_types for item in sublist]
 
-
-def get_interior_rectangle(dataset_list_of_lists: List[List[gdal.Dataset]]):
-
-    # Convert list of lists or list for interior convenience
-    dataset_list = [item for sublist in dataset_list_of_lists for item in sublist]
-
-    # Get list of all gdal geotransforms
-    trans_list = []
-    for _d in range(len(dataset_list)):
-        trans_list.append(dataset_list[_d].GetGeoTransform())
-
-    # Find the interior (UL) x,y coordinates in map-space
-    interior_x = np.nanmax([x[0] for x in trans_list])
-    interior_y = np.nanmin([x[3] for x in trans_list])
-
-    # calculate the UL coordinates in pixel-space
-    ul_list = []
-    for _d in range(len(dataset_list)):
-        ul_list.append(list(upper_left_pixel(trans_list[_d], interior_x, interior_y)))
-
-    # calculate the size of the matched interior extent
-    x_len = int(np.floor(np.min([dataset_list[_d].RasterXSize - ul_list[_d][0] for _d in range(len(dataset_list))])))
-    y_len = int(np.floor(np.min([dataset_list[_d].RasterYSize - ul_list[_d][1] for _d in range(len(dataset_list))])))
-
-    # separate out into list of lists for return
-    return_ul_list = []
-    idx = 0
-    for _l in range(len(dataset_list_of_lists)):
-        local_list = []
-        for _d in range(len(dataset_list_of_lists[_l])):
-            local_list.append(ul_list[idx])
-            idx += 1
-        local_list = np.array(local_list)
-        return_ul_list.append(local_list)
-
-    return return_ul_list, x_len, y_len
+            return output_raw_band_types
 
 
-# def get_interior_rectangle(feature_set, response_set, boundary_set):
-#    f_trans = feature_set.GetGeoTransform()
-#    r_trans = response_set.GetGeoTransform()
-#    b_trans = None
-#    if (boundary_set is not None):
-#        b_trans = boundary_set.GetGeoTransform()
-#
-#    # Calculate the interior space location and extent
-#
-#    # Find the interior (UL) x,y coordinates in map-space
-#    interior_x = max(r_trans[0], f_trans[0])
-#    interior_y = min(r_trans[3], f_trans[3])
-#    if (b_trans is not None):
-#        interior_x = max(interior_x, b_trans[0])
-#        interior_y = max(interior_y, b_trans[3])
-#
-#    # calculate the feature and response UL coordinates in pixel-space
-#    f_x_ul, f_y_ul = upper_left_pixel(f_trans, interior_x, interior_y)
-#    r_x_ul, r_y_ul = upper_left_pixel(r_trans, interior_x, interior_y)
-#
-#    # calculate the size of the matched interior extent
-#    x_len = min(feature_set.RasterXSize - f_x_ul, response_set.RasterXSize - r_x_ul)
-#    y_len = min(feature_set.RasterYSize - f_y_ul, response_set.RasterYSize - r_y_ul)
-#
-#    # update the UL location, and the interior extent, if there is a boundary
-#    if (b_trans is not None):
-#        b_x_ul, b_y_ul = upper_left_pixel(b_trans, interior_x, interior_y)
-#        x_len = min(x_len, boundary_set.RasterXSize - b_x_ul)
-#        y_len = min(y_len, boundary_set.RasterYSize - b_y_ul)
-#
-#    # convert these UL coordinates to an array for easy addition later
-#    f_ul = np.array([f_x_ul, f_y_ul])
-#    r_ul = np.array([r_x_ul, r_y_ul])
-#    if (b_trans is not None):
-#        b_ul = np.array([b_x_ul, b_y_ul])
-#    else:
-#        b_ul = None
-#
-#    return f_ul, r_ul, b_ul, x_len, y_len
+    def upper_left_pixel(trans, interior_x, interior_y):
+        x_ul = max((trans[0] - interior_x)/trans[1], 0)
+        y_ul = max((interior_y - trans[3])/trans[5], 0)
+        return x_ul, y_ul
 
 
-def one_hot_encode_array(raw_band_types, array, memmap_file):
+    def get_interior_rectangle(dataset_list_of_lists: List[List[gdal.Dataset]]):
 
-    cat_band_locations = [idx for idx, val in enumerate(raw_band_types) if val == 'C']
-    band_types = raw_band_types.copy()
-    for _c in reversed(range(len(cat_band_locations))):
+        # Convert list of lists or list for interior convenience
+        dataset_list = [item for sublist in dataset_list_of_lists for item in sublist]
 
-        un_array = array[..., cat_band_locations[_c]]
-        un_array = np.unique(un_array[np.isfinite(un_array)])
-        assert len(un_array) < MAX_UNIQUE_RESPONSES,\
-            'Too many ({}) unique responses found, suspected incorrect categorical specification'.format(len(un_array))
-        _logger.info('Found {} categorical responses'.format(len(un_array)))
-        _logger.debug('Cat response: {}'.format(un_array))
+        # Get list of all gdal geotransforms
+        trans_list = []
+        for _d in range(len(dataset_list)):
+            trans_list.append(dataset_list[_d].GetGeoTransform())
 
-        array_shape = list(array.shape)
-        array_shape[-1] = len(un_array) + array.shape[-1] - 1
+        # Find the interior (UL) x,y coordinates in map-space
+        interior_x = np.nanmax([x[0] for x in trans_list])
+        interior_y = np.nanmin([x[3] for x in trans_list])
 
-        cat_memmap_file = os.path.join(os.path.dirname(
-            memmap_file), os.path.basename(memmap_file).split('.')[0] + '_cat.npy')
-        cat_array = np.memmap(cat_memmap_file,
+        # calculate the UL coordinates in pixel-space
+        ul_list = []
+        for _d in range(len(dataset_list)):
+            ul_list.append(list(upper_left_pixel(trans_list[_d], interior_x, interior_y)))
+
+        # calculate the size of the matched interior extent
+        x_len = int(np.floor(np.min([dataset_list[_d].RasterXSize - ul_list[_d][0] for _d in range(len(dataset_list))])))
+        y_len = int(np.floor(np.min([dataset_list[_d].RasterYSize - ul_list[_d][1] for _d in range(len(dataset_list))])))
+
+        # separate out into list of lists for return
+        return_ul_list = []
+        idx = 0
+        for _l in range(len(dataset_list_of_lists)):
+            local_list = []
+            for _d in range(len(dataset_list_of_lists[_l])):
+                local_list.append(ul_list[idx])
+                idx += 1
+            local_list = np.array(local_list)
+            return_ul_list.append(local_list)
+
+        return return_ul_list, x_len, y_len
+
+
+    # def get_interior_rectangle(feature_set, response_set, boundary_set):
+    #    f_trans = feature_set.GetGeoTransform()
+    #    r_trans = response_set.GetGeoTransform()
+    #    b_trans = None
+    #    if (boundary_set is not None):
+    #        b_trans = boundary_set.GetGeoTransform()
+    #
+    #    # Calculate the interior space location and extent
+    #
+    #    # Find the interior (UL) x,y coordinates in map-space
+    #    interior_x = max(r_trans[0], f_trans[0])
+    #    interior_y = min(r_trans[3], f_trans[3])
+    #    if (b_trans is not None):
+    #        interior_x = max(interior_x, b_trans[0])
+    #        interior_y = max(interior_y, b_trans[3])
+    #
+    #    # calculate the feature and response UL coordinates in pixel-space
+    #    f_x_ul, f_y_ul = upper_left_pixel(f_trans, interior_x, interior_y)
+    #    r_x_ul, r_y_ul = upper_left_pixel(r_trans, interior_x, interior_y)
+    #
+    #    # calculate the size of the matched interior extent
+    #    x_len = min(feature_set.RasterXSize - f_x_ul, response_set.RasterXSize - r_x_ul)
+    #    y_len = min(feature_set.RasterYSize - f_y_ul, response_set.RasterYSize - r_y_ul)
+    #
+    #    # update the UL location, and the interior extent, if there is a boundary
+    #    if (b_trans is not None):
+    #        b_x_ul, b_y_ul = upper_left_pixel(b_trans, interior_x, interior_y)
+    #        x_len = min(x_len, boundary_set.RasterXSize - b_x_ul)
+    #        y_len = min(y_len, boundary_set.RasterYSize - b_y_ul)
+    #
+    #    # convert these UL coordinates to an array for easy addition later
+    #    f_ul = np.array([f_x_ul, f_y_ul])
+    #    r_ul = np.array([r_x_ul, r_y_ul])
+    #    if (b_trans is not None):
+    #        b_ul = np.array([b_x_ul, b_y_ul])
+    #    else:
+    #        b_ul = None
+    #
+    #    return f_ul, r_ul, b_ul, x_len, y_len
+
+
+    def one_hot_encode_array(raw_band_types, array, memmap_file):
+
+        cat_band_locations = [idx for idx, val in enumerate(raw_band_types) if val == 'C']
+        band_types = raw_band_types.copy()
+        for _c in reversed(range(len(cat_band_locations))):
+
+            un_array = array[..., cat_band_locations[_c]]
+            un_array = np.unique(un_array[np.isfinite(un_array)])
+            assert len(un_array) < MAX_UNIQUE_RESPONSES,\
+                'Too many ({}) unique responses found, suspected incorrect categorical specification'.format(len(un_array))
+            _logger.info('Found {} categorical responses'.format(len(un_array)))
+            _logger.debug('Cat response: {}'.format(un_array))
+
+            array_shape = list(array.shape)
+            array_shape[-1] = len(un_array) + array.shape[-1] - 1
+
+            cat_memmap_file = os.path.join(os.path.dirname(
+                memmap_file), os.path.basename(memmap_file).split('.')[0] + '_cat.npy')
+            cat_array = np.memmap(cat_memmap_file,
+                                  dtype=np.float32,
+                                  mode='w+',
+                                  shape=tuple(array_shape))
+
+            # One hot-encode
+            for _r in range(array_shape[-1]):
+                if (_r >= cat_band_locations[_c] and _r < len(un_array)):
+                    cat_array[..., _r] = np.squeeze(array[..., cat_band_locations[_c]] ==
+                                                    un_array[_r - cat_band_locations[_c]])
+                else:
+                    if (_r < cat_band_locations[_c]):
+                        cat_array[..., _r] = array[..., _r]
+                    else:
+                        cat_array[..., _r] = array[..., _r - len(un_array) + 1]
+
+            # Force file dump, and then reload the encoded responses as the primary response
+            del array, cat_array
+            if (os.path.isfile(memmap_file)):
+                os.remove(memmap_file)
+            memmap_file = cat_memmap_file
+            array = np.memmap(memmap_file, dtype=np.float32, mode='r+', shape=tuple(array_shape))
+
+            band_types.pop(cat_band_locations[_c])
+            for _r in range(len(un_array)):
+                band_types.insert(cat_band_locations[_c], 'B' + str(int(_c)))
+        return array, band_types
+
+
+    def build_training_data_ordered(config: configs.Config, feature_raw_band_types: List[List[str]], response_raw_band_types: List[List[str]]):
+
+        if config.data_build.random_seed:
+            np.random.seed(config.data_build.random_seed)
+
+        if (isinstance(config.data_build.max_samples, list)):
+            if (len(config.data_build.max_samples) != len(config.raw_files.feature_files)):
+                raise Exception('max_samples must equal feature_files length, or be an integer.')
+
+        n_features = np.sum([len(feat_type) for feat_type in feature_raw_band_types])
+        n_responses = np.sum([len(resp_type) for resp_type in response_raw_band_types])
+
+        basename = _get_built_data_basename(config.data_build.dir_out, config.data_build.filename_prefix_out)
+        feature_memmap_file = basename + '_feature_munge_memmap.npy'
+        response_memmap_file = basename + '_response_munge_memmap.npy'
+        weight_memmap_file = basename + '_weight_munge_memmap.npy'
+
+        # TODO: fix max size issue, but force for now to prevent overly sized sets
+        assert config.data_build.max_samples * (config.data_build.window_radius*2)**2 * \
+            n_features / 1024.**3 < 10, 'max_samples too large'
+        features = np.memmap(feature_memmap_file,
+                             dtype=np.float32,
+                             mode='w+',
+                             shape=(config.data_build.max_samples, config.data_build.window_radius*2, config.data_build.window_radius*2, n_features))
+
+        responses = np.memmap(response_memmap_file,
                               dtype=np.float32,
                               mode='w+',
-                              shape=tuple(array_shape))
+                              shape=(config.data_build.max_samples, config.data_build.window_radius*2, config.data_build.window_radius*2, n_responses))
 
-        # One hot-encode
-        for _r in range(array_shape[-1]):
-            if (_r >= cat_band_locations[_c] and _r < len(un_array)):
-                cat_array[..., _r] = np.squeeze(array[..., cat_band_locations[_c]] ==
-                                                un_array[_r - cat_band_locations[_c]])
-            else:
-                if (_r < cat_band_locations[_c]):
-                    cat_array[..., _r] = array[..., _r]
-                else:
-                    cat_array[..., _r] = array[..., _r - len(un_array) + 1]
+        sample_index = 0
+        boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
+                         if loc_file is not None else None for loc_file in config.boundary_files]
+        if (len(boundary_sets) == 0):
+            boundary_sets = [None for i in range(len(config.raw_files.feature_files))]
+        for _site in range(0, len(config.raw_files.feature_files)):
 
-        # Force file dump, and then reload the encoded responses as the primary response
-        del array, cat_array
-        if (os.path.isfile(memmap_file)):
-            os.remove(memmap_file)
-        memmap_file = cat_memmap_file
-        array = np.memmap(memmap_file, dtype=np.float32, mode='r+', shape=tuple(array_shape))
+            # open requisite datasets
+            feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
+                            for loc_file in config.raw_files.feature_files[_site]]
+            response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.response_files[_site]]
 
-        band_types.pop(cat_band_locations[_c])
-        for _r in range(len(un_array)):
-            band_types.insert(cat_band_locations[_c], 'B' + str(int(_c)))
-    return array, band_types
+            # Calculate the interior space location and extent
+            [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle(
+                [feature_sets, response_sets, [bs for bs in boundary_sets if bs is not None]])
 
+            # Use interior space calculations to calculate pixel-based interior space offsets for data aquisition
+            collist = [x for x in range(0,
+                                        int(x_len - 2*config.data_build.window_radius),
+                                        int(config.data_build.loss_window_radius*2))]
+            rowlist = [y for y in range(0,
+                                        int(y_len - 2*config.data_build.window_radius),
+                                        int(config.data_build.loss_window_radius*2))]
 
-def build_training_data_ordered(config: configs.Config, feature_raw_band_types: List[List[str]], response_raw_band_types: List[List[str]]):
+            colrow = np.zeros((len(collist)*len(rowlist), 2)).astype(int)
+            colrow[:, 0] = np.matlib.repmat(np.array(collist).reshape((-1, 1)), 1, len(rowlist)).flatten()
+            colrow[:, 1] = np.matlib.repmat(np.array(rowlist).reshape((1, -1)), len(collist), 1).flatten()
+            del collist, rowlist
 
-    if config.data_build.random_seed:
-        np.random.seed(config.data_build.random_seed)
+            colrow = colrow[np.random.permutation(colrow.shape[0]), :]
 
-    if (isinstance(config.data_build.max_samples, list)):
-        if (len(config.data_build.max_samples) != len(config.raw_files.feature_files)):
-            raise Exception('max_samples must equal feature_files length, or be an integer.')
+            ref_trans = feature_sets[0].GetGeoTransform()
+            subset_geotransform = None
+            if len(config.boundary_files) > 0:
+                if config.boundary_files[_site] is not None and \
+                        _is_boundary_file_vectorized(config.boundary_files[_site]):
+                    subset_geotransform = [ref_trans[0], ref_trans[1], 0, ref_trans[3], 0, ref_trans[5]]
 
-    n_features = np.sum([len(feat_type) for feat_type in feature_raw_band_types])
-    n_responses = np.sum([len(resp_type) for resp_type in response_raw_band_types])
+            for _cr in tqdm(range(len(colrow)), ncols=80):
 
-    basename = _get_built_data_basename(config.data_build.dir_out, config.data_build.filename_prefix_out)
-    feature_memmap_file = basename + '_feature_munge_memmap.npy'
-    response_memmap_file = basename + '_response_munge_memmap.npy'
-    weight_memmap_file = basename + '_weight_munge_memmap.npy'
+                # Determine local information about boundary file
+                local_boundary_vector_file = None
+                local_boundary_upper_left = None
+                if (boundary_sets[_site] is not None):
+                    local_boundary_upper_left = b_ul + colrow[_cr, :]
+                if (subset_geotransform is not None):
+                    subset_geotransform[0] = ref_trans[0] + (f_ul[0][0] + colrow[_cr, 0]) * ref_trans[1]
+                    subset_geotransform[3] = ref_trans[3] + (f_ul[0][1] + colrow[_cr, 1]) * ref_trans[5]
+                    local_boundary_vector_file = config.boundary_files[_site]
 
-    # TODO: fix max size issue, but force for now to prevent overly sized sets
-    assert config.data_build.max_samples * (config.data_build.window_radius*2)**2 * \
-        n_features / 1024.**3 < 10, 'max_samples too large'
-    features = np.memmap(feature_memmap_file,
-                         dtype=np.float32,
-                         mode='w+',
-                         shape=(config.data_build.max_samples, config.data_build.window_radius*2, config.data_build.window_radius*2, n_features))
+                local_feature, local_response = read_segmentation_chunk(feature_sets,
+                                                                        response_sets,
+                                                                        f_ul + colrow[_cr, :],
+                                                                        r_ul + colrow[_cr, :],
+                                                                        config,
+                                                                        boundary_vector_file=local_boundary_vector_file,
+                                                                        boundary_upper_left=local_boundary_upper_left,
+                                                                        b_set=boundary_sets[_site],
+                                                                        boundary_subset_geotransform=subset_geotransform)
 
-    responses = np.memmap(response_memmap_file,
-                          dtype=np.float32,
-                          mode='w+',
-                          shape=(config.data_build.max_samples, config.data_build.window_radius*2, config.data_build.window_radius*2, n_responses))
+                if (local_feature is not None):
+                    features[sample_index, ...] = local_feature.copy()
+                    responses[sample_index, ...] = local_response.copy()
+                    sample_index += 1
+                    if (sample_index >= config.data_build.max_samples):
+                        break
 
-    sample_index = 0
-    boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
-                     if loc_file is not None else None for loc_file in config.boundary_files]
-    if (len(boundary_sets) == 0):
-        boundary_sets = [None for i in range(len(config.raw_files.feature_files))]
-    for _site in range(0, len(config.raw_files.feature_files)):
+        # Get the feature/response shapes for re-reading (modified ooc resize)
+        feat_shape = list(features.shape)
+        resp_shape = list(responses.shape)
+        feat_shape[0] = sample_index
+        resp_shape[0] = sample_index
 
-        # open requisite datasets
-        feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
-                        for loc_file in config.raw_files.feature_files[_site]]
-        response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.response_files[_site]]
+        # Delete and reload feauters/responses, as a hard and fast way to force data dump to disc and reload
+        # with a modified size....IE, an ooc resize
+        del features, responses
+        features = np.memmap(feature_memmap_file, dtype=np.float32, mode='r+', shape=(tuple(feat_shape)))
+        responses = np.memmap(response_memmap_file, dtype=np.float32, mode='r+', shape=tuple(resp_shape))
 
-        # Calculate the interior space location and extent
-        [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle(
-            [feature_sets, response_sets, [bs for bs in boundary_sets if bs is not None]])
+        # Shuffle the data one last time (in case the fold-assignment would otherwise be biased beacuase of
+        # the feature/response file order
+        perm = np.random.permutation(features.shape[0])
+        features = features[perm, :]
+        responses = responses[perm, :]
+        del perm
 
-        # Use interior space calculations to calculate pixel-based interior space offsets for data aquisition
-        collist = [x for x in range(0,
-                                    int(x_len - 2*config.data_build.window_radius),
-                                    int(config.data_build.loss_window_radius*2))]
-        rowlist = [y for y in range(0,
-                                    int(y_len - 2*config.data_build.window_radius),
-                                    int(config.data_build.loss_window_radius*2))]
+        fold_assignments = np.zeros(responses.shape[0]).astype(int)
+        for f in range(0, config.data_build.number_folds):
+            idx_start = int(round(f / config.data_build.number_folds * len(fold_assignments)))
+            idx_finish = int(round((f + 1) / config.data_build.number_folds * len(fold_assignments)))
+            fold_assignments[idx_start:idx_finish] = f
 
-        colrow = np.zeros((len(collist)*len(rowlist), 2)).astype(int)
-        colrow[:, 0] = np.matlib.repmat(np.array(collist).reshape((-1, 1)), 1, len(rowlist)).flatten()
-        colrow[:, 1] = np.matlib.repmat(np.array(rowlist).reshape((1, -1)), len(collist), 1).flatten()
-        del collist, rowlist
+        # Set up initial weights....will add in class-balancing if appropriate later
+        weights = np.memmap(weight_memmap_file,
+                            dtype=np.float32,
+                            mode='w+',
+                            shape=(features.shape[0], features.shape[1], features.shape[2], 1))
+        weights[:, :, :, :] = 1
+        weights[np.isnan(responses[..., 0])] = 0
 
-        colrow = colrow[np.random.permutation(colrow.shape[0]), :]
+        if (config.data_build.loss_window_radius != config.data_build.window_radius):
+            buf = config.data_build.window_radius - config.data_build.loss_window_radius
+            weights[:, :buf, :, -1] = 0
+            weights[:, -buf:, :, -1] = 0
+            weights[:, :, :buf, -1] = 0
+            weights[:, :, -buf:, -1] = 0
 
-        ref_trans = feature_sets[0].GetGeoTransform()
-        subset_geotransform = None
-        if len(config.boundary_files) > 0:
-            if config.boundary_files[_site] is not None and \
-                    _is_boundary_file_vectorized(config.boundary_files[_site]):
-                subset_geotransform = [ref_trans[0], ref_trans[1], 0, ref_trans[3], 0, ref_trans[5]]
+        _logger.info('Feature shape: {}'.format(features.shape))
+        _logger.info('Response shape: {}'.format(responses.shape))
+        _logger.info('Weight shape: {}'.format(weights.shape))
 
-        for _cr in tqdm(range(len(colrow)), ncols=80):
+        # one hot encode
+        responses, response_band_types = one_hot_encode_array(response_raw_band_types, responses, response_memmap_file)
+        features, feature_band_types = one_hot_encode_array(feature_raw_band_types, features, feature_memmap_file)
 
-            # Determine local information about boundary file
-            local_boundary_vector_file = None
-            local_boundary_upper_left = None
-            if (boundary_sets[_site] is not None):
-                local_boundary_upper_left = b_ul + colrow[_cr, :]
-            if (subset_geotransform is not None):
-                subset_geotransform[0] = ref_trans[0] + (f_ul[0][0] + colrow[_cr, 0]) * ref_trans[1]
-                subset_geotransform[3] = ref_trans[3] + (f_ul[0][1] + colrow[_cr, 1]) * ref_trans[5]
-                local_boundary_vector_file = config.boundary_files[_site]
+        for fold in range(config.data_build.number_folds):
+            np.save(feature_files[fold], features[fold_assignments == fold, ...])
+            np.save(response_files[fold], responses[fold_assignments == fold, ...])
+            np.save(weight_files[fold], weights[fold_assignments == fold, ...])
 
-            local_feature, local_response = read_segmentation_chunk(feature_sets,
-                                                                    response_sets,
-                                                                    f_ul + colrow[_cr, :],
-                                                                    r_ul + colrow[_cr, :],
-                                                                    config,
-                                                                    boundary_vector_file=local_boundary_vector_file,
-                                                                    boundary_upper_left=local_boundary_upper_left,
-                                                                    b_set=boundary_sets[_site],
-                                                                    boundary_subset_geotransform=subset_geotransform)
-
-            if (local_feature is not None):
-                features[sample_index, ...] = local_feature.copy()
-                responses[sample_index, ...] = local_response.copy()
-                sample_index += 1
-                if (sample_index >= config.data_build.max_samples):
-                    break
-
-    # Get the feature/response shapes for re-reading (modified ooc resize)
-    feat_shape = list(features.shape)
-    resp_shape = list(responses.shape)
-    feat_shape[0] = sample_index
-    resp_shape[0] = sample_index
-
-    # Delete and reload feauters/responses, as a hard and fast way to force data dump to disc and reload
-    # with a modified size....IE, an ooc resize
-    del features, responses
-    features = np.memmap(feature_memmap_file, dtype=np.float32, mode='r+', shape=(tuple(feat_shape)))
-    responses = np.memmap(response_memmap_file, dtype=np.float32, mode='r+', shape=tuple(resp_shape))
-
-    # Shuffle the data one last time (in case the fold-assignment would otherwise be biased beacuase of
-    # the feature/response file order
-    perm = np.random.permutation(features.shape[0])
-    features = features[perm, :]
-    responses = responses[perm, :]
-    del perm
-
-    fold_assignments = np.zeros(responses.shape[0]).astype(int)
-    for f in range(0, config.data_build.number_folds):
-        idx_start = int(round(f / config.data_build.number_folds * len(fold_assignments)))
-        idx_finish = int(round((f + 1) / config.data_build.number_folds * len(fold_assignments)))
-        fold_assignments[idx_start:idx_finish] = f
-
-    # Set up initial weights....will add in class-balancing if appropriate later
-    weights = np.memmap(weight_memmap_file,
-                        dtype=np.float32,
-                        mode='w+',
-                        shape=(features.shape[0], features.shape[1], features.shape[2], 1))
-    weights[:, :, :, :] = 1
-    weights[np.isnan(responses[..., 0])] = 0
-
-    if (config.data_build.loss_window_radius != config.data_build.window_radius):
-        buf = config.data_build.window_radius - config.data_build.loss_window_radius
-        weights[:, :buf, :, -1] = 0
-        weights[:, -buf:, :, -1] = 0
-        weights[:, :, :buf, -1] = 0
-        weights[:, :, -buf:, -1] = 0
-
-    _logger.info('Feature shape: {}'.format(features.shape))
-    _logger.info('Response shape: {}'.format(responses.shape))
-    _logger.info('Weight shape: {}'.format(weights.shape))
-
-    # one hot encode
-    responses, response_band_types = one_hot_encode_array(response_raw_band_types, responses, response_memmap_file)
-
-    for fold in range(config.data_build.number_folds):
-        np.save(feature_files[fold], features[fold_assignments == fold, ...])
-        np.save(response_files[fold], responses[fold_assignments == fold, ...])
-        np.save(weight_files[fold], weights[fold_assignments == fold, ...])
-
-    del features, responses, weights
-    if ('C' in response_raw_band_types):
-        if (np.sum(np.array(response_raw_band_types) == 'C') > 1):
-            _logger.warning('Currently weighting is only enabled for one categorical response variable')
-        features, responses, weights, success = open_memmap_files(config, writeable=True, override_success_file=True)
-        weights = calculate_categorical_weights(responses, weights, config)
         del features, responses, weights
+        if ('C' in response_raw_band_types):
+            if (np.sum(np.array(response_raw_band_types) == 'C') > 1):
+                _logger.warning('Currently weighting is only enabled for one categorical response variable')
+            features, responses, weights, success = open_memmap_files(config, writeable=True, override_success_file=True)
+            weights = calculate_categorical_weights(responses, weights, config)
+            del features, responses, weights
 
-    # clean up munge files
-    if (os.path.isfile(feature_memmap_file)):
-        os.remove(feature_memmap_file)
-    if (os.path.isfile(weight_memmap_file)):
-        os.remove(weight_memmap_file)
+        # clean up munge files
+        if (os.path.isfile(feature_memmap_file)):
+            os.remove(feature_memmap_file)
+        if (os.path.isfile(weight_memmap_file)):
+            os.remove(weight_memmap_file)
 
-    Path(config.successful_data_save_file).touch()
-    features, responses, weights, success = open_memmap_files(config, writeable=False)
-    return features, responses, weights, response_band_types
+        Path(config.successful_data_save_file).touch()
+        features, responses, weights, success = open_memmap_files(config, writeable=False)
+        return features, responses, weights, feature_band_types, response_band_types
 
 
-def build_training_data_from_response_points(config: DataConfig, feature_raw_band_types: List[List[str]], response_raw_band_types: List[List[str]]):
+    def build_training_data_from_response_points(config: DataConfig, feature_raw_band_types: List[List[str]], response_raw_band_types: List[List[str]]):
 
-    if (config.random_seed is not None):
-        np.random.seed(config.random_seed)
+        if (config.random_seed is not None):
+            np.random.seed(config.random_seed)
 
-    colrow_per_site = []
-    responses_per_site = []
-    boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
-                     if loc_file is not None else None for loc_file in config.boundary_files]
-    if (len(boundary_sets) == 0):
-        boundary_sets = [None for i in range(len(config.raw_files.feature_files))]
-    for _site in range(0, len(config.raw_files.feature_files)):
-        # open requisite datasets
-        feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
-                        for loc_file in config.raw_files.feature_files[_site]]
-        response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.response_files[_site]]
+        colrow_per_site = []
+        responses_per_site = []
+        boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
+                         if loc_file is not None else None for loc_file in config.boundary_files]
+        if (len(boundary_sets) == 0):
+            boundary_sets = [None for i in range(len(config.raw_files.feature_files))]
+        for _site in range(0, len(config.raw_files.feature_files)):
+            # open requisite datasets
+            feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
+                            for loc_file in config.raw_files.feature_files[_site]]
+            response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.response_files[_site]]
 
-        # Calculate the interior space location and extent
-        [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle(
-            [feature_sets, response_sets, [bs for bs in boundary_sets if bs is not None]])
+            # Calculate the interior space location and extent
+            [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle(
+                [feature_sets, response_sets, [bs for bs in boundary_sets if bs is not None]])
 
-        collist = []
-        rowlist = []
-        responses = []
-        # Run through first response
-        for _line in range(y_len):
-            line_dat = np.squeeze(response_sets[_site].ReadAsArray(r_ul[0][0], r_ul[0][1] + _line, x_len, 1))
-            if (len(line_dat.shape) == 1):
-                line_dat = line_dat.reshape(-1, 1)
+            collist = []
+            rowlist = []
+            responses = []
+            # Run through first response
+            for _line in range(y_len):
+                line_dat = np.squeeze(response_sets[_site].ReadAsArray(r_ul[0][0], r_ul[0][1] + _line, x_len, 1))
+                if (len(line_dat.shape) == 1):
+                    line_dat = line_dat.reshape(-1, 1)
 
-            if (config.response_background_value is not None):
-                good_data = np.all(line_dat != config.response_background_value, axis=1)
-            else:
-                good_data = np.ones(line_dat.shape[0]).astype(bool)
+                if (config.response_background_value is not None):
+                    good_data = np.all(line_dat != config.response_background_value, axis=1)
+                else:
+                    good_data = np.ones(line_dat.shape[0]).astype(bool)
 
-            if (config.raw_files.response_nodata_value is not None):
-                good_data[np.any(line_dat == config.raw_files.response_nodata_value, axis=1)] = False
+                if (config.raw_files.response_nodata_value is not None):
+                    good_data[np.any(line_dat == config.raw_files.response_nodata_value, axis=1)] = False
 
-            if (np.sum(good_data) > 0):
-                line_x = np.arange(x_len)
-                line_y = line_x.copy()
-                line_y[:] = _line
+                if (np.sum(good_data) > 0):
+                    line_x = np.arange(x_len)
+                    line_y = line_x.copy()
+                    line_y[:] = _line
 
-                collist.extend(line_x[good_data].tolist())
-                rowlist.extend(line_y[good_data].tolist())
-                responses.append(line_dat[good_data, :])
+                    collist.extend(line_x[good_data].tolist())
+                    rowlist.extend(line_y[good_data].tolist())
+                    responses.append(line_dat[good_data, :])
 
-        colrow = np.vstack([np.array(collist), np.array(rowlist)]).T
-        responses = np.vstack(responses).astype(np.float32)
-        responses_per_file = [responses.copy()]
+            colrow = np.vstack([np.array(collist), np.array(rowlist)]).T
+            responses = np.vstack(responses).astype(np.float32)
+            responses_per_file = [responses.copy()]
 
-        for _file in range(1, len(response_sets)):
-            responses = np.zeros(responses_per_file[0].shape[0])
-            for _point in range(len(colrow)):
-                responses[_point] = response_sets[_file].ReadAsArray(
-                    r_ul[_file][0], r_ul[_file][1], 1, 1).astype(np.float32)
-            responses_per_file.append(responses.copy())
+            for _file in range(1, len(response_sets)):
+                responses = np.zeros(responses_per_file[0].shape[0])
+                for _point in range(len(colrow)):
+                    responses[_point] = response_sets[_file].ReadAsArray(
+                        r_ul[_file][0], r_ul[_file][1], 1, 1).astype(np.float32)
+                responses_per_file.append(responses.copy())
 
-        responses_per_file = np.hstack(responses_per_file)
+            responses_per_file = np.hstack(responses_per_file)
 
-        good_dat = np.all(responses_per_file != config.response_background_value, axis=1)
-        responses_per_file = responses_per_file[good_dat, :]
-        colrow = colrow[good_dat, :]
+            good_dat = np.all(responses_per_file != config.response_background_value, axis=1)
+            responses_per_file = responses_per_file[good_dat, :]
+            colrow = colrow[good_dat, :]
 
-        colrow_per_site.append(colrow)
-        responses_per_site.append(np.vstack(responses))
+            colrow_per_site.append(colrow)
+            responses_per_site.append(np.vstack(responses))
 
-    total_samples = 0
-    for _site in range(0, len(responses_per_site)):
-        total_samples += responses_per_site[_site].shape[0]
-
-    assert config.data_build.max_samples > 0, 'need more than 1 valid sample...'
-
-    _logger.debug('total samples: {}'.format(total_samples))
-    if (total_samples > config.data_build.max_samples):
+        total_samples = 0
         for _site in range(0, len(responses_per_site)):
-            perm = np.random.permutation(len(responses_per_site[_site]))[:int(
-                config.data_build.max_samples*len(responses_per_site[_site])/float(total_samples))]
-            responses_per_site[_site] = responses_per_site[_site][perm, :]
-            colrow_per_site[_site] = colrow_per_site[_site][perm, :]
-            _logger.debug('perm len: {}'.format(len(perm)))
+            total_samples += responses_per_site[_site].shape[0]
 
-    total_samples = 0
-    for _site in range(0, len(responses_per_site)):
-        total_samples += responses_per_site[_site].shape[0]
-    _logger.debug('total samples after trim: {}'.format(total_samples))
+        assert config.data_build.max_samples > 0, 'need more than 1 valid sample...'
 
-    n_features = np.sum([len(feat_type) for feat_type in feature_raw_band_types])
+        _logger.debug('total samples: {}'.format(total_samples))
+        if (total_samples > config.data_build.max_samples):
+            for _site in range(0, len(responses_per_site)):
+                perm = np.random.permutation(len(responses_per_site[_site]))[:int(
+                    config.data_build.max_samples*len(responses_per_site[_site])/float(total_samples))]
+                responses_per_site[_site] = responses_per_site[_site][perm, :]
+                colrow_per_site[_site] = colrow_per_site[_site][perm, :]
+                _logger.debug('perm len: {}'.format(len(perm)))
 
-    # TODO: fix max size issue, but force for now to prevent overly sized sets
-    basename = _get_built_data_basename(config.data_build.dir_out, config.data_build.filename_prefix_out)
-    feature_memmap_file = basename + '_feature_munge_memmap.npy'
-    response_memmap_file = basename + '_response_munge_memmap.npy'
-    assert total_samples * (config.data_build.window_radius*2)**2 * n_features / 1024.**3 < 10, 'max_samples too large'
-    features = np.memmap(feature_memmap_file,
-                         dtype=np.float32,
-                         mode='w+',
-                         shape=(total_samples, config.data_build.window_radius*2, config.data_build.window_radius*2, n_features))
+        total_samples = 0
+        for _site in range(0, len(responses_per_site)):
+            total_samples += responses_per_site[_site].shape[0]
+        _logger.debug('total samples after trim: {}'.format(total_samples))
 
-    sample_index = 0
-    boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
-                     if loc_file is not None else None for loc_file in config.boundary_files]
-    if (len(boundary_sets) == 0):
-        boundary_sets = [None for i in range(len(config.raw_files.feature_files))]
-    for _site in range(0, len(config.raw_files.feature_files)):
+        n_features = np.sum([len(feat_type) for feat_type in feature_raw_band_types])
 
-        # open requisite datasets
-        feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
-                        for loc_file in config.raw_files.feature_files[_site]]
-        response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.response_files[_site]]
+        # TODO: fix max size issue, but force for now to prevent overly sized sets
+        basename = _get_built_data_basename(config.data_build.dir_out, config.data_build.filename_prefix_out)
+        feature_memmap_file = basename + '_feature_munge_memmap.npy'
+        response_memmap_file = basename + '_response_munge_memmap.npy'
+        assert total_samples * (config.data_build.window_radius*2)**2 * n_features / 1024.**3 < 10, 'max_samples too large'
+        features = np.memmap(feature_memmap_file,
+                             dtype=np.float32,
+                             mode='w+',
+                             shape=(total_samples, config.data_build.window_radius*2, config.data_build.window_radius*2, n_features))
 
-        # Calculate the interior space location and extent
-        [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle(
-            [feature_sets, response_sets, [bs for bs in boundary_sets if bs is not None]])
+        sample_index = 0
+        boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
+                         if loc_file is not None else None for loc_file in config.boundary_files]
+        if (len(boundary_sets) == 0):
+            boundary_sets = [None for i in range(len(config.raw_files.feature_files))]
+        for _site in range(0, len(config.raw_files.feature_files)):
 
-        # colrow is current the response cetners, but we need to use the pixel ULs.  So subtract
-        # out the corresponding feature radius
-        colrow = colrow_per_site[_site] - config.data_build.window_radius
+            # open requisite datasets
+            feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
+                            for loc_file in config.raw_files.feature_files[_site]]
+            response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.response_files[_site]]
 
-        ref_trans = feature_sets[0].GetGeoTransform()
-        subset_geotransform = None
-        if len(config.boundary_files) > 0:
-            if config.boundary_files[_site] is not None and \
-                    _is_boundary_file_vectorized(config.boundary_files[_site]):
-                subset_geotransform = [ref_trans[0], ref_trans[1], 0, ref_trans[3], 0, ref_trans[5]]
+            # Calculate the interior space location and extent
+            [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle(
+                [feature_sets, response_sets, [bs for bs in boundary_sets if bs is not None]])
 
-        good_response_data = np.zeros(responses_per_site[_site].shape[0]).astype(bool)
-        # Now read in features
-        for _cr in tqdm(range(len(colrow)), ncols=80):
+            # colrow is current the response cetners, but we need to use the pixel ULs.  So subtract
+            # out the corresponding feature radius
+            colrow = colrow_per_site[_site] - config.data_build.window_radius
 
-            # Determine local information about boundary file
-            local_boundary_vector_file = None
-            local_boundary_upper_left = None
-            if (boundary_sets[_site] is not None):
-                local_boundary_upper_left = b_ul + colrow[_cr, :]
-            if (subset_geotransform is not None):
-                subset_geotransform[0] = ref_trans[0] + (f_ul[0][0] + colrow[_cr, 0]) * ref_trans[1]
-                subset_geotransform[3] = ref_trans[3] + (f_ul[0][1] + colrow[_cr, 1]) * ref_trans[5]
-                local_boundary_vector_file = config.boundary_files[_site]
+            ref_trans = feature_sets[0].GetGeoTransform()
+            subset_geotransform = None
+            if len(config.boundary_files) > 0:
+                if config.boundary_files[_site] is not None and \
+                        _is_boundary_file_vectorized(config.boundary_files[_site]):
+                    subset_geotransform = [ref_trans[0], ref_trans[1], 0, ref_trans[3], 0, ref_trans[5]]
 
-            local_feature = read_labeling_chunk(feature_sets,
-                                                f_ul + colrow[_cr, :],
-                                                config,
-                                                boundary_vector_file=local_boundary_vector_file,
-                                                boundary_upper_left=local_boundary_upper_left,
-                                                b_set=boundary_sets[_site],
-                                                boundary_subset_geotransform=subset_geotransform)
+            good_response_data = np.zeros(responses_per_site[_site].shape[0]).astype(bool)
+            # Now read in features
+            for _cr in tqdm(range(len(colrow)), ncols=80):
 
-            if (local_feature is not None):
-                features[sample_index, ...] = local_feature.copy()
-                good_response_data[_cr] = True
-                sample_index += 1
-        responses_per_site[_site] = responses_per_site[_site][good_response_data, :]
+                # Determine local information about boundary file
+                local_boundary_vector_file = None
+                local_boundary_upper_left = None
+                if (boundary_sets[_site] is not None):
+                    local_boundary_upper_left = b_ul + colrow[_cr, :]
+                if (subset_geotransform is not None):
+                    subset_geotransform[0] = ref_trans[0] + (f_ul[0][0] + colrow[_cr, 0]) * ref_trans[1]
+                    subset_geotransform[3] = ref_trans[3] + (f_ul[0][1] + colrow[_cr, 1]) * ref_trans[5]
+                    local_boundary_vector_file = config.boundary_files[_site]
 
-    # transform responses
-    responses = np.vstack(responses_per_site)
-    del responses_per_site
+                local_feature = read_labeling_chunk(feature_sets,
+                                                    f_ul + colrow[_cr, :],
+                                                    config,
+                                                    boundary_vector_file=local_boundary_vector_file,
+                                                    boundary_upper_left=local_boundary_upper_left,
+                                                    b_set=boundary_sets[_site],
+                                                    boundary_subset_geotransform=subset_geotransform)
 
-    # Get the feature shapes for re-reading (modified ooc resize)
-    feat_shape = list(features.shape)
-    feat_shape[0] = sample_index
+                if (local_feature is not None):
+                    features[sample_index, ...] = local_feature.copy()
+                    good_response_data[_cr] = True
+                    sample_index += 1
+            responses_per_site[_site] = responses_per_site[_site][good_response_data, :]
 
-    # Delete and reload feauters, as a hard and fast way to force data dump to disc and reload
-    # with a modified size....IE, an ooc resize
-    del features
-    features = np.memmap(feature_memmap_file, dtype=np.float32, mode='r+', shape=(tuple(feat_shape)))
+        # transform responses
+        responses = np.vstack(responses_per_site)
+        del responses_per_site
+
+        # Get the feature shapes for re-reading (modified ooc resize)
+        feat_shape = list(features.shape)
+        feat_shape[0] = sample_index
+
+        # Delete and reload feauters, as a hard and fast way to force data dump to disc and reload
+        # with a modified size....IE, an ooc resize
+        del features
+        features = np.memmap(feature_memmap_file, dtype=np.float32, mode='r+', shape=(tuple(feat_shape)))
 
     # Shuffle the data one last time (in case the fold-assignment would otherwise be biased beacuase of
     # the feature/response file order
@@ -1023,6 +1025,7 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
     weights = np.ones((responses.shape[0], 1))
 
     # one hot encode
+    features, feature_band_types = one_hot_encode_array(feature_raw_band_types, features, feature_memmap_file)
     responses, response_band_types = one_hot_encode_array(response_raw_band_types, responses, response_memmap_file)
 
     _logger.info('Feature shape: {}'.format(features.shape))
@@ -1050,13 +1053,7 @@ def build_training_data_from_response_points(config: DataConfig, feature_raw_ban
 
     Path(config.successful_data_save_file).touch()
     features, responses, weights = _load_built_data_files(config, writeable=False)
-    return features, responses, weights, response_band_types
-
-
-# TODO: Phil:  sorry, I'm reorganizing the script to follow the Python conventions:  more nested or specialized
-#  functions later in the script, higher level or main functions earlier, leading underscores for functions that
-#  are "protected" or "private", that shouldn't be used outside of the module. This also helps because we can add
-#  testing (eventually) for the lowest level functions and we'll know which ones are easiest to catch first.
+    return features, responses, weights, feature_band_types, response_band_types
 
 
 def _check_build_successful(config: configs.Config) -> bool:
