@@ -63,10 +63,8 @@ def build_or_load_rawfile_data(config: configs.Config, rebuild: bool = False):
     data_container.response_raw_band_types = data_container.get_band_types(
         config.raw_files.response_files, config.raw_files.response_data_type)
 
-<<<<<<< Updated upstream
-=======
+
     # Load data if it already exists
->>>>>>> Stashed changes
     if _check_built_data_files_exist(config) and not rebuild:
         features, responses, weights = _load_built_data_files(config)
 
@@ -79,7 +77,7 @@ def build_or_load_rawfile_data(config: configs.Config, rebuild: bool = False):
                 config.raw_files.feature_files, config.raw_files.response_files, config.raw_files.boundary_files
             )
 
-        if config.raw_files.boundary_files: 
+        if config.raw_files.boundary_files:
             boundary_files = [loc_file for loc_file in config.raw_files.boundary_files
                               if gdal.Open(loc_file, gdal.GA_ReadOnly) is not None]
         else:
@@ -144,13 +142,8 @@ def check_projections(a_files, b_files, c_files=None):
 
     loc_a_files = [item for sublist in a_files for item in sublist]
     loc_b_files = [item for sublist in b_files for item in sublist]
-<<<<<<< Updated upstream
-    if not c_files:
-        loc_c_files = []
-=======
     if c_files is None:
         loc_c_files = list()
->>>>>>> Stashed changes
     else:
         loc_c_files = [item for sublist in c_files for item in sublist]
 
