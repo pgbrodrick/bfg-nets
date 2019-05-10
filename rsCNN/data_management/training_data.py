@@ -453,8 +453,10 @@ class Dataset:
         # Checks on the matching numbers of sites
         assert len(f_file_list) == len(r_file_list), 'Feature and response site lists must be the same length'
         assert len(f_file_list) > 0, 'At least one feature and response site is required'
-        if (len(b_file_list) > 0):
-            assert len(b_file_list) == len(f_file_list), 'Boundary and feature site lists must be the same length'
+        if len(b_file_list) > 0:
+            assert len(b_file_list) == len(f_file_list), \
+                'Boundary and feature file lists must be the same length. Boundary list: {}. Feature list: {}.'.format(
+                    ', '.join(b_file_list), ', '.join(f_file_list))
 
         # Checks that we have lists of lists for f and r
         for _f in range(len(f_file_list)):
