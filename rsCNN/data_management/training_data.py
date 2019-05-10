@@ -1130,7 +1130,7 @@ def _get_built_data_config_filepath(config: configs.Config) -> str:
 
 
 def _get_built_data_filepaths_and_check_exist(config: configs.Config, filename_suffix: str) -> List[str]:
-    basename = _get_built_data_basename(config.data_build.dir_out, config.data_build.filename_prefix_out)
+    basename = _get_built_data_basename(config)
     filepaths = [basename + filename_suffix.format(idx_fold) for idx_fold in range(config.data_build.num_folds)]
     return filepaths
 
