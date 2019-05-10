@@ -33,8 +33,6 @@ def plot_transformed_features(
         add_xlabel: bool,
         add_ylabel: bool
 ) -> None:
-    # TODO:  when data config accessible, perhaps via network config, then check if NullScaler applied to features
-    #  if so, then ax.remove() if NullScaler applied and it should just work (TM)
     _plot_sample_attribute(sampled, idx_sample, idx_feature, 'trans_features', ax, add_xlabel, add_ylabel)
 
 
@@ -57,8 +55,6 @@ def plot_transformed_responses(
         add_xlabel: bool,
         add_ylabel: bool
 ) -> None:
-    # TODO:  when data config accessible, perhaps via network config, then check if NullScaler applied to features
-    #  if so, then ax.remove() if NullScaler applied and it should just work (TM)
     _plot_sample_attribute(sampled, idx_sample, idx_response, 'trans_responses', ax, add_xlabel, add_ylabel)
 
 
@@ -82,8 +78,6 @@ def plot_transformed_predictions(
         add_xlabel: bool,
         add_ylabel: bool
 ) -> None:
-    # TODO:  when data config accessible, perhaps via network config, then check if NullScaler applied to features
-    #  if so, then ax.remove() if NullScaler applied and it should just work (TM)
     _plot_sample_attribute(sampled, idx_sample, idx_response, 'trans_predictions', ax, add_xlabel, add_ylabel)
     add_internal_window_to_subplot(sampled, ax)
 
@@ -224,8 +218,8 @@ def plot_transformed_error_regression(
 
 
 def add_internal_window_to_subplot(sampled: samples.Samples, ax: plt.Axes) -> None:
-    inshape = sampled.network_config['architecture']['inshape']
-    loss_window_radius = sampled.network_config['architecture']['loss_window_radius']
+    inshape = sampled.config.architecture_options.inshape
+    loss_window_radius = sampled.config.data_build.loss_window_radius
     if (loss_window_radius * 2 == inshape[0]):
         return
     buffer = int((inshape[0] - loss_window_radius * 2) / 2)
