@@ -81,7 +81,6 @@ class DataBuild(BaseConfigSection):
     dir_out = None
     filename_prefix_out = None
     response_data_format = None
-    data_build_category = None
     random_seed = None
     max_samples = None
     number_folds = None
@@ -104,7 +103,6 @@ class DataBuild(BaseConfigSection):
         # TODO:  rename the following?
         ConfigOption('response_data_format', 'FCN', str,
                      'Either CNN for convolutional neural network or FCN for fully convolutional network.'),
-        ConfigOption('data_build_category', 'or', str),  # TODO rename and description
         ConfigOption('max_samples', None, int, 'Maximum number of built data samples to draw from the raw data ' +
                      'files. Sampling stops when the raw data files are fully crawled or the maximum samples are ' +
                      'reached.'),

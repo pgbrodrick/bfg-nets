@@ -13,7 +13,6 @@ data_build:
   dir_out: REQUIRED
   filename_prefix_out: REQUIRED
   response_data_format: FCN
-  data_build_category: or
   max_samples: REQUIRED
   window_radius: REQUIRED
   loss_window_radius: REQUIRED
