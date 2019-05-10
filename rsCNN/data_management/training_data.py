@@ -1136,8 +1136,8 @@ def _get_built_data_filepaths_and_check_exist(config: configs.Config, filename_s
 
 
 def _get_built_data_basename(config: configs.Config) -> str:
-    filepath_separator = '_' if config.data_build.filename_prefix_out else ''
-    return os.path.join(config.data_build.dir_out, config.data_build.filename_prefix_out) + filepath_separator
+    filepath_separator = config.data_build.filename_prefix_out + '_' if config.data_build.filename_prefix_out else ''
+    return os.path.join(config.data_build.dir_out, filepath_separator)
 
 
 def _is_boundary_file_vectorized(boundary_filepath: str) -> bool:
