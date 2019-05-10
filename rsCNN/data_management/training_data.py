@@ -456,7 +456,7 @@ class Dataset:
         if len(b_file_list) > 0:
             assert len(b_file_list) == len(f_file_list), \
                 'Boundary and feature file lists must be the same length. Boundary list: {}. Feature list: {}.'.format(
-                    ', '.join(b_file_list), ', '.join(f_file_list))
+                    b_file_list, f_file_list)
 
         # Checks that we have lists of lists for f and r
         for _f in range(len(f_file_list)):
