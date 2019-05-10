@@ -22,9 +22,12 @@ _logger = logging.get_child_logger(__name__)
 MAX_UNIQUE_RESPONSES = 100
 
 _FILENAME_BUILT_DATA_CONFIG_SUFFIX = 'built_data_config.yaml'
-_FILENAME_RESPONSES_SUFFIX = 'responses_{}.npy'
 _FILENAME_FEATURES_SUFFIX = 'features_{}.npy'
+_FILENAME_FEATURES_MUNGE_SUFFIX = '_features_munge_memmap.npy'
+_FILENAME_RESPONSES_SUFFIX = 'responses_{}.npy'
+_FILENAME_RESPONSES_MUNGE_SUFFIX = '_responses_munge_memmap.npy'
 _FILENAME_WEIGHTS_SUFFIX = 'weights_{}.npy'
+_FILENAME_WEIGHTS_MUNGE_SUFFIX = '_weights_munge_memmap.npy'
 _VECTORIZED_FILENAMES = ('kml', 'shp')
 
 
@@ -51,7 +54,6 @@ def rasterize_vector(vector_file, geotransform, output_shape):
 
 
 def build_or_load_rawfile_data(config: configs.Config, rebuild: bool = False):
-
     data_container = Dataset(config)
     data_container.check_input_files(
         config.raw_files.feature_files, config.raw_files.response_files,
@@ -62,7 +64,6 @@ def build_or_load_rawfile_data(config: configs.Config, rebuild: bool = False):
         config.raw_files.feature_files, config.raw_files.feature_data_type)
     data_container.response_raw_band_types = data_container.get_band_types(
         config.raw_files.response_files, config.raw_files.response_data_type)
-
 
     # Load data if it already exists
     if _check_built_data_files_exist(config) and not rebuild:
@@ -680,55 +681,52 @@ def one_hot_encode_array(raw_band_types, array, memmap_file):
 def build_training_data_ordered(config: configs.Config, feature_raw_band_types: List[List[str]], response_raw_band_types: List[List[str]]):
 
     if config.data_build.random_seed:
+        _logger.trace('Setting random seed to {}'.format(config.data_build.random_seed))
         np.random.seed(config.data_build.random_seed)
 
+    # TODO:  move to config checks
     if (isinstance(config.data_build.max_samples, list)):
         if (len(config.data_build.max_samples) != len(config.raw_files.feature_files)):
             raise Exception('max_samples must equal feature_files length, or be an integer.')
-
+    # TODO:  move to checks
+    # TODO:  fix max size issue, but force for now to prevent overly sized sets
     n_features = np.sum([len(feat_type) for feat_type in feature_raw_band_types])
     n_responses = np.sum([len(resp_type) for resp_type in response_raw_band_types])
-
-    basename = _get_built_data_basename(config)
-    feature_memmap_file = basename + '_feature_munge_memmap.npy'
-    response_memmap_file = basename + '_response_munge_memmap.npy'
-    weight_memmap_file = basename + '_weight_munge_memmap.npy'
-
-    # TODO: fix max size issue, but force for now to prevent overly sized sets
     assert config.data_build.max_samples * (config.data_build.window_radius*2)**2 * \
-        n_features / 1024.**3 < 10, 'max_samples too large'
-    features = np.memmap(feature_memmap_file,
-                         dtype=np.float32,
-                         mode='w+',
-                         shape=(config.data_build.max_samples, config.data_build.window_radius*2, config.data_build.window_radius*2, n_features))
+           n_features / 1024.**3 < 10, 'max_samples too large'
 
-    responses = np.memmap(response_memmap_file,
-                          dtype=np.float32,
-                          mode='w+',
-                          shape=(config.data_build.max_samples, config.data_build.window_radius*2, config.data_build.window_radius*2, n_responses))
+    _logger.trace('Create temporary munge data files')
+    basename = _get_built_data_basename(config)
+    feature_memmap_file = basename + _FILENAME_FEATURES_MUNGE_SUFFIX
+    response_memmap_file = basename + _FILENAME_RESPONSES_MUNGE_SUFFIX
+    weight_memmap_file = basename + _FILENAME_WEIGHTS_MUNGE_SUFFIX
+    shape = [config.data_build.max_samples, config.data_build.window_radius * 2, config.data_build.window_radius * 2]
+    features = np.memmap(feature_memmap_file, dtype=np.float32, mode='w+', shape=shape + [n_features])
+    responses = np.memmap(response_memmap_file, dtype=np.float32, mode='w+', shape=shape + [n_responses])
 
-    sample_index = 0
+    _logger.trace('Open boundary files')
     # TODO:  we need to refactor how boundary files are handled, how all of the checks are handled for these data types
     #   to make them consistent, simple, centralized, etc
     if not config.raw_files.boundary_files:
-        boundary_sets = list()
+        boundary_sets = [None for _ in range(len(config.raw_files.feature_files))]
     else:
         boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
                          if loc_file is not None else None for loc_file in config.raw_files.boundary_files]
-    if (len(boundary_sets) == 0):
-        boundary_sets = [None for i in range(len(config.raw_files.feature_files))]
-    for _site in range(0, len(config.raw_files.feature_files)):
 
-        # open requisite datasets
+    sample_index = 0
+    for _site in range(0, len(config.raw_files.feature_files)):
+        _logger.debug('Build data for site {}'.format(_site))
+
+        _logger.trace('Open feature and response datasets for site {}'.format(_site))
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
                         for loc_file in config.raw_files.feature_files[_site]]
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
 
-        # Calculate the interior space location and extent
+        _logger.trace('Calculate interior rectangle location and extent')
         [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle(
             [feature_sets, response_sets, [bs for bs in boundary_sets if bs is not None]])
 
-        # Use interior space calculations to calculate pixel-based interior space offsets for data aquisition
+        _logger.trace('Calculate pixel-based interior offsets for data acquisition')
         collist = [x for x in range(0,
                                     int(x_len - 2*config.data_build.window_radius),
                                     int(config.data_build.loss_window_radius*2))]
@@ -740,9 +738,11 @@ def build_training_data_ordered(config: configs.Config, feature_raw_band_types: 
         colrow[:, 0] = np.matlib.repmat(np.array(collist).reshape((-1, 1)), 1, len(rowlist)).flatten()
         colrow[:, 1] = np.matlib.repmat(np.array(rowlist).reshape((1, -1)), len(collist), 1).flatten()
         del collist, rowlist
-
         colrow = colrow[np.random.permutation(colrow.shape[0]), :]
 
+        _logger.trace('Get geotransform for feature set')
+        # TODO:  Phil:  is this an error? Should the geotransform be from the _site index of feature_sets or really just
+        #  from the first?
         ref_trans = feature_sets[0].GetGeoTransform()
         subset_geotransform = None
         if config.raw_files.boundary_files is not None > 0:
@@ -750,9 +750,10 @@ def build_training_data_ordered(config: configs.Config, feature_raw_band_types: 
                     _is_boundary_file_vectorized(config.raw_files.boundary_files[_site]):
                 subset_geotransform = [ref_trans[0], ref_trans[1], 0, ref_trans[3], 0, ref_trans[5]]
 
+        _logger.trace('Collect samples by iterating through {} potential samples'.format(len(colrow)))
         for _cr in tqdm(range(len(colrow)), ncols=80):
-
-            # Determine local information about boundary file
+            _logger.trace('Checking sample {}'.format(_cr))
+            _logger.trace('Determine local information about sample')
             local_boundary_vector_file = None
             local_boundary_upper_left = None
             if (boundary_sets[_site] is not None):
@@ -761,7 +762,7 @@ def build_training_data_ordered(config: configs.Config, feature_raw_band_types: 
                 subset_geotransform[0] = ref_trans[0] + (f_ul[0][0] + colrow[_cr, 0]) * ref_trans[1]
                 subset_geotransform[3] = ref_trans[3] + (f_ul[0][1] + colrow[_cr, 1]) * ref_trans[5]
                 local_boundary_vector_file = config.raw_files.boundary_files[_site]
-
+            _logger.trace('Read sample data')
             local_feature, local_response = read_segmentation_chunk(feature_sets,
                                                                     response_sets,
                                                                     f_ul + colrow[_cr, :],
@@ -771,47 +772,52 @@ def build_training_data_ordered(config: configs.Config, feature_raw_band_types: 
                                                                     boundary_upper_left=local_boundary_upper_left,
                                                                     b_set=boundary_sets[_site],
                                                                     boundary_subset_geotransform=subset_geotransform)
-
             if (local_feature is not None):
+                _logger.trace('Save sample data; {} samples saved'.format(sample_index + 1))
                 features[sample_index, ...] = local_feature.copy()
                 responses[sample_index, ...] = local_response.copy()
                 sample_index += 1
                 if (sample_index >= config.data_build.max_samples):
+                    _logger.trace('Max samples found ({}) after inspecting {}/{} samples, ignoring remainder'.format(
+                        config.data_build.max_samples, _cr + 1, len(colrow)))
                     break
+            if _cr == len(colrow) - 1:
+                _logger.trace('Only {} valid samples saved after inspecting all {} samples'.format(
+                    sample_index + 1, len(colrow)))
 
-    # Get the feature/response shapes for re-reading (modified ooc resize)
+    _logger.debug('Resize memmapped data arrays with out-of-memory methods; ' +
+                  'original features shape {} and responses shape {}'.format(features.shape, responses.shape))
     feat_shape = list(features.shape)
     resp_shape = list(responses.shape)
     feat_shape[0] = sample_index
     resp_shape[0] = sample_index
-
-    # Delete and reload feauters/responses, as a hard and fast way to force data dump to disc and reload
-    # with a modified size....IE, an ooc resize
+    _logger.trace('Delete in-memory data to force data dump')
     del features, responses
-    features = np.memmap(feature_memmap_file, dtype=np.float32, mode='r+', shape=(tuple(feat_shape)))
+    _logger.trace('Reload data from memmap files with modified sizes')
+    features = np.memmap(feature_memmap_file, dtype=np.float32, mode='r+', shape=tuple(feat_shape))
     responses = np.memmap(response_memmap_file, dtype=np.float32, mode='r+', shape=tuple(resp_shape))
-
-    # Shuffle the data one last time (in case the fold-assignment would otherwise be biased beacuase of
-    # the feature/response file order
+    _logger.trace('Shuffle data to avoid fold assignment biases')
     perm = np.random.permutation(features.shape[0])
     features = features[perm, :]
     responses = responses[perm, :]
     del perm
 
+    _logger.trace('Create fold assignments')
+    # TODO:  calculate this later because we don't need it yet, may not need to do this separately from other loop?
     fold_assignments = np.zeros(responses.shape[0]).astype(int)
     for f in range(0, config.data_build.number_folds):
         idx_start = int(round(f / config.data_build.number_folds * len(fold_assignments)))
         idx_finish = int(round((f + 1) / config.data_build.number_folds * len(fold_assignments)))
         fold_assignments[idx_start:idx_finish] = f
 
-    # Set up initial weights....will add in class-balancing if appropriate later
-    weights = np.memmap(weight_memmap_file,
-                        dtype=np.float32,
-                        mode='w+',
+    _logger.trace('Create uniform weights')
+    weights = np.memmap(weight_memmap_file, dtype=np.float32, mode='w+',
                         shape=(features.shape[0], features.shape[1], features.shape[2], 1))
     weights[:, :, :, :] = 1
+    _logger.trace('Remove weights for missing responses')
     weights[np.isnan(responses[..., 0])] = 0
 
+    _logger.trace('Remove weights outside loss window')
     if (config.data_build.loss_window_radius != config.data_build.window_radius):
         buf = config.data_build.window_radius - config.data_build.loss_window_radius
         weights[:, :buf, :, -1] = 0
@@ -819,23 +825,35 @@ def build_training_data_ordered(config: configs.Config, feature_raw_band_types: 
         weights[:, :, :buf, -1] = 0
         weights[:, :, -buf:, -1] = 0
 
-    _logger.info('Feature shape: {}'.format(features.shape))
-    _logger.info('Response shape: {}'.format(responses.shape))
-    _logger.info('Weight shape: {}'.format(weights.shape))
-
-    # one hot encode
-    responses, response_band_types = one_hot_encode_array(response_raw_band_types, responses, response_memmap_file)
+    _logger.debug('One-hot encode features')
     features, feature_band_types = one_hot_encode_array(feature_raw_band_types, features, feature_memmap_file)
+    _logger.debug('One-hot encode responses')
+    responses, response_band_types = one_hot_encode_array(response_raw_band_types, responses, response_memmap_file)
 
+    _logger.debug('Save features to memmapped arrays separated by folds')
     features_filepaths = _get_built_features_filepaths(config)
+    for idx_fold in range(config.data_build.number_folds):
+        _logger.debug('Save features fold {}'.format(idx_fold))
+        np.save(features_filepaths[idx_fold], features[fold_assignments == idx_fold, ...])
+    _logger.trace('Close features arrays')
+    del features
+
+    _logger.debug('Save responses to memmapped arrays separated by folds')
     responses_filepaths = _get_built_responses_filepaths(config)
+    for idx_fold in range(config.data_build.number_folds):
+        _logger.debug('Save responses fold {}'.format(idx_fold))
+        np.save(responses_filepaths[idx_fold], responses[fold_assignments == idx_fold, ...])
+    _logger.trace('Close responses arrays')
+    del responses
+
+    _logger.debug('Save weights to memmapped arrays separated by folds')
     weights_filepaths = _get_built_weights_filepaths(config)
     for idx_fold in range(config.data_build.number_folds):
-        np.save(features_filepaths[idx_fold], features[fold_assignments == idx_fold, ...])
-        np.save(responses_filepaths[idx_fold], responses[fold_assignments == idx_fold, ...])
+        _logger.debug('Save weights fold {}'.format(idx_fold))
         np.save(weights_filepaths[idx_fold], weights[fold_assignments == idx_fold, ...])
+    _logger.trace('Close weights arrays')
+    del weights
 
-    del features, responses, weights
     if ('C' in response_raw_band_types):
         if (np.sum(np.array(response_raw_band_types) == 'C') > 1):
             _logger.warning('Currently weighting is only enabled for one categorical response variable')
@@ -843,12 +861,13 @@ def build_training_data_ordered(config: configs.Config, feature_raw_band_types: 
         weights = calculate_categorical_weights(responses, weights, config)
         del features, responses, weights
 
-    # clean up munge files
+    _logger.trace('Remove temporary munge files')
     if (os.path.isfile(feature_memmap_file)):
         os.remove(feature_memmap_file)
     if (os.path.isfile(weight_memmap_file)):
         os.remove(weight_memmap_file)
 
+    _logger.trace('Store data build config sections')
     _save_built_data_config_sections_to_verify_successful(config)
     features, responses, weights = _load_built_data_files(config, writeable=False)
     return features, responses, weights, feature_band_types, response_band_types
@@ -945,8 +964,8 @@ def build_training_data_from_response_points(config: configs.Config, feature_raw
 
     # TODO: fix max size issue, but force for now to prevent overly sized sets
     basename = _get_built_data_basename(config)
-    feature_memmap_file = basename + '_feature_munge_memmap.npy'
-    response_memmap_file = basename + '_response_munge_memmap.npy'
+    feature_memmap_file = basename + _FILENAME_FEATURES_MUNGE_SUFFIX
+    response_memmap_file = basename + _FILENAME_RESPONSES_MUNGE_SUFFIX
     assert total_samples * (config.data_build.window_radius*2)**2 * \
         n_features / 1024.**3 < 10, 'max_samples too large'
     features = np.memmap(feature_memmap_file,
@@ -1072,6 +1091,7 @@ def build_training_data_from_response_points(config: configs.Config, feature_raw
 
 def _save_built_data_config_sections_to_verify_successful(config: configs.Config) -> None:
     filepath = _get_built_data_config_filepath(config)
+    _logger.debug('Saving built data config sections to {}'.format(filepath))
     configs.save_config_to_file(
         config, os.path.dirname(filepath), os.path.basename(filepath), include_sections=['raw_files', 'data_build'])
 
@@ -1109,6 +1129,7 @@ def _check_mask_data_sufficient(mask: np.array, max_nodata_fraction: float) -> b
 
 def _load_built_data_files(config: configs.Config, writeable: bool = False) \
         -> Tuple[List[np.array], List[np.array], List[np.array]]:
+    _logger.debug('Loading built data files with writeable == {}'.format(writeable))
     feature_files = _get_built_features_filepaths(config)
     response_files = _get_built_responses_filepaths(config)
     weight_files = _get_built_weights_filepaths(config)
@@ -1116,6 +1137,7 @@ def _load_built_data_files(config: configs.Config, writeable: bool = False) \
     features = [np.load(feature_file, mmap_mode=mode) for feature_file in feature_files]
     responses = [np.load(response_file, mmap_mode=mode) for response_file in response_files]
     weights = [np.load(weight_file, mmap_mode=mode) for weight_file in weight_files]
+    _logger.debug('Built data files loaded')
     return features, responses, weights
 
 
