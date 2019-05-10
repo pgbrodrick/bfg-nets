@@ -281,7 +281,7 @@ def create_config_template(architecture_name: str, dir_config: str, filename: st
     save_config_to_file(config, dir_config, filename)
 
 
-def save_config_to_file(config: 'Config', dir_config: str, filename: str = None) -> None:
+def save_config_to_file(config: 'Config', dir_config: str, filename: str = None, include_sections: list = None) -> None:
     def _represent_dictionary_order(self, dict_data):
         # via https://stackoverflow.com/questions/31605131/dumping-a-dictionary-to-a-yaml-file-while-preserving-order
         return self.represent_mapping('tag:yaml.org,2002:map', dict_data.items())
@@ -294,6 +294,9 @@ def save_config_to_file(config: 'Config', dir_config: str, filename: str = None)
     config_out = config.get_config_as_dict()
     filepath = os.path.join(dir_config, filename or FILENAME_CONFIG)
     _logger.debug('Saving config file to {}'.format(filepath))
+    if include_sections:
+        _logger.trace('Only saving config sections: {}'.format(', '.join(include_sections)))
+        config_out = {section: config_out[section] for section in include_sections}
     with open(filepath, 'w') as file_:
         yaml.dump(config_out, file_, default_flow_style=False)
 
