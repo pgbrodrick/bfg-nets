@@ -1,6 +1,7 @@
 import keras
 import numpy as np
 
+from rsCNN import configs
 from rsCNN.data_management import scalers, sequences
 
 
@@ -8,7 +9,7 @@ class Samples(object):
     data_sequence = None
     data_sequence_label = None
     model = None
-    network_config = None
+    config = None
     num_samples = None
     num_features = None
     num_responses = None
@@ -33,12 +34,12 @@ class Samples(object):
             self,
             data_sequence: sequences.BaseSequence,
             model: keras.Model,
-            network_config: dict,
+            config: configs.Config,
             data_sequence_label: str = None
     ) -> None:
         self.data_sequence = data_sequence
         self.model = model
-        self.network_config = network_config
+        self.config = config
         self.data_sequence_label = data_sequence_label
         self._get_sampled_features_responses_and_set_metadata_and_weights()
         self.trans_predictions = model.predict(self.trans_features)

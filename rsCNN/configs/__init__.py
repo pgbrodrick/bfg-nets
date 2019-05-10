@@ -367,6 +367,7 @@ class Config(object):
             data_build: DataBuild = None,
             data_samples: DataSamples = None,
             model_training: ModelTraining = None,
+            # TODO:  fix this reference
             architecture_options: 'BaseArchitectureOptions' = None,
             callback_general: CallbackGeneral = None,
             callback_tensorboard: CallbackTensorboard = None,
