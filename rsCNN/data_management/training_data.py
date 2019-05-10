@@ -63,8 +63,7 @@ def build_or_load_rawfile_data(config: configs.Config, rebuild: bool = False):
     data_container.response_raw_band_types = data_container.get_band_types(
         config.raw_files.response_files, config.raw_files.response_data_type)
 
-    if rebuild is False:
-        assert _check_built_data_files_exist(config, do_assert=True)
+    if _check_built_data_files_exist(config) and not rebuild:
         features, responses, weights = _load_built_data_files(config)
 
     else:
@@ -77,14 +76,17 @@ def build_or_load_rawfile_data(config: configs.Config, rebuild: bool = False):
                 config.raw_files.boundary_files
             )
 
-        boundary_files = [loc_file for loc_file in config.raw_files.boundary_files
-                          if gdal.Open(loc_file, gdal.GA_ReadOnly) is not None]
+        if config.raw_files.boundary_files: 
+            boundary_files = [loc_file for loc_file in config.raw_files.boundary_files
+                              if gdal.Open(loc_file, gdal.GA_ReadOnly) is not None]
+        else:
+            boundary_files = list()
         check_resolutions(config.raw_files.feature_files, config.raw_files.response_files, boundary_files)
 
-        if (config.raw_files.response_data_format == 'FCN'):
+        if (config.data_build.response_data_format == 'FCN'):
             features, responses, weights, feature_band_types, response_band_types = build_training_data_ordered(
                 config, data_container.feature_raw_band_types, data_container.response_raw_band_types)
-        elif (config.raw_files.response_data_format == 'CNN'):
+        elif (config.data_build.response_data_format == 'CNN'):
             features, responses, weights, feature_band_types, response_band_types = build_training_data_from_response_points(
                 config, data_container.feature_raw_band_types, data_container.response_raw_band_types)
         else:
@@ -135,14 +137,14 @@ def get_proj(fname):
     return b_proj
 
 
-def check_projections(a_files, b_files, c_files=[]):
+def check_projections(a_files, b_files, c_files=None):
 
     loc_a_files = [item for sublist in a_files for item in sublist]
     loc_b_files = [item for sublist in b_files for item in sublist]
-    if (len(c_files) > 0):
-        loc_c_files = [item for sublist in c_files for item in sublist]
-    else:
+    if not c_files:
         loc_c_files = []
+    else:
+        loc_c_files = [item for sublist in c_files for item in sublist]
 
     a_proj = []
     b_proj = []
@@ -322,7 +324,7 @@ def read_labeling_chunk(f_sets: List[gdal.Dataset],
     local_feature, mask = read_map_subset(f_sets, feature_upper_lefts,
                                           window_diameter, mask, config.raw_files.feature_nodata_value)
 
-    if not _check_mask_data_sufficient(mask, config.data_build.nodata_maximum_fraction):
+    if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         _logger.trace('Insufficient feature data')
         return None
 
@@ -351,12 +353,12 @@ def read_segmentation_chunk(f_sets: List[tuple],
                            config.raw_files.boundary_bad_value)
     mv = [np.sum(mask)]
 
-    if not _check_mask_data_sufficient(mask, config.data_build.nodata_maximum_fraction):
+    if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         return None, None
 
     local_response, mask = read_map_subset(r_sets, response_upper_lefts,
                                            window_diameter, mask, config.raw_files.response_nodata_value)
-    if not _check_mask_data_sufficient(mask, config.data_build.nodata_maximum_fraction):
+    if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         return None, None
     mv.append(np.sum(mask))
 
@@ -369,14 +371,14 @@ def read_segmentation_chunk(f_sets: List[tuple],
 
     if (mask is None):
         return None, None
-    if not _check_mask_data_sufficient(mask, config.data_build.nodata_maximum_fraction):
+    if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         return None, None
 
     local_feature, mask = read_map_subset(f_sets, feature_upper_lefts,
                                           window_diameter, mask, config.raw_files.feature_nodata_value)
     mv.append(np.sum(mask))
 
-    if not _check_mask_data_sufficient(mask, config.data_build.nodata_maximum_fraction):
+    if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         return None, None
 
     # Final check (propogate mask forward), and return
@@ -705,8 +707,11 @@ def build_training_data_ordered(config: configs.Config, feature_raw_band_types: 
                           shape=(config.data_build.max_samples, config.data_build.window_radius*2, config.data_build.window_radius*2, n_responses))
 
     sample_index = 0
-    boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
-                     if loc_file is not None else None for loc_file in config.boundary_files]
+    if not config.raw_files.boundary_files:
+        boundary_sets = list()
+    else:
+        boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
+                         if loc_file is not None else None for loc_file in config.raw_files.boundary_files]
     if (len(boundary_sets) == 0):
         boundary_sets = [None for i in range(len(config.raw_files.feature_files))]
     for _site in range(0, len(config.raw_files.feature_files)):
@@ -714,7 +719,7 @@ def build_training_data_ordered(config: configs.Config, feature_raw_band_types: 
         # open requisite datasets
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
                         for loc_file in config.raw_files.feature_files[_site]]
-        response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.response_files[_site]]
+        response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
 
         # Calculate the interior space location and extent
         [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle(
@@ -737,9 +742,9 @@ def build_training_data_ordered(config: configs.Config, feature_raw_band_types: 
 
         ref_trans = feature_sets[0].GetGeoTransform()
         subset_geotransform = None
-        if len(config.boundary_files) > 0:
-            if config.boundary_files[_site] is not None and \
-                    _is_boundary_file_vectorized(config.boundary_files[_site]):
+        if config.raw_files.boundary_files is not None > 0:
+            if config.raw_files.boundary_files[_site] is not None and \
+                    _is_boundary_file_vectorized(config.raw_files.boundary_files[_site]):
                 subset_geotransform = [ref_trans[0], ref_trans[1], 0, ref_trans[3], 0, ref_trans[5]]
 
         for _cr in tqdm(range(len(colrow)), ncols=80):
@@ -752,7 +757,7 @@ def build_training_data_ordered(config: configs.Config, feature_raw_band_types: 
             if (subset_geotransform is not None):
                 subset_geotransform[0] = ref_trans[0] + (f_ul[0][0] + colrow[_cr, 0]) * ref_trans[1]
                 subset_geotransform[3] = ref_trans[3] + (f_ul[0][1] + colrow[_cr, 1]) * ref_trans[5]
-                local_boundary_vector_file = config.boundary_files[_site]
+                local_boundary_vector_file = config.raw_files.boundary_files[_site]
 
             local_feature, local_response = read_segmentation_chunk(feature_sets,
                                                                     response_sets,
@@ -854,14 +859,14 @@ def build_training_data_from_response_points(config: configs.Config, feature_raw
     colrow_per_site = []
     responses_per_site = []
     boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
-                     if loc_file is not None else None for loc_file in config.boundary_files]
+                     if loc_file is not None else None for loc_file in config.raw_files.boundary_files]
     if (len(boundary_sets) == 0):
         boundary_sets = [None for i in range(len(config.raw_files.feature_files))]
     for _site in range(0, len(config.raw_files.feature_files)):
         # open requisite datasets
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
                         for loc_file in config.raw_files.feature_files[_site]]
-        response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.response_files[_site]]
+        response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
 
         # Calculate the interior space location and extent
         [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle(
@@ -948,7 +953,7 @@ def build_training_data_from_response_points(config: configs.Config, feature_raw
 
     sample_index = 0
     boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
-                     if loc_file is not None else None for loc_file in config.boundary_files]
+                     if loc_file is not None else None for loc_file in config.raw_files.boundary_files]
     if (len(boundary_sets) == 0):
         boundary_sets = [None for i in range(len(config.raw_files.feature_files))]
     for _site in range(0, len(config.raw_files.feature_files)):
@@ -956,7 +961,7 @@ def build_training_data_from_response_points(config: configs.Config, feature_raw
         # open requisite datasets
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
                         for loc_file in config.raw_files.feature_files[_site]]
-        response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.response_files[_site]]
+        response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
 
         # Calculate the interior space location and extent
         [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle(
@@ -968,9 +973,9 @@ def build_training_data_from_response_points(config: configs.Config, feature_raw
 
         ref_trans = feature_sets[0].GetGeoTransform()
         subset_geotransform = None
-        if len(config.boundary_files) > 0:
-            if config.boundary_files[_site] is not None and \
-                    _is_boundary_file_vectorized(config.boundary_files[_site]):
+        if len(config.raw_files.boundary_files) > 0:
+            if config.raw_files.boundary_files[_site] is not None and \
+                    _is_boundary_file_vectorized(config.raw_files.boundary_files[_site]):
                 subset_geotransform = [ref_trans[0], ref_trans[1], 0, ref_trans[3], 0, ref_trans[5]]
 
         good_response_data = np.zeros(responses_per_site[_site].shape[0]).astype(bool)
@@ -985,7 +990,7 @@ def build_training_data_from_response_points(config: configs.Config, feature_raw
             if (subset_geotransform is not None):
                 subset_geotransform[0] = ref_trans[0] + (f_ul[0][0] + colrow[_cr, 0]) * ref_trans[1]
                 subset_geotransform[3] = ref_trans[3] + (f_ul[0][1] + colrow[_cr, 1]) * ref_trans[5]
-                local_boundary_vector_file = config.boundary_files[_site]
+                local_boundary_vector_file = config.raw_files.boundary_files[_site]
 
             local_feature = read_labeling_chunk(feature_sets,
                                                 f_ul + colrow[_cr, :],
@@ -1131,7 +1136,7 @@ def _get_built_data_config_filepath(config: configs.Config) -> str:
 
 def _get_built_data_filepaths_and_check_exist(config: configs.Config, filename_suffix: str) -> List[str]:
     basename = _get_built_data_basename(config)
-    filepaths = [basename + filename_suffix.format(idx_fold) for idx_fold in range(config.data_build.num_folds)]
+    filepaths = [basename + filename_suffix.format(idx_fold) for idx_fold in range(config.data_build.number_folds)]
     return filepaths
 
 
