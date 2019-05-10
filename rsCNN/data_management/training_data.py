@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 import re
-from typing import List
+from typing import List, Tuple
 
 import fiona
 import gdal
@@ -21,7 +21,7 @@ _logger = logging.get_child_logger(__name__)
 
 MAX_UNIQUE_RESPONSES = 100
 
-_FILENAME_BUILD_SUCCESS = 'success'
+_FILENAME_BUILT_DATA_CONFIG_SUFFIX = 'built_data_config.yaml'
 _FILENAME_RESPONSES_SUFFIX = 'responses_{}.npy'
 _FILENAME_FEATURES_SUFFIX = 'features_{}.npy'
 _FILENAME_WEIGHTS_SUFFIX = 'weights_{}.npy'
@@ -413,8 +413,7 @@ class Dataset:
         # TODO:  I think this worked only if feature_scaler_name was a string, but it was also possible to be a list
         #  according to the DataConfig, in which case it would error out. This needs to be updated for multiple scalers.
         #  Specifically, the feature_scaler and response_scaler assignments need to be vectorized.
-        basename = _get_built_data_basename(
-            self.config.data_build.dir_out, self.config.data_build.filename_prefix_out)
+        basename = _get_built_data_basename(self.config)
 
         feat_scaler_atr = {'savename_base': basename + '_feature_scaler'}
         feature_scaler = scalers.get_scaler(self.config.data_samples.feature_scaler_names, feat_scaler_atr)
@@ -685,7 +684,7 @@ def build_training_data_ordered(config: configs.Config, feature_raw_band_types: 
     n_features = np.sum([len(feat_type) for feat_type in feature_raw_band_types])
     n_responses = np.sum([len(resp_type) for resp_type in response_raw_band_types])
 
-    basename = _get_built_data_basename(config.data_build.dir_out, config.data_build.filename_prefix_out)
+    basename = _get_built_data_basename(config)
     feature_memmap_file = basename + '_feature_munge_memmap.npy'
     response_memmap_file = basename + '_response_munge_memmap.npy'
     weight_memmap_file = basename + '_weight_munge_memmap.npy'
@@ -818,17 +817,19 @@ def build_training_data_ordered(config: configs.Config, feature_raw_band_types: 
     responses, response_band_types = one_hot_encode_array(response_raw_band_types, responses, response_memmap_file)
     features, feature_band_types = one_hot_encode_array(feature_raw_band_types, features, feature_memmap_file)
 
-    for fold in range(config.data_build.number_folds):
-        np.save(feature_files[fold], features[fold_assignments == fold, ...])
-        np.save(response_files[fold], responses[fold_assignments == fold, ...])
-        np.save(weight_files[fold], weights[fold_assignments == fold, ...])
+    features_filepaths = _get_built_features_filepaths(config)
+    responses_filepaths = _get_built_responses_filepaths(config)
+    weights_filepaths = _get_built_weights_filepaths(config)
+    for idx_fold in range(config.data_build.number_folds):
+        np.save(features_filepaths[idx_fold], features[fold_assignments == idx_fold, ...])
+        np.save(responses_filepaths[idx_fold], responses[fold_assignments == idx_fold, ...])
+        np.save(weights_filepaths[idx_fold], weights[fold_assignments == idx_fold, ...])
 
     del features, responses, weights
     if ('C' in response_raw_band_types):
         if (np.sum(np.array(response_raw_band_types) == 'C') > 1):
             _logger.warning('Currently weighting is only enabled for one categorical response variable')
-        features, responses, weights, success = open_memmap_files(
-            config, writeable=True, override_success_file=True)
+        features, responses, weights = _load_built_data_files(config, writeable=True)
         weights = calculate_categorical_weights(responses, weights, config)
         del features, responses, weights
 
@@ -838,8 +839,8 @@ def build_training_data_ordered(config: configs.Config, feature_raw_band_types: 
     if (os.path.isfile(weight_memmap_file)):
         os.remove(weight_memmap_file)
 
-    Path(config.successful_data_save_file).touch()
-    features, responses, weights, success = open_memmap_files(config, writeable=False)
+    _save_built_data_config_sections_to_verify_successful(config)
+    features, responses, weights = _load_built_data_files(config, writeable=False)
     return features, responses, weights, feature_band_types, response_band_types
 
 
@@ -933,7 +934,7 @@ def build_training_data_from_response_points(config: configs.Config, feature_raw
     n_features = np.sum([len(feat_type) for feat_type in feature_raw_band_types])
 
     # TODO: fix max size issue, but force for now to prevent overly sized sets
-    basename = _get_built_data_basename(config.data_build.dir_out, config.data_build.filename_prefix_out)
+    basename = _get_built_data_basename(config)
     feature_memmap_file = basename + '_feature_munge_memmap.npy'
     response_memmap_file = basename + '_response_munge_memmap.npy'
     assert total_samples * (config.data_build.window_radius*2)**2 * \
@@ -1034,18 +1035,19 @@ def build_training_data_from_response_points(config: configs.Config, feature_raw
     _logger.info('Response shape: {}'.format(responses.shape))
     _logger.info('Weight shape: {}'.format(weights.shape))
 
-    for fold in range(config.data_build.number_folds):
-        # TODO:  I'm pretty sure this is an error that's present before the refactor. The *_files variables are not in
-        #  this local scope
-        np.save(feature_files[fold], features[fold_assignments == fold, ...])
-        np.save(response_files[fold], responses[fold_assignments == fold, ...])
-        np.save(weight_files[fold], weights[fold_assignments == fold, ...])
+    features_filepaths = _get_built_features_filepaths(config)
+    responses_filepaths = _get_built_responses_filepaths(config)
+    weights_filepaths = _get_built_weights_filepaths(config)
+    for idx_fold in range(config.data_build.number_folds):
+        np.save(features_filepaths[idx_fold], features[fold_assignments == idx_fold, ...])
+        np.save(responses_filepaths[idx_fold], responses[fold_assignments == idx_fold, ...])
+        np.save(weights_filepaths[idx_fold], weights[fold_assignments == idx_fold, ...])
 
     del features, responses, weights
     if ('C' in response_raw_band_types):
         if (np.sum(np.array(response_raw_band_types) == 'C') > 1):
             _logger.warning('Currently weighting is only enabled for one categorical response variable')
-        features, responses, weights = _load_built_data_files(config, writeable=True, override_success_file=True)
+        features, responses, weights = _load_built_data_files(config, writeable=True)
         weights = calculate_categorical_weights(responses, weights, config)
         del features, responses, weights
 
@@ -1053,22 +1055,27 @@ def build_training_data_from_response_points(config: configs.Config, feature_raw
     if (os.path.isfile(feature_memmap_file)):
         os.remove(feature_memmap_file)
 
-    Path(config.successful_data_save_file).touch()
+    _save_built_data_config_sections_to_verify_successful(config)
     features, responses, weights = _load_built_data_files(config, writeable=False)
     return features, responses, weights, feature_band_types, response_band_types
 
 
-def _check_build_successful(config: configs.Config) -> bool:
-    basename = _get_built_data_basename(config.data_build.dir_out, config.data_build.filename_prefix_out)
-    return os.path.exists(basename + _FILENAME_BUILD_SUCCESS)
+def _save_built_data_config_sections_to_verify_successful(config: configs.Config) -> None:
+    filepath = _get_built_data_config_filepath(config)
+    configs.save_config_to_file(
+        config, os.path.dirname(filepath), os.path.basename(filepath), include_sections=['raw_files', 'data_build'])
+
+
+def _check_build_successful_and_built_data_config_sections_available(config: configs.Config) -> bool:
+    filepath = _get_built_data_config_filepath(config)
+    return os.path.exists(filepath)
 
 
 def _check_built_data_files_exist(config: configs.Config, do_assert: bool = False) -> bool:
-    basename = _get_built_data_basename(config.data_build.dir_out, config.data_build.filename_prefix_out)
     filepaths = \
-        _get_built_features_filepaths(basename, config.data_build.num_folds) + \
-        _get_built_responses_filepaths(basename, config.data_build.num_folds) + \
-        _get_built_weights_filepaths(basename, config.data_build.num_folds)
+        _get_built_features_filepaths(config) + \
+        _get_built_responses_filepaths(config) + \
+        _get_built_weights_filepaths(config)
     missing_files = [filepath for filepath in filepaths if not os.path.exists(filepath)]
     if missing_files:
         message = 'Built data files are missing at paths: {}'.format(', '.join(missing_files))
@@ -1094,10 +1101,9 @@ def _check_mask_data_sufficient(mask: np.array, max_nodata_fraction: float) -> b
 
 def _load_built_data_files(config: configs.Config, writeable: bool = False) \
         -> Tuple[List[np.array], List[np.array], List[np.array]]:
-    basename = _get_built_data_basename(config.data_build.dir_out, config.data_build.filename_prefix_out)
-    feature_files = _get_built_features_filepaths(basename, config.data_build.number_folds)
-    response_files = _get_built_responses_filepaths(basename, config.data_build.number_folds)
-    weight_files = _get_built_weights_filepaths(basename, config.data_build.number_folds)
+    feature_files = _get_built_features_filepaths(config)
+    response_files = _get_built_responses_filepaths(config)
+    weight_files = _get_built_weights_filepaths(config)
     mode = 'r+' if writeable else 'r'
     features = [np.load(feature_file, mmap_mode=mode) for feature_file in feature_files]
     responses = [np.load(response_file, mmap_mode=mode) for response_file in response_files]
@@ -1105,35 +1111,31 @@ def _load_built_data_files(config: configs.Config, writeable: bool = False) \
     return features, responses, weights
 
 
-def _get_built_features_filepaths(dir_out: str, filename_prefix_out: str, num_folds: int) -> List[str]:
-    return _get_built_data_filepaths_and_check_exist(
-        dir_out, filename_prefix_out, num_folds, _FILENAME_FEATURES_SUFFIX)
+def _get_built_features_filepaths(config: configs.Config) -> List[str]:
+    return _get_built_data_filepaths_and_check_exist(config, _FILENAME_FEATURES_SUFFIX)
 
 
-def _get_built_responses_filepaths(dir_out: str, filename_prefix_out: str, num_folds: int) -> List[str]:
-    return _get_built_data_filepaths_and_check_exist(
-        dir_out, filename_prefix_out, num_folds, _FILENAME_RESPONSES_SUFFIX)
+def _get_built_responses_filepaths(config: configs.Config) -> List[str]:
+    return _get_built_data_filepaths_and_check_exist(config, _FILENAME_RESPONSES_SUFFIX)
 
 
-def _get_built_weights_filepaths(dir_out: str, filename_prefix_out: str, num_folds: int) -> List[str]:
-    return _get_built_data_filepaths_and_check_exist(
-        dir_out, filename_prefix_out, num_folds, _FILENAME_WEIGHTS_SUFFIX)
+def _get_built_weights_filepaths(config: configs.Config) -> List[str]:
+    return _get_built_data_filepaths_and_check_exist(config, _FILENAME_WEIGHTS_SUFFIX)
 
 
-def _get_built_data_filepaths_and_check_exist(
-        dir_out: str,
-        filename_prefix_out: str,
-        num_folds: int,
-        filename_suffix: str
-) -> List[str]:
-    basename = _get_built_data_basename(dir_out, filename_prefix_out)
-    filepaths = [basename + filename_suffix.format(idx_fold) for idx_fold in range(num_folds)]
+def _get_built_data_config_filepath(config: configs.Config) -> str:
+    return _get_built_data_filepaths_and_check_exist(config, _FILENAME_BUILT_DATA_CONFIG_SUFFIX)[0]
+
+
+def _get_built_data_filepaths_and_check_exist(config: configs.Config, filename_suffix: str) -> List[str]:
+    basename = _get_built_data_basename(config.data_build.dir_out, config.data_build.filename_prefix_out)
+    filepaths = [basename + filename_suffix.format(idx_fold) for idx_fold in range(config.data_build.num_folds)]
     return filepaths
 
 
-def _get_built_data_basename(dir_out: str, filename_prefix_out: str) -> str:
-    filepath_separator = '_' if filename_prefix_out else ''
-    return os.path.join(dir_out, filename_prefix_out) + filepath_separator
+def _get_built_data_basename(config: configs.Config) -> str:
+    filepath_separator = '_' if config.data_build.filename_prefix_out else ''
+    return os.path.join(config.data_build.dir_out, config.data_build.filename_prefix_out) + filepath_separator
 
 
 def _is_boundary_file_vectorized(boundary_filepath: str) -> bool:
