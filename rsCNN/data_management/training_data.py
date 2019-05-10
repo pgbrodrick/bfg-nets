@@ -445,7 +445,7 @@ class Dataset:
         # The inner list is a series of files associated with that site (band x, y, z).  Each site must have the
         # same number of files, and each file from each site must have the same number of bands, in the same order.
         # file list b is a list for each site, with one boundary file expected to be the interior boundary for all bands.
-
+        # TODO:  move these checks to configs.py
         # Check that feature and response files are lists
         assert type(f_file_list) is list, 'Feature files must be a list of lists'
         assert type(r_file_list) is list, 'Response files must be a list of lists'
@@ -453,7 +453,7 @@ class Dataset:
         # Checks on the matching numbers of sites
         assert len(f_file_list) == len(r_file_list), 'Feature and response site lists must be the same length'
         assert len(f_file_list) > 0, 'At least one feature and response site is required'
-        if len(b_file_list) > 0:
+        if b_file_list is not None:
             assert len(b_file_list) == len(f_file_list), \
                 'Boundary and feature file lists must be the same length. Boundary list: {}. Feature list: {}.'.format(
                     b_file_list, f_file_list)
