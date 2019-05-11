@@ -97,7 +97,7 @@ def _plot_sample_attribute(
     #  handling elsewhere in the code
     if attribute_name in ('trans_features', 'trans_responses', 'trans_predictions'):
         attribute_values = attribute_values.copy()
-        attribute_values[sampled.data_sequence.nan_replacement_value] = np.nan
+        attribute_values[attribute_values == sampled.data_sequence.nan_replacement_value] = np.nan
     x_label = '\n'.join(word.capitalize() for word in attribute_name.split('_') if word != 'raw').rstrip('s')
     min_, max_ = range_[idx_axis, :]
     ax.imshow(attribute_values, vmin=min_, vmax=max_)
