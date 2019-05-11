@@ -92,11 +92,12 @@ def build_or_load_rawfile_data(config: configs.Config, rebuild: bool = False):
         else:
             raise NotImplementedError('Unknown response data format')
 
+        data_container.feature_band_types = feature_band_types
+        data_container.response_band_types = response_band_types
+
     data_container.features = features
     data_container.responses = responses
     data_container.weights = weights
-    data_container.feature_band_types = feature_band_types
-    data_container.response_band_types = response_band_types
 
     return data_container
 
@@ -416,11 +417,10 @@ class Dataset:
         #  according to the DataConfig, in which case it would error out. This needs to be updated for multiple scalers.
         #  Specifically, the feature_scaler and response_scaler assignments need to be vectorized.
         basename = _get_built_data_basename(self.config)
-
         feat_scaler_atr = {'savename_base': basename + '_feature_scaler'}
-        feature_scaler = scalers.get_scaler(self.config.data_samples.feature_scaler_names, feat_scaler_atr)
+        feature_scaler = scalers.get_scaler(self.config.data_samples.feature_scaler_names[0], feat_scaler_atr)
         resp_scaler_atr = {'savename_base': basename + '_response_scaler'}
-        response_scaler = scalers.get_scaler(self.config.data_samples.response_scaler_names, resp_scaler_atr)
+        response_scaler = scalers.get_scaler(self.config.data_samples.response_scaler_names[0], resp_scaler_atr)
         feature_scaler.load()
         response_scaler.load()
 
