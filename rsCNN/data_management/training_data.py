@@ -63,6 +63,8 @@ def build_or_load_rawfile_data(config: configs.Config, rebuild: bool = False):
     data_container.response_raw_band_types = data_container.get_band_types(
         config.raw_files.response_files, config.raw_files.response_data_type)
 
+
+    # Load data if it already exists
     if _check_built_data_files_exist(config) and not rebuild:
         features, responses, weights = _load_built_data_files(config)
 
@@ -72,11 +74,10 @@ def build_or_load_rawfile_data(config: configs.Config, rebuild: bool = False):
 
         if (config.raw_files.ignore_projections is False):
             check_projections(
-                config.raw_files.feature_files, config.raw_files.response_files,
-                config.raw_files.boundary_files
+                config.raw_files.feature_files, config.raw_files.response_files, config.raw_files.boundary_files
             )
 
-        if config.raw_files.boundary_files: 
+        if config.raw_files.boundary_files:
             boundary_files = [loc_file for loc_file in config.raw_files.boundary_files
                               if gdal.Open(loc_file, gdal.GA_ReadOnly) is not None]
         else:
@@ -142,8 +143,8 @@ def check_projections(a_files, b_files, c_files=None):
 
     loc_a_files = [item for sublist in a_files for item in sublist]
     loc_b_files = [item for sublist in b_files for item in sublist]
-    if not c_files:
-        loc_c_files = []
+    if c_files is None:
+        loc_c_files = list()
     else:
         loc_c_files = [item for sublist in c_files for item in sublist]
 
@@ -707,6 +708,8 @@ def build_training_data_ordered(config: configs.Config, feature_raw_band_types: 
                           shape=(config.data_build.max_samples, config.data_build.window_radius*2, config.data_build.window_radius*2, n_responses))
 
     sample_index = 0
+    # TODO:  we need to refactor how boundary files are handled, how all of the checks are handled for these data types
+    #   to make them consistent, simple, centralized, etc
     if not config.raw_files.boundary_files:
         boundary_sets = list()
     else:
@@ -1078,16 +1081,14 @@ def _check_build_successful_and_built_data_config_sections_available(config: con
     return os.path.exists(filepath)
 
 
-def _check_built_data_files_exist(config: configs.Config, do_assert: bool = False) -> bool:
+def _check_built_data_files_exist(config: configs.Config) -> bool:
     filepaths = \
         _get_built_features_filepaths(config) + \
         _get_built_responses_filepaths(config) + \
         _get_built_weights_filepaths(config)
     missing_files = [filepath for filepath in filepaths if not os.path.exists(filepath)]
     if missing_files:
-        message = 'Built data files are missing at paths: {}'.format(', '.join(missing_files))
-        if do_assert:
-            assert not missing_files, message
+        message = 'Built data files were not found at paths: {}'.format(', '.join(missing_files))
         _logger.warning(message)
     return not missing_files
 
