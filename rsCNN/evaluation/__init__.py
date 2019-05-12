@@ -29,8 +29,8 @@ _FILENAME_PRELIMINARY_MODEL_REPORT = 'model_overview.pdf'
 
 def create_model_report_from_experiment(experiment: experiments.Experiment):
     return create_model_report(
-        experiment.model, experiment.train_sequence, experiment.validation_sequence,
-        experiment.config, experiment.history
+        experiment.model, experiment.config, experiment.train_sequence, experiment.validation_sequence,
+        experiment.history
     )
 
 
