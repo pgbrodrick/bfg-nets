@@ -89,7 +89,7 @@ def apply_model_to_raster(cnn, config: configs.Config, feature_file, destination
         write_ul = []
         for row in rowlist:
             d = read_feature_chunk(feature_set, [col, row],
-                                   config.data_build.window_radius*2, config.data_build.feature_nodata_value)
+                                   config.data_build.window_radius*2, config.raw_files.feature_nodata_value)
 
             if(d.shape[0] == config.data_build.window_radius*2 and d.shape[1] == config.data_build.window_radius*2):
                 # TODO: consider having this as an option
