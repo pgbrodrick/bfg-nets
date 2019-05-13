@@ -11,11 +11,11 @@ from rsCNN.utils import logging
 _logger = logging.get_child_logger(__name__)
 
 
-def check_scaler_exists(scaler_name, ):
+def check_scaler_exists(scaler_name: str) -> bool:
     return hasattr(sys.modules[__name__], scaler_name)
 
 
-def get_scaler(scaler_name, scaler_options):
+def get_scaler(scaler_name: str, scaler_options: dict) -> 'BaseGlobalScaler':
     check_scaler_exists(scaler_name)
     return getattr(sys.modules[__name__], scaler_name)(**scaler_options)
 
