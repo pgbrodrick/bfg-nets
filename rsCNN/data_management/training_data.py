@@ -1123,11 +1123,15 @@ def _create_munged_features_responses_data_files(config: configs.Config, num_fea
         -> Tuple[np.array, np.array]:
     basename = _get_built_data_basename(config)
     shape = [config.data_build.max_samples, config.data_build.window_radius * 2, config.data_build.window_radius * 2]
+    shape_features = shape + [num_features]
+    shape_responses = shape + [num_responses]
     features_filepath = basename + _FILENAME_FEATURES_MUNGE_SUFFIX
     responses_filepath = basename + _FILENAME_RESPONSES_MUNGE_SUFFIX
-    _logger.debug('Create temporary munged features data file with shape {} at {}'.format(shape, features_filepath))
+    _logger.debug('Create temporary munged features data file with shape {} at {}'.format(
+        shape_features, features_filepath))
     features = np.memmap(features_filepath, dtype=np.float32, mode='w+', shape=shape + [num_features])
-    _logger.debug('Create temporary munged responses data file with shape {} at {}'.format(shape, responses_filepath))
+    _logger.debug('Create temporary munged responses data file with shape {} at {}'.format(
+        shape_responses, responses_filepath))
     responses = np.memmap(responses_filepath, dtype=np.float32, mode='w+', shape=shape + [num_responses])
     return features, responses
 
