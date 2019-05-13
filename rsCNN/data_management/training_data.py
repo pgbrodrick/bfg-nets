@@ -817,7 +817,7 @@ def build_training_data_ordered(
 
     _logger.debug('Create uniform weights')
     basename = _get_built_data_basename(config)
-    shape = list(features_munged.shape)[:-1] + [1]
+    shape = tuple(list(features_munged.shape)[:-1] + [1])
     weights = np.memmap(basename + _FILENAME_WEIGHTS_MUNGE_SUFFIX, dtype=np.float32, mode='w+', shape=shape)
     weights[:, :, :, :] = 1
     _logger.debug('Remove weights for missing responses')
@@ -1123,16 +1123,16 @@ def _create_munged_features_responses_data_files(config: configs.Config, num_fea
         -> Tuple[np.array, np.array]:
     basename = _get_built_data_basename(config)
     shape = [config.data_build.max_samples, config.data_build.window_radius * 2, config.data_build.window_radius * 2]
-    shape_features = shape + [num_features]
-    shape_responses = shape + [num_responses]
+    shape_features = tuple(shape + [num_features])
+    shape_responses = tuple(shape + [num_responses])
     features_filepath = basename + _FILENAME_FEATURES_MUNGE_SUFFIX
     responses_filepath = basename + _FILENAME_RESPONSES_MUNGE_SUFFIX
     _logger.debug('Create temporary munged features data file with shape {} at {}'.format(
         shape_features, features_filepath))
-    features = np.memmap(features_filepath, dtype=np.float32, mode='w+', shape=shape + [num_features])
+    features = np.memmap(features_filepath, dtype=np.float32, mode='w+', shape=shape_features)
     _logger.debug('Create temporary munged responses data file with shape {} at {}'.format(
         shape_responses, responses_filepath))
-    responses = np.memmap(responses_filepath, dtype=np.float32, mode='w+', shape=shape + [num_responses])
+    responses = np.memmap(responses_filepath, dtype=np.float32, mode='w+', shape=shape_responses)
     return features, responses
 
 
@@ -1145,8 +1145,8 @@ def _resize_munged_features_responses_data_files(
     _logger.debug('Resize memmapped data arrays with out-of-memory methods; ' +
                   'original features shape {} and responses shape {}'.format(
                       features_munged.shape, responses_munged.shape))
-    new_features_shape = [num_samples] + list(features_munged.shape)[1:]
-    new_responses_shape = [num_samples] + list(responses_munged.shape)[1:]
+    new_features_shape = tuple([num_samples] + list(features_munged.shape)[1:])
+    new_responses_shape = tuple([num_samples] + list(responses_munged.shape)[1:])
     _logger.debug('Delete in-memory data to force data dump')
     del features_munged, responses_munged
     _logger.debug('Reload data from memmap files with modified sizes; ' +
@@ -1161,7 +1161,7 @@ def _resize_munged_features_responses_data_files(
 def _create_munged_weights_data_files(config: configs.Config, num_samples: int) -> np.array:
     weights_filepath = _get_munged_weights_filepaths(config)
     _logger.debug('Create temporary munged weights data file at {}'.format(weights_filepath))
-    shape = [num_samples, config.data_build.window_radius * 2, config.data_build.window_radius * 2, 1]
+    shape = tuple([num_samples, config.data_build.window_radius * 2, config.data_build.window_radius * 2, 1])
     return np.memmap(weights_filepath, dtype=np.float32, mode='w+', shape=shape)
 
 
