@@ -85,7 +85,6 @@ def apply_model_to_raster(cnn, config: configs.Config, feature_file, destination
     collist.append(cr[1]-2*config.data_build.window_radius)
     rowlist.append(rr[1]-2*config.data_build.window_radius)
 
-
     for _c in tqdm(range(len(collist)), ncols=80):
         col = collist[_c]
         images = []
