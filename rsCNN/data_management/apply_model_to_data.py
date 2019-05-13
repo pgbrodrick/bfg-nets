@@ -61,8 +61,8 @@ def apply_model_to_raster(cnn, config: configs.Config, feature_file, destination
     driver.Register()
 
     outDataset = driver.Create(destination_basename + '.tif',
-                               feature_set.RasterYSize,
                                feature_set.RasterXSize,
+                               feature_set.RasterYSize,
                                n_classes,
                                gdal.GDT_Float32)
 
@@ -72,6 +72,9 @@ def apply_model_to_raster(cnn, config: configs.Config, feature_file, destination
     step_size = config.data_build.loss_window_radius*2
     if (CNN_MODE):
         step_size = 1
+        internal_offset = config.data_build.loss_window_radius - 1
+    else:
+        internal_offset = config.data_window_radius - config.data_build.loss_window_radius
 
     # Find the UL indicies of all prediction locations
     cr = [0, feature_set.RasterXSize]
@@ -81,6 +84,7 @@ def apply_model_to_raster(cnn, config: configs.Config, feature_file, destination
     rowlist = [x for x in range(rr[0], rr[1] - 2*config.data_build.window_radius, step_size)]
     collist.append(cr[1]-2*config.data_build.window_radius)
     rowlist.append(rr[1]-2*config.data_build.window_radius)
+
 
     for _c in tqdm(range(len(collist)), ncols=80):
         col = collist[_c]
@@ -95,7 +99,7 @@ def apply_model_to_raster(cnn, config: configs.Config, feature_file, destination
                 # TODO: consider having this as an option
                 # d = fill_nearest_neighbor(d)
                 images.append(d)
-                write_ul.append([row, col])
+                write_ul.append([col + internal_offset, row + internal_offset])
         images = np.stack(images)
         images = images.reshape((images.shape[0], images.shape[1], images.shape[2], feature_set.RasterCount))
 
