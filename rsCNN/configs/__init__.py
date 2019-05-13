@@ -293,7 +293,7 @@ def save_config_to_file(config: 'Config', dir_config: str, filename: str = None,
     filepath = os.path.join(dir_config, filename or FILENAME_CONFIG)
     _logger.debug('Saving config file to {}'.format(filepath))
     if include_sections:
-        _logger.trace('Only saving config sections: {}'.format(', '.join(include_sections)))
+        _logger.debug('Only saving config sections: {}'.format(', '.join(include_sections)))
         config_out = {section: config_out[section] for section in include_sections}
     with open(filepath, 'w') as file_:
         yaml.dump(config_out, file_, default_flow_style=False)
