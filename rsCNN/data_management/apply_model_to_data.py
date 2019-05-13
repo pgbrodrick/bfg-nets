@@ -82,6 +82,8 @@ def apply_model_to_raster(cnn, config: configs.Config, feature_file, destination
     collist.append(cr[1]-2*config.data_build.window_radius)
     rowlist.append(rr[1]-2*config.data_build.window_radius)
 
+    internal_offset = config.data_window_radius - config.data_build.loss_window_radius
+
     for _c in tqdm(range(len(collist)), ncols=80):
         col = collist[_c]
         images = []
@@ -95,7 +97,7 @@ def apply_model_to_raster(cnn, config: configs.Config, feature_file, destination
                 # TODO: consider having this as an option
                 # d = fill_nearest_neighbor(d)
                 images.append(d)
-                write_ul.append([col, row])
+                write_ul.append([col + internal_offset, row + internal_offset])
         images = np.stack(images)
         images = images.reshape((images.shape[0], images.shape[1], images.shape[2], feature_set.RasterCount))
 
