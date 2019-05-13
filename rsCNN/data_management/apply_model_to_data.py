@@ -61,8 +61,8 @@ def apply_model_to_raster(cnn, config: configs.Config, feature_file, destination
     driver.Register()
 
     outDataset = driver.Create(destination_basename + '.tif',
-                               feature_set.RasterYSize,
                                feature_set.RasterXSize,
+                               feature_set.RasterYSize,
                                n_classes,
                                gdal.GDT_Float32)
 
@@ -95,7 +95,7 @@ def apply_model_to_raster(cnn, config: configs.Config, feature_file, destination
                 # TODO: consider having this as an option
                 # d = fill_nearest_neighbor(d)
                 images.append(d)
-                write_ul.append([row, col])
+                write_ul.append([col, row])
         images = np.stack(images)
         images = images.reshape((images.shape[0], images.shape[1], images.shape[2], feature_set.RasterCount))
 
