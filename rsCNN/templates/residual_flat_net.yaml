@@ -45,11 +45,10 @@ architecture_options:
   inshape: REQUIRED
   kernel_size: [3, 3]
   n_classes: REQUIRED
-  optimizer: adam
   output_activation: REQUIRED
   padding: same
   use_batch_norm: true
-  use_initial_colorspaced_transformation_layer: false
+  use_initial_colorspace_transformation_layer: false
 callback_general:
   checkpoint_periods: 5
   use_terminate_on_nan: true
