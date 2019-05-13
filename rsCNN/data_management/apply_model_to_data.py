@@ -74,7 +74,7 @@ def apply_model_to_raster(cnn, config: configs.Config, feature_file, destination
         step_size = 1
         internal_offset = config.data_build.loss_window_radius - 1
     else:
-        internal_offset = config.data_window_radius - config.data_build.loss_window_radius
+        internal_offset = config.data_build.window_radius - config.data_build.loss_window_radius
 
     # Find the UL indicies of all prediction locations
     cr = [0, feature_set.RasterXSize]
