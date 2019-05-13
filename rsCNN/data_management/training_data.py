@@ -275,6 +275,7 @@ def read_map_subset(datasets: List, upper_lefts: List[List[int]], window_diamete
         file_set = datasets[_file]
         file_upper_left = upper_lefts[_file]
         file_array = np.zeros((window_diameter, window_diameter, file_set.RasterCount))
+        #TODO: go back and optimize for nodata bands
         for _b in range(file_set.RasterCount):
             file_array[:, :, _b] = file_set.GetRasterBand(
                 _b+1).ReadAsArray(file_upper_left[0], file_upper_left[1], window_diameter, window_diameter)
