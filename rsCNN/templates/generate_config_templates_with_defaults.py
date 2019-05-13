@@ -4,7 +4,7 @@ from rsCNN.utils import DIR_TEMPLATES, logging
 
 
 _logger = logging.get_root_logger()
-_logger.setLevel('TRACE')
+_logger.setLevel('DEBUG')
 
 
 if __name__ == '__main__':
