@@ -59,7 +59,7 @@ class Experiment(object):
                 K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
             # TODO:  do we want to warn or raise or nothing if the network type doesn't match the model type?
         else:
-            _logger.debug('History does not exists in out directory, creating new model')
+            _logger.debug('History does not exist in model out directory, creating new model')
             self.model = architectures.create_model_from_architecture_options(
                 self.config.model_training.architecture_name, self.config.architecture_options)
             self.model.compile(loss=loss_function, optimizer=self.config.model_training.optimizer)
