@@ -275,18 +275,20 @@ def read_map_subset(datasets: List, upper_lefts: List[List[int]], window_diamete
         file_set = datasets[_file]
         file_upper_left = upper_lefts[_file]
         file_array = np.zeros((window_diameter, window_diameter, file_set.RasterCount))
-        #TODO: go back and optimize for nodata bands
         for _b in range(file_set.RasterCount):
-            file_array[:, :, _b] = file_set.GetRasterBand(
-                _b+1).ReadAsArray(file_upper_left[0], file_upper_left[1], window_diameter, window_diameter)
+            ld =  file_set.GetRasterBand(b+1).ReadAsArray(file_upper_left[0], 
+                                                          file_upper_left[1], 
+                                                          window_diameter, 
+                                                          window_diameter)
 
-        file_array[file_array == nodata_value] = np.nan
-        file_array[np.isfinite(file_array) is False] = np.nan
+            mask[np.isfinite(ld) == False] = True
+            mask[ld == nodata_value] = True
+            if np.all(mask):
+                return None, None
+
         file_array[mask, :] = np.nan
 
         mask[np.any(np.isnan(file_array), axis=-1)] = True
-        if np.all(mask):
-            return None, None
         local_array[..., idx:idx+file_array.shape[-1]] = file_array
         idx += file_array.shape[-1]
 
@@ -355,7 +357,6 @@ def read_segmentation_chunk(f_sets: List[tuple],
                            boundary_upper_left,
                            window_diameter,
                            config.raw_files.boundary_bad_value)
-    mv = [np.sum(mask)]
 
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         return None, None
@@ -364,14 +365,12 @@ def read_segmentation_chunk(f_sets: List[tuple],
                                            window_diameter, mask, config.raw_files.response_nodata_value)
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         return None, None
-    mv.append(np.sum(mask))
 
     if (config.data_build.response_min_value is not None):
         local_response[local_response < config.data_build.response_min_value] = np.nan
     if (config.data_build.response_max_value is not None):
         local_response[local_response > config.data_build.response_max_value] = np.nan
     mask[np.any(np.isnan(local_response), axis=-1)] = True
-    mv.append(np.sum(mask))
 
     if (mask is None):
         return None, None
@@ -380,7 +379,6 @@ def read_segmentation_chunk(f_sets: List[tuple],
 
     local_feature, mask = read_map_subset(f_sets, feature_upper_lefts,
                                           window_diameter, mask, config.raw_files.feature_nodata_value)
-    mv.append(np.sum(mask))
 
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         return None, None
