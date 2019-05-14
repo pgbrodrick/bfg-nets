@@ -44,11 +44,11 @@ class BaseConfigSection(object):
 
     def get_config_options_as_dict(self) -> Dict[str, Dict[str, any]]:
         config_options = OrderedDict()
-        for field in self.get_option_keys():
-            value = getattr(self, field)
+        for option_key in self.get_option_keys():
+            value = getattr(self, option_key)
             if type(value) is tuple:
                 value = list(value)  # Lists look nicer in config files and seem friendlier
-            config_options[field] = value
+            config_options[option_key] = value
         return config_options
 
     def get_option_keys(self) -> List[str]:
