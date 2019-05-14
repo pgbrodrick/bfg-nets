@@ -55,12 +55,6 @@ def create_model(
     """
     inlayer = keras.layers.Input(inshape)
 
-    if type(kernel_size) is tuple:
-        kernel_sizes = [kernel_size] * num_layers
-    else:
-        assert len(kernel_size) == num_layers, 'If providing a list of kernel sizes, length must equal num_layers'
-        kernel_sizes = kernel_size
-
     conv = inlayer
     if use_initial_colorspace_transformation_layer:
         intermediate_color_depth = int(inshape[-1] ** 2)
