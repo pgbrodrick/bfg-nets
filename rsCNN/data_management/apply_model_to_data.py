@@ -12,19 +12,6 @@ from rsCNN.utils.general import *
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
 
-def read_feature_chunk(feature_set, ul, window_size, nodata_value):
-
-    subset = np.zeros((window_size, window_size, feature_set.RasterCount))
-    for _b in range(feature_set.RasterCount):
-        subset[..., _b] = feature_set.GetRasterBand(
-            _b+1).ReadAsArray(int(ul[0]), int(ul[1]), int(window_size), int(window_size))
-
-    subset[subset == nodata_value] = np.nan
-    subset[np.logical_not(np.isfinite(subset))] = np.nan
-
-    return subset
-
-
 def apply_model_to_raster(cnn, config: configs.Config, feature_file, destination_basename, make_png=False, make_tif=True, feature_transformer=None, response_transformer=None, CNN_MODE=False):
     """ Apply a trained model to a raster file.
 
@@ -91,8 +78,13 @@ def apply_model_to_raster(cnn, config: configs.Config, feature_file, destination
 
         write_ul = []
         for row in rowlist:
-            d = read_feature_chunk(feature_set, [col, row],
-                                   config.data_build.window_radius*2, config.raw_files.feature_nodata_value)
+            d,m = read_map_subset([feature_set], 
+                                [[col, row]],
+                                config.data_build.window_radius*2, 
+                                mask=None, 
+                                nodata_value=config.raw_files.feature_nodata_value)
+            if (d is None):
+                continue
 
             if(d.shape[0] == config.data_build.window_radius*2 and d.shape[1] == config.data_build.window_radius*2):
                 # TODO: consider having this as an option
