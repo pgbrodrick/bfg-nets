@@ -13,6 +13,7 @@ from tqdm import tqdm
 
 from rsCNN import configs
 from rsCNN.data_management import scalers
+from rsCNN.data_management import shared
 # TODO:  remove * imports
 from rsCNN.utils.general import *
 from rsCNN.utils import logging
@@ -280,31 +281,6 @@ def read_mask_chunk(
     return mask
 
 
-def read_map_subset(datasets: List, upper_lefts: List[List[int]], window_diameter: int, mask, nodata_value):
-    # Next check to see if we have a response, if so read all
-    local_array = np.zeros((window_diameter, window_diameter, np.sum([lset.RasterCount for lset in datasets])))
-    idx = 0
-    for _file in range(len(datasets)):
-        file_set = datasets[_file]
-        file_upper_left = upper_lefts[_file]
-        file_array = np.zeros((window_diameter, window_diameter, file_set.RasterCount))
-        for _b in range(file_set.RasterCount):
-            file_array[:, :, _b] = file_set.GetRasterBand(
-                _b+1).ReadAsArray(file_upper_left[0], file_upper_left[1], window_diameter, window_diameter)
-
-        file_array[file_array == nodata_value] = np.nan
-        file_array[np.isfinite(file_array) is False] = np.nan
-        file_array[mask, :] = np.nan
-
-        mask[np.any(np.isnan(file_array), axis=-1)] = True
-        if np.all(mask):
-            return None, None
-        local_array[..., idx:idx+file_array.shape[-1]] = file_array
-        idx += file_array.shape[-1]
-
-    return local_array, mask
-
-
 def read_labeling_chunk(f_sets: List[gdal.Dataset],
                         feature_upper_lefts: List[List[int]],
                         config: configs.Config,
@@ -337,8 +313,8 @@ def read_labeling_chunk(f_sets: List[gdal.Dataset],
         _logger.debug('Insufficient mask data')
         return None
 
-    local_feature, mask = read_map_subset(f_sets, feature_upper_lefts,
-                                          window_diameter, mask, config.raw_files.feature_nodata_value)
+    local_feature, mask = shared.read_map_subset(f_sets, feature_upper_lefts,
+                                                 window_diameter, mask, config.raw_files.feature_nodata_value)
 
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         _logger.debug('Insufficient feature data')
@@ -372,8 +348,8 @@ def read_segmentation_chunk(f_sets: List[tuple],
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         return None, None
 
-    local_response, mask = read_map_subset(r_sets, response_upper_lefts,
-                                           window_diameter, mask, config.raw_files.response_nodata_value)
+    local_response, mask = shared.read_map_subset(r_sets, response_upper_lefts,
+                                                  window_diameter, mask, config.raw_files.response_nodata_value)
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         return None, None
     mv.append(np.sum(mask))
@@ -390,8 +366,8 @@ def read_segmentation_chunk(f_sets: List[tuple],
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         return None, None
 
-    local_feature, mask = read_map_subset(f_sets, feature_upper_lefts,
-                                          window_diameter, mask, config.raw_files.feature_nodata_value)
+    local_feature, mask = shared.read_map_subset(f_sets, feature_upper_lefts,
+                                                 window_diameter, mask, config.raw_files.feature_nodata_value)
     mv.append(np.sum(mask))
 
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
@@ -605,93 +581,6 @@ def get_interior_rectangle(dataset_list_of_lists: List[List[gdal.Dataset]]):
 
     return return_ul_list, x_len, y_len
 
-# def get_interior_rectangle(feature_set, response_set, boundary_set):
-#    f_trans = feature_set.GetGeoTransform()
-#    r_trans = response_set.GetGeoTransform()
-#    b_trans = None
-#    if (boundary_set is not None):
-#        b_trans = boundary_set.GetGeoTransform()
-#
-#    # Calculate the interior space location and extent
-#
-#    # Find the interior (UL) x,y coordinates in map-space
-#    interior_x = max(r_trans[0], f_trans[0])
-#    interior_y = min(r_trans[3], f_trans[3])
-#    if (b_trans is not None):
-#        interior_x = max(interior_x, b_trans[0])
-#        interior_y = max(interior_y, b_trans[3])
-#
-#    # calculate the feature and response UL coordinates in pixel-space
-#    f_x_ul, f_y_ul = upper_left_pixel(f_trans, interior_x, interior_y)
-#    r_x_ul, r_y_ul = upper_left_pixel(r_trans, interior_x, interior_y)
-#
-#    # calculate the size of the matched interior extent
-#    x_len = min(feature_set.RasterXSize - f_x_ul, response_set.RasterXSize - r_x_ul)
-#    y_len = min(feature_set.RasterYSize - f_y_ul, response_set.RasterYSize - r_y_ul)
-#
-#    # update the UL location, and the interior extent, if there is a boundary
-#    if (b_trans is not None):
-#        b_x_ul, b_y_ul = upper_left_pixel(b_trans, interior_x, interior_y)
-#        x_len = min(x_len, boundary_set.RasterXSize - b_x_ul)
-#        y_len = min(y_len, boundary_set.RasterYSize - b_y_ul)
-#
-#    # convert these UL coordinates to an array for easy addition later
-#    f_ul = np.array([f_x_ul, f_y_ul])
-#    r_ul = np.array([r_x_ul, r_y_ul])
-#    if (b_trans is not None):
-#        b_ul = np.array([b_x_ul, b_y_ul])
-#    else:
-#        b_ul = None
-#
-#    return f_ul, r_ul, b_ul, x_len, y_len
-
-
-def one_hot_encode_array(raw_band_types, array, memmap_file):
-
-    cat_band_locations = [idx for idx, val in enumerate(raw_band_types) if val == 'C']
-    band_types = raw_band_types.copy()
-    for _c in reversed(range(len(cat_band_locations))):
-
-        un_array = array[..., cat_band_locations[_c]]
-        un_array = np.unique(un_array[np.isfinite(un_array)])
-        assert len(un_array) < MAX_UNIQUE_RESPONSES,\
-            'Too many ({}) unique responses found, suspected incorrect categorical specification'.format(len(un_array))
-        _logger.info('Found {} categorical responses'.format(len(un_array)))
-        _logger.debug('Cat response: {}'.format(un_array))
-
-        array_shape = list(array.shape)
-        array_shape[-1] = len(un_array) + array.shape[-1] - 1
-
-        cat_memmap_file = os.path.join(
-            os.path.dirname(memmap_file), str(os.path.basename(memmap_file).split('.')[0]) + '_cat.npy')
-        cat_array = np.memmap(cat_memmap_file,
-                              dtype=np.float32,
-                              mode='w+',
-                              shape=tuple(array_shape))
-
-        # One hot-encode
-        for _r in range(array_shape[-1]):
-            if (_r >= cat_band_locations[_c] and _r < len(un_array)):
-                cat_array[..., _r] = np.squeeze(array[..., cat_band_locations[_c]] ==
-                                                un_array[_r - cat_band_locations[_c]])
-            else:
-                if (_r < cat_band_locations[_c]):
-                    cat_array[..., _r] = array[..., _r]
-                else:
-                    cat_array[..., _r] = array[..., _r - len(un_array) + 1]
-
-        # Force file dump, and then reload the encoded responses as the primary response
-        del array, cat_array
-        if (os.path.isfile(memmap_file)):
-            os.remove(memmap_file)
-        memmap_file = cat_memmap_file
-        array = np.memmap(memmap_file, dtype=np.float32, mode='r+', shape=tuple(array_shape))
-
-        band_types.pop(cat_band_locations[_c])
-        for _r in range(len(un_array)):
-            band_types.insert(cat_band_locations[_c], 'B' + str(int(_c)))
-    return array, band_types
-
 
 # TODO:  typing
 def build_training_data_ordered(
@@ -832,10 +721,10 @@ def build_training_data_ordered(
         weights[:, :, -buf:, -1] = 0
 
     _logger.debug('One-hot encode features')
-    features, feature_band_types = one_hot_encode_array(
+    features, feature_band_types = shared.one_hot_encode_array(
         feature_raw_band_types, features_munged, _get_munged_features_filepaths(config))
     _logger.debug('One-hot encode responses')
-    responses, response_band_types = one_hot_encode_array(
+    responses, response_band_types = shared.one_hot_encode_array(
         response_raw_band_types, responses_munged, _get_munged_responses_filepaths(config))
 
     _logger.debug('Save features to memmapped arrays separated by folds')
@@ -1065,8 +954,8 @@ def build_training_data_from_response_points(
     weights = np.ones((responses.shape[0], 1))
 
     # one hot encode
-    features, feature_band_types = one_hot_encode_array(feature_raw_band_types, features, feature_memmap_file)
-    responses, response_band_types = one_hot_encode_array(response_raw_band_types, responses, response_memmap_file)
+    features, feature_band_types = shared.one_hot_encode_array(feature_raw_band_types, features, feature_memmap_file)
+    responses, response_band_types = shared.one_hot_encode_array(response_raw_band_types, responses, response_memmap_file)
 
     _logger.info('Feature shape: {}'.format(features.shape))
     _logger.info('Response shape: {}'.format(responses.shape))
