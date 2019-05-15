@@ -780,10 +780,11 @@ def build_training_data_from_response_points(
 
     colrow_per_site = []
     responses_per_site = []
-    boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
-                     if loc_file is not None else None for loc_file in config.raw_files.boundary_files]
-    if (len(boundary_sets) == 0):
+    if not config.raw_files.boundary_files:
         boundary_sets = [None] * len(config.raw_files.feature_files)
+    else:
+        boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
+                         if loc_file is not None else None for loc_file in config.raw_files.boundary_files]
     for _site in range(0, len(config.raw_files.feature_files)):
         # open requisite datasets
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
