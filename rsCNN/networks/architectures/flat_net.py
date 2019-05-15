@@ -23,7 +23,7 @@ def create_model(
         n_classes: int,
         output_activation: str,
         filters: int = shared.DEFAULT_FILTERS,
-        kernel_size: Union[Tuple[int, int], List[Tuple[int, int]]] = shared.DEFAULT_KERNEL_SIZE,
+        kernel_size: Tuple[int, int] = shared.DEFAULT_KERNEL_SIZE,
         num_layers: int = DEFAULT_NUM_LAYERS,
         padding: str = shared.DEFAULT_PADDING,
         use_batch_norm: bool = shared.DEFAULT_USE_BATCH_NORM,
@@ -55,12 +55,6 @@ def create_model(
     """
     inlayer = keras.layers.Input(inshape)
 
-    if type(kernel_size) is tuple:
-        kernel_sizes = [kernel_size] * num_layers
-    else:
-        assert len(kernel_size) == num_layers, 'If providing a list of kernel sizes, length must equal num_layers'
-        kernel_sizes = kernel_size
-
     conv = inlayer
     if use_initial_colorspace_transformation_layer:
         intermediate_color_depth = int(inshape[-1] ** 2)
@@ -68,7 +62,7 @@ def create_model(
         conv = Conv2D(filters=inshape[-1], kernel_size=(1, 1), padding='same')(conv)
         conv = BatchNormalization()(conv)
 
-    for kernel_size in kernel_sizes:
+    for idx_layer in range(num_layers):
         conv = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(conv)
         conv = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(conv)
         if use_batch_norm:
