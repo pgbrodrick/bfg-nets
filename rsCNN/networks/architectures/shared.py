@@ -34,7 +34,7 @@ class BaseArchitectureOptions(BaseConfigSection):
     _config_options_extra = list()
 
     def __init__(self):
-        # We need to reorder field defaults given that child ArchitectureOptions will be adding field defaults
+        # We need to reorder option defaults given that child ArchitectureOptions will be adding option defaults
         self._config_options = self._config_options + self._config_options_extra
         self._config_options = sorted(self._config_options, key=lambda x: x.key)
         super().__init__()

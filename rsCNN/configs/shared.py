@@ -44,11 +44,11 @@ class BaseConfigSection(object):
 
     def get_config_options_as_dict(self) -> Dict[str, Dict[str, any]]:
         config_options = OrderedDict()
-        for field in self.get_option_keys():
-            value = getattr(self, field)
+        for option_key in self.get_option_keys():
+            value = getattr(self, option_key)
             if type(value) is tuple:
                 value = list(value)  # Lists look nicer in config files and seem friendlier
-            config_options[field] = value
+            config_options[option_key] = value
         return config_options
 
     def get_option_keys(self) -> List[str]:
@@ -57,16 +57,16 @@ class BaseConfigSection(object):
     def set_config_options(self, config_options: dict, highlight_required: bool) -> None:
         # TODO:  I expect an error here when reading in a config file and trying to parse that, we might need to
         #  automatically read the structure from different config sections and nestedness
-        _logger.trace('Setting config options for section {} from {}'.format(self.__class__.__name__, config_options))
+        _logger.debug('Setting config options for section {} from {}'.format(self.__class__.__name__, config_options))
         for config_option in self._config_options:
             if config_option.key in config_options:
                 option_value = config_options.pop(config_option.key)
-                _logger.trace('Setting option "{}" to provided value "{}"'.format(config_option.key, option_value))
+                _logger.debug('Setting option "{}" to provided value "{}"'.format(config_option.key, option_value))
             else:
                 option_value = config_option.default
                 if option_value is None and highlight_required:
                     option_value = DEFAULT_REQUIRED_VALUE
-                _logger.trace('Setting option "{}" to default value "{}"'.format(config_option.key, option_value))
+                _logger.debug('Setting option "{}" to default value "{}"'.format(config_option.key, option_value))
             setattr(self, config_option.key, option_value)
         return
 
