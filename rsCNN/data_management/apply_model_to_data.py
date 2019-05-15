@@ -143,8 +143,8 @@ def maximum_likelihood_classification(likelihood_file,\
                                       make_tif=False,
                                       png_dpi=200,
                                       output_nodata_value=-1):
-  """ Convert a n-band map of probabilities to a classified image using maximum likelihood.
-  """
+    """ Convert a n-band map of probabilities to a classified image using maximum likelihood.
+    """
 
 
     output_tif_file = output_file_base + '.tif'
