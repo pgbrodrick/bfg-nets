@@ -2,6 +2,7 @@
 import numpy as np
 import gdal
 from typing import List, Tuple
+from rsCNN.utils import logging
 
 
 _logger = logging.get_child_logger(__name__)
