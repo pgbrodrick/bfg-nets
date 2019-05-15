@@ -13,7 +13,7 @@ from rsCNN.data_management.training_data import Dataset
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
 
-def apply_model_to_raster(cnn, data_container: Dataset, feature_file, destination_basename, make_png=False, make_tif=True CNN_MODE=False):
+def apply_model_to_raster(cnn, data_container: Dataset, feature_file, destination_basename, make_png=False, make_tif=True, CNN_MODE=False):
     """ Apply a trained model to a raster file.
 
       Arguments:
