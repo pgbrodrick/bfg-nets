@@ -85,7 +85,7 @@ def build_or_load_rawfile_data(config: configs.Config, rebuild: bool = False):
             boundary_files = [loc_file for loc_file in config.raw_files.boundary_files
                               if gdal.Open(loc_file, gdal.GA_ReadOnly) is not None]
 
-        check_resolutions(config.raw_files.feature_files, config.raw_files.response_files, boundary_files)
+        check_resolutions(config.raw_files.feature_files, config.raw_files.response_files, [boundary_files])
 
         if (config.data_build.response_data_format == 'FCN'):
             features, responses, weights, feature_band_types, response_band_types = build_training_data_ordered(
@@ -336,6 +336,10 @@ def read_segmentation_chunk(f_sets: List[tuple],
                             b_set=None,
                             boundary_upper_left: List[int] = None):
     window_diameter = config.data_build.window_radius * 2
+
+    print(feature_upper_lefts)
+    print(response_upper_lefts)
+    print(boundary_upper_left)
 
     mask = read_mask_chunk(boundary_vector_file,
                            boundary_subset_geotransform,
@@ -625,7 +629,7 @@ def build_training_data_ordered(
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
 
         _logger.debug('Calculate interior rectangle location and extent')
-        [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle(
+        [f_ul, r_ul, [b_ul]], x_len, y_len = get_interior_rectangle(
             [feature_sets, response_sets, [bs for bs in boundary_sets if bs is not None]])
 
         _logger.debug('Calculate pixel-based interior offsets for data acquisition')
@@ -789,7 +793,7 @@ def build_training_data_from_response_points(
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
 
         # Calculate the interior space location and extent
-        [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle(
+        [f_ul, r_ul, [b_ul]], x_len, y_len = get_interior_rectangle(
             [feature_sets, response_sets, [bs for bs in boundary_sets if bs is not None]])
 
         collist = []
@@ -883,7 +887,7 @@ def build_training_data_from_response_points(
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
 
         # Calculate the interior space location and extent
-        [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle(
+        [f_ul, r_ul, [b_ul]], x_len, y_len = get_interior_rectangle(
             [feature_sets, response_sets, [bs for bs in boundary_sets if bs is not None]])
 
         # colrow is current the response cetners, but we need to use the pixel ULs.  So subtract
