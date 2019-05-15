@@ -7,12 +7,13 @@ from tqdm import tqdm
 
 from rsCNN import configs
 from rsCNN.utils.general import *
+from rsCNN.data_management.training_data import Dataset
 
 
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
 
-def apply_model_to_raster(cnn, config: configs.Config, feature_file, destination_basename, make_png=False, make_tif=True, feature_transformer=None, response_transformer=None, CNN_MODE=False):
+def apply_model_to_raster(cnn, config: configs.Config, data_container: Dataset, feature_file, destination_basename, make_png=False, make_tif=True, feature_transformer=None, response_transformer=None, CNN_MODE=False):
     """ Apply a trained model to a raster file.
 
       Arguments:
@@ -78,11 +79,11 @@ def apply_model_to_raster(cnn, config: configs.Config, feature_file, destination
 
         write_ul = []
         for row in rowlist:
-            d,m = read_map_subset([feature_set], 
-                                [[col, row]],
-                                config.data_build.window_radius*2, 
-                                mask=None, 
-                                nodata_value=config.raw_files.feature_nodata_value)
+            d,m = shared.read_map_subset([feature_set], 
+                                         [[col, row]],
+                                         config.data_build.window_radius*2, 
+                                         mask=None, 
+                                         nodata_value=config.raw_files.feature_nodata_value)
             if (d is None):
                 continue
 
@@ -93,6 +94,8 @@ def apply_model_to_raster(cnn, config: configs.Config, feature_file, destination
                 write_ul.append([col + internal_offset, row + internal_offset])
         images = np.stack(images)
         images = images.reshape((images.shape[0], images.shape[1], images.shape[2], feature_set.RasterCount))
+
+        images, image_band_types = shared.one_hot_encode_array(data_container.feature_raw_band_types, images)
 
         if (config.data_build.feature_mean_centering is True):
             images -= np.nanmean(images, axis=(1, 2))[:, np.newaxis, np.newaxis, :]

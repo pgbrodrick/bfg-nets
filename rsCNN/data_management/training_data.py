@@ -76,15 +76,15 @@ def build_or_load_rawfile_data(config: configs.Config, rebuild: bool = False):
         _create_built_data_output_directory(config)
 
         if (config.raw_files.ignore_projections is False):
-            check_projections(
-                config.raw_files.feature_files, config.raw_files.response_files, config.raw_files.boundary_files
+            check_projections(config.raw_files.feature_files, 
+                              config.raw_files.response_files, 
+                              config.raw_files.boundary_files
             )
 
-        if config.raw_files.boundary_files:
+        if (config.raw_files.boundary_files is not None):
             boundary_files = [loc_file for loc_file in config.raw_files.boundary_files
                               if gdal.Open(loc_file, gdal.GA_ReadOnly) is not None]
-        else:
-            boundary_files = list()
+
         check_resolutions(config.raw_files.feature_files, config.raw_files.response_files, boundary_files)
 
         if (config.data_build.response_data_format == 'FCN'):
