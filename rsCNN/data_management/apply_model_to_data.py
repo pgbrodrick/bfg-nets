@@ -192,6 +192,4 @@ def maximum_likelihood_classification(likelihood_file,\
  
   
 
- 
-
 
