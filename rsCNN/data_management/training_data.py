@@ -678,8 +678,8 @@ def build_training_data_ordered(
                 _logger.debug('Only {} valid samples saved after inspecting all {} samples'.format(
                     sample_index + 1, len(colrow)))
 
-    features_munged, responses_munged = _resize_munged_features_responses_data_files(
-        features_munged, responses_munged, sample_index, config)
+    features_munged = _resize_munged_features(features_munged, sample_index, config)
+    responses_munged = _resize_munged_responses(responses_munged, sample_index, config)
     _log_munged_data_information(features_munged, responses_munged)
 
     _logger.debug('Shuffle data to avoid fold assignment biases')
@@ -717,8 +717,8 @@ def build_training_data_ordered(
     del features_munged, responses_munged, weights_munged
 
     if ('C' in response_raw_band_types):
-        if (np.sum(np.array(response_raw_band_types) == 'C') > 1):
-            _logger.warning('Currently weighting is only enabled for one categorical response variable')
+        assert np.sum(np.array(response_raw_band_types) == 'C') == 1, \
+            'Weighting is currently only enabled for one categorical response variable.'
         features, responses, weights = _load_built_data_files(config, writeable=True)
         weights = calculate_categorical_weights(responses, weights, config)
         del features, responses, weights
@@ -889,14 +889,7 @@ def build_training_data_from_response_points(
     del responses_per_site
     _log_munged_data_information(features_munged, responses_munged)
 
-    # Get the feature shapes for re-reading (modified ooc resize)
-    feat_shape = list(features_munged.shape)
-    feat_shape[0] = sample_index
-
-    # Delete and reload feauters, as a hard and fast way to force data dump to disc and reload
-    # with a modified size....IE, an ooc resize
-    del features_munged
-    features_munged = np.memmap(feature_memmap_file, dtype=np.float32, mode='r+', shape=(tuple(feat_shape)))
+    features_munged = _resize_munged_features(features_munged, sample_index, config)
     _log_munged_data_information(features_munged, responses_munged)
 
     _logger.debug('Shuffle data to avoid fold assignment biases')
@@ -909,7 +902,8 @@ def build_training_data_from_response_points(
     _log_munged_data_information(features_munged, responses_munged, weights_munged)
 
     # one hot encode
-    features_munged, feature_band_types = shared.one_hot_encode_array(feature_raw_band_types, features_munged, feature_memmap_file)
+    features_munged, feature_band_types = shared.one_hot_encode_array(
+        feature_raw_band_types, features_munged, feature_memmap_file)
     responses_munged, response_band_types = shared.one_hot_encode_array(
         response_raw_band_types, responses_munged, response_memmap_file)
     _log_munged_data_information(features_munged, responses_munged, weights_munged)
@@ -917,9 +911,9 @@ def build_training_data_from_response_points(
     _save_built_data_files(features_munged, responses_munged, weights_munged, config)
     del features_munged, responses_munged, weights_munged
 
-    if ('C' in response_raw_band_types):
-        if (np.sum(np.array(response_raw_band_types) == 'C') > 1):
-            _logger.warning('Currently weighting is only enabled for one categorical response variable')
+    if 'C' in response_raw_band_types:
+        assert np.sum(np.array(response_raw_band_types) == 'C') == 1, \
+            'Weighting is currently only enabled for one categorical response variable.'
         features, responses, weights = _load_built_data_files(config, writeable=True)
         weights = calculate_categorical_weights(responses, weights, config)
         del features, responses, weights
@@ -982,26 +976,30 @@ def _create_munged_features_responses_data_files(config: configs.Config, num_fea
     return features, responses
 
 
-def _resize_munged_features_responses_data_files(
-        features_munged: np.array,
-        responses_munged: np.array,
-        num_samples: int,
-        config: configs.Config
-) -> Tuple[np.array, np.array]:
-    _logger.debug('Resize memmapped data arrays with out-of-memory methods; ' +
-                  'original features shape {} and responses shape {}'.format(
-                      features_munged.shape, responses_munged.shape))
-    new_features_shape = tuple([num_samples] + list(features_munged.shape)[1:])
-    new_responses_shape = tuple([num_samples] + list(responses_munged.shape)[1:])
+def _resize_munged_features(features_munged: np.array, num_samples: int, config: configs.Config) -> np.array:
+    _logger.debug('Resize memmapped features array with out-of-memory methods; original features shape {}'.format(
+        features_munged.shape))
+    new_features_shape = tuple([num_samples] + list(features_munged.shape[1:]))
     _logger.debug('Delete in-memory data to force data dump')
-    del features_munged, responses_munged
-    _logger.debug('Reload data from memmap files with modified sizes; ' +
-                  'new features shape {} and responses shape {}'.format(new_features_shape, new_responses_shape))
-    features_filepath = _get_munged_features_filepaths(config)
-    responses_filepath = _get_munged_responses_filepaths(config)
-    features_resized = np.memmap(features_filepath, dtype=np.float32, mode='r+', shape=new_features_shape)
-    responses_resized = np.memmap(responses_filepath, dtype=np.float32, mode='r+', shape=new_responses_shape)
-    return features_resized, responses_resized
+    del features_munged
+    _logger.debug('Reload data from memmap files with modified sizes; new features shape {}'.format(
+        new_features_shape))
+    features_munged = np.memmap(
+        _get_munged_features_filepaths(config), dtype=np.float32, mode='r+', shape=new_features_shape)
+    return features_munged
+
+
+def _resize_munged_responses(responses_munged: np.array, num_samples: int, config: configs.Config) -> np.array:
+    _logger.debug('Resize memmapped responses array with out-of-memory methods; original responses shape {}'.format(
+        responses_munged.shape))
+    new_responses_shape = tuple([num_samples] + list(responses_munged.shape[1:]))
+    _logger.debug('Delete in-memory data to force data dump')
+    del responses_munged
+    _logger.debug('Reload data from memmap files with modified sizes; new responses shape {}'.format(
+        new_responses_shape))
+    responses_munged = np.memmap(
+        _get_munged_responses_filepaths(config), dtype=np.float32, mode='r+', shape=new_responses_shape)
+    return responses_munged
 
 
 def _create_munged_weights_data_files(config: configs.Config, num_samples: int) -> np.array:
