@@ -5,7 +5,9 @@ import gdal
 import numpy as np
 
 from rsCNN.utils import logging
+import os
 
+MAX_UNIQUE_RESPONSES = 100
 
 _logger = logging.get_child_logger(__name__)
 
