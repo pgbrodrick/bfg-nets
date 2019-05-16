@@ -540,7 +540,7 @@ def upper_left_pixel(trans, interior_x, interior_y):
     return x_ul, y_ul
 
 
-def get_interior_rectangle(dataset_list_of_lists: List[List[gdal.Dataset]]):
+def get_overlapping_extent(dataset_list_of_lists: List[List[gdal.Dataset]]):
 
     # Convert list of lists or list for interior convenience
     dataset_list = [item for sublist in dataset_list_of_lists for item in sublist]
@@ -616,7 +616,7 @@ def build_training_data_ordered(
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
 
         _logger.debug('Calculate interior rectangle location and extent')
-        [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle(
+        [f_ul, r_ul, b_ul], x_len, y_len = get_overlapping_extent(
             [feature_sets, response_sets, [bs for bs in boundary_sets if bs is not None]])
 
         _logger.debug('Calculate pixel-based interior offsets for data acquisition')
@@ -741,8 +741,6 @@ def build_training_data_from_response_points(
     if (config.data_build.random_seed is not None):
         np.random.seed(config.data_build.random_seed)
 
-    # TODO:  Phil:  this assertion was further than halfway through the function, which is a big time-waster if there
-    #  are too many requested samples, it's good practice to put these things as early as possible
     num_features = np.sum([len(feat_type) for feat_type in feature_raw_band_types])
     assert config.data_build.max_samples * (2 * config.data_build.window_radius) ** 2 * num_features / 1024**3 < 10, \
         'Max samples requested exceeds temporary and arbitrary threshold, we need to handle this to support more'
@@ -755,18 +753,16 @@ def build_training_data_from_response_points(
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.feature_files[_site]]
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
 
-        _logger.debug('Calculate interior rectangle location and extent')
-        # TODO:  Phil:  I think we need to rename get_interior_rectangle and make these variables more informative,
-        #  I couldn't tell you what interior rectangle actually does and I have other comments on the variables later
-        [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle(
+        _logger.debug('Calculate overlapping extent')
+        [f_ul, r_ul, b_ul], x_px_size, y_px_size = get_overlapping_extent(
             [feature_sets, response_sets, [bs for bs in boundary_sets if bs is not None]])
 
-        collist = []
-        rowlist = []
+        x_sample_points = []
+        y_sample_points = []
         responses = []
-        _logger.debug('Run through first response')  # TODO:  Phil, what does this mean? What is y_len?
-        for _line in range(y_len):
-            line_dat = np.squeeze(response_sets[_site].ReadAsArray(r_ul[0][0], r_ul[0][1] + _line, x_len, 1))
+        _logger.debug('Run through first response')
+        for _line in range(y_px_size):
+            line_dat = np.squeeze(response_sets[_site].ReadAsArray(r_ul[0][0], r_ul[0][1] + _line, x_px_size, 1))
             if len(line_dat.shape) == 1:
                 line_dat = line_dat.reshape(-1, 1)
 
@@ -780,77 +776,60 @@ def build_training_data_from_response_points(
                 good_data[np.any(line_dat == config.raw_files.response_nodata_value, axis=1)] = False
 
             if (np.sum(good_data) > 0):
-                # TODO:  Phil:  what's going on here? what do line_x, line_y, collist, rowlist signify? what are their
-                #   types and possible forms? I wanted to log this, but it's all a bit unclear. also, this is a chance
-                #   for me to point out that Hungarian notation is pretty generally frowned upon (e.g., collist). It's
-                #   less useful to know that collist is a list (which we can see when we append things to it and do
-                #   other list-specific operations), and it'd be much more useful to know what it represents (e.g.,
-                #   latitudes -- I'm sure this isn't what it is, but I really have no clue here because these variables
-                #   are all generic and uninformative). I guess I might as well mention that using variables like x and
-                #   y are also generally frowned upon because there's almost always a better, more informative variable
-                #   name.
                 _logger.debug('Storing something about the data')
-                line_x = np.arange(x_len)
+                line_x = np.arange(x_px_size)
                 line_y = line_x.copy()
                 line_y[:] = _line
 
-                collist.extend(line_x[good_data].tolist())
-                rowlist.extend(line_y[good_data].tolist())
+                x_sample_points.extend(line_x[good_data].tolist())
+                y_sample_points.extend(line_y[good_data].tolist())
                 responses.append(line_dat[good_data, :])
 
-        colrow = np.vstack([np.array(collist), np.array(rowlist)]).T
-        # TODO:  Phil:  I deleted the following line and just made the assignment directly. The reason why is because
-        #   you reuse the variable "responses" a few lines later, when it represents something completely different.
-        #   There are two things that are suboptimal here. One, reusing a variable name makes it difficult to parse
-        #   whether there's a bug (e.g., should this be overwritten?) or use a debugger (e.g., introspect the value of
-        #   a variable at any point in time). Two, reusing a variable name for two different values/objects means that
-        #   at least one of the variable names could be more informative (i.e., the note above about Hungarian naming).
-        # responses = np.vstack(responses).astype(np.float32)
-        responses_per_file = [np.vstack(responses).astype(np.float32).copy()]  # TODO:  Phil:  is this copy necessary?
+        xy_sample_points = np.vstack([np.array(x_sample_points), np.array(y_sample_points)]).T
+        responses_per_file = [np.vstack(responses).astype(np.float32).copy()]
         _logger.debug('Found {} responses for site {}'.format(len(responses_per_file[0]), _site))
 
+        _logger.debug('Grab the rest of the resopnses')
         for _file in range(1, len(response_sets)):
             responses = np.zeros(responses_per_file[0].shape[0])
-            for _point in range(len(colrow)):
+            for _point in range(len(xy_sample_points)):
                 responses[_point] = response_sets[_file].ReadAsArray(
                     r_ul[_file][0], r_ul[_file][1], 1, 1).astype(np.float32)
             responses_per_file.append(responses.copy())
 
         responses_per_file = np.hstack(responses_per_file)
-        _logger.debug('Something informative could be logged here, but I don\'t know what\'s happening') # TODO:  Phil
+        _logger.debug('All responses now obtained, response stack of shape: {}'.format(respones_per_file.shape))
 
-        # TODO:  Phil:  is this already handled by the check above in the inner loop? where it's called good_data?
-        good_dat = np.all(responses_per_file != config.data_build.response_background_value, axis=1)
-        colrow = colrow[good_dat, :]
+        _logger.debug('Check responses 1 onward for nodata values')
+        good_data = np.all(responses_per_file != config.data_build.response_background_value, axis=1)
+        xy_sample_points = xy_sample_points[good_data, :]
 
-        colrow_per_site.append(colrow)
+        xy_sample_points_per_site.append(xy_sample_points)
         responses_per_site.append(np.vstack(responses))
 
     total_samples = sum([site_responses.shape[0] for site_responses in responses_per_site])
     _logger.debug('Found {} total samples across {} sites'.format(total_samples, len(responses_per_site)))
 
-    # TODO:  Phil:  is this assertion correct? Were you trying to do assert total_samples > 0?
-    assert config.data_build.max_samples > 0, 'need more than 1 valid sample...'
+    assert config.data_build.max_samples > 0, 'need at least 1 valid sample...'
 
-    # TODO:  Phil:  note that it's usually a good idea to create intermediate (informatively-named) variables for
-    #  calculations (sometimes even if they're small) so that it's easier to parse what's happening quickly and to
-    #  sometimes have another person be able to identify potential bugs in calculations (e.g., "oh, this is supposed to
-    #  be the number of samples per site, but it looks like the math is off?").
     if total_samples > config.data_build.max_samples:
         _logger.debug('Discard samples because the number of valid samples ({}) exceeds the max samples requested ({})'
                       .format(total_samples, config.data_build.max_samples))
+
         prop_samples_kept_per_site = config.data_build.max_samples / total_samples
         for _site in range(len(responses_per_site)):
             num_samples = len(responses_per_site[_site])
             num_samples_kept = prop_samples_kept_per_site * num_samples
+
             idxs_kept = np.random.permutation(num_samples)[:num_samples_kept]
             responses_per_site[_site] = responses_per_site[_site][idxs_kept, :]
-            colrow_per_site[_site] = colrow_per_site[_site][idxs_kept, :]
+
+            xy_sample_list_per_site[_site] = xy_sample_list_per_site[_site][idxs_kept, :]
             _logger.debug('Site {} had {} valid samples, kept {} samples'.format(_site, num_samples, num_samples_kept))
+
         total_samples = sum([site_responses.shape[0] for site_responses in responses_per_site])
         _logger.debug('Kept {} total samples across {} sites after discarding'.format(
             total_samples, len(responses_per_site)))
-
 
     # TODO: fix max size issue, but force for now to prevent overly sized sets
     features_munged = np.memmap(
@@ -867,12 +846,12 @@ def build_training_data_from_response_points(
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
 
         _logger.debug('Calculate interior rectangle location and extent')
-        [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle(
+        [f_ul, r_ul, b_ul], x_px_size, y_px_size = get_overlapping_extent(
             [feature_sets, response_sets, [bs for bs in boundary_sets if bs is not None]])
 
-        # colrow is current the response cetners, but we need to use the pixel ULs.  So subtract
+        # xy_sample_list is current the response centers, but we need to use the pixel ULs.  So subtract
         # out the corresponding feature radius
-        colrow = colrow_per_site[_site] - config.data_build.window_radius
+        xy_sample_list = xy_sample_list_per_site[_site] - config.data_build.window_radius
 
         ref_trans = feature_sets[0].GetGeoTransform()
         subset_geotransform = None
@@ -883,33 +862,27 @@ def build_training_data_from_response_points(
 
         good_response_data = np.zeros(responses_per_site[_site].shape[0]).astype(bool)
         # Now read in features
-        for _cr in tqdm(range(len(colrow)), ncols=80):
+        for _cr in tqdm(range(len(xy_sample_list)), ncols=80):
 
             # Determine local information about boundary file
-            # TODO:  Phil:  the logic and equations below are unintuitive unless you work with this type of data
-            #  frequently, so we should probably comment and better document what's happening. Also, we're doing
-            #  operations on subset_geotransform and constantly mutating that object. It'd probably be better to have
-            #  the above subset_geotransform better named... is it the site-specific transform?... and then use a
-            #  different variable below to refer to individual... locations?... why the distinction? What are these
-            #  operations?
             local_boundary_vector_file = None
             local_boundary_upper_left = None
             if (boundary_sets[_site] is not None):
-                local_boundary_upper_left = b_ul + colrow[_cr, :]
+                local_boundary_upper_left = b_ul + xy_sample_list[_cr, :]
             if (subset_geotransform is not None):
-                subset_geotransform[0] = ref_trans[0] + (f_ul[0][0] + colrow[_cr, 0]) * ref_trans[1]
-                subset_geotransform[3] = ref_trans[3] + (f_ul[0][1] + colrow[_cr, 1]) * ref_trans[5]
+                # define a geotramsform for the subset we are going to take
+                subset_geotransform[0] = ref_trans[0] + (f_ul[0][0] + xy_sample_list[_cr, 0]) * ref_trans[1]
+                subset_geotransform[3] = ref_trans[3] + (f_ul[0][1] + xy_sample_list[_cr, 1]) * ref_trans[5]
                 local_boundary_vector_file = config.raw_files.boundary_files[_site]
 
             local_feature = read_labeling_chunk(
-                feature_sets, f_ul + colrow[_cr, :], config, boundary_vector_file=local_boundary_vector_file,
+                feature_sets, f_ul + xy_sample_list[_cr, :], config, boundary_vector_file=local_boundary_vector_file,
                 boundary_upper_left=local_boundary_upper_left, b_set=boundary_sets[_site],
                 boundary_subset_geotransform=subset_geotransform
             )
 
-            # TODO:  Phil:  I'm surprised we're checking whether data is valid again here. Should the data be valid
-            #  after looking through the data in the previous loop-by-site? If not, is it possible we have fewer samples
-            #  than requested after trimming to max_samples?
+            # Make sure that the feature space also has data - the fact that the response space had valid data is no
+            # guarantee that the feature space does.
             if local_feature is not None:
                 _logger.debug('Save sample data; {} samples saved total'.format(sample_index + 1))
                 features_munged[sample_index, ...] = local_feature.copy()
@@ -942,15 +915,8 @@ def build_training_data_from_response_points(
         response_raw_band_types, responses_munged, _get_munged_responses_filepath(config))
     _log_munged_data_information(features_munged, responses_munged, weights_munged)
 
-    # TODO:  Phil:  note that, previously, you had calculated fold_assignments several lines up in the code, before the
-    #  weights were even created, but that you never used the fold_assignments until you got to saving the munged data
-    #  into fold-specific files. It's a best-practice to create variables closest to where they're used so that it's
-    #  easier to see which code needs access to those variables. It makes it easier to write/debug when you see all of
-    #  the relevant variables and operations closer to one another and can better reason about what happens when you
-    #  make changes. In this case, I refactored it so that the munged data is saved within a subfunction, and now we
-    #  don't even need to know that fold_assignments are happened or how they're happening unless we need to dig into
-    #  the saving code. It cleans up this function because then we know that fold_assignments are specific to that block
-    #  of saving code.
+    # This change happens to work in this instance, but will not work with all sampling strategies.  I will leave for
+    # now and refactor down the line as necessary.  Generally speaking, fold assignments are specific to the style of data read
     _save_built_data_files(features_munged, responses_munged, weights_munged, config)
     del features_munged, responses_munged, weights_munged
 
