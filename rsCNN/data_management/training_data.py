@@ -745,7 +745,7 @@ def build_training_data_from_response_points(
     assert config.data_build.max_samples * (2 * config.data_build.window_radius) ** 2 * num_features / 1024**3 < 10, \
         'Max samples requested exceeds temporary and arbitrary threshold, we need to handle this to support more'
 
-    colrow_per_site = []
+    xy_sample_points_per_site = []
     responses_per_site = []
     boundary_sets = _get_boundary_sets_from_boundary_files(config)
     for _site in range(0, len(config.raw_files.feature_files)):
@@ -798,7 +798,7 @@ def build_training_data_from_response_points(
             responses_per_file.append(responses.copy())
 
         responses_per_file = np.hstack(responses_per_file)
-        _logger.debug('All responses now obtained, response stack of shape: {}'.format(respones_per_file.shape))
+        _logger.debug('All responses now obtained, response stack of shape: {}'.format(responses_per_file.shape))
 
         _logger.debug('Check responses 1 onward for nodata values')
         good_data = np.all(responses_per_file != config.data_build.response_background_value, axis=1)
@@ -824,7 +824,7 @@ def build_training_data_from_response_points(
             idxs_kept = np.random.permutation(num_samples)[:num_samples_kept]
             responses_per_site[_site] = responses_per_site[_site][idxs_kept, :]
 
-            xy_sample_list_per_site[_site] = xy_sample_list_per_site[_site][idxs_kept, :]
+            xy_sample_points_per_site[_site] = xy_sample_points_per_site[_site][idxs_kept, :]
             _logger.debug('Site {} had {} valid samples, kept {} samples'.format(_site, num_samples, num_samples_kept))
 
         total_samples = sum([site_responses.shape[0] for site_responses in responses_per_site])
@@ -851,7 +851,7 @@ def build_training_data_from_response_points(
 
         # xy_sample_list is current the response centers, but we need to use the pixel ULs.  So subtract
         # out the corresponding feature radius
-        xy_sample_list = xy_sample_list_per_site[_site] - config.data_build.window_radius
+        xy_sample_list = xy_sample_points_per_site[_site] - config.data_build.window_radius
 
         ref_trans = feature_sets[0].GetGeoTransform()
         subset_geotransform = None
