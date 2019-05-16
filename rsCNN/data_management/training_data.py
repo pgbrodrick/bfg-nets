@@ -601,6 +601,7 @@ def build_training_data_ordered(
         n_features / 1024.**3 < 10, 'max_samples too large'
 
     features_munged, responses_munged = _create_munged_features_responses_data_files(config, n_features, n_responses)
+    _log_munged_data_information(features_munged, responses_munged)
 
     _logger.debug('Open boundary files')
     boundary_sets = _get_boundary_sets_from_boundary_files(config)
@@ -679,6 +680,7 @@ def build_training_data_ordered(
 
     features_munged, responses_munged = _resize_munged_features_responses_data_files(
         features_munged, responses_munged, sample_index, config)
+    _log_munged_data_information(features_munged, responses_munged)
 
     _logger.debug('Shuffle data to avoid fold assignment biases')
     perm = np.random.permutation(features_munged.shape[0])
@@ -686,29 +688,22 @@ def build_training_data_ordered(
     responses_munged = responses_munged[perm, :]
     del perm
 
-    _logger.debug('Create fold assignments')
-    # TODO:  calculate this later because we don't need it yet, may not need to do this separately from other loop?
-    fold_assignments = np.zeros(responses_munged.shape[0]).astype(int)
-    for f in range(0, config.data_build.number_folds):
-        idx_start = int(round(f / config.data_build.number_folds * len(fold_assignments)))
-        idx_finish = int(round((f + 1) / config.data_build.number_folds * len(fold_assignments)))
-        fold_assignments[idx_start:idx_finish] = f
-
     _logger.debug('Create uniform weights')
     basename = _get_built_data_basename(config)
     shape = tuple(list(features_munged.shape)[:-1] + [1])
-    weights = np.memmap(basename + _FILENAME_WEIGHTS_MUNGE_SUFFIX, dtype=np.float32, mode='w+', shape=shape)
-    weights[:, :, :, :] = 1
+    weights_munged = np.memmap(basename + _FILENAME_WEIGHTS_MUNGE_SUFFIX, dtype=np.float32, mode='w+', shape=shape)
+    weights_munged[:, :, :, :] = 1
     _logger.debug('Remove weights for missing responses')
-    weights[np.isnan(responses_munged[..., 0])] = 0
+    weights_munged[np.isnan(responses_munged[..., 0])] = 0
 
     _logger.debug('Remove weights outside loss window')
     if (config.data_build.loss_window_radius != config.data_build.window_radius):
         buf = config.data_build.window_radius - config.data_build.loss_window_radius
-        weights[:, :buf, :, -1] = 0
-        weights[:, -buf:, :, -1] = 0
-        weights[:, :, :buf, -1] = 0
-        weights[:, :, -buf:, -1] = 0
+        weights_munged[:, :buf, :, -1] = 0
+        weights_munged[:, -buf:, :, -1] = 0
+        weights_munged[:, :, :buf, -1] = 0
+        weights_munged[:, :, -buf:, -1] = 0
+    _log_munged_data_information(features_munged, responses_munged, weights_munged)
 
     _logger.debug('One-hot encode features')
     features, feature_band_types = shared.one_hot_encode_array(
@@ -716,30 +711,10 @@ def build_training_data_ordered(
     _logger.debug('One-hot encode responses')
     responses, response_band_types = shared.one_hot_encode_array(
         response_raw_band_types, responses_munged, _get_munged_responses_filepaths(config))
+    _log_munged_data_information(features_munged, responses_munged, weights_munged)
 
-    _logger.debug('Save features to memmapped arrays separated by folds')
-    features_filepaths = _get_built_features_filepaths(config)
-    for idx_fold in range(config.data_build.number_folds):
-        _logger.debug('Save features fold {}'.format(idx_fold))
-        np.save(features_filepaths[idx_fold], features[fold_assignments == idx_fold, ...])
-    _logger.debug('Close features arrays')
-    del features
-
-    _logger.debug('Save responses to memmapped arrays separated by folds')
-    responses_filepaths = _get_built_responses_filepaths(config)
-    for idx_fold in range(config.data_build.number_folds):
-        _logger.debug('Save responses fold {}'.format(idx_fold))
-        np.save(responses_filepaths[idx_fold], responses[fold_assignments == idx_fold, ...])
-    _logger.debug('Close responses arrays')
-    del responses
-
-    _logger.debug('Save weights to memmapped arrays separated by folds')
-    weights_filepaths = _get_built_weights_filepaths(config)
-    for idx_fold in range(config.data_build.number_folds):
-        _logger.debug('Save weights fold {}'.format(idx_fold))
-        np.save(weights_filepaths[idx_fold], weights[fold_assignments == idx_fold, ...])
-    _logger.debug('Close weights arrays')
-    del weights
+    _save_built_data_files(features_munged, responses_munged, weights_munged, config)
+    del features_munged, responses_munged, weights_munged
 
     if ('C' in response_raw_band_types):
         if (np.sum(np.array(response_raw_band_types) == 'C') > 1):
@@ -762,6 +737,7 @@ def build_training_data_from_response_points(
         feature_raw_band_types: List[List[str]],
         response_raw_band_types: List[List[str]]
 ):
+    _logger.info('Build training data from response points')
     if (config.data_build.random_seed is not None):
         np.random.seed(config.data_build.random_seed)
 
@@ -911,6 +887,7 @@ def build_training_data_from_response_points(
     # transform responses
     responses = np.vstack(responses_per_site)
     del responses_per_site
+    _log_munged_data_information(features, responses)
 
     # Get the feature shapes for re-reading (modified ooc resize)
     feat_shape = list(features.shape)
@@ -920,39 +897,26 @@ def build_training_data_from_response_points(
     # with a modified size....IE, an ooc resize
     del features
     features = np.memmap(feature_memmap_file, dtype=np.float32, mode='r+', shape=(tuple(feat_shape)))
+    _log_munged_data_information(features, responses)
 
-    # Shuffle the data one last time (in case the fold-assignment would otherwise be biased beacuase of
-    # the feature/response file order
+    _logger.debug('Shuffle data to avoid fold assignment biases')
     perm = np.random.permutation(features.shape[0])
     features = features[perm, :]
     responses = responses[perm, :]
     del perm
 
-    fold_assignments = np.zeros(responses.shape[0]).astype(int)
-    for f in range(0, config.data_build.number_folds):
-        idx_start = int(round(f / config.data_build.number_folds * len(fold_assignments)))
-        idx_finish = int(round((f + 1) / config.data_build.number_folds * len(fold_assignments)))
-        fold_assignments[idx_start:idx_finish] = f
-
     weights = np.ones((responses.shape[0], 1))
+    _log_munged_data_information(features, responses, weights)
 
     # one hot encode
     features, feature_band_types = shared.one_hot_encode_array(feature_raw_band_types, features, feature_memmap_file)
-    responses, response_band_types = shared.one_hot_encode_array(response_raw_band_types, responses, response_memmap_file)
+    responses, response_band_types = shared.one_hot_encode_array(
+        response_raw_band_types, responses, response_memmap_file)
+    _log_munged_data_information(features, responses, weights)
 
-    _logger.info('Feature shape: {}'.format(features.shape))
-    _logger.info('Response shape: {}'.format(responses.shape))
-    _logger.info('Weight shape: {}'.format(weights.shape))
-
-    features_filepaths = _get_built_features_filepaths(config)
-    responses_filepaths = _get_built_responses_filepaths(config)
-    weights_filepaths = _get_built_weights_filepaths(config)
-    for idx_fold in range(config.data_build.number_folds):
-        np.save(features_filepaths[idx_fold], features[fold_assignments == idx_fold, ...])
-        np.save(responses_filepaths[idx_fold], responses[fold_assignments == idx_fold, ...])
-        np.save(weights_filepaths[idx_fold], weights[fold_assignments == idx_fold, ...])
-
+    _save_built_data_files(features, responses, weights, config)
     del features, responses, weights
+
     if ('C' in response_raw_band_types):
         if (np.sum(np.array(response_raw_band_types) == 'C') > 1):
             _logger.warning('Currently weighting is only enabled for one categorical response variable')
@@ -1112,6 +1076,35 @@ def _load_built_data_files(config: configs.Config, writeable: bool = False) \
     return features, responses, weights
 
 
+def _save_built_data_files(
+        features_munged: np.array,
+        responses_munged: np.array,
+        weights_munged: np.array,
+        config: configs.Config
+) -> None:
+    _logger.debug('Create fold assignments')
+    fold_assignments = np.zeros(features_munged.shape[0]).astype(int)
+    for f in range(0, config.data_build.number_folds):
+        idx_start = int(round(f / config.data_build.number_folds * len(fold_assignments)))
+        idx_finish = int(round((f + 1) / config.data_build.number_folds * len(fold_assignments)))
+        fold_assignments[idx_start:idx_finish] = f
+    _logger.debug('Save features to memmapped arrays separated by folds')
+    features_filepaths = _get_built_features_filepaths(config)
+    for idx_fold in range(config.data_build.number_folds):
+        _logger.debug('Save features fold {}'.format(idx_fold))
+        np.save(features_filepaths[idx_fold], features_munged[fold_assignments == idx_fold, ...])
+    _logger.debug('Save responses to memmapped arrays separated by folds')
+    responses_filepaths = _get_built_responses_filepaths(config)
+    for idx_fold in range(config.data_build.number_folds):
+        _logger.debug('Save responses fold {}'.format(idx_fold))
+        np.save(responses_filepaths[idx_fold], responses_munged[fold_assignments == idx_fold, ...])
+    _logger.debug('Save weights to memmapped arrays separated by folds')
+    weights_filepaths = _get_built_weights_filepaths(config)
+    for idx_fold in range(config.data_build.number_folds):
+        _logger.debug('Save weights fold {}'.format(idx_fold))
+        np.save(weights_filepaths[idx_fold], weights_munged[fold_assignments == idx_fold, ...])
+
+
 def _get_built_features_filepaths(config: configs.Config) -> List[str]:
     return _get_built_data_filepaths(config, _FILENAME_FEATURES_SUFFIX)
 
@@ -1137,3 +1130,16 @@ def _get_built_data_filepaths(config: configs.Config, filename_suffix: str) -> L
 def _get_built_data_basename(config: configs.Config) -> str:
     filepath_separator = config.data_build.filename_prefix_out + '_' if config.data_build.filename_prefix_out else ''
     return os.path.join(config.data_build.dir_out, filepath_separator)
+
+
+def _log_munged_data_information(
+        features_munged: np.array = None,
+        responses_munged: np.array = None,
+        weights_munged: np.array = None
+) -> None:
+    if features_munged is not None:
+        _logger.debug('Munged features shape: {}'.format(features_munged.shape))
+    if responses_munged is not None:
+        _logger.debug('Munged responses shape: {}'.format(responses_munged.shape))
+    if weights_munged is not None:
+        _logger.debug('Munged weights shape: {}'.format(weights_munged.shape))
