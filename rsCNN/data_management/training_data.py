@@ -609,13 +609,7 @@ def build_training_data_ordered(
     features_munged, responses_munged = _create_munged_features_responses_data_files(config, n_features, n_responses)
 
     _logger.debug('Open boundary files')
-    # TODO:  we need to refactor how boundary files are handled, how all of the checks are handled for these data types
-    #   to make them consistent, simple, centralized, etc
-    if not config.raw_files.boundary_files:
-        boundary_sets = [None for _ in range(len(config.raw_files.feature_files))]
-    else:
-        boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
-                         if loc_file is not None else None for loc_file in config.raw_files.boundary_files]
+    boundary_sets = _get_boundary_sets_from_boundary_files(config)
 
     sample_index = 0
     for _site in range(0, len(config.raw_files.feature_files)):
@@ -774,17 +768,12 @@ def build_training_data_from_response_points(
         feature_raw_band_types: List[List[str]],
         response_raw_band_types: List[List[str]]
 ):
-
     if (config.data_build.random_seed is not None):
         np.random.seed(config.data_build.random_seed)
 
     colrow_per_site = []
     responses_per_site = []
-    if not config.raw_files.boundary_files:
-        boundary_sets = [None] * len(config.raw_files.feature_files)
-    else:
-        boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
-                         if loc_file is not None else None for loc_file in config.raw_files.boundary_files]
+    boundary_sets = _get_boundary_sets_from_boundary_files(config)
     for _site in range(0, len(config.raw_files.feature_files)):
         # open requisite datasets
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
@@ -874,11 +863,7 @@ def build_training_data_from_response_points(
     )
 
     sample_index = 0
-    if not config.raw_files.boundary_files:
-        boundary_sets = [None for _ in range(len(config.raw_files.feature_files))]
-    else:
-        boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
-                         if loc_file is not None else None for loc_file in config.raw_files.boundary_files]
+    boundary_sets = _get_boundary_sets_from_boundary_files(config)
     for _site in range(0, len(config.raw_files.feature_files)):
 
         # open requisite datasets
@@ -1004,6 +989,16 @@ def _check_mask_data_sufficient(mask: np.array, max_nodata_fraction: float) -> b
 
 def _is_boundary_file_vectorized(boundary_filepath: str) -> bool:
     return str(os.path.splitext(boundary_filepath)).lower() in _VECTORIZED_FILENAMES
+
+
+# TODO:  improve typing return
+def _get_boundary_sets_from_boundary_files(config: configs.Config) -> List:
+    if not config.raw_files.boundary_files:
+        boundary_sets = [None] * len(config.raw_files.feature_files)
+    else:
+        boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) if loc_file is not None else None
+                         for loc_file in config.raw_files.boundary_files]
+    return boundary_sets
 
 
 def _create_built_data_output_directory(config: configs.Config) -> None:
