@@ -827,7 +827,7 @@ def build_training_data_from_response_points(
     response_memmap_file = basename + _FILENAME_RESPONSES_MUNGE_SUFFIX
     assert total_samples * (config.data_build.window_radius*2)**2 * \
         n_features / 1024.**3 < 10, 'max_samples too large'
-    features = np.memmap(
+    features_munged = np.memmap(
         feature_memmap_file, dtype=np.float32, mode='w+',
         shape=(total_samples, config.data_build.window_radius*2, config.data_build.window_radius*2, n_features)
     )
@@ -879,43 +879,43 @@ def build_training_data_from_response_points(
                                                 boundary_subset_geotransform=subset_geotransform)
 
             if (local_feature is not None):
-                features[sample_index, ...] = local_feature.copy()
+                features_munged[sample_index, ...] = local_feature.copy()
                 good_response_data[_cr] = True
                 sample_index += 1
         responses_per_site[_site] = responses_per_site[_site][good_response_data, :]
 
     # transform responses
-    responses = np.vstack(responses_per_site)
+    responses_munged = np.vstack(responses_per_site)
     del responses_per_site
-    _log_munged_data_information(features, responses)
+    _log_munged_data_information(features_munged, responses_munged)
 
     # Get the feature shapes for re-reading (modified ooc resize)
-    feat_shape = list(features.shape)
+    feat_shape = list(features_munged.shape)
     feat_shape[0] = sample_index
 
     # Delete and reload feauters, as a hard and fast way to force data dump to disc and reload
     # with a modified size....IE, an ooc resize
-    del features
-    features = np.memmap(feature_memmap_file, dtype=np.float32, mode='r+', shape=(tuple(feat_shape)))
-    _log_munged_data_information(features, responses)
+    del features_munged
+    features_munged = np.memmap(feature_memmap_file, dtype=np.float32, mode='r+', shape=(tuple(feat_shape)))
+    _log_munged_data_information(features_munged, responses_munged)
 
     _logger.debug('Shuffle data to avoid fold assignment biases')
-    perm = np.random.permutation(features.shape[0])
-    features = features[perm, :]
-    responses = responses[perm, :]
+    perm = np.random.permutation(features_munged.shape[0])
+    features_munged = features_munged[perm, :]
+    responses_munged = responses_munged[perm, :]
     del perm
 
-    weights = np.ones((responses.shape[0], 1))
-    _log_munged_data_information(features, responses, weights)
+    weights_munged = np.ones((responses_munged.shape[0], 1))
+    _log_munged_data_information(features_munged, responses_munged, weights_munged)
 
     # one hot encode
-    features, feature_band_types = shared.one_hot_encode_array(feature_raw_band_types, features, feature_memmap_file)
-    responses, response_band_types = shared.one_hot_encode_array(
-        response_raw_band_types, responses, response_memmap_file)
-    _log_munged_data_information(features, responses, weights)
+    features_munged, feature_band_types = shared.one_hot_encode_array(feature_raw_band_types, features_munged, feature_memmap_file)
+    responses_munged, response_band_types = shared.one_hot_encode_array(
+        response_raw_band_types, responses_munged, response_memmap_file)
+    _log_munged_data_information(features_munged, responses_munged, weights_munged)
 
-    _save_built_data_files(features, responses, weights, config)
-    del features, responses, weights
+    _save_built_data_files(features_munged, responses_munged, weights_munged, config)
+    del features_munged, responses_munged, weights_munged
 
     if ('C' in response_raw_band_types):
         if (np.sum(np.array(response_raw_band_types) == 'C') > 1):
