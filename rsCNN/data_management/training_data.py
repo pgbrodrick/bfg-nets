@@ -20,7 +20,6 @@ from rsCNN.utils import logging
 
 _logger = logging.get_child_logger(__name__)
 
-MAX_UNIQUE_RESPONSES = 100
 
 _FILENAME_BUILT_DATA_CONFIG_SUFFIX = 'built_data_config.yaml'
 _FILENAME_FEATURES_SUFFIX = 'features_{}.npy'
@@ -338,10 +337,6 @@ def read_segmentation_chunk(f_sets: List[tuple],
                             boundary_upper_left: List[int] = None):
     window_diameter = config.data_build.window_radius * 2
 
-    print(feature_upper_lefts)
-    print(response_upper_lefts)
-    print(boundary_upper_left)
-
     mask = read_mask_chunk(boundary_vector_file,
                            boundary_subset_geotransform,
                            b_set,
@@ -370,7 +365,6 @@ def read_segmentation_chunk(f_sets: List[tuple],
 
     local_feature, mask = shared.read_map_subset(f_sets, feature_upper_lefts,
                                                  window_diameter, mask, config.raw_files.feature_nodata_value)
-    mv.append(np.sum(mask))
 
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         return None, None
