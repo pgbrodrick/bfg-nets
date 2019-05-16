@@ -75,14 +75,14 @@ def build_or_load_rawfile_data(config: configs.Config, rebuild: bool = False):
         _create_built_data_output_directory(config)
 
         if (config.raw_files.ignore_projections is False):
-            check_projections(config.raw_files.feature_files, 
-                              config.raw_files.response_files, 
+            check_projections(config.raw_files.feature_files,
+                              config.raw_files.response_files,
                               config.raw_files.boundary_files
-            )
+                              )
 
         if (config.raw_files.boundary_files is not None):
             boundary_files = [[loc_file for loc_file in config.raw_files.boundary_files
-                              if gdal.Open(loc_file, gdal.GA_ReadOnly) is not None]]
+                               if gdal.Open(loc_file, gdal.GA_ReadOnly) is not None]]
         else:
             boundary_files = None
 
@@ -280,7 +280,6 @@ def read_mask_chunk(
         mask = mask == boundary_bad_value
 
     return mask
-
 
 
 def read_labeling_chunk(f_sets: List[gdal.Dataset],
