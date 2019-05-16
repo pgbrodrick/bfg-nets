@@ -1,11 +1,17 @@
-
-import numpy as np
-import gdal
+import os
 from typing import List, Tuple
+
+import gdal
+import numpy as np
+
 from rsCNN.utils import logging
 
 
 _logger = logging.get_child_logger(__name__)
+
+
+_MAX_UNIQUE_RESPONSES = 100
+
 
 def read_map_subset(datasets: List, upper_lefts: List[List[int]], window_diameter: int, mask=None, nodata_value=None):
     local_array = np.zeros((window_diameter, window_diameter, np.sum([lset.RasterCount for lset in datasets])))
@@ -43,7 +49,7 @@ def one_hot_encode_array(raw_band_types: List[str], array: np.array, memmap_file
 
         un_array = array[..., cat_band_locations[_c]]
         un_array = np.unique(un_array[np.isfinite(un_array)])
-        assert len(un_array) < MAX_UNIQUE_RESPONSES,\
+        assert len(un_array) < _MAX_UNIQUE_RESPONSES,\
             'Too many ({}) unique responses found, suspected incorrect categorical specification'.format(len(un_array))
         _logger.info('Found {} categorical responses'.format(len(un_array)))
         _logger.debug('Cat response: {}'.format(un_array))

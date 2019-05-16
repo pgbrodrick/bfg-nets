@@ -20,7 +20,6 @@ from rsCNN.utils import logging
 
 _logger = logging.get_child_logger(__name__)
 
-MAX_UNIQUE_RESPONSES = 100
 
 _FILENAME_BUILT_DATA_CONFIG_SUFFIX = 'built_data_config.yaml'
 _FILENAME_FEATURES_SUFFIX = 'features_{}.npy'
@@ -82,10 +81,12 @@ def build_or_load_rawfile_data(config: configs.Config, rebuild: bool = False):
             )
 
         if (config.raw_files.boundary_files is not None):
-            boundary_files = [loc_file for loc_file in config.raw_files.boundary_files
-                              if gdal.Open(loc_file, gdal.GA_ReadOnly) is not None]
+            boundary_files = [[loc_file for loc_file in config.raw_files.boundary_files
+                              if gdal.Open(loc_file, gdal.GA_ReadOnly) is not None]]
+        else:
+            boundary_files = None
 
-        check_resolutions(config.raw_files.feature_files, config.raw_files.response_files, [boundary_files])
+        check_resolutions(config.raw_files.feature_files, config.raw_files.response_files, boundary_files)
 
         if (config.data_build.response_data_format == 'FCN'):
             features, responses, weights, feature_band_types, response_band_types = build_training_data_ordered(
@@ -580,7 +581,6 @@ def get_interior_rectangle(dataset_list_of_lists: List[List[gdal.Dataset]]):
             idx += 1
         local_list = np.array(local_list)
         return_ul_list.append(local_list)
-
     return return_ul_list, x_len, y_len
 
 
@@ -627,7 +627,7 @@ def build_training_data_ordered(
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
 
         _logger.debug('Calculate interior rectangle location and extent')
-        [f_ul, r_ul, [b_ul]], x_len, y_len = get_interior_rectangle(
+        [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle(
             [feature_sets, response_sets, [bs for bs in boundary_sets if bs is not None]])
 
         _logger.debug('Calculate pixel-based interior offsets for data acquisition')
@@ -792,7 +792,7 @@ def build_training_data_from_response_points(
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
 
         # Calculate the interior space location and extent
-        [f_ul, r_ul, [b_ul]], x_len, y_len = get_interior_rectangle(
+        [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle(
             [feature_sets, response_sets, [bs for bs in boundary_sets if bs is not None]])
 
         collist = []
@@ -874,10 +874,11 @@ def build_training_data_from_response_points(
     )
 
     sample_index = 0
-    boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
-                     if loc_file is not None else None for loc_file in config.raw_files.boundary_files]
-    if (len(boundary_sets) == 0):
-        boundary_sets = [None] * len(config.raw_files.feature_files)
+    if not config.raw_files.boundary_files:
+        boundary_sets = [None for _ in range(len(config.raw_files.feature_files))]
+    else:
+        boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
+                         if loc_file is not None else None for loc_file in config.raw_files.boundary_files]
     for _site in range(0, len(config.raw_files.feature_files)):
 
         # open requisite datasets
@@ -886,7 +887,7 @@ def build_training_data_from_response_points(
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
 
         # Calculate the interior space location and extent
-        [f_ul, r_ul, [b_ul]], x_len, y_len = get_interior_rectangle(
+        [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle(
             [feature_sets, response_sets, [bs for bs in boundary_sets if bs is not None]])
 
         # colrow is current the response cetners, but we need to use the pixel ULs.  So subtract
@@ -895,7 +896,7 @@ def build_training_data_from_response_points(
 
         ref_trans = feature_sets[0].GetGeoTransform()
         subset_geotransform = None
-        if len(config.raw_files.boundary_files) > 0:
+        if config.raw_files.boundary_files is not None:
             if config.raw_files.boundary_files[_site] is not None and \
                     _is_boundary_file_vectorized(config.raw_files.boundary_files[_site]):
                 subset_geotransform = [ref_trans[0], ref_trans[1], 0, ref_trans[3], 0, ref_trans[5]]
