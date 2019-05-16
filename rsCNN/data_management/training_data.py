@@ -665,12 +665,12 @@ def build_training_data_ordered(
                                                                     boundary_upper_left=local_boundary_upper_left,
                                                                     b_set=boundary_sets[_site],
                                                                     boundary_subset_geotransform=subset_geotransform)
-            if (local_feature is not None):
+            if local_feature is not None:
                 _logger.debug('Save sample data; {} samples saved'.format(sample_index + 1))
                 features_munged[sample_index, ...] = local_feature.copy()
                 responses_munged[sample_index, ...] = local_response.copy()
                 sample_index += 1
-                if (sample_index >= config.data_build.max_samples):
+                if sample_index >= config.data_build.max_samples:
                     _logger.debug('Max samples found ({}) after inspecting {}/{} samples, ignoring remainder'.format(
                         config.data_build.max_samples, _cr + 1, len(colrow)))
                     break
@@ -691,7 +691,7 @@ def build_training_data_ordered(
     _logger.debug('Create uniform weights')
     basename = _get_built_data_basename(config)
     shape = tuple(list(features_munged.shape)[:-1] + [1])
-    weights_munged = np.memmap(basename + _FILENAME_WEIGHTS_MUNGE_SUFFIX, dtype=np.float32, mode='w+', shape=shape)
+    weights_munged = np.memmap(_get_munged_weights_filepath(config), dtype=np.float32, mode='w+', shape=shape)
     weights_munged[:, :, :, :] = 1
     _logger.debug('Remove weights for missing responses')
     weights_munged[np.isnan(responses_munged[..., 0])] = 0
@@ -707,10 +707,10 @@ def build_training_data_ordered(
 
     _logger.debug('One-hot encode features')
     features, feature_band_types = shared.one_hot_encode_array(
-        feature_raw_band_types, features_munged, _get_munged_features_filepaths(config))
+        feature_raw_band_types, features_munged, _get_munged_features_filepath(config))
     _logger.debug('One-hot encode responses')
     responses, response_band_types = shared.one_hot_encode_array(
-        response_raw_band_types, responses_munged, _get_munged_responses_filepaths(config))
+        response_raw_band_types, responses_munged, _get_munged_responses_filepath(config))
     _log_munged_data_information(features_munged, responses_munged, weights_munged)
 
     _save_built_data_files(features_munged, responses_munged, weights_munged, config)
@@ -741,29 +741,37 @@ def build_training_data_from_response_points(
     if (config.data_build.random_seed is not None):
         np.random.seed(config.data_build.random_seed)
 
+    # TODO:  Phil:  this assertion was further than halfway through the function, which is a big time-waster if there
+    #  are too many requested samples, it's good practice to put these things as early as possible
+    num_features = np.sum([len(feat_type) for feat_type in feature_raw_band_types])
+    assert config.data_build.max_samples * (2 * config.data_build.window_radius) ** 2 * num_features / 1024**3 < 10, \
+        'Max samples requested exceeds temporary and arbitrary threshold, we need to handle this to support more'
+
     colrow_per_site = []
     responses_per_site = []
     boundary_sets = _get_boundary_sets_from_boundary_files(config)
     for _site in range(0, len(config.raw_files.feature_files)):
-        # open requisite datasets
-        feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
-                        for loc_file in config.raw_files.feature_files[_site]]
+        _logger.debug('Open feature and response datasets for site {}'.format(_site))
+        feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.feature_files[_site]]
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
 
-        # Calculate the interior space location and extent
+        _logger.debug('Calculate interior rectangle location and extent')
+        # TODO:  Phil:  I think we need to rename get_interior_rectangle and make these variables more informative,
+        #  I couldn't tell you what interior rectangle actually does and I have other comments on the variables later
         [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle(
             [feature_sets, response_sets, [bs for bs in boundary_sets if bs is not None]])
 
         collist = []
         rowlist = []
         responses = []
-        # Run through first response
+        _logger.debug('Run through first response')  # TODO:  Phil, what does this mean? What is y_len?
         for _line in range(y_len):
             line_dat = np.squeeze(response_sets[_site].ReadAsArray(r_ul[0][0], r_ul[0][1] + _line, x_len, 1))
-            if (len(line_dat.shape) == 1):
+            if len(line_dat.shape) == 1:
                 line_dat = line_dat.reshape(-1, 1)
 
-            if (config.data_build.response_background_value is not None):
+            # TODO:  Nick:  simplify the good_data operations and log operations that are applied
+            if config.data_build.response_background_value is not None:
                 good_data = np.all(line_dat != config.data_build.response_background_value, axis=1)
             else:
                 good_data = np.ones(line_dat.shape[0]).astype(bool)
@@ -772,6 +780,16 @@ def build_training_data_from_response_points(
                 good_data[np.any(line_dat == config.raw_files.response_nodata_value, axis=1)] = False
 
             if (np.sum(good_data) > 0):
+                # TODO:  Phil:  what's going on here? what do line_x, line_y, collist, rowlist signify? what are their
+                #   types and possible forms? I wanted to log this, but it's all a bit unclear. also, this is a chance
+                #   for me to point out that Hungarian notation is pretty generally frowned upon (e.g., collist). It's
+                #   less useful to know that collist is a list (which we can see when we append things to it and do
+                #   other list-specific operations), and it'd be much more useful to know what it represents (e.g.,
+                #   latitudes -- I'm sure this isn't what it is, but I really have no clue here because these variables
+                #   are all generic and uninformative). I guess I might as well mention that using variables like x and
+                #   y are also generally frowned upon because there's almost always a better, more informative variable
+                #   name.
+                _logger.debug('Storing something about the data')
                 line_x = np.arange(x_len)
                 line_y = line_x.copy()
                 line_y[:] = _line
@@ -781,8 +799,15 @@ def build_training_data_from_response_points(
                 responses.append(line_dat[good_data, :])
 
         colrow = np.vstack([np.array(collist), np.array(rowlist)]).T
-        responses = np.vstack(responses).astype(np.float32)
-        responses_per_file = [responses.copy()]
+        # TODO:  Phil:  I deleted the following line and just made the assignment directly. The reason why is because
+        #   you reuse the variable "responses" a few lines later, when it represents something completely different.
+        #   There are two things that are suboptimal here. One, reusing a variable name makes it difficult to parse
+        #   whether there's a bug (e.g., should this be overwritten?) or use a debugger (e.g., introspect the value of
+        #   a variable at any point in time). Two, reusing a variable name for two different values/objects means that
+        #   at least one of the variable names could be more informative (i.e., the note above about Hungarian naming).
+        # responses = np.vstack(responses).astype(np.float32)
+        responses_per_file = [np.vstack(responses).astype(np.float32).copy()]  # TODO:  Phil:  is this copy necessary?
+        _logger.debug('Found {} responses for site {}'.format(len(responses_per_file[0]), _site))
 
         for _file in range(1, len(response_sets)):
             responses = np.zeros(responses_per_file[0].shape[0])
@@ -792,56 +817,56 @@ def build_training_data_from_response_points(
             responses_per_file.append(responses.copy())
 
         responses_per_file = np.hstack(responses_per_file)
+        _logger.debug('Something informative could be logged here, but I don\'t know what\'s happening') # TODO:  Phil
 
+        # TODO:  Phil:  is this already handled by the check above in the inner loop? where it's called good_data?
         good_dat = np.all(responses_per_file != config.data_build.response_background_value, axis=1)
         colrow = colrow[good_dat, :]
 
         colrow_per_site.append(colrow)
         responses_per_site.append(np.vstack(responses))
 
-    total_samples = 0
-    for _site in range(0, len(responses_per_site)):
-        total_samples += responses_per_site[_site].shape[0]
+    total_samples = sum([site_responses.shape[0] for site_responses in responses_per_site])
+    _logger.debug('Found {} total samples across {} sites'.format(total_samples, len(responses_per_site)))
 
+    # TODO:  Phil:  is this assertion correct? Were you trying to do assert total_samples > 0?
     assert config.data_build.max_samples > 0, 'need more than 1 valid sample...'
 
-    _logger.debug('total samples: {}'.format(total_samples))
-    if (total_samples > config.data_build.max_samples):
-        for _site in range(0, len(responses_per_site)):
-            perm = np.random.permutation(len(responses_per_site[_site]))[:int(
-                config.data_build.max_samples*len(responses_per_site[_site])/float(total_samples))]
-            responses_per_site[_site] = responses_per_site[_site][perm, :]
-            colrow_per_site[_site] = colrow_per_site[_site][perm, :]
-            _logger.debug('perm len: {}'.format(len(perm)))
+    # TODO:  Phil:  note that it's usually a good idea to create intermediate (informatively-named) variables for
+    #  calculations (sometimes even if they're small) so that it's easier to parse what's happening quickly and to
+    #  sometimes have another person be able to identify potential bugs in calculations (e.g., "oh, this is supposed to
+    #  be the number of samples per site, but it looks like the math is off?").
+    if total_samples > config.data_build.max_samples:
+        _logger.debug('Discard samples because the number of valid samples ({}) exceeds the max samples requested ({})'
+                      .format(total_samples, config.data_build.max_samples))
+        prop_samples_kept_per_site = config.data_build.max_samples / total_samples
+        for _site in range(len(responses_per_site)):
+            num_samples = len(responses_per_site[_site])
+            num_samples_kept = prop_samples_kept_per_site * num_samples
+            idxs_kept = np.random.permutation(num_samples)[:num_samples_kept]
+            responses_per_site[_site] = responses_per_site[_site][idxs_kept, :]
+            colrow_per_site[_site] = colrow_per_site[_site][idxs_kept, :]
+            _logger.debug('Site {} had {} valid samples, kept {} samples'.format(_site, num_samples, num_samples_kept))
+        total_samples = sum([site_responses.shape[0] for site_responses in responses_per_site])
+        _logger.debug('Kept {} total samples across {} sites after discarding'.format(
+            total_samples, len(responses_per_site)))
 
-    total_samples = 0
-    for _site in range(0, len(responses_per_site)):
-        total_samples += responses_per_site[_site].shape[0]
-    _logger.debug('total samples after trim: {}'.format(total_samples))
-
-    n_features = np.sum([len(feat_type) for feat_type in feature_raw_band_types])
 
     # TODO: fix max size issue, but force for now to prevent overly sized sets
-    basename = _get_built_data_basename(config)
-    feature_memmap_file = basename + _FILENAME_FEATURES_MUNGE_SUFFIX
-    response_memmap_file = basename + _FILENAME_RESPONSES_MUNGE_SUFFIX
-    assert total_samples * (config.data_build.window_radius*2)**2 * \
-        n_features / 1024.**3 < 10, 'max_samples too large'
     features_munged = np.memmap(
-        feature_memmap_file, dtype=np.float32, mode='w+',
-        shape=(total_samples, config.data_build.window_radius*2, config.data_build.window_radius*2, n_features)
+        _get_munged_features_filepath(config), dtype=np.float32, mode='w+',
+        shape=(total_samples, 2*config.data_build.window_radius, 2*config.data_build.window_radius, num_features)
     )
 
     sample_index = 0
     boundary_sets = _get_boundary_sets_from_boundary_files(config)
     for _site in range(0, len(config.raw_files.feature_files)):
-
-        # open requisite datasets
+        _logger.debug('Open feature and response datasets for site {}'.format(_site))
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
                         for loc_file in config.raw_files.feature_files[_site]]
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
 
-        # Calculate the interior space location and extent
+        _logger.debug('Calculate interior rectangle location and extent')
         [f_ul, r_ul, b_ul], x_len, y_len = get_interior_rectangle(
             [feature_sets, response_sets, [bs for bs in boundary_sets if bs is not None]])
 
@@ -861,6 +886,12 @@ def build_training_data_from_response_points(
         for _cr in tqdm(range(len(colrow)), ncols=80):
 
             # Determine local information about boundary file
+            # TODO:  Phil:  the logic and equations below are unintuitive unless you work with this type of data
+            #  frequently, so we should probably comment and better document what's happening. Also, we're doing
+            #  operations on subset_geotransform and constantly mutating that object. It'd probably be better to have
+            #  the above subset_geotransform better named... is it the site-specific transform?... and then use a
+            #  different variable below to refer to individual... locations?... why the distinction? What are these
+            #  operations?
             local_boundary_vector_file = None
             local_boundary_upper_left = None
             if (boundary_sets[_site] is not None):
@@ -870,19 +901,22 @@ def build_training_data_from_response_points(
                 subset_geotransform[3] = ref_trans[3] + (f_ul[0][1] + colrow[_cr, 1]) * ref_trans[5]
                 local_boundary_vector_file = config.raw_files.boundary_files[_site]
 
-            local_feature = read_labeling_chunk(feature_sets,
-                                                f_ul + colrow[_cr, :],
-                                                config,
-                                                boundary_vector_file=local_boundary_vector_file,
-                                                boundary_upper_left=local_boundary_upper_left,
-                                                b_set=boundary_sets[_site],
-                                                boundary_subset_geotransform=subset_geotransform)
+            local_feature = read_labeling_chunk(
+                feature_sets, f_ul + colrow[_cr, :], config, boundary_vector_file=local_boundary_vector_file,
+                boundary_upper_left=local_boundary_upper_left, b_set=boundary_sets[_site],
+                boundary_subset_geotransform=subset_geotransform
+            )
 
-            if (local_feature is not None):
+            # TODO:  Phil:  I'm surprised we're checking whether data is valid again here. Should the data be valid
+            #  after looking through the data in the previous loop-by-site? If not, is it possible we have fewer samples
+            #  than requested after trimming to max_samples?
+            if local_feature is not None:
+                _logger.debug('Save sample data; {} samples saved total'.format(sample_index + 1))
                 features_munged[sample_index, ...] = local_feature.copy()
                 good_response_data[_cr] = True
                 sample_index += 1
         responses_per_site[_site] = responses_per_site[_site][good_response_data, :]
+        _logger.debug('{} samples saved for site {}'.format(responses_per_site[_site].shape[0], _site))
 
     # transform responses
     responses_munged = np.vstack(responses_per_site)
@@ -903,11 +937,20 @@ def build_training_data_from_response_points(
 
     # one hot encode
     features_munged, feature_band_types = shared.one_hot_encode_array(
-        feature_raw_band_types, features_munged, feature_memmap_file)
+        feature_raw_band_types, features_munged, _get_munged_features_filepath(config))
     responses_munged, response_band_types = shared.one_hot_encode_array(
-        response_raw_band_types, responses_munged, response_memmap_file)
+        response_raw_band_types, responses_munged, _get_munged_responses_filepath(config))
     _log_munged_data_information(features_munged, responses_munged, weights_munged)
 
+    # TODO:  Phil:  note that, previously, you had calculated fold_assignments several lines up in the code, before the
+    #  weights were even created, but that you never used the fold_assignments until you got to saving the munged data
+    #  into fold-specific files. It's a best-practice to create variables closest to where they're used so that it's
+    #  easier to see which code needs access to those variables. It makes it easier to write/debug when you see all of
+    #  the relevant variables and operations closer to one another and can better reason about what happens when you
+    #  make changes. In this case, I refactored it so that the munged data is saved within a subfunction, and now we
+    #  don't even need to know that fold_assignments are happened or how they're happening unless we need to dig into
+    #  the saving code. It cleans up this function because then we know that fold_assignments are specific to that block
+    #  of saving code.
     _save_built_data_files(features_munged, responses_munged, weights_munged, config)
     del features_munged, responses_munged, weights_munged
 
@@ -965,8 +1008,8 @@ def _create_munged_features_responses_data_files(config: configs.Config, num_fea
     shape = [config.data_build.max_samples, config.data_build.window_radius * 2, config.data_build.window_radius * 2]
     shape_features = tuple(shape + [num_features])
     shape_responses = tuple(shape + [num_responses])
-    features_filepath = basename + _FILENAME_FEATURES_MUNGE_SUFFIX
-    responses_filepath = basename + _FILENAME_RESPONSES_MUNGE_SUFFIX
+    features_filepath = _get_munged_features_filepath(config)
+    responses_filepath = _get_munged_responses_filepath(config)
     _logger.debug('Create temporary munged features data file with shape {} at {}'.format(
         shape_features, features_filepath))
     features = np.memmap(features_filepath, dtype=np.float32, mode='w+', shape=shape_features)
@@ -985,7 +1028,7 @@ def _resize_munged_features(features_munged: np.array, num_samples: int, config:
     _logger.debug('Reload data from memmap files with modified sizes; new features shape {}'.format(
         new_features_shape))
     features_munged = np.memmap(
-        _get_munged_features_filepaths(config), dtype=np.float32, mode='r+', shape=new_features_shape)
+        _get_munged_features_filepath(config), dtype=np.float32, mode='r+', shape=new_features_shape)
     return features_munged
 
 
@@ -998,12 +1041,12 @@ def _resize_munged_responses(responses_munged: np.array, num_samples: int, confi
     _logger.debug('Reload data from memmap files with modified sizes; new responses shape {}'.format(
         new_responses_shape))
     responses_munged = np.memmap(
-        _get_munged_responses_filepaths(config), dtype=np.float32, mode='r+', shape=new_responses_shape)
+        _get_munged_responses_filepath(config), dtype=np.float32, mode='r+', shape=new_responses_shape)
     return responses_munged
 
 
 def _create_munged_weights_data_files(config: configs.Config, num_samples: int) -> np.array:
-    weights_filepath = _get_munged_weights_filepaths(config)
+    weights_filepath = _get_munged_weights_filepath(config)
     _logger.debug('Create temporary munged weights data file at {}'.format(weights_filepath))
     shape = tuple([num_samples, config.data_build.window_radius * 2, config.data_build.window_radius * 2, 1])
     return np.memmap(weights_filepath, dtype=np.float32, mode='w+', shape=shape)
@@ -1011,23 +1054,23 @@ def _create_munged_weights_data_files(config: configs.Config, num_samples: int) 
 
 def _remove_munged_data_files(config: configs.Config) -> None:
     _logger.debug('Remove temporary munge files')
-    if os.path.exists(_get_munged_features_filepaths(config)):
-        os.remove(_get_munged_features_filepaths(config))
-    if os.path.exists(_get_munged_responses_filepaths(config)):
-        os.remove(_get_munged_responses_filepaths(config))
-    if os.path.exists(_get_munged_weights_filepaths(config)):
-        os.remove(_get_munged_weights_filepaths(config))
+    if os.path.exists(_get_munged_features_filepath(config)):
+        os.remove(_get_munged_features_filepath(config))
+    if os.path.exists(_get_munged_responses_filepath(config)):
+        os.remove(_get_munged_responses_filepath(config))
+    if os.path.exists(_get_munged_weights_filepath(config)):
+        os.remove(_get_munged_weights_filepath(config))
 
 
-def _get_munged_features_filepaths(config: configs.Config) -> str:
+def _get_munged_features_filepath(config: configs.Config) -> str:
     return _get_munged_data_filepaths(config, _FILENAME_FEATURES_MUNGE_SUFFIX)
 
 
-def _get_munged_responses_filepaths(config: configs.Config) -> str:
+def _get_munged_responses_filepath(config: configs.Config) -> str:
     return _get_munged_data_filepaths(config, _FILENAME_RESPONSES_MUNGE_SUFFIX)
 
 
-def _get_munged_weights_filepaths(config: configs.Config) -> str:
+def _get_munged_weights_filepath(config: configs.Config) -> str:
     return _get_munged_data_filepaths(config, _FILENAME_WEIGHTS_MUNGE_SUFFIX)
 
 
