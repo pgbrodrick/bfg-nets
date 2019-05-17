@@ -1,12 +1,13 @@
 from typing import List
 
 from rsCNN.networks.architectures \
-    import alex_net, change_detection, dilation_net, flat_net, residual_dilation_net, residual_flat_net, \
-    residual_unet, shared, unet
+    import alex_net, change_detection, dense_flat_net, dense_unet, dilation_net, flat_net, residual_dilation_net, \
+    residual_flat_net, residual_unet, shared, unet
 
 
 _ARCHITECTURE_NAMES = [
-    'alex_net', 'dilation_net', 'flat_net', 'residual_dilation_net', 'residual_flat_net', 'residual_unet', 'unet'
+    'alex_net', 'dense_flat_net', 'dense_unet', 'dilation_net', 'flat_net', 'residual_dilation_net',
+    'residual_flat_net', 'residual_unet', 'unet'
 ]
 
 

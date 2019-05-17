@@ -1,0 +1,72 @@
+raw_files:
+  feature_files: REQUIRED
+  response_files: REQUIRED
+  boundary_files: REQUIRED
+  feature_data_type: REQUIRED
+  response_data_type: REQUIRED
+  feature_nodata_value: -9999
+  response_nodata_value: -9999
+  boundary_bad_value: REQUIRED
+  ignore_projections: false
+data_build:
+  random_seed: 0
+  dir_out: REQUIRED
+  filename_prefix_out: REQUIRED
+  response_data_format: FCN
+  max_samples: REQUIRED
+  window_radius: REQUIRED
+  loss_window_radius: REQUIRED
+  number_folds: 10
+  validation_fold: 0
+  test_fold: 1
+  feature_mean_centering: false
+  feature_nodata_maximum_fraction: 0.0
+  response_min_value: REQUIRED
+  response_max_value: REQUIRED
+  response_background_value: REQUIRED
+data_samples:
+  apply_random_transformations: false
+  batch_size: 100
+  feature_scaler_names: REQUIRED
+  response_scaler_names: REQUIRED
+  feature_nodata_encoding: -10.0
+model_training:
+  dir_out: REQUIRED
+  verbosity: 1
+  assert_gpu: false
+  architecture_name: dense_unet
+  loss_metric: REQUIRED
+  max_epochs: 100
+  optimizer: adam
+  weighted: false
+architecture_options:
+  block_structure: [2, 2, 2, 2]
+  filters: 12
+  inshape: REQUIRED
+  kernel_size: [3, 3]
+  n_classes: REQUIRED
+  output_activation: REQUIRED
+  padding: same
+  pool_size: [2, 2]
+  use_batch_norm: true
+  use_growth: false
+  use_initial_colorspace_transformation_layer: false
+callback_general:
+  checkpoint_periods: 5
+  use_terminate_on_nan: true
+callback_tensorboard:
+  use_callback: true
+  update_freq: epoch
+  histogram_freq: 0
+  write_graph: true
+  write_grads: false
+  write_images: true
+callback_early_stopping:
+  use_callback: true
+  min_delta: 0.0001
+  patience: 50
+callback_reduced_learning_rate:
+  use_callback: true
+  factor: 0.5
+  min_delta: 0.0001
+  patience: 10
