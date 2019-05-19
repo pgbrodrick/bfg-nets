@@ -13,7 +13,7 @@ DEFAULT_BLOCK_STRUCTURE = (2, 2, 2, 2)
 class ArchitectureOptions(shared.BaseArchitectureOptions):
     block_structure = None
     _config_options_extra = [
-        ConfigOption('block_structure', (2, 2, 2, 2), tuple),
+        ConfigOption('block_structure', DEFAULT_BLOCK_STRUCTURE, tuple),
     ]
 
 

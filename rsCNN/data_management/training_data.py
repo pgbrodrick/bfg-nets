@@ -75,10 +75,10 @@ def build_or_load_rawfile_data(config: configs.Config, rebuild: bool = False):
         _create_built_data_output_directory(config)
 
         if (config.raw_files.ignore_projections is False):
-            check_projections(config.raw_files.feature_files, 
-                              config.raw_files.response_files, 
+            check_projections(config.raw_files.feature_files,
+                              config.raw_files.response_files,
                               config.raw_files.boundary_files
-            )
+                              )
 
         if (config.raw_files.boundary_files is not None):
             boundary_files = [loc_file for loc_file in config.raw_files.boundary_files
@@ -278,7 +278,6 @@ def read_mask_chunk(
         mask = mask == boundary_bad_value
 
     return mask
-
 
 
 def read_labeling_chunk(f_sets: List[gdal.Dataset],
@@ -951,7 +950,8 @@ def build_training_data_from_response_points(
 
     # one hot encode
     features, feature_band_types = shared.one_hot_encode_array(feature_raw_band_types, features, feature_memmap_file)
-    responses, response_band_types = shared.one_hot_encode_array(response_raw_band_types, responses, response_memmap_file)
+    responses, response_band_types = shared.one_hot_encode_array(
+        response_raw_band_types, responses, response_memmap_file)
 
     _logger.info('Feature shape: {}'.format(features.shape))
     _logger.info('Response shape: {}'.format(responses.shape))
