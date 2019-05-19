@@ -35,7 +35,6 @@ def apply_model_to_raster(cnn, data_container: Dataset, feature_file, destinatio
 
     config = data_container.config
 
-
     assert os.path.dirname(destination_basename), 'Output directory does not exist'
 
     # Open feature dataset and establish n_classes
@@ -78,11 +77,11 @@ def apply_model_to_raster(cnn, data_container: Dataset, feature_file, destinatio
 
         write_ul = []
         for row in rowlist:
-            d,m = shared.read_map_subset([feature_set], 
-                                         [[col, row]],
-                                         config.data_build.window_radius*2, 
-                                         mask=None, 
-                                         nodata_value=config.raw_files.feature_nodata_value)
+            d, m = shared.read_map_subset([feature_set],
+                                          [[col, row]],
+                                          config.data_build.window_radius*2,
+                                          mask=None,
+                                          nodata_value=config.raw_files.feature_nodata_value)
             if (d is None):
                 continue
 
@@ -114,7 +113,7 @@ def apply_model_to_raster(cnn, data_container: Dataset, feature_file, destinatio
 
         if (not CNN_MODE):
             if (internal_offset != 0):
-                pred_y = pred_y[:,internal_offset:-internal_offset,internal_offset:-internal_offset,:]
+                pred_y = pred_y[:, internal_offset:-internal_offset, internal_offset:-internal_offset, :]
 
         for _b in range(0, n_classes):
             for _i in range(len(images)):
@@ -141,8 +140,8 @@ def apply_model_to_raster(cnn, data_container: Dataset, feature_file, destinatio
     #    plt.clf()
 
 
-def maximum_likelihood_classification(likelihood_file,\
-                                      output_file_base,\
+def maximum_likelihood_classification(likelihood_file,
+                                      output_file_base,
                                       make_png=True,
                                       make_tif=False,
                                       png_dpi=200,
@@ -150,50 +149,45 @@ def maximum_likelihood_classification(likelihood_file,\
     """ Convert a n-band map of probabilities to a classified image using maximum likelihood.
     """
 
-
     output_tif_file = output_file_base + '.tif'
     output_png_file = output_file_base + '.png'
 
-    dataset = gdal.Open(likelihood_file,gdal.GA_ReadOnly)
+    dataset = gdal.Open(likelihood_file, gdal.GA_ReadOnly)
     n_classes = dataset.RasterCount
 
-    output = np.zeros((dataset.RasterYSize,dataset.RasterXSize))
+    output = np.zeros((dataset.RasterYSize, dataset.RasterXSize))
     output[dataset.GetRasterBand(1).ReadAsArray() == nodata_value] = nodata_value
 
-    for line in tqdm(np.arange(0,dataset.RasterYSize).astype(int),ncols=80):
-        prob = dataset.ReadAsArray(0,line,dataset.RasterXSize,1)
-        output[line,:] = np.argmax(prob)
-        output[np.any(prob == config.response_nodata_value,axis=0)] = output_nodata_value
+    for line in tqdm(np.arange(0, dataset.RasterYSize).astype(int), ncols=80):
+        prob = dataset.ReadAsArray(0, line, dataset.RasterXSize, 1)
+        output[line, :] = np.argmax(prob)
+        output[np.any(prob == config.response_nodata_value, axis=0)] = output_nodata_value
 
     if (make_tif):
-      driver = gdal.GetDriverByName('GTiff') 
-      driver.Register()
-       
-      outDataset = driver.Create(output_tif_file,output.shape[1],output.shape[0],1,gdal.GDT_Float32)
-      outDataset.SetProjection(dataset.GetProjection())
-      outDataset.SetGeoTransform(dataset.GetGeoTransform())
-      outDataset.GetRasterBand(1).WriteArray(output,0,0)
-      del outDataset
+        driver = gdal.GetDriverByName('GTiff')
+        driver.Register()
+
+        outDataset = driver.Create(output_tif_file, output.shape[1], output.shape[0], 1, gdal.GDT_Float32)
+        outDataset.SetProjection(dataset.GetProjection())
+        outDataset.SetGeoTransform(dataset.GetGeoTransform())
+        outDataset.GetRasterBand(1).WriteArray(output, 0, 0)
+        del outDataset
     if (make_png):
-      if (feature_band_to_plot is not None):
-        gs1 = gridspec.GridSpec(1,2)
-        ax = plt.subplot(gs1[0,0])
-        feat_set = gdal.Open(f,gdal.GA_ReadOnly)
-        feat = feat_set.GetRasterBand(feature_band_to_plot+1).ReadAsArray().astype(float)
-        feat[feat == config.raw_files.feature_nodata_value] = np.nan
-        plt.imshow(feat)
+        if (feature_band_to_plot is not None):
+            gs1 = gridspec.GridSpec(1, 2)
+            ax = plt.subplot(gs1[0, 0])
+            feat_set = gdal.Open(f, gdal.GA_ReadOnly)
+            feat = feat_set.GetRasterBand(feature_band_to_plot+1).ReadAsArray().astype(float)
+            feat[feat == config.raw_files.feature_nodata_value] = np.nan
+            plt.imshow(feat)
+            plt.axis('off')
+
+            ax = plt.subplot(gs1[0, 1])
+
+        output[output == output_nodata_value] = np.nan
+        cmap = mpl.cm.Set1_r
+        cmap.set_bad('black', 1.)
+        plt.imshow(output, cmap=cmap)
         plt.axis('off')
-
-        ax = plt.subplot(gs1[0,1])
-      
-      output[output == output_nodata_value] = np.nan
-      cmap = mpl.cm.Set1_r
-      cmap.set_bad('black',1.)
-      plt.imshow(output,cmap=cmap)
-      plt.axis('off')
-      plt.savefig(output_png_file,dpi=png_dpi,bbox_inches='tight')
-      plt.clf()
- 
-  
-
-
+        plt.savefig(output_png_file, dpi=png_dpi, bbox_inches='tight')
+        plt.clf()
