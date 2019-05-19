@@ -18,7 +18,7 @@ _MAX_UNIQUE_RESPONSES = 100
 def read_map_subset(datasets: List, upper_lefts: List[List[int]], window_diameter: int, mask=None, nodata_value=None):
     local_array = np.zeros((window_diameter, window_diameter, np.sum([lset.RasterCount for lset in datasets])))
     if mask is None:
-        mask = np.zeros((window_diameter,window_diameter))
+        mask = np.zeros((window_diameter, window_diameter))
     idx = 0
     for _file in range(len(datasets)):
         file_set = datasets[_file]
@@ -69,7 +69,6 @@ def one_hot_encode_array(raw_band_types: List[str], array: np.array, memmap_file
         else:
             cat_array = np.zeros(tuple(array_shape))
 
-
         # One hot-encode
         for _r in range(array_shape[-1]):
             if (_r >= cat_band_locations[_c] and _r < len(un_array)):
@@ -94,5 +93,3 @@ def one_hot_encode_array(raw_band_types: List[str], array: np.array, memmap_file
         for _r in range(len(un_array)):
             band_types.insert(cat_band_locations[_c], 'B' + str(int(_c)))
     return array, band_types
-
-
