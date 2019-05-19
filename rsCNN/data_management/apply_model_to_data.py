@@ -1,11 +1,11 @@
 import os
 
 import gdal
+import keras
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from tqdm import tqdm
 
-from rsCNN import configs
 from rsCNN.utils.general import *
 from rsCNN.data_management.training_data import Dataset
 
@@ -13,7 +13,15 @@ from rsCNN.data_management.training_data import Dataset
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
 
-def apply_model_to_raster(cnn, data_container: Dataset, feature_file, destination_basename, make_png=False, make_tif=True, CNN_MODE=False):
+def apply_model_to_raster(
+        cnn: keras.Model,
+        data_container: Dataset,
+        feature_file: str,
+        destination_basename: str,
+        make_png: bool = False,
+        make_tif: bool = True,
+        CNN_MODE: bool = False
+) -> None:
     """ Apply a trained model to a raster file.
 
       Arguments:
@@ -140,12 +148,14 @@ def apply_model_to_raster(cnn, data_container: Dataset, feature_file, destinatio
     #    plt.clf()
 
 
-def maximum_likelihood_classification(likelihood_file,
-                                      output_file_base,
-                                      make_png=True,
-                                      make_tif=False,
-                                      png_dpi=200,
-                                      output_nodata_value=-1):
+def maximum_likelihood_classification(
+        likelihood_file: str,
+        output_file_base: str,
+        make_png: bool = True,
+        make_tif: bool = False,
+        png_dpi: int = 200,
+        output_nodata_value: int = -1
+) -> None:
     """ Convert a n-band map of probabilities to a classified image using maximum likelihood.
     """
 
