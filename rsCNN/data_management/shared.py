@@ -14,7 +14,7 @@ _MAX_UNIQUE_RESPONSES = 100
 def read_map_subset(datasets: List, upper_lefts: List[List[int]], window_diameter: int, mask=None, nodata_value=None):
     local_array = np.zeros((window_diameter, window_diameter, np.sum([lset.RasterCount for lset in datasets])))
     if mask is None:
-        mask = np.zeros((window_diameter, window_diameter))
+        mask = np.zeros((window_diameter, window_diameter)).astype(bool)
     idx = 0
     for _file in range(len(datasets)):
         file_set = datasets[_file]
