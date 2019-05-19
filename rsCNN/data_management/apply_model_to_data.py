@@ -6,8 +6,9 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from tqdm import tqdm
 
-from rsCNN.utils.general import *
+from rsCNN.data_management import shared
 from rsCNN.data_management.training_data import Dataset
+from rsCNN.utils.general import *
 
 
 plt.switch_backend('Agg')  # Needed for remote server plotting
