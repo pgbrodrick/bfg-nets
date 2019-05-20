@@ -634,8 +634,7 @@ def build_training_data_ordered(
         colrow = colrow[np.random.permutation(colrow.shape[0]), :]
 
         _logger.debug('Get geotransform for feature set')
-        # TODO:  Phil:  is this an error? Should the geotransform be from the _site index of feature_sets or really just
-        #  from the first?
+        # Grab geotransform from first set - all we actually need is resolution, which has to be consistent between sites
         ref_trans = feature_sets[0].GetGeoTransform()
         subset_geotransform = None
         if config.raw_files.boundary_files is not None:
@@ -759,14 +758,13 @@ def build_training_data_from_response_points(
 
         x_sample_points = []
         y_sample_points = []
-        responses = []
+        band_responses = []
         _logger.debug('Run through first response')
         for _line in range(y_px_size):
             line_dat = np.squeeze(response_sets[_site].ReadAsArray(r_ul[0][0], r_ul[0][1] + _line, x_px_size, 1))
             if len(line_dat.shape) == 1:
                 line_dat = line_dat.reshape(-1, 1)
 
-            # TODO:  Nick:  simplify the good_data operations and log operations that are applied
             if config.data_build.response_background_value is not None:
                 good_data = np.all(line_dat != config.data_build.response_background_value, axis=1)
             else:
@@ -776,26 +774,25 @@ def build_training_data_from_response_points(
                 good_data[np.any(line_dat == config.raw_files.response_nodata_value, axis=1)] = False
 
             if (np.sum(good_data) > 0):
-                _logger.debug('Storing something about the data')
                 line_x = np.arange(x_px_size)
                 line_y = line_x.copy()
                 line_y[:] = _line
 
                 x_sample_points.extend(line_x[good_data].tolist())
                 y_sample_points.extend(line_y[good_data].tolist())
-                responses.append(line_dat[good_data, :])
+                band_responses.append(line_dat[good_data, :])
 
         xy_sample_points = np.vstack([np.array(x_sample_points), np.array(y_sample_points)]).T
-        responses_per_file = [np.vstack(responses).astype(np.float32).copy()]
+        responses_per_file = [np.vstack(band_responses).astype(np.float32)]
         _logger.debug('Found {} responses for site {}'.format(len(responses_per_file[0]), _site))
 
         _logger.debug('Grab the rest of the resopnses')
         for _file in range(1, len(response_sets)):
-            responses = np.zeros(responses_per_file[0].shape[0])
+            band_responses = np.zeros(responses_per_file[0].shape[0])
             for _point in range(len(xy_sample_points)):
-                responses[_point] = response_sets[_file].ReadAsArray(
+                band_responses[_point] = response_sets[_file].ReadAsArray(
                     r_ul[_file][0], r_ul[_file][1], 1, 1).astype(np.float32)
-            responses_per_file.append(responses.copy())
+            responses_per_file.append(band_responses.copy())
 
         responses_per_file = np.hstack(responses_per_file)
         _logger.debug('All responses now obtained, response stack of shape: {}'.format(responses_per_file.shape))
@@ -805,7 +802,7 @@ def build_training_data_from_response_points(
         xy_sample_points = xy_sample_points[good_data, :]
 
         xy_sample_points_per_site.append(xy_sample_points)
-        responses_per_site.append(np.vstack(responses))
+        responses_per_site.append(np.vstack(band_responses))
 
     total_samples = sum([site_responses.shape[0] for site_responses in responses_per_site])
     _logger.debug('Found {} total samples across {} sites'.format(total_samples, len(responses_per_site)))
@@ -819,7 +816,7 @@ def build_training_data_from_response_points(
         prop_samples_kept_per_site = config.data_build.max_samples / total_samples
         for _site in range(len(responses_per_site)):
             num_samples = len(responses_per_site[_site])
-            num_samples_kept = prop_samples_kept_per_site * num_samples
+            num_samples_kept = int(prop_samples_kept_per_site * num_samples)
 
             idxs_kept = np.random.permutation(num_samples)[:num_samples_kept]
             responses_per_site[_site] = responses_per_site[_site][idxs_kept, :]
@@ -832,13 +829,12 @@ def build_training_data_from_response_points(
             total_samples, len(responses_per_site)))
 
     # TODO: fix max size issue, but force for now to prevent overly sized sets
-    features_munged = np.memmap(
+    features = np.memmap(
         _get_munged_features_filepath(config), dtype=np.float32, mode='w+',
         shape=(total_samples, 2*config.data_build.window_radius, 2*config.data_build.window_radius, num_features)
     )
 
     sample_index = 0
-    boundary_sets = _get_boundary_sets_from_boundary_files(config)
     for _site in range(0, len(config.raw_files.feature_files)):
         _logger.debug('Open feature and response datasets for site {}'.format(_site))
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
@@ -885,40 +881,42 @@ def build_training_data_from_response_points(
             # guarantee that the feature space does.
             if local_feature is not None:
                 _logger.debug('Save sample data; {} samples saved total'.format(sample_index + 1))
-                features_munged[sample_index, ...] = local_feature.copy()
+                features[sample_index, ...] = local_feature.copy()
                 good_response_data[_cr] = True
                 sample_index += 1
         responses_per_site[_site] = responses_per_site[_site][good_response_data, :]
         _logger.debug('{} samples saved for site {}'.format(responses_per_site[_site].shape[0], _site))
 
-    # transform responses
-    responses_munged = np.vstack(responses_per_site)
-    del responses_per_site
-    _log_munged_data_information(features_munged, responses_munged)
+    assert sample_index > 0, 'Insufficient feature data corresponding to response data.  Consider increasing maximum feature nodata size'
 
-    features_munged = _resize_munged_features(features_munged, sample_index, config)
-    _log_munged_data_information(features_munged, responses_munged)
+    # transform responses
+    responses = np.vstack(responses_per_site)
+    del responses_per_site
+    _log_munged_data_information(features, responses)
+
+    features = _resize_munged_features(features, sample_index, config)
+    _log_munged_data_information(features, responses)
 
     _logger.debug('Shuffle data to avoid fold assignment biases')
-    perm = np.random.permutation(features_munged.shape[0])
-    features_munged = features_munged[perm, :]
-    responses_munged = responses_munged[perm, :]
+    perm = np.random.permutation(features.shape[0])
+    features = features[perm, :]
+    responses = responses[perm, :]
     del perm
 
-    weights_munged = np.ones((responses_munged.shape[0], 1))
-    _log_munged_data_information(features_munged, responses_munged, weights_munged)
+    weights = np.ones((responses.shape[0], 1))
+    _log_munged_data_information(features, responses, weights)
 
     # one hot encode
-    features_munged, feature_band_types = shared.one_hot_encode_array(
-        feature_raw_band_types, features_munged, _get_munged_features_filepath(config))
-    responses_munged, response_band_types = shared.one_hot_encode_array(
-        response_raw_band_types, responses_munged, _get_munged_responses_filepath(config))
-    _log_munged_data_information(features_munged, responses_munged, weights_munged)
+    features, feature_band_types = shared.one_hot_encode_array(
+        feature_raw_band_types, features, _get_munged_features_filepath(config))
+    responses, response_band_types = shared.one_hot_encode_array(
+        response_raw_band_types, responses, _get_munged_responses_filepath(config))
+    _log_munged_data_information(features, responses, weights)
 
     # This change happens to work in this instance, but will not work with all sampling strategies.  I will leave for
     # now and refactor down the line as necessary.  Generally speaking, fold assignments are specific to the style of data read
-    _save_built_data_files(features_munged, responses_munged, weights_munged, config)
-    del features_munged, responses_munged, weights_munged
+    _save_built_data_files(features, responses, weights, config)
+    del features, responses, weights
 
     if 'C' in response_raw_band_types:
         assert np.sum(np.array(response_raw_band_types) == 'C') == 1, \
@@ -1145,8 +1143,8 @@ def _log_munged_data_information(
         weights_munged: np.array = None
 ) -> None:
     if features_munged is not None:
-        _logger.debug('Munged features shape: {}'.format(features_munged.shape))
+        _logger.info('Munged features shape: {}'.format(features_munged.shape))
     if responses_munged is not None:
-        _logger.debug('Munged responses shape: {}'.format(responses_munged.shape))
+        _logger.info('Munged responses shape: {}'.format(responses_munged.shape))
     if weights_munged is not None:
-        _logger.debug('Munged weights shape: {}'.format(weights_munged.shape))
+        _logger.info('Munged weights shape: {}'.format(weights_munged.shape))

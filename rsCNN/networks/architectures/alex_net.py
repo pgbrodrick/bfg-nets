@@ -66,9 +66,9 @@ def create_model(
             encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(encoder)
             if use_batch_norm:
                 encoder = BatchNormalization()(encoder)
-            encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(encoder)
-            if use_batch_norm:
-                encoder = BatchNormalization()(encoder)
+            #encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(encoder)
+            #if use_batch_norm:
+            #    encoder = BatchNormalization()(encoder)
         # Each encoder block passes its pre-pooled layers through to the decoder
         layers_pass_through.append(encoder)
         encoder = MaxPooling2D(pool_size=pool_size)(encoder)
