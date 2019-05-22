@@ -16,18 +16,11 @@ class ConfigOption(object):
     value = None
     default = None
     type = None
-    help_text = None
 
     def __init__(self, key: str, default: any, type: any, help_text: str = None) -> None:
         self.key = key
         self.default = default
         self.type = type
-        self.help_text = help_text
-
-    def get_help_text(self):
-        if not self.help_text:
-            return DEFAULT_HELP_TEXT
-        return self.help_text
 
 
 class BaseConfigSection(object):
