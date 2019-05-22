@@ -553,12 +553,6 @@ def get_overlapping_extent(dataset_list_of_lists: List[List[gdal.Dataset]]):
     # Find the interior (UL) x,y coordinates in map-space
     interior_x = np.nanmax([x[0] for x in trans_list])
     interior_y = np.nanmin([x[3] for x in trans_list])
-    #if (trans_list[0][5] < 0):
-    #    interior_y = np.nanmin([x[3] for x in trans_list])
-    #else:
-    #    # special case where these aren't georeferenced images, use max instead 
-    #    # (positive y geotransform pixel size)
-    #    interior_y = np.nanmax([x[3] for x in trans_list])
 
     # calculate the UL coordinates in pixel-space
     ul_list = []
@@ -610,7 +604,6 @@ def build_training_data_ordered(
     _log_munged_data_information(features, responses)
 
     _logger.debug('Open boundary files')
-    boundary_sets = _get_boundary_sets_from_boundary_files(config)
 
     sample_index = 0
     for _site in range(0, len(config.raw_files.feature_files)):
@@ -620,10 +613,11 @@ def build_training_data_ordered(
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
                         for loc_file in config.raw_files.feature_files[_site]]
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
+        boundary_set = _get_boundary_sets_from_boundary_files(config)[_site]
 
         _logger.debug('Calculate interior rectangle location and extent')
-        [f_ul, r_ul, [b_ul]], x_len, y_len = get_overlapping_extent(
-            [feature_sets, response_sets, [boundary_sets[_site]]])
+        [f_ul, r_ul, b_ul], x_px_size, y_px_size = get_overlapping_extent(
+            [feature_sets, response_sets, [bs for bs in [boundary_set] if bs is not None]])
 
         _logger.debug('Calculate pixel-based interior offsets for data acquisition')
         x_sample_list = [x for x in range(0,
@@ -654,7 +648,7 @@ def build_training_data_ordered(
             _logger.debug('Determine local information about sample')
             local_boundary_vector_file = None
             local_boundary_upper_left = None
-            if (boundary_sets[_site] is not None):
+            if (boundary_set is not None):
                 local_boundary_upper_left = b_ul + xy_sample_list[_cr, :]
             if (subset_geotransform is not None):
                 subset_geotransform[0] = ref_trans[0] + (f_ul[0][0] + xy_sample_list[_cr, 0]) * ref_trans[1]
@@ -670,7 +664,7 @@ def build_training_data_ordered(
                                                                     config,
                                                                     boundary_vector_file=local_boundary_vector_file,
                                                                     boundary_upper_left=local_boundary_upper_left,
-                                                                    b_set=boundary_sets[_site],
+                                                                    b_set=boundary_set,
                                                                     boundary_subset_geotransform=subset_geotransform)
             if local_feature is not None:
                 _logger.debug('Save sample data; {} samples saved'.format(sample_index + 1))
@@ -756,15 +750,15 @@ def build_training_data_from_response_points(
 
     xy_sample_points_per_site = []
     responses_per_site = []
-    boundary_sets = _get_boundary_sets_from_boundary_files(config)
     for _site in range(0, len(config.raw_files.feature_files)):
         _logger.debug('Open feature and response datasets for site {}'.format(_site))
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.feature_files[_site]]
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
+        boundary_set = _get_boundary_sets_from_boundary_files(config)[_site]
 
         _logger.debug('Calculate overlapping extent')
         [f_ul, r_ul, b_ul], x_px_size, y_px_size = get_overlapping_extent(
-            [feature_sets, response_sets, [bs for bs in boundary_sets if bs is not None]])
+            [feature_sets, response_sets, [bs for bs in [boundary_set] if bs is not None]])
 
         x_sample_points = []
         y_sample_points = []
@@ -850,10 +844,11 @@ def build_training_data_from_response_points(
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
                         for loc_file in config.raw_files.feature_files[_site]]
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
+        boundary_set = _get_boundary_sets_from_boundary_files(config)[_site]
 
         _logger.debug('Calculate interior rectangle location and extent')
         [f_ul, r_ul, b_ul], x_px_size, y_px_size = get_overlapping_extent(
-            [feature_sets, response_sets, [bs for bs in boundary_sets if bs is not None]])
+            [feature_sets, response_sets, [bs for bs in [boundary_set] if bs is not None]])
 
         # xy_sample_list is current the response centers, but we need to use the pixel ULs.  So subtract
         # out the corresponding feature radius
@@ -873,7 +868,7 @@ def build_training_data_from_response_points(
             # Determine local information about boundary file
             local_boundary_vector_file = None
             local_boundary_upper_left = None
-            if (boundary_sets[_site] is not None):
+            if (boundary_set is not None):
                 local_boundary_upper_left = b_ul + xy_sample_list[_cr, :]
             if (subset_geotransform is not None):
                 # define a geotramsform for the subset we are going to take
@@ -883,7 +878,7 @@ def build_training_data_from_response_points(
 
             local_feature = read_labeling_chunk(
                 feature_sets, f_ul + xy_sample_list[_cr, :], config, boundary_vector_file=local_boundary_vector_file,
-                boundary_upper_left=local_boundary_upper_left, b_set=boundary_sets[_site],
+                boundary_upper_left=local_boundary_upper_left, b_set=boundary_set,
                 boundary_subset_geotransform=subset_geotransform
             )
 
