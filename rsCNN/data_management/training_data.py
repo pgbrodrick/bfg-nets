@@ -698,12 +698,12 @@ def build_training_data_ordered(
     del perm
 
     _logger.debug('Create uniform weights')
-    basename = _get_built_data_basename(config)
     shape = tuple(list(features.shape)[:-1] + [1])
     weights = np.memmap(_get_munged_weights_filepath(config), dtype=np.float32, mode='w+', shape=shape)
     weights[:, :, :, :] = 1
     _logger.debug('Remove weights for missing responses')
     weights[np.isnan(responses[..., 0])] = 0
+    assert not np.all(weights == 0), 'All weights are zero because all responses are np.nan'
 
     _logger.debug('Remove weights outside loss window')
     if (config.data_build.loss_window_radius != config.data_build.window_radius):
@@ -712,6 +712,7 @@ def build_training_data_ordered(
         weights[:, -buf:, :, -1] = 0
         weights[:, :, :buf, -1] = 0
         weights[:, :, -buf:, -1] = 0
+        assert not np.all(weights == 0), 'All weights are zero because buffer is incorrect'
     _log_munged_data_information(features, responses, weights)
 
     _logger.debug('One-hot encode features')
@@ -729,7 +730,9 @@ def build_training_data_ordered(
         assert np.sum(np.array(response_raw_band_types) == 'C') == 1, \
             'Weighting is currently only enabled for one categorical response variable.'
         features, responses, weights = _load_built_data_files(config, writeable=True)
+        assert not np.all(weights == 0), 'Loaded (prior to reweighting) weights are all zero'
         weights = calculate_categorical_weights(responses, weights, config)
+        assert not np.all(weights == 0), 'Categorical weights are all zero'
         del features, responses, weights
 
     _remove_munged_data_files(config)
@@ -737,6 +740,7 @@ def build_training_data_ordered(
     _logger.debug('Store data build config sections')
     _save_built_data_config_sections_to_verify_successful(config)
     features, responses, weights = _load_built_data_files(config, writeable=False)
+    assert not np.all(weights == 0), 'Loaded (complete) weights are all zero'
     return features, responses, weights, feature_band_types, response_band_types
 
 
