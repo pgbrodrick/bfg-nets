@@ -1,5 +1,6 @@
 from collections import OrderedDict
 import copy
+import logging
 import os
 from typing import List
 
@@ -8,10 +9,9 @@ import yaml
 from rsCNN.configs.shared import BaseConfigSection, ConfigOption
 from rsCNN.data_management import scalers
 from rsCNN.networks import architectures
-from rsCNN.utils import logging
 
 
-_logger = logging.get_child_logger(__name__)
+_logger = logging.getLogger(__name__)
 
 FILENAME_CONFIG = 'config.yaml'
 
