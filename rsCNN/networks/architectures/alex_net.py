@@ -62,13 +62,10 @@ def create_model(
     # Each encoder block has a number of subblocks
     for num_subblocks in block_structure:
         for idx_sublayer in range(num_subblocks):
-            # Each subblock has two convolutions
+            # Each subblock has a number of convolutions
             encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(encoder)
             if use_batch_norm:
                 encoder = BatchNormalization()(encoder)
-            #encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(encoder)
-            #if use_batch_norm:
-            #    encoder = BatchNormalization()(encoder)
         # Each encoder block passes its pre-pooled layers through to the decoder
         layers_pass_through.append(encoder)
         encoder = MaxPooling2D(pool_size=pool_size)(encoder)

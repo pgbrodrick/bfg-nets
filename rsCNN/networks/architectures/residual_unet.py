@@ -64,18 +64,15 @@ def create_model(
 
     # Each encoder block has a number of subblocks
     for num_subblocks in block_structure:
+        # Store the subblock input for the residual connection
+        input_subblock = encoder
         for idx_sublayer in range(num_subblocks):
-            # Store the subblock input for the residual connection
-            input_subblock = encoder
-            # Each subblock has two convolutions
+            # Each subblock has a number of convolutions
             encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(encoder)
             if use_batch_norm:
                 encoder = BatchNormalization()(encoder)
-            encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(encoder)
-            if use_batch_norm:
-                encoder = BatchNormalization()(encoder)
-            # Add the residual connection from the previous subblock output to the current subblock output
-            encoder = _add_residual_shortcut(input_subblock, encoder)
+        # Add the residual connection from the previous subblock output to the current subblock output
+        encoder = _add_residual_shortcut(input_subblock, encoder)
         # Each encoder block passes its pre-pooled layers through to the decoder
         layers_pass_through.append(encoder)
         encoder = MaxPooling2D(pool_size=pool_size)(encoder)
@@ -86,18 +83,15 @@ def create_model(
     decoder = encoder
     # Each decoder block has a number of subblocks, but in reverse order of encoder
     for num_subblocks, layer_passed_through in zip(reversed(block_structure), reversed(layers_pass_through)):
+        # Store the subblock input for the residual connection
+        input_subblock = decoder
         for idx_sublayer in range(num_subblocks):
-            # Store the subblock input for the residual connection
-            input_subblock = decoder
-            # Each subblock has two convolutions
+            # Each subblock has a number of convolutions
             decoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(decoder)
             if use_batch_norm:
                 decoder = BatchNormalization()(decoder)
-            decoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(decoder)
-            if use_batch_norm:
-                decoder = BatchNormalization()(decoder)
-            # Add the residual connection from the previous subblock output to the current subblock output
-            decoder = _add_residual_shortcut(input_subblock, decoder)
+        # Add the residual connection from the previous subblock output to the current subblock output
+        decoder = _add_residual_shortcut(input_subblock, decoder)
         decoder = UpSampling2D(size=pool_size)(decoder)
         decoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(decoder)
         if use_batch_norm:
@@ -108,9 +102,6 @@ def create_model(
 
     # Last convolutions
     output_layer = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(decoder)
-    if use_batch_norm:
-        output_layer = BatchNormalization()(output_layer)
-    output_layer = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(output_layer)
     if use_batch_norm:
         output_layer = BatchNormalization()(output_layer)
     output_layer = Conv2D(

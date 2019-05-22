@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import Tuple
 
 import keras
 from keras.layers import BatchNormalization, Conv2D
