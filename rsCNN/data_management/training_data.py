@@ -22,7 +22,7 @@ from rsCNN.utils.general import *
 _logger = logging.getLogger(__name__)
 
 
-#TODO: change munge to temporary
+# TODO: change munge to temporary
 _FILENAME_BUILT_DATA_CONFIG_SUFFIX = 'built_data_config.yaml'
 _FILENAME_FEATURES_SUFFIX = 'features_{}.npy'
 _FILENAME_FEATURES_TEMPORARY_SUFFIX = '_features_memmap_temporary.npy'
@@ -274,7 +274,8 @@ def read_mask_chunk(
         mask = rasterize_vector(boundary_vector_file, boundary_subset_geotransform,
                                 (window_diameter, window_diameter))
     if (b_set is not None):
-        mask = b_set.ReadAsArray(int(boundary_upper_left[0]), int(boundary_upper_left[1]), window_diameter, window_diameter)
+        mask = b_set.ReadAsArray(int(boundary_upper_left[0]), int(
+            boundary_upper_left[1]), window_diameter, window_diameter)
 
     if mask is None:
         mask = np.zeros((window_diameter, window_diameter)).astype(bool)
@@ -587,7 +588,7 @@ def build_training_data_ordered(
         response_raw_band_types: List[List[str]]
 ):
 
-    #TODO:  check default, and set it to a standard value
+    # TODO:  check default, and set it to a standard value
     if config.data_build.random_seed:
         _logger.debug('Setting random seed to {}'.format(config.data_build.random_seed))
         np.random.seed(config.data_build.random_seed)
@@ -624,15 +625,17 @@ def build_training_data_ordered(
 
         _logger.debug('Calculate pixel-based interior offsets for data acquisition')
         x_sample_list = [x for x in range(0,
-                                    int(x_px_size - 2*config.data_build.window_radius)-1,
-                                    int(config.data_build.loss_window_radius*2))]
+                                          int(x_px_size - 2*config.data_build.window_radius)-1,
+                                          int(config.data_build.loss_window_radius*2))]
         y_sample_list = [y for y in range(0,
-                                    int(y_px_size - 2*config.data_build.window_radius)-1,
-                                    int(config.data_build.loss_window_radius*2))]
+                                          int(y_px_size - 2*config.data_build.window_radius)-1,
+                                          int(config.data_build.loss_window_radius*2))]
 
         xy_sample_list = np.zeros((len(x_sample_list)*len(y_sample_list), 2)).astype(int)
-        xy_sample_list[:, 0] = np.matlib.repmat(np.array(x_sample_list).reshape((-1, 1)), 1, len(y_sample_list)).flatten()
-        xy_sample_list[:, 1] = np.matlib.repmat(np.array(y_sample_list).reshape((1, -1)), len(x_sample_list), 1).flatten()
+        xy_sample_list[:, 0] = np.matlib.repmat(
+            np.array(x_sample_list).reshape((-1, 1)), 1, len(y_sample_list)).flatten()
+        xy_sample_list[:, 1] = np.matlib.repmat(
+            np.array(y_sample_list).reshape((1, -1)), len(x_sample_list), 1).flatten()
         del x_sample_list, y_sample_list
         xy_sample_list = xy_sample_list[np.random.permutation(xy_sample_list.shape[0]), :]
 
@@ -658,7 +661,6 @@ def build_training_data_ordered(
                 subset_geotransform[3] = ref_trans[3] + (f_ul[0][1] + xy_sample_list[_cr, 1]) * ref_trans[5]
                 local_boundary_vector_file = config.raw_files.boundary_files[_site]
             _logger.debug('Read sample data')
-            
 
             local_feature, local_response = read_segmentation_chunk(feature_sets,
                                                                     response_sets,
