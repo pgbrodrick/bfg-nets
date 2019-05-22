@@ -21,13 +21,14 @@ from rsCNN.utils import logging
 _logger = logging.get_child_logger(__name__)
 
 
+#TODO: change munge to temporary
 _FILENAME_BUILT_DATA_CONFIG_SUFFIX = 'built_data_config.yaml'
 _FILENAME_FEATURES_SUFFIX = 'features_{}.npy'
-_FILENAME_FEATURES_MUNGE_SUFFIX = '_features_munge_memmap.npy'
+_FILENAME_FEATURES_TEMPORARY_SUFFIX = '_features_memmap_temporary.npy'
 _FILENAME_RESPONSES_SUFFIX = 'responses_{}.npy'
-_FILENAME_RESPONSES_MUNGE_SUFFIX = '_responses_munge_memmap.npy'
+_FILENAME_RESPONSES_TEMPORARY_SUFFIX = '_responses_memmap_temporary.npy'
 _FILENAME_WEIGHTS_SUFFIX = 'weights_{}.npy'
-_FILENAME_WEIGHTS_MUNGE_SUFFIX = '_weights_munge_memmap.npy'
+_FILENAME_WEIGHTS_TEMPORARY_SUFFIX = '_weights_memmap_temporary.npy'
 _VECTORIZED_FILENAMES = ('kml', 'shp')
 
 
@@ -405,7 +406,7 @@ class Dataset:
         # TODO:  I think this worked only if feature_scaler_name was a string, but it was also possible to be a list
         #  according to the DataConfig, in which case it would error out. This needs to be updated for multiple scalers.
         #  Specifically, the feature_scaler and response_scaler assignments need to be vectorized.
-        basename = _get_built_data_basename(self.config)
+        basename = _get_memmap_basename(self.config)
         feat_scaler_atr = {'savename_base': basename + '_feature_scaler'}
         feature_scaler = scalers.get_scaler(self.config.data_samples.feature_scaler_names[0], feat_scaler_atr)
         resp_scaler_atr = {'savename_base': basename + '_response_scaler'}
@@ -585,6 +586,7 @@ def build_training_data_ordered(
         response_raw_band_types: List[List[str]]
 ):
 
+    #TODO:  check default, and set it to a standard value
     if config.data_build.random_seed:
         _logger.debug('Setting random seed to {}'.format(config.data_build.random_seed))
         np.random.seed(config.data_build.random_seed)
@@ -621,10 +623,10 @@ def build_training_data_ordered(
 
         _logger.debug('Calculate pixel-based interior offsets for data acquisition')
         x_sample_list = [x for x in range(0,
-                                    int(x_len - 2*config.data_build.window_radius)-1,
+                                    int(x_px_size - 2*config.data_build.window_radius)-1,
                                     int(config.data_build.loss_window_radius*2))]
         y_sample_list = [y for y in range(0,
-                                    int(y_len - 2*config.data_build.window_radius)-1,
+                                    int(y_px_size - 2*config.data_build.window_radius)-1,
                                     int(config.data_build.loss_window_radius*2))]
 
         xy_sample_list = np.zeros((len(x_sample_list)*len(y_sample_list), 2)).astype(int)
@@ -692,9 +694,9 @@ def build_training_data_ordered(
     del perm
 
     _logger.debug('Create uniform weights')
-    basename = _get_built_data_basename(config)
+    basename = _get_memmap_basename(config)
     shape = tuple(list(features.shape)[:-1] + [1])
-    weights = np.memmap(_get_munged_weights_filepath(config), dtype=np.float32, mode='w+', shape=shape)
+    weights = np.memmap(_get_temporary_weights_filepath(config), dtype=np.float32, mode='w+', shape=shape)
     weights[:, :, :, :] = 1
     _logger.debug('Remove weights for missing responses')
     weights[np.isnan(responses[..., 0])] = 0
@@ -710,10 +712,10 @@ def build_training_data_ordered(
 
     _logger.debug('One-hot encode features')
     features, feature_band_types = shared.one_hot_encode_array(
-        feature_raw_band_types, features, _get_munged_features_filepath(config))
+        feature_raw_band_types, features, _get_temporary_features_filepath(config))
     _logger.debug('One-hot encode responses')
     responses, response_band_types = shared.one_hot_encode_array(
-        response_raw_band_types, responses, _get_munged_responses_filepath(config))
+        response_raw_band_types, responses, _get_temporary_responses_filepath(config))
     _log_munged_data_information(features, responses, weights)
 
     _save_built_data_files(features, responses, weights, config)
@@ -723,7 +725,12 @@ def build_training_data_ordered(
         assert np.sum(np.array(response_raw_band_types) == 'C') == 1, \
             'Weighting is currently only enabled for one categorical response variable.'
         features, responses, weights = _load_built_data_files(config, writeable=True)
+        assert not np.all(weights[0] == 0), 'Before weights must not be all 0'
         weights = calculate_categorical_weights(responses, weights, config)
+        assert not np.all(weights[0] == 0), 'After weights must not be all 0'
+        _logger.debug('Delete in order to flush output')
+        # WEIGHTS SHOULD NOT BE ALL 0
+        _save_built_data_files(features, responses, weights, config)
         del features, responses, weights
 
     _remove_munged_data_files(config)
@@ -834,7 +841,7 @@ def build_training_data_from_response_points(
 
     # TODO: fix max size issue, but force for now to prevent overly sized sets
     features = np.memmap(
-        _get_munged_features_filepath(config), dtype=np.float32, mode='w+',
+        _get_temporary_features_filepath(config), dtype=np.float32, mode='w+',
         shape=(total_samples, 2*config.data_build.window_radius, 2*config.data_build.window_radius, num_features)
     )
 
@@ -913,9 +920,9 @@ def build_training_data_from_response_points(
 
     # one hot encode
     features, feature_band_types = shared.one_hot_encode_array(
-        feature_raw_band_types, features, _get_munged_features_filepath(config))
+        feature_raw_band_types, features, _get_temporary_features_filepath(config))
     responses, response_band_types = shared.one_hot_encode_array(
-        response_raw_band_types, responses, _get_munged_responses_filepath(config))
+        response_raw_band_types, responses, _get_temporary_responses_filepath(config))
     _log_munged_data_information(features, responses, weights)
 
     # This change happens to work in this instance, but will not work with all sampling strategies.  I will leave for
@@ -937,6 +944,8 @@ def build_training_data_from_response_points(
     return features, responses, weights, feature_band_types, response_band_types
 
 
+################### Verification Functions ##############################
+
 def _check_mask_data_sufficient(mask: np.array, max_nodata_fraction: float) -> bool:
     if mask is not None:
         nodata_fraction = np.sum(mask) / np.prod(mask.shape)
@@ -955,111 +964,9 @@ def _is_boundary_file_vectorized(boundary_filepath: str) -> bool:
     return str(os.path.splitext(boundary_filepath)).lower() in _VECTORIZED_FILENAMES
 
 
-# TODO:  improve typing return
-def _get_boundary_sets_from_boundary_files(config: configs.Config) -> List:
-    if not config.raw_files.boundary_files:
-        boundary_sets = [None] * len(config.raw_files.feature_files)
-    else:
-        boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) if loc_file is not None else None
-                         for loc_file in config.raw_files.boundary_files]
-    return boundary_sets
-
-
-def _create_built_data_output_directory(config: configs.Config) -> None:
-    if not os.path.exists(config.data_build.dir_out):
-        _logger.debug('Create built data output directory at {}'.format(config.data_build.dir_out))
-        os.makedirs(config.data_build.dir_out)
-
-
-def _create_munged_features_responses_data_files(config: configs.Config, num_features: int, num_responses: int) \
-        -> Tuple[np.array, np.array]:
-    basename = _get_built_data_basename(config)
-    shape = [config.data_build.max_samples, config.data_build.window_radius * 2, config.data_build.window_radius * 2]
-    shape_features = tuple(shape + [num_features])
-    shape_responses = tuple(shape + [num_responses])
-
-    features_filepath = _get_munged_features_filepath(config)
-    responses_filepath = _get_munged_responses_filepath(config)
-
-    _logger.debug('Create temporary munged features data file with shape {} at {}'.format(
-        shape_features, features_filepath))
-    features = np.memmap(features_filepath, dtype=np.float32, mode='w+', shape=shape_features)
-
-    _logger.debug('Create temporary munged responses data file with shape {} at {}'.format(
-        shape_responses, responses_filepath))
-    responses = np.memmap(responses_filepath, dtype=np.float32, mode='w+', shape=shape_responses)
-    return features, responses
-
-
-def _resize_munged_features(features_munged: np.array, num_samples: int, config: configs.Config) -> np.array:
-    _logger.debug('Resize memmapped features array with out-of-memory methods; original features shape {}'.format(
-        features_munged.shape))
-    new_features_shape = tuple([num_samples] + list(features_munged.shape[1:]))
-    _logger.debug('Delete in-memory data to force data dump')
-    del features_munged
-    _logger.debug('Reload data from memmap files with modified sizes; new features shape {}'.format(
-        new_features_shape))
-    features_munged = np.memmap(
-        _get_munged_features_filepath(config), dtype=np.float32, mode='r+', shape=new_features_shape)
-    return features_munged
-
-
-def _resize_munged_responses(responses_munged: np.array, num_samples: int, config: configs.Config) -> np.array:
-    _logger.debug('Resize memmapped responses array with out-of-memory methods; original responses shape {}'.format(
-        responses_munged.shape))
-    new_responses_shape = tuple([num_samples] + list(responses_munged.shape[1:]))
-    _logger.debug('Delete in-memory data to force data dump')
-    del responses_munged
-    _logger.debug('Reload data from memmap files with modified sizes; new responses shape {}'.format(
-        new_responses_shape))
-    responses_munged = np.memmap(
-        _get_munged_responses_filepath(config), dtype=np.float32, mode='r+', shape=new_responses_shape)
-    return responses_munged
-
-
-def _create_munged_weights_data_files(config: configs.Config, num_samples: int) -> np.array:
-    weights_filepath = _get_munged_weights_filepath(config)
-    _logger.debug('Create temporary munged weights data file at {}'.format(weights_filepath))
-    shape = tuple([num_samples, config.data_build.window_radius * 2, config.data_build.window_radius * 2, 1])
-    return np.memmap(weights_filepath, dtype=np.float32, mode='w+', shape=shape)
-
-
-def _remove_munged_data_files(config: configs.Config) -> None:
-    _logger.debug('Remove temporary munge files')
-    if os.path.exists(_get_munged_features_filepath(config)):
-        os.remove(_get_munged_features_filepath(config))
-    if os.path.exists(_get_munged_responses_filepath(config)):
-        os.remove(_get_munged_responses_filepath(config))
-    if os.path.exists(_get_munged_weights_filepath(config)):
-        os.remove(_get_munged_weights_filepath(config))
-
-
-def _get_munged_features_filepath(config: configs.Config) -> str:
-    return _get_munged_data_filepaths(config, _FILENAME_FEATURES_MUNGE_SUFFIX)
-
-
-def _get_munged_responses_filepath(config: configs.Config) -> str:
-    return _get_munged_data_filepaths(config, _FILENAME_RESPONSES_MUNGE_SUFFIX)
-
-
-def _get_munged_weights_filepath(config: configs.Config) -> str:
-    return _get_munged_data_filepaths(config, _FILENAME_WEIGHTS_MUNGE_SUFFIX)
-
-
-def _get_munged_data_filepaths(config: configs.Config, filename_suffix: str) -> str:
-    return _get_built_data_basename(config) + filename_suffix
-
-
 def _check_build_successful_and_built_data_config_sections_available(config: configs.Config) -> bool:
     filepath = _get_built_data_config_filepath(config)
     return os.path.exists(filepath)
-
-
-def _save_built_data_config_sections_to_verify_successful(config: configs.Config) -> None:
-    filepath = _get_built_data_config_filepath(config)
-    _logger.debug('Saving built data config sections to {}'.format(filepath))
-    configs.save_config_to_file(
-        config, os.path.dirname(filepath), os.path.basename(filepath), include_sections=['raw_files', 'data_build'])
 
 
 def _check_built_data_files_exist(config: configs.Config) -> bool:
@@ -1075,6 +982,46 @@ def _check_built_data_files_exist(config: configs.Config) -> bool:
     return not missing_files
 
 
+################### File/Dataset Opening Functions ##############################
+
+
+# TODO:  improve typing return
+def _get_boundary_sets_from_boundary_files(config: configs.Config) -> List:
+    if not config.raw_files.boundary_files:
+        boundary_sets = [None] * len(config.raw_files.feature_files)
+    else:
+        boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) if loc_file is not None else None
+                         for loc_file in config.raw_files.boundary_files]
+    return boundary_sets
+
+
+def _create_munged_features_responses_data_files(config: configs.Config, num_features: int, num_responses: int) \
+        -> Tuple[np.array, np.array]:
+    basename = _get_memmap_basename(config)
+    shape = [config.data_build.max_samples, config.data_build.window_radius * 2, config.data_build.window_radius * 2]
+    shape_features = tuple(shape + [num_features])
+    shape_responses = tuple(shape + [num_responses])
+
+    features_filepath = _get_temporary_features_filepath(config)
+    responses_filepath = _get_temporary_responses_filepath(config)
+
+    _logger.debug('Create temporary munged features data file with shape {} at {}'.format(
+        shape_features, features_filepath))
+    features = np.memmap(features_filepath, dtype=np.float32, mode='w+', shape=shape_features)
+
+    _logger.debug('Create temporary munged responses data file with shape {} at {}'.format(
+        shape_responses, responses_filepath))
+    responses = np.memmap(responses_filepath, dtype=np.float32, mode='w+', shape=shape_responses)
+    return features, responses
+
+
+def _create_temporary_weights_data_files(config: configs.Config, num_samples: int) -> np.array:
+    weights_filepath = _get_temporary_weights_filepath(config)
+    _logger.debug('Create temporary munged weights data file at {}'.format(weights_filepath))
+    shape = tuple([num_samples, config.data_build.window_radius * 2, config.data_build.window_radius * 2, 1])
+    return np.memmap(weights_filepath, dtype=np.float32, mode='w+', shape=shape)
+
+
 def _load_built_data_files(config: configs.Config, writeable: bool = False) \
         -> Tuple[List[np.array], List[np.array], List[np.array]]:
     _logger.debug('Loading built data files with writeable == {}'.format(writeable))
@@ -1082,11 +1029,15 @@ def _load_built_data_files(config: configs.Config, writeable: bool = False) \
     response_files = _get_built_responses_filepaths(config)
     weight_files = _get_built_weights_filepaths(config)
     mode = 'r+' if writeable else 'r'
+
     features = [np.load(feature_file, mmap_mode=mode) for feature_file in feature_files]
     responses = [np.load(response_file, mmap_mode=mode) for response_file in response_files]
     weights = [np.load(weight_file, mmap_mode=mode) for weight_file in weight_files]
     _logger.debug('Built data files loaded')
     return features, responses, weights
+
+
+################### Save/remove Functions ##############################
 
 
 def _save_built_data_files(
@@ -1101,21 +1052,95 @@ def _save_built_data_files(
         idx_start = int(round(f / config.data_build.number_folds * len(fold_assignments)))
         idx_finish = int(round((f + 1) / config.data_build.number_folds * len(fold_assignments)))
         fold_assignments[idx_start:idx_finish] = f
+
     _logger.debug('Save features to memmapped arrays separated by folds')
     features_filepaths = _get_built_features_filepaths(config)
     for idx_fold in range(config.data_build.number_folds):
         _logger.debug('Save features fold {}'.format(idx_fold))
         np.save(features_filepaths[idx_fold], features_munged[fold_assignments == idx_fold, ...])
+
     _logger.debug('Save responses to memmapped arrays separated by folds')
     responses_filepaths = _get_built_responses_filepaths(config)
     for idx_fold in range(config.data_build.number_folds):
         _logger.debug('Save responses fold {}'.format(idx_fold))
         np.save(responses_filepaths[idx_fold], responses_munged[fold_assignments == idx_fold, ...])
+
     _logger.debug('Save weights to memmapped arrays separated by folds')
     weights_filepaths = _get_built_weights_filepaths(config)
     for idx_fold in range(config.data_build.number_folds):
         _logger.debug('Save weights fold {}'.format(idx_fold))
         np.save(weights_filepaths[idx_fold], weights_munged[fold_assignments == idx_fold, ...])
+
+
+def _save_built_data_config_sections_to_verify_successful(config: configs.Config) -> None:
+    filepath = _get_built_data_config_filepath(config)
+    _logger.debug('Saving built data config sections to {}'.format(filepath))
+    configs.save_config_to_file(
+        config, os.path.dirname(filepath), os.path.basename(filepath), include_sections=['raw_files', 'data_build'])
+
+
+def _remove_munged_data_files(config: configs.Config) -> None:
+    _logger.debug('Remove temporary munge files')
+    if os.path.exists(_get_temporary_features_filepath(config)):
+        os.remove(_get_temporary_features_filepath(config))
+    if os.path.exists(_get_temporary_responses_filepath(config)):
+        os.remove(_get_temporary_responses_filepath(config))
+    if os.path.exists(_get_temporary_weights_filepath(config)):
+        os.remove(_get_temporary_weights_filepath(config))
+
+
+################### Array Resizing Functions ##############################
+
+
+def _resize_munged_features(features_munged: np.array, num_samples: int, config: configs.Config) -> np.array:
+    _logger.debug('Resize memmapped features array with out-of-memory methods; original features shape {}'.format(
+        features_munged.shape))
+    new_features_shape = tuple([num_samples] + list(features_munged.shape[1:]))
+    _logger.debug('Delete in-memory data to force data dump')
+    del features_munged
+    _logger.debug('Reload data from memmap files with modified sizes; new features shape {}'.format(
+        new_features_shape))
+    features_munged = np.memmap(
+        _get_temporary_features_filepath(config), dtype=np.float32, mode='r+', shape=new_features_shape)
+    return features_munged
+
+
+def _resize_munged_responses(responses_munged: np.array, num_samples: int, config: configs.Config) -> np.array:
+    _logger.debug('Resize memmapped responses array with out-of-memory methods; original responses shape {}'.format(
+        responses_munged.shape))
+    new_responses_shape = tuple([num_samples] + list(responses_munged.shape[1:]))
+    _logger.debug('Delete in-memory data to force data dump')
+    del responses_munged
+    _logger.debug('Reload data from memmap files with modified sizes; new responses shape {}'.format(
+        new_responses_shape))
+    responses_munged = np.memmap(
+        _get_temporary_responses_filepath(config), dtype=np.float32, mode='r+', shape=new_responses_shape)
+    return responses_munged
+
+
+################### Filepath Nomenclature Functions ##############################
+
+
+def _create_built_data_output_directory(config: configs.Config) -> None:
+    if not os.path.exists(config.data_build.dir_out):
+        _logger.debug('Create built data output directory at {}'.format(config.data_build.dir_out))
+        os.makedirs(config.data_build.dir_out)
+
+
+def _get_temporary_features_filepath(config: configs.Config) -> str:
+    return _get_temporary_data_filepaths(config, _FILENAME_FEATURES_TEMPORARY_SUFFIX)
+
+
+def _get_temporary_responses_filepath(config: configs.Config) -> str:
+    return _get_temporary_data_filepaths(config, _FILENAME_RESPONSES_TEMPORARY_SUFFIX)
+
+
+def _get_temporary_weights_filepath(config: configs.Config) -> str:
+    return _get_temporary_data_filepaths(config, _FILENAME_WEIGHTS_TEMPORARY_SUFFIX)
+
+
+def _get_temporary_data_filepaths(config: configs.Config, filename_suffix: str) -> str:
+    return _get_memmap_basename(config) + filename_suffix
 
 
 def _get_built_features_filepaths(config: configs.Config) -> List[str]:
@@ -1135,14 +1160,17 @@ def _get_built_data_config_filepath(config: configs.Config) -> str:
 
 
 def _get_built_data_filepaths(config: configs.Config, filename_suffix: str) -> List[str]:
-    basename = _get_built_data_basename(config)
+    basename = _get_memmap_basename(config)
     filepaths = [basename + filename_suffix.format(idx_fold) for idx_fold in range(config.data_build.number_folds)]
     return filepaths
 
 
-def _get_built_data_basename(config: configs.Config) -> str:
+def _get_memmap_basename(config: configs.Config) -> str:
     filepath_separator = config.data_build.filename_prefix_out + '_' if config.data_build.filename_prefix_out else ''
     return os.path.join(config.data_build.dir_out, filepath_separator)
+
+
+################### Logging Functions ##############################
 
 
 def _log_munged_data_information(
