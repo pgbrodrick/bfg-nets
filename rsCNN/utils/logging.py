@@ -32,11 +32,15 @@ model_directory/log.out.
 """
 
 
-def get_child_logger(logger_name: str) -> logging.Logger:
-    return logging.getLogger(logger_name)
-
-
 def get_root_logger(log_outfile: str = None) -> logging.Logger:
+    """Docstring
+
+    Args:
+        log_outfile: file to which logs should be written.
+
+    Returns:
+        Logger configured for logging.
+    """
     logger = logging.getLogger('rsCNN')
     logger.setLevel(logging.INFO)
     formatter = logging.Formatter(fmt='%(asctime)s - %(processName)s - %(name)s - %(levelname)s - %(message)s')

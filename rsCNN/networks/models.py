@@ -1,12 +1,11 @@
+import logging
 import os
 from typing import Union
 
 import keras
 
-from rsCNN.utils import logging
 
-
-_logger = logging.get_child_logger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 FILENAME_MODEL = 'model.h5'

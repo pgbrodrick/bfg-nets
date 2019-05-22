@@ -1,12 +1,11 @@
+import logging
+import os
 from typing import List
 
 import numpy as np
 
-from rsCNN.utils import logging
-import os
 
-
-_logger = logging.get_child_logger(__name__)
+_logger = logging.getLogger(__name__)
 
 _MAX_UNIQUE_RESPONSES = 100
 

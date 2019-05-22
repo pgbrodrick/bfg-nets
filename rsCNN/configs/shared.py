@@ -1,11 +1,10 @@
 from collections import OrderedDict
+import logging
 import re
 from typing import Dict, List
 
-from rsCNN.utils import logging
 
-
-_logger = logging.get_child_logger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 DEFAULT_HELP_TEXT = 'This config option needs help text for documentation purposes.'

@@ -1,3 +1,4 @@
+import logging
 import os
 
 import keras
@@ -7,10 +8,10 @@ import numpy as np
 from rsCNN import configs
 from rsCNN.data_management.sequences import BaseSequence
 from rsCNN.networks import architectures, callbacks, histories, losses, models
-from rsCNN.utils import gpus, logging
+from rsCNN.utils import gpus
 
 
-_logger = logging.get_child_logger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 # TODO: rename Experiment to something more reasonable, as well as this file

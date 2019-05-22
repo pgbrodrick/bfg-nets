@@ -1,14 +1,13 @@
+import logging
+import os
 import sys
 
 import numpy as np
-import os
 from sklearn.externals import joblib
 import sklearn.preprocessing
 
-from rsCNN.utils import logging
 
-
-_logger = logging.get_child_logger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 def check_scaler_exists(scaler_name: str) -> bool:
