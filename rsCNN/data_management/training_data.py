@@ -262,7 +262,7 @@ def read_mask_chunk(
         boundary_vector_file: str,
         boundary_subset_geotransform: tuple,
         b_set: gdal.Dataset,
-        boundary_upper_left: List,
+        boundary_upper_left: List[int],
         window_diameter: int,
         boundary_bad_value: float
 ) -> np.array:
@@ -272,7 +272,7 @@ def read_mask_chunk(
         mask = rasterize_vector(boundary_vector_file, boundary_subset_geotransform,
                                 (window_diameter, window_diameter))
     if (b_set is not None):
-        mask = b_set.ReadAsArray(boundary_upper_left[0], boundary_upper_left[1], window_diameter, window_diameter)
+        mask = b_set.ReadAsArray(int(boundary_upper_left[0]), int(boundary_upper_left[1]), window_diameter, window_diameter)
 
     if mask is None:
         mask = np.zeros((window_diameter, window_diameter)).astype(bool)
@@ -553,6 +553,12 @@ def get_overlapping_extent(dataset_list_of_lists: List[List[gdal.Dataset]]):
     # Find the interior (UL) x,y coordinates in map-space
     interior_x = np.nanmax([x[0] for x in trans_list])
     interior_y = np.nanmin([x[3] for x in trans_list])
+    #if (trans_list[0][5] < 0):
+    #    interior_y = np.nanmin([x[3] for x in trans_list])
+    #else:
+    #    # special case where these aren't georeferenced images, use max instead 
+    #    # (positive y geotransform pixel size)
+    #    interior_y = np.nanmax([x[3] for x in trans_list])
 
     # calculate the UL coordinates in pixel-space
     ul_list = []
@@ -573,7 +579,7 @@ def get_overlapping_extent(dataset_list_of_lists: List[List[gdal.Dataset]]):
         for _d in range(len(dataset_list_of_lists[_l])):
             local_list.append(ul_list[idx])
             idx += 1
-        local_list = np.array(local_list)
+        local_list = np.array(local_list).astype(int)
         return_ul_list.append(local_list)
     return return_ul_list, x_len, y_len
 
@@ -600,8 +606,8 @@ def build_training_data_ordered(
     assert config.data_build.max_samples * (config.data_build.window_radius*2)**2 * \
         n_features / 1024.**3 < 10, 'max_samples too large'
 
-    features_munged, responses_munged = _create_munged_features_responses_data_files(config, n_features, n_responses)
-    _log_munged_data_information(features_munged, responses_munged)
+    features, responses = _create_munged_features_responses_data_files(config, n_features, n_responses)
+    _log_munged_data_information(features, responses)
 
     _logger.debug('Open boundary files')
     boundary_sets = _get_boundary_sets_from_boundary_files(config)
@@ -616,22 +622,22 @@ def build_training_data_ordered(
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
 
         _logger.debug('Calculate interior rectangle location and extent')
-        [f_ul, r_ul, b_ul], x_len, y_len = get_overlapping_extent(
-            [feature_sets, response_sets, [bs for bs in boundary_sets if bs is not None]])
+        [f_ul, r_ul, [b_ul]], x_len, y_len = get_overlapping_extent(
+            [feature_sets, response_sets, [boundary_sets[_site]]])
 
         _logger.debug('Calculate pixel-based interior offsets for data acquisition')
-        collist = [x for x in range(0,
-                                    int(x_len - 2*config.data_build.window_radius),
+        x_sample_list = [x for x in range(0,
+                                    int(x_len - 2*config.data_build.window_radius)-1,
                                     int(config.data_build.loss_window_radius*2))]
-        rowlist = [y for y in range(0,
-                                    int(y_len - 2*config.data_build.window_radius),
+        y_sample_list = [y for y in range(0,
+                                    int(y_len - 2*config.data_build.window_radius)-1,
                                     int(config.data_build.loss_window_radius*2))]
 
-        colrow = np.zeros((len(collist)*len(rowlist), 2)).astype(int)
-        colrow[:, 0] = np.matlib.repmat(np.array(collist).reshape((-1, 1)), 1, len(rowlist)).flatten()
-        colrow[:, 1] = np.matlib.repmat(np.array(rowlist).reshape((1, -1)), len(collist), 1).flatten()
-        del collist, rowlist
-        colrow = colrow[np.random.permutation(colrow.shape[0]), :]
+        xy_sample_list = np.zeros((len(x_sample_list)*len(y_sample_list), 2)).astype(int)
+        xy_sample_list[:, 0] = np.matlib.repmat(np.array(x_sample_list).reshape((-1, 1)), 1, len(y_sample_list)).flatten()
+        xy_sample_list[:, 1] = np.matlib.repmat(np.array(y_sample_list).reshape((1, -1)), len(x_sample_list), 1).flatten()
+        del x_sample_list, y_sample_list
+        xy_sample_list = xy_sample_list[np.random.permutation(xy_sample_list.shape[0]), :]
 
         _logger.debug('Get geotransform for feature set')
         # Grab geotransform from first set - all we actually need is resolution, which has to be consistent between sites
@@ -642,23 +648,25 @@ def build_training_data_ordered(
                     _is_boundary_file_vectorized(config.raw_files.boundary_files[_site]):
                 subset_geotransform = [ref_trans[0], ref_trans[1], 0, ref_trans[3], 0, ref_trans[5]]
 
-        _logger.debug('Collect samples by iterating through {} potential samples'.format(len(colrow)))
-        for _cr in tqdm(range(len(colrow)), ncols=80):
+        _logger.debug('Collect samples by iterating through {} potential samples'.format(len(xy_sample_list)))
+        for _cr in tqdm(range(len(xy_sample_list)), ncols=80):
             _logger.debug('Checking sample {}'.format(_cr))
             _logger.debug('Determine local information about sample')
             local_boundary_vector_file = None
             local_boundary_upper_left = None
             if (boundary_sets[_site] is not None):
-                local_boundary_upper_left = b_ul + colrow[_cr, :]
+                local_boundary_upper_left = b_ul + xy_sample_list[_cr, :]
             if (subset_geotransform is not None):
-                subset_geotransform[0] = ref_trans[0] + (f_ul[0][0] + colrow[_cr, 0]) * ref_trans[1]
-                subset_geotransform[3] = ref_trans[3] + (f_ul[0][1] + colrow[_cr, 1]) * ref_trans[5]
+                subset_geotransform[0] = ref_trans[0] + (f_ul[0][0] + xy_sample_list[_cr, 0]) * ref_trans[1]
+                subset_geotransform[3] = ref_trans[3] + (f_ul[0][1] + xy_sample_list[_cr, 1]) * ref_trans[5]
                 local_boundary_vector_file = config.raw_files.boundary_files[_site]
             _logger.debug('Read sample data')
+            
+
             local_feature, local_response = read_segmentation_chunk(feature_sets,
                                                                     response_sets,
-                                                                    f_ul + colrow[_cr, :],
-                                                                    r_ul + colrow[_cr, :],
+                                                                    f_ul + xy_sample_list[_cr, :],
+                                                                    r_ul + xy_sample_list[_cr, :],
                                                                     config,
                                                                     boundary_vector_file=local_boundary_vector_file,
                                                                     boundary_upper_left=local_boundary_upper_left,
@@ -666,54 +674,56 @@ def build_training_data_ordered(
                                                                     boundary_subset_geotransform=subset_geotransform)
             if local_feature is not None:
                 _logger.debug('Save sample data; {} samples saved'.format(sample_index + 1))
-                features_munged[sample_index, ...] = local_feature.copy()
-                responses_munged[sample_index, ...] = local_response.copy()
+                features[sample_index, ...] = local_feature.copy()
+                responses[sample_index, ...] = local_response.copy()
                 sample_index += 1
                 if sample_index >= config.data_build.max_samples:
                     _logger.debug('Max samples found ({}) after inspecting {}/{} samples, ignoring remainder'.format(
-                        config.data_build.max_samples, _cr + 1, len(colrow)))
+                        config.data_build.max_samples, _cr + 1, len(xy_sample_list)))
                     break
-            if _cr == len(colrow) - 1:
+            if _cr == len(xy_sample_list) - 1:
                 _logger.debug('Only {} valid samples saved after inspecting all {} samples'.format(
-                    sample_index + 1, len(colrow)))
+                    sample_index + 1, len(xy_sample_list)))
+        if sample_index >= config.data_build.max_samples:
+            break
 
-    features_munged = _resize_munged_features(features_munged, sample_index, config)
-    responses_munged = _resize_munged_responses(responses_munged, sample_index, config)
-    _log_munged_data_information(features_munged, responses_munged)
+    features = _resize_munged_features(features, sample_index, config)
+    responses = _resize_munged_responses(responses, sample_index, config)
+    _log_munged_data_information(features, responses)
 
     _logger.debug('Shuffle data to avoid fold assignment biases')
-    perm = np.random.permutation(features_munged.shape[0])
-    features_munged = features_munged[perm, :]
-    responses_munged = responses_munged[perm, :]
+    perm = np.random.permutation(features.shape[0])
+    features = features[perm, :]
+    responses = responses[perm, :]
     del perm
 
     _logger.debug('Create uniform weights')
     basename = _get_built_data_basename(config)
-    shape = tuple(list(features_munged.shape)[:-1] + [1])
-    weights_munged = np.memmap(_get_munged_weights_filepath(config), dtype=np.float32, mode='w+', shape=shape)
-    weights_munged[:, :, :, :] = 1
+    shape = tuple(list(features.shape)[:-1] + [1])
+    weights = np.memmap(_get_munged_weights_filepath(config), dtype=np.float32, mode='w+', shape=shape)
+    weights[:, :, :, :] = 1
     _logger.debug('Remove weights for missing responses')
-    weights_munged[np.isnan(responses_munged[..., 0])] = 0
+    weights[np.isnan(responses[..., 0])] = 0
 
     _logger.debug('Remove weights outside loss window')
     if (config.data_build.loss_window_radius != config.data_build.window_radius):
         buf = config.data_build.window_radius - config.data_build.loss_window_radius
-        weights_munged[:, :buf, :, -1] = 0
-        weights_munged[:, -buf:, :, -1] = 0
-        weights_munged[:, :, :buf, -1] = 0
-        weights_munged[:, :, -buf:, -1] = 0
-    _log_munged_data_information(features_munged, responses_munged, weights_munged)
+        weights[:, :buf, :, -1] = 0
+        weights[:, -buf:, :, -1] = 0
+        weights[:, :, :buf, -1] = 0
+        weights[:, :, -buf:, -1] = 0
+    _log_munged_data_information(features, responses, weights)
 
     _logger.debug('One-hot encode features')
     features, feature_band_types = shared.one_hot_encode_array(
-        feature_raw_band_types, features_munged, _get_munged_features_filepath(config))
+        feature_raw_band_types, features, _get_munged_features_filepath(config))
     _logger.debug('One-hot encode responses')
     responses, response_band_types = shared.one_hot_encode_array(
-        response_raw_band_types, responses_munged, _get_munged_responses_filepath(config))
-    _log_munged_data_information(features_munged, responses_munged, weights_munged)
+        response_raw_band_types, responses, _get_munged_responses_filepath(config))
+    _log_munged_data_information(features, responses, weights)
 
-    _save_built_data_files(features_munged, responses_munged, weights_munged, config)
-    del features_munged, responses_munged, weights_munged
+    _save_built_data_files(features, responses, weights, config)
+    del features, responses, weights
 
     if ('C' in response_raw_band_types):
         assert np.sum(np.array(response_raw_band_types) == 'C') == 1, \
@@ -972,11 +982,14 @@ def _create_munged_features_responses_data_files(config: configs.Config, num_fea
     shape = [config.data_build.max_samples, config.data_build.window_radius * 2, config.data_build.window_radius * 2]
     shape_features = tuple(shape + [num_features])
     shape_responses = tuple(shape + [num_responses])
+
     features_filepath = _get_munged_features_filepath(config)
     responses_filepath = _get_munged_responses_filepath(config)
+
     _logger.debug('Create temporary munged features data file with shape {} at {}'.format(
         shape_features, features_filepath))
     features = np.memmap(features_filepath, dtype=np.float32, mode='w+', shape=shape_features)
+
     _logger.debug('Create temporary munged responses data file with shape {} at {}'.format(
         shape_responses, responses_filepath))
     responses = np.memmap(responses_filepath, dtype=np.float32, mode='w+', shape=shape_responses)
