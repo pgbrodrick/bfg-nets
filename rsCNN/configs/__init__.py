@@ -15,6 +15,7 @@ _logger = logging.getLogger(__name__)
 
 FILENAME_CONFIG = 'config.yaml'
 
+
 # TODO:  add documentation for how to handle this file
 # TODO:  check downstream that len raw filename lists match len scalers if len scalers > 1
 # TODO:  add functions like get_available_architectures to get available options for all config options
@@ -25,33 +26,39 @@ class RawFiles(BaseConfigSection):
     Raw file configuration, information necessary to locate and parse the raw files.
     """
     feature_files = None
+    """list: List of filepaths to raw feature rasters."""
     response_files = None
+    """list: List of filepaths to raw response rasters."""
     boundary_files = None
+    """list: Optional list of filepaths to boundaries. Data is built or sampled within the boundaries."""
     feature_data_type = None
+    """str: Data type from each input feature band.  R for Real, C for Categorical.  All C bands will be one-hot
+    encoded. Can be provided as a single string value(e.g. \'C\') or as a list of lists corresponding to each
+    band from each file in the raw input files list."""
     response_data_type = None
-    feature_nodata_value = None
-    response_nodata_value = None
+    """str: Data type from each input feature band.  R for Real, C for Categorical.  All C bands will be one-hot
+    encoded. Can be provided as a single string value(e.g. \'C\') or as a list of lists corresponding to each
+    band from each file in the raw input files list."""
+    feature_nodata_value = -9999
+    """float: Value that denotes missing data in feature files."""
+    response_nodata_value = -9999
+    """float: Value that denotes missing data in response files."""
     boundary_bad_value = None
-    ignore_projections = None
-
-    data_type_str = \
-        'Data type from each input feature band.  R for Real, C for Categorical.  All C bands will be one-hot ' + \
-        'encoded. Can be provided as a single string value(e.g. \'C\') or as a list of lists corresponding to each ' + \
-        'band from each file in the raw input files list.'
+    """float: Value that denotes out-of-bounds areas in boundary files."""
+    ignore_projections = False
+    """bool: Should projection differences between feature and response files be ignored? This option ' +
+    'should only be true if the user is confident that projections are identical despite encodings."""
 
     _config_options = [
-        ConfigOption('feature_files', None, list, 'List of filepaths to raw feature rasters.'),
-        ConfigOption('response_files', None, list, 'List of filepaths to raw response rasters.'),
-        ConfigOption('boundary_files', None, list,
-                     'Optional list of filepaths to boundaries. Data is built or sampled within the boundaries.'),
-        ConfigOption('feature_data_type', None, str, data_type_str),  # See above note
-        ConfigOption('response_data_type', None, str, data_type_str),  # See above note
-        ConfigOption('feature_nodata_value', -9999, float, 'Value that denotes missing data in feature files.'),
-        ConfigOption('response_nodata_value', -9999, float, 'Value that denotes missing data in response files.'),
-        ConfigOption('boundary_bad_value', None, float, 'Value that denotes out-of-bounds areas in boundary files.'),
-        ConfigOption('ignore_projections', False, bool,
-                     'Should projection differences between feature and response files be ignored? This option ' +
-                     'should only be true if the user is confident that projections are identical despite encodings.'),
+        ConfigOption('feature_files', None, list),
+        ConfigOption('response_files', None, list),
+        ConfigOption('boundary_files', None, list),
+        ConfigOption('feature_data_type', None, str),  # See above note
+        ConfigOption('response_data_type', None, str),  # See above note
+        ConfigOption('feature_nodata_value', -9999, float),
+        ConfigOption('response_nodata_value', -9999, float),
+        ConfigOption('boundary_bad_value', None, float),
+        ConfigOption('ignore_projections', False, bool)
     ]
 
     def check_config_validity(self) -> List[str]:
@@ -78,57 +85,63 @@ class DataBuild(BaseConfigSection):
     """
     Data build configuration, information necessary to structure and format the built data files
     """
-    dir_out = None
-    filename_prefix_out = None
-    response_data_format = None
-    random_seed = None
+    dir_out = '.'
+    """str: Directory to which built data files are saved."""
+    filename_prefix_out = ''
+    """str: Optional prefix for built data filenames, useful for organizing or tracking built data files
+    from different build strategies."""
+    response_data_format = 'FCN'
+    """str: Either CNN for convolutional neural network or FCN for fully convolutional network."""
+    random_seed = 0
+    """int: Random seed for reproducible data generation."""
     max_samples = None
-    number_folds = None
-    validation_fold = None
+    """int: Maximum number of built data samples to draw from the raw data files. Sampling stops when the raw data files 
+    are fully crawled or the maximum samples are reached."""
+    number_folds = 10
+    """int: Number of training data folds."""
+    validation_fold = 0
+    """int: Index of fold to use for validation."""
     test_fold = None
+    """int: Index of fold to use for testing."""
     window_radius = None
+    """int: Window radius determines the full image size as 2x the window radius"""
     loss_window_radius = None
+    """int: Loss window radius determines the internal image window to use for loss calculations during model 
+    training."""
     # TODO:  Phil:  should mean_centering be a list so that we have one item per file?
-    feature_mean_centering = None
-    feature_nodata_maximum_fraction = None
+    feature_mean_centering = False
+    """bool: Should features be mean centered?"""
+    feature_nodata_maximum_fraction = 0.0
+    """float: Only include built data samples with a lower proportion of missing feature data values."""
     response_min_value = None
+    """float: Response values below this minimum are converted to missing data. Currently applied to all response values 
+    uniformly."""
     response_max_value = None
+    """float: Response values above this maximum are converted to missing data. Currently applied to all response values 
+    uniformly."""
     response_background_value = None
-    _config_options = [
-        ConfigOption('random_seed', 0, int, 'Random seed for reproducible data generation.'),
-        ConfigOption('dir_out', None, str, 'Directory to which built data files are saved.'),
-        ConfigOption('filename_prefix_out', None, str,
-                     'Optional prefix for built data filenames, useful for organizing or tracking built data files ' +
-                     'from different build strategies.'),
-        # TODO:  rename the following?
-        ConfigOption('response_data_format', 'FCN', str,
-                     'Either CNN for convolutional neural network or FCN for fully convolutional network.'),
-        ConfigOption('max_samples', None, int, 'Maximum number of built data samples to draw from the raw data ' +
-                     'files. Sampling stops when the raw data files are fully crawled or the maximum samples are ' +
-                     'reached.'),
-        ConfigOption('window_radius', None, int,
-                     'Window radius determines the full image size as 2x the window radius'),
-        ConfigOption('loss_window_radius', None, int,
-                     'Loss window radius determines the internal image window to use for loss calculations during ' +
-                     'model training.'),
-        ConfigOption('number_folds', 10, int, 'Number of training data folds.'),
-        ConfigOption('validation_fold', 0, int, 'Index of fold to use for validation.'),
-        ConfigOption('test_fold', 1, int, 'Index of fold to use for testing.'),
-        # TODO:  Phil:  should mean_centering be a list so that we have one item per file?
-        ConfigOption('feature_mean_centering', False, bool, 'Should features be mean centered?'),
-        ConfigOption('feature_nodata_maximum_fraction', 0.0, float,
-                     'Only include built data samples with a lower proportion of missing feature data values.'),
+    """int: Built data samples containing only this response are discarded and not included in the final built data 
+    files."""
 
+    _config_options = [
+        ConfigOption('random_seed', 0, int, ),
+        ConfigOption('dir_out', None, str, ),
+        ConfigOption('filename_prefix_out', None, str,),
+        # TODO:  rename the following?
+        ConfigOption('response_data_format', 'FCN', str,),
+        ConfigOption('max_samples', None, int, ),
+        ConfigOption('window_radius', None, int,),
+        ConfigOption('loss_window_radius', None, int, ),
+        ConfigOption('number_folds', 10, int, ),
+        ConfigOption('validation_fold', 0, int, ),
+        ConfigOption('test_fold', 1, int, ),
+        # TODO:  Phil:  should mean_centering be a list so that we have one item per file?
+        ConfigOption('feature_mean_centering', False, bool, ),
+        ConfigOption('feature_nodata_maximum_fraction', 0.0, float,),
         # TODO: expand to multiple response values
-        ConfigOption('response_min_value', None, float,
-                     'Response values below this minimum are converted to missing data. Currently applied to all ' +
-                     'response values uniformly.'),
-        ConfigOption('response_max_value', None, float,
-                     'Response values above this maximum are converted to missing data. Currently applied to all ' +
-                     'response values uniformly.'),
-        ConfigOption('response_background_value', None, float,
-                     'Built data samples containing only this response are discarded and not included in the final ' +
-                     'built data files.'),
+        ConfigOption('response_min_value', None, float, ),
+        ConfigOption('response_max_value', None, float, ),
+        ConfigOption('response_background_value', None, float, ),
     ]
 
     def check_config_validity(self) -> List[str]:
@@ -146,22 +159,24 @@ class DataSamples(BaseConfigSection):
     """
     Data sample configuration, information necessary to parse built data files and pass data to models during training
     """
-    apply_random_transformations = None
-    batch_size = None
+    apply_random_transformations = False
+    """bool: Should random transformations, including rotations and flips, be applied to sample images."""
+    batch_size = 100
+    """int: The sample batch size for images passed to the model."""
     feature_scaler_names = None
+    """list: Names of the scalers which are applied to each feature file."""
     response_scaler_names = None
-    feature_nodata_encoding = None
+    """list: Names of the scalers which are applied to each response file."""
+    feature_nodata_encoding = -10.0
+    """float: The encoding for missing data values passed to the model, given that neural networks are sensitive to 
+    nans."""
+
     _config_options = [
-        ConfigOption('apply_random_transformations', False, bool,
-                     'Should random transformations, including rotations and flips, be applied to sample images.'),
-        ConfigOption('batch_size', 100, int, 'The sample batch size for images passed to the model.'),
-        ConfigOption('feature_scaler_names', None, list,
-                     'Names of the scalers which are applied to each feature file.'),
-        ConfigOption('response_scaler_names', None, list,
-                     'Names of the scalers which are applied to each response file.'),
-        ConfigOption('feature_nodata_encoding', -10.0, float,
-                     'The encoding for missing data values passed to the model, given that neural networks are ' +
-                     'sensitive to nans.'),
+        ConfigOption('apply_random_transformations', False, bool, ),
+        ConfigOption('batch_size', 100, int, ),
+        ConfigOption('feature_scaler_names', None, list, ),
+        ConfigOption('response_scaler_names', None, list, ),
+        ConfigOption('feature_nodata_encoding', -10.0, float, ),
     ]
 
     def check_config_validity(self) -> List[str]:
@@ -182,25 +197,32 @@ class ModelTraining(BaseConfigSection):
     """
     Model training configuration, information necessary to train models from start to finish
     """
-    dir_out = None
-    verbosity = None
-    assert_gpu = None
+    dir_out = '.'
+    """str: Directory to which new model files are saved and from which existing model files are loaded."""
+    verbosity = 1
+    """int: Verbosity value for keras library. Either 0 for silent or 1 for verbose."""
+    assert_gpu = False
+    """bool: Assert, i.e., fail if GPUs are required and not available."""
     architecture_name = None
+    """str: Architecture name from existing options:  TODO."""
     loss_metric = None
-    max_epochs = None
-    optimizer = None
-    weighted = None
+    """str: Loss metric to use for model training."""
+    max_epochs = 100
+    """int: Maximum number of epochs to run model training."""
+    optimizer = str
+    """str: Optimizer to use during model training."""
+    weighted = False
+    """bool: Should underrepresented classes be overweighted during model training"""
+
     _config_options = [
-        ConfigOption('dir_out', None, str,
-                     'Directory to which new model files are saved and from which existing model files are loaded.'),
-        ConfigOption('verbosity', 1, int, 'Verbosity value for keras library. Either 0 for silent or 1 for verbose.'),
-        ConfigOption('assert_gpu', False, bool, 'Assert, i.e., fail if GPUs are required and not available.'),
-        # TODO:  get imports working so you can autofill
-        ConfigOption('architecture_name', None, str, 'Architecture name from existing options:  TODO.'),
-        ConfigOption('loss_metric', None, str, 'Loss metric to use for model training.'),
-        ConfigOption('max_epochs', 100, int, 'Maximum number of epochs to run model training.'),
-        ConfigOption('optimizer', 'adam', str, 'Optimizer to use during model training.'),
-        ConfigOption('weighted', False, bool, 'Should underrepresented classes be overweighted during model training'),
+        ConfigOption('dir_out', None, str,),
+        ConfigOption('verbosity', 1, int, ),
+        ConfigOption('assert_gpu', False, bool, ),
+        ConfigOption('architecture_name', None, str, ),
+        ConfigOption('loss_metric', None, str, ),
+        ConfigOption('max_epochs', 100, int, ),
+        ConfigOption('optimizer', 'adam', str, ),
+        ConfigOption('weighted', False, bool, ),
     ]
 
     def check_config_validity(self) -> List[str]:
@@ -210,25 +232,33 @@ class ModelTraining(BaseConfigSection):
 
 
 class CallbackGeneral(BaseConfigSection):
-    checkpoint_periods = None
-    use_terminate_on_nan = None
+    checkpoint_periods = 5
+    """int: Number of periods of model training between model state and history saves."""
+    use_terminate_on_nan = True
+    """bool: Terminate model training if nans are observed."""
+
     _config_options = [
-        ConfigOption('checkpoint_periods', 5, int,
-                     'Number of periods of model training between model state and history saves.'),
-        ConfigOption('use_terminate_on_nan', True, 'Terminate model training if nans are observed.'),
+        ConfigOption('checkpoint_periods', 5, int, ),
+        ConfigOption('use_terminate_on_nan', True, bool),
     ]
 
 
 class CallbackTensorboard(BaseConfigSection):
-    use_callback = None
-    update_freq = None
-    histogram_freq = None
-    write_graph = None
-    write_grads = None
-    write_images = None
+    use_callback = True
+    """bool: Use the Tensorboard callback to enable Tensorboard by saving necessary data."""
+    update_freq = """epoch"""
+    """str: See Keras documentation."""
+    histogram_freq = 0
+    """int: See Keras documentation."""
+    write_graph = True
+    """bool: See Keras documentation."""
+    write_grads = False
+    """bool: See Keras documentation."""
+    write_images = True
+    """bool: See Keras documentation."""
+
     _config_options = [
-        ConfigOption('use_callback', True, bool,
-                     'Use the Tensorboard callback to enable Tensorboard by saving necessary data.'),
+        ConfigOption('use_callback', True, bool, ),
         ConfigOption('update_freq', 'epoch', str, 'See keras documentation.'),
         ConfigOption('histogram_freq', 0, int, 'See keras documentation.'),
         ConfigOption('write_graph', True, bool, 'See keras documentation.'),
@@ -238,9 +268,12 @@ class CallbackTensorboard(BaseConfigSection):
 
 
 class CallbackEarlyStopping(BaseConfigSection):
-    use_callback = None
-    min_delta = None
-    patience = None
+    use_callback = True
+    """bool: See Keras documentation."""
+    min_delta = 0.0001
+    """float: See Keras documentation."""
+    patience = 50
+    """int: See Keras documentation."""
     _config_options = [
         ConfigOption('use_callback', True, bool, 'See keras documentation.'),
         ConfigOption('min_delta', 0.0001, float, 'See keras documentation.'),
@@ -249,10 +282,14 @@ class CallbackEarlyStopping(BaseConfigSection):
 
 
 class CallbackReducedLearningRate(BaseConfigSection):
-    use_callback = None
-    factor = None
-    min_delta = None
-    patience = None
+    use_callback = True
+    """bool: See Keras documentation."""
+    factor = 0.5
+    """float: See Keras documentation."""
+    min_delta = 0.0001
+    """float: See Keras documentation."""
+    patience = 10
+    """int: See Keras documentation."""
     _config_options = [
         ConfigOption('use_callback', True, bool, 'See keras documentation.'),
         ConfigOption('factor', 0.5, float, 'See keras documentation.'),
