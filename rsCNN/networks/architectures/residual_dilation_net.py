@@ -47,21 +47,18 @@ def create_model(
     # Iterate blocks and subblocks
     subblock_input = conv
     for idx_block, num_subblocks in enumerate(block_structure):
+        subblock = subblock_input
         for idx_sublayer in range(num_subblocks):
-            subblock = subblock_input
-            if use_batch_norm:
-                subblock = BatchNormalization()(subblock)
             subblock = Conv2D(
                 filters=filters, dilation_rate=dilation_rate, kernel_size=kernel_size, padding=padding)(subblock)
-            subblock_input = _add_residual_shortcut(subblock_input, subblock)
+            if use_batch_norm:
+                subblock = BatchNormalization()(subblock)
+        subblock_input = _add_residual_shortcut(subblock_input, subblock)
         filters *= 2
 
     # Output convolutions
-    output_layer = subblock_input
-    if use_batch_norm:
-        output_layer = BatchNormalization()(output_layer)
     output_layer = Conv2D(
-        filters=n_classes, kernel_size=(1, 1), padding='same', activation=output_activation)(output_layer)
+        filters=n_classes, kernel_size=(1, 1), padding='same', activation=output_activation)(subblock_input)
     return keras.models.Model(inputs=[inlayer], outputs=[output_layer])
 
 

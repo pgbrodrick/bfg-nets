@@ -81,12 +81,9 @@ def create_model(
         encoder = BatchNormalization()(encoder)
 
     # Each encoder block has a number of subblocks
-    for num_subblocks in block_structure:
-        for idx_sublayer in range(num_subblocks):
-            # Each subblock has two convolutions
-            encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(encoder)
-            if use_batch_norm:
-                encoder = BatchNormalization()(encoder)
+    for num_sublayers in block_structure:
+        for idx_sublayer in range(num_sublayers):
+            # Each subblock has a number of convolutions
             encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(encoder)
             if use_batch_norm:
                 encoder = BatchNormalization()(encoder)
@@ -101,10 +98,7 @@ def create_model(
     # Each decoder block has a number of subblocks, but in reverse order of encoder
     for num_subblocks, layer_passed_through in zip(reversed(block_structure), reversed(layers_pass_through)):
         for idx_sublayer in range(num_subblocks):
-            # Each subblock has two convolutions
-            decoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(decoder)
-            if use_batch_norm:
-                decoder = BatchNormalization()(decoder)
+            # Each subblock has a number of convolutions
             decoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(decoder)
             if use_batch_norm:
                 decoder = BatchNormalization()(decoder)
@@ -118,9 +112,6 @@ def create_model(
 
     # Last convolutions
     output_layer = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(decoder)
-    if use_batch_norm:
-        output_layer = BatchNormalization()(output_layer)
-    output_layer = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(output_layer)
     if use_batch_norm:
         output_layer = BatchNormalization()(output_layer)
     output_layer = Conv2D(
