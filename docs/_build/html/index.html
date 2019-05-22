@@ -1,0 +1,1351 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Welcome to rsCNN’s documentation! &#8212; rsCNN  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-rsCNN.configs">
+<span id="welcome-to-rscnn-s-documentation"></span><h1>Welcome to rsCNN’s documentation!<a class="headerlink" href="#module-rsCNN.configs" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="rsCNN.configs.RawFiles">
+<em class="property">class </em><code class="descclassname">rsCNN.configs.</code><code class="descname">RawFiles</code><a class="headerlink" href="#rsCNN.configs.RawFiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.configs.shared.BaseConfigSection</span></code></p>
+<p>Raw file configuration, information necessary to locate and parse the raw files.</p>
+<dl class="attribute">
+<dt id="rsCNN.configs.RawFiles.feature_files">
+<code class="descname">feature_files</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.RawFiles.feature_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of filepaths to raw feature rasters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.RawFiles.response_files">
+<code class="descname">response_files</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.RawFiles.response_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of filepaths to raw response rasters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.RawFiles.boundary_files">
+<code class="descname">boundary_files</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.RawFiles.boundary_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>Optional list of filepaths to boundaries. Data is built or sampled within the boundaries.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.RawFiles.feature_data_type">
+<code class="descname">feature_data_type</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.RawFiles.feature_data_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Data type from each input feature band.  R for Real, C for Categorical.  All C bands will be one-hot
+encoded. Can be provided as a single string value(e.g. ‘C’) or as a list of lists corresponding to each
+band from each file in the raw input files list.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.RawFiles.response_data_type">
+<code class="descname">response_data_type</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.RawFiles.response_data_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Data type from each input feature band.  R for Real, C for Categorical.  All C bands will be one-hot
+encoded. Can be provided as a single string value(e.g. ‘C’) or as a list of lists corresponding to each
+band from each file in the raw input files list.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.RawFiles.feature_nodata_value">
+<code class="descname">feature_nodata_value</code><em class="property"> = -9999</em><a class="headerlink" href="#rsCNN.configs.RawFiles.feature_nodata_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Value that denotes missing data in feature files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.RawFiles.response_nodata_value">
+<code class="descname">response_nodata_value</code><em class="property"> = -9999</em><a class="headerlink" href="#rsCNN.configs.RawFiles.response_nodata_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Value that denotes missing data in response files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.RawFiles.boundary_bad_value">
+<code class="descname">boundary_bad_value</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.RawFiles.boundary_bad_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Value that denotes out-of-bounds areas in boundary files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.RawFiles.ignore_projections">
+<code class="descname">ignore_projections</code><em class="property"> = False</em><a class="headerlink" href="#rsCNN.configs.RawFiles.ignore_projections" title="Permalink to this definition">¶</a></dt>
+<dd><p>Should projection differences between feature and response files be ignored? This option ‘ +
+‘should only be true if the user is confident that projections are identical despite encodings.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.RawFiles.check_config_validity">
+<code class="descname">check_config_validity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.RawFiles.check_config_validity" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="rsCNN.configs.RawFiles.get_config_name_as_snake_case">
+<em class="property">classmethod </em><code class="descname">get_config_name_as_snake_case</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.RawFiles.get_config_name_as_snake_case" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.RawFiles.get_config_options_as_dict">
+<code class="descname">get_config_options_as_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.RawFiles.get_config_options_as_dict" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, &lt;built-in function any&gt;]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.RawFiles.get_option_keys">
+<code class="descname">get_option_keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.RawFiles.get_option_keys" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.RawFiles.set_config_options">
+<code class="descname">set_config_options</code><span class="sig-paren">(</span><em>config_options</em>, <em>highlight_required</em><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.RawFiles.set_config_options" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.configs.DataBuild">
+<em class="property">class </em><code class="descclassname">rsCNN.configs.</code><code class="descname">DataBuild</code><a class="headerlink" href="#rsCNN.configs.DataBuild" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.configs.shared.BaseConfigSection</span></code></p>
+<p>Data build configuration, information necessary to structure and format the built data files</p>
+<dl class="attribute">
+<dt id="rsCNN.configs.DataBuild.dir_out">
+<code class="descname">dir_out</code><em class="property"> = '.'</em><a class="headerlink" href="#rsCNN.configs.DataBuild.dir_out" title="Permalink to this definition">¶</a></dt>
+<dd><p>Directory to which built data files are saved.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.DataBuild.filename_prefix_out">
+<code class="descname">filename_prefix_out</code><em class="property"> = ''</em><a class="headerlink" href="#rsCNN.configs.DataBuild.filename_prefix_out" title="Permalink to this definition">¶</a></dt>
+<dd><p>Optional prefix for built data filenames, useful for organizing or tracking built data files
+from different build strategies.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.DataBuild.response_data_format">
+<code class="descname">response_data_format</code><em class="property"> = 'FCN'</em><a class="headerlink" href="#rsCNN.configs.DataBuild.response_data_format" title="Permalink to this definition">¶</a></dt>
+<dd><p>Either CNN for convolutional neural network or FCN for fully convolutional network.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.DataBuild.random_seed">
+<code class="descname">random_seed</code><em class="property"> = 0</em><a class="headerlink" href="#rsCNN.configs.DataBuild.random_seed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Random seed for reproducible data generation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.DataBuild.max_samples">
+<code class="descname">max_samples</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.DataBuild.max_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum number of built data samples to draw from the raw data files. Sampling stops when the raw data files
+are fully crawled or the maximum samples are reached.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.DataBuild.number_folds">
+<code class="descname">number_folds</code><em class="property"> = 10</em><a class="headerlink" href="#rsCNN.configs.DataBuild.number_folds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of training data folds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.DataBuild.validation_fold">
+<code class="descname">validation_fold</code><em class="property"> = 0</em><a class="headerlink" href="#rsCNN.configs.DataBuild.validation_fold" title="Permalink to this definition">¶</a></dt>
+<dd><p>Index of fold to use for validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.DataBuild.test_fold">
+<code class="descname">test_fold</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.DataBuild.test_fold" title="Permalink to this definition">¶</a></dt>
+<dd><p>Index of fold to use for testing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.DataBuild.window_radius">
+<code class="descname">window_radius</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.DataBuild.window_radius" title="Permalink to this definition">¶</a></dt>
+<dd><p>Window radius determines the full image size as 2x the window radius</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.DataBuild.loss_window_radius">
+<code class="descname">loss_window_radius</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.DataBuild.loss_window_radius" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loss window radius determines the internal image window to use for loss calculations during model
+training.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.DataBuild.feature_mean_centering">
+<code class="descname">feature_mean_centering</code><em class="property"> = False</em><a class="headerlink" href="#rsCNN.configs.DataBuild.feature_mean_centering" title="Permalink to this definition">¶</a></dt>
+<dd><p>Should features be mean centered?</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.DataBuild.feature_nodata_maximum_fraction">
+<code class="descname">feature_nodata_maximum_fraction</code><em class="property"> = 0.0</em><a class="headerlink" href="#rsCNN.configs.DataBuild.feature_nodata_maximum_fraction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Only include built data samples with a lower proportion of missing feature data values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.DataBuild.response_min_value">
+<code class="descname">response_min_value</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.DataBuild.response_min_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Response values below this minimum are converted to missing data. Currently applied to all response values
+uniformly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.DataBuild.response_max_value">
+<code class="descname">response_max_value</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.DataBuild.response_max_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Response values above this maximum are converted to missing data. Currently applied to all response values
+uniformly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.DataBuild.response_background_value">
+<code class="descname">response_background_value</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.DataBuild.response_background_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Built data samples containing only this response are discarded and not included in the final built data
+files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.DataBuild.check_config_validity">
+<code class="descname">check_config_validity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.DataBuild.check_config_validity" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="rsCNN.configs.DataBuild.get_config_name_as_snake_case">
+<em class="property">classmethod </em><code class="descname">get_config_name_as_snake_case</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.DataBuild.get_config_name_as_snake_case" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.DataBuild.get_config_options_as_dict">
+<code class="descname">get_config_options_as_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.DataBuild.get_config_options_as_dict" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, &lt;built-in function any&gt;]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.DataBuild.get_option_keys">
+<code class="descname">get_option_keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.DataBuild.get_option_keys" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.DataBuild.set_config_options">
+<code class="descname">set_config_options</code><span class="sig-paren">(</span><em>config_options</em>, <em>highlight_required</em><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.DataBuild.set_config_options" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.configs.DataSamples">
+<em class="property">class </em><code class="descclassname">rsCNN.configs.</code><code class="descname">DataSamples</code><a class="headerlink" href="#rsCNN.configs.DataSamples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.configs.shared.BaseConfigSection</span></code></p>
+<p>Data sample configuration, information necessary to parse built data files and pass data to models during training</p>
+<dl class="attribute">
+<dt id="rsCNN.configs.DataSamples.apply_random_transformations">
+<code class="descname">apply_random_transformations</code><em class="property"> = False</em><a class="headerlink" href="#rsCNN.configs.DataSamples.apply_random_transformations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Should random transformations, including rotations and flips, be applied to sample images.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.DataSamples.batch_size">
+<code class="descname">batch_size</code><em class="property"> = 100</em><a class="headerlink" href="#rsCNN.configs.DataSamples.batch_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>The sample batch size for images passed to the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.DataSamples.feature_scaler_names">
+<code class="descname">feature_scaler_names</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.DataSamples.feature_scaler_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Names of the scalers which are applied to each feature file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.DataSamples.response_scaler_names">
+<code class="descname">response_scaler_names</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.DataSamples.response_scaler_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Names of the scalers which are applied to each response file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.DataSamples.feature_nodata_encoding">
+<code class="descname">feature_nodata_encoding</code><em class="property"> = -10.0</em><a class="headerlink" href="#rsCNN.configs.DataSamples.feature_nodata_encoding" title="Permalink to this definition">¶</a></dt>
+<dd><p>The encoding for missing data values passed to the model, given that neural networks are sensitive to
+nans.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.DataSamples.check_config_validity">
+<code class="descname">check_config_validity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.DataSamples.check_config_validity" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="rsCNN.configs.DataSamples.get_config_name_as_snake_case">
+<em class="property">classmethod </em><code class="descname">get_config_name_as_snake_case</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.DataSamples.get_config_name_as_snake_case" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.DataSamples.get_config_options_as_dict">
+<code class="descname">get_config_options_as_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.DataSamples.get_config_options_as_dict" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, &lt;built-in function any&gt;]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.DataSamples.get_option_keys">
+<code class="descname">get_option_keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.DataSamples.get_option_keys" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.DataSamples.set_config_options">
+<code class="descname">set_config_options</code><span class="sig-paren">(</span><em>config_options</em>, <em>highlight_required</em><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.DataSamples.set_config_options" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.configs.ModelTraining">
+<em class="property">class </em><code class="descclassname">rsCNN.configs.</code><code class="descname">ModelTraining</code><a class="headerlink" href="#rsCNN.configs.ModelTraining" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.configs.shared.BaseConfigSection</span></code></p>
+<p>Model training configuration, information necessary to train models from start to finish</p>
+<dl class="attribute">
+<dt id="rsCNN.configs.ModelTraining.dir_out">
+<code class="descname">dir_out</code><em class="property"> = '.'</em><a class="headerlink" href="#rsCNN.configs.ModelTraining.dir_out" title="Permalink to this definition">¶</a></dt>
+<dd><p>Directory to which new model files are saved and from which existing model files are loaded.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.ModelTraining.verbosity">
+<code class="descname">verbosity</code><em class="property"> = 1</em><a class="headerlink" href="#rsCNN.configs.ModelTraining.verbosity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Verbosity value for keras library. Either 0 for silent or 1 for verbose.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.ModelTraining.assert_gpu">
+<code class="descname">assert_gpu</code><em class="property"> = False</em><a class="headerlink" href="#rsCNN.configs.ModelTraining.assert_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assert, i.e., fail if GPUs are required and not available.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.ModelTraining.architecture_name">
+<code class="descname">architecture_name</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.ModelTraining.architecture_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+<dt class="field-even">Type</dt>
+<dd class="field-even"><p>Architecture name from existing options</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.ModelTraining.loss_metric">
+<code class="descname">loss_metric</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.ModelTraining.loss_metric" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loss metric to use for model training.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.ModelTraining.max_epochs">
+<code class="descname">max_epochs</code><em class="property"> = 100</em><a class="headerlink" href="#rsCNN.configs.ModelTraining.max_epochs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum number of epochs to run model training.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.ModelTraining.optimizer">
+<code class="descname">optimizer</code><a class="headerlink" href="#rsCNN.configs.ModelTraining.optimizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">builtins.str</span></code></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.ModelTraining.weighted">
+<code class="descname">weighted</code><em class="property"> = False</em><a class="headerlink" href="#rsCNN.configs.ModelTraining.weighted" title="Permalink to this definition">¶</a></dt>
+<dd><p>Should underrepresented classes be overweighted during model training</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.ModelTraining.check_config_validity">
+<code class="descname">check_config_validity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.ModelTraining.check_config_validity" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="rsCNN.configs.ModelTraining.get_config_name_as_snake_case">
+<em class="property">classmethod </em><code class="descname">get_config_name_as_snake_case</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.ModelTraining.get_config_name_as_snake_case" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.ModelTraining.get_config_options_as_dict">
+<code class="descname">get_config_options_as_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.ModelTraining.get_config_options_as_dict" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, &lt;built-in function any&gt;]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.ModelTraining.get_option_keys">
+<code class="descname">get_option_keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.ModelTraining.get_option_keys" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.ModelTraining.set_config_options">
+<code class="descname">set_config_options</code><span class="sig-paren">(</span><em>config_options</em>, <em>highlight_required</em><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.ModelTraining.set_config_options" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.configs.CallbackGeneral">
+<em class="property">class </em><code class="descclassname">rsCNN.configs.</code><code class="descname">CallbackGeneral</code><a class="headerlink" href="#rsCNN.configs.CallbackGeneral" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.configs.shared.BaseConfigSection</span></code></p>
+<dl class="attribute">
+<dt id="rsCNN.configs.CallbackGeneral.checkpoint_periods">
+<code class="descname">checkpoint_periods</code><em class="property"> = 5</em><a class="headerlink" href="#rsCNN.configs.CallbackGeneral.checkpoint_periods" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of periods of model training between model state and history saves.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.CallbackGeneral.use_terminate_on_nan">
+<code class="descname">use_terminate_on_nan</code><em class="property"> = True</em><a class="headerlink" href="#rsCNN.configs.CallbackGeneral.use_terminate_on_nan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Terminate model training if nans are observed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.CallbackGeneral.check_config_validity">
+<code class="descname">check_config_validity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.CallbackGeneral.check_config_validity" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="rsCNN.configs.CallbackGeneral.get_config_name_as_snake_case">
+<em class="property">classmethod </em><code class="descname">get_config_name_as_snake_case</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.CallbackGeneral.get_config_name_as_snake_case" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.CallbackGeneral.get_config_options_as_dict">
+<code class="descname">get_config_options_as_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.CallbackGeneral.get_config_options_as_dict" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, &lt;built-in function any&gt;]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.CallbackGeneral.get_option_keys">
+<code class="descname">get_option_keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.CallbackGeneral.get_option_keys" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.CallbackGeneral.set_config_options">
+<code class="descname">set_config_options</code><span class="sig-paren">(</span><em>config_options</em>, <em>highlight_required</em><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.CallbackGeneral.set_config_options" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.configs.CallbackTensorboard">
+<em class="property">class </em><code class="descclassname">rsCNN.configs.</code><code class="descname">CallbackTensorboard</code><a class="headerlink" href="#rsCNN.configs.CallbackTensorboard" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.configs.shared.BaseConfigSection</span></code></p>
+<dl class="attribute">
+<dt id="rsCNN.configs.CallbackTensorboard.use_callback">
+<code class="descname">use_callback</code><em class="property"> = True</em><a class="headerlink" href="#rsCNN.configs.CallbackTensorboard.use_callback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use the Tensorboard callback to enable Tensorboard by saving necessary data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.CallbackTensorboard.check_config_validity">
+<code class="descname">check_config_validity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.CallbackTensorboard.check_config_validity" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="rsCNN.configs.CallbackTensorboard.get_config_name_as_snake_case">
+<em class="property">classmethod </em><code class="descname">get_config_name_as_snake_case</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.CallbackTensorboard.get_config_name_as_snake_case" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.CallbackTensorboard.get_config_options_as_dict">
+<code class="descname">get_config_options_as_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.CallbackTensorboard.get_config_options_as_dict" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, &lt;built-in function any&gt;]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.CallbackTensorboard.get_option_keys">
+<code class="descname">get_option_keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.CallbackTensorboard.get_option_keys" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.CallbackTensorboard.set_config_options">
+<code class="descname">set_config_options</code><span class="sig-paren">(</span><em>config_options</em>, <em>highlight_required</em><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.CallbackTensorboard.set_config_options" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.CallbackTensorboard.update_freq">
+<code class="descname">update_freq</code><em class="property"> = 'epoch'</em><a class="headerlink" href="#rsCNN.configs.CallbackTensorboard.update_freq" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.CallbackTensorboard.histogram_freq">
+<code class="descname">histogram_freq</code><em class="property"> = 0</em><a class="headerlink" href="#rsCNN.configs.CallbackTensorboard.histogram_freq" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.CallbackTensorboard.write_graph">
+<code class="descname">write_graph</code><em class="property"> = True</em><a class="headerlink" href="#rsCNN.configs.CallbackTensorboard.write_graph" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.CallbackTensorboard.write_grads">
+<code class="descname">write_grads</code><em class="property"> = False</em><a class="headerlink" href="#rsCNN.configs.CallbackTensorboard.write_grads" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.CallbackTensorboard.write_images">
+<code class="descname">write_images</code><em class="property"> = True</em><a class="headerlink" href="#rsCNN.configs.CallbackTensorboard.write_images" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.configs.CallbackEarlyStopping">
+<em class="property">class </em><code class="descclassname">rsCNN.configs.</code><code class="descname">CallbackEarlyStopping</code><a class="headerlink" href="#rsCNN.configs.CallbackEarlyStopping" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.configs.shared.BaseConfigSection</span></code></p>
+<dl class="method">
+<dt id="rsCNN.configs.CallbackEarlyStopping.check_config_validity">
+<code class="descname">check_config_validity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.CallbackEarlyStopping.check_config_validity" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="rsCNN.configs.CallbackEarlyStopping.get_config_name_as_snake_case">
+<em class="property">classmethod </em><code class="descname">get_config_name_as_snake_case</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.CallbackEarlyStopping.get_config_name_as_snake_case" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.CallbackEarlyStopping.get_config_options_as_dict">
+<code class="descname">get_config_options_as_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.CallbackEarlyStopping.get_config_options_as_dict" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, &lt;built-in function any&gt;]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.CallbackEarlyStopping.get_option_keys">
+<code class="descname">get_option_keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.CallbackEarlyStopping.get_option_keys" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.CallbackEarlyStopping.set_config_options">
+<code class="descname">set_config_options</code><span class="sig-paren">(</span><em>config_options</em>, <em>highlight_required</em><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.CallbackEarlyStopping.set_config_options" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.CallbackEarlyStopping.use_callback">
+<code class="descname">use_callback</code><em class="property"> = True</em><a class="headerlink" href="#rsCNN.configs.CallbackEarlyStopping.use_callback" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.CallbackEarlyStopping.min_delta">
+<code class="descname">min_delta</code><em class="property"> = 0.0001</em><a class="headerlink" href="#rsCNN.configs.CallbackEarlyStopping.min_delta" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.CallbackEarlyStopping.patience">
+<code class="descname">patience</code><em class="property"> = 50</em><a class="headerlink" href="#rsCNN.configs.CallbackEarlyStopping.patience" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.configs.CallbackReducedLearningRate">
+<em class="property">class </em><code class="descclassname">rsCNN.configs.</code><code class="descname">CallbackReducedLearningRate</code><a class="headerlink" href="#rsCNN.configs.CallbackReducedLearningRate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.configs.shared.BaseConfigSection</span></code></p>
+<dl class="method">
+<dt id="rsCNN.configs.CallbackReducedLearningRate.check_config_validity">
+<code class="descname">check_config_validity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.CallbackReducedLearningRate.check_config_validity" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="rsCNN.configs.CallbackReducedLearningRate.get_config_name_as_snake_case">
+<em class="property">classmethod </em><code class="descname">get_config_name_as_snake_case</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.CallbackReducedLearningRate.get_config_name_as_snake_case" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.CallbackReducedLearningRate.get_config_options_as_dict">
+<code class="descname">get_config_options_as_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.CallbackReducedLearningRate.get_config_options_as_dict" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, &lt;built-in function any&gt;]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.CallbackReducedLearningRate.get_option_keys">
+<code class="descname">get_option_keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.CallbackReducedLearningRate.get_option_keys" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.CallbackReducedLearningRate.set_config_options">
+<code class="descname">set_config_options</code><span class="sig-paren">(</span><em>config_options</em>, <em>highlight_required</em><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.CallbackReducedLearningRate.set_config_options" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.CallbackReducedLearningRate.use_callback">
+<code class="descname">use_callback</code><em class="property"> = True</em><a class="headerlink" href="#rsCNN.configs.CallbackReducedLearningRate.use_callback" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.CallbackReducedLearningRate.factor">
+<code class="descname">factor</code><em class="property"> = 0.5</em><a class="headerlink" href="#rsCNN.configs.CallbackReducedLearningRate.factor" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.CallbackReducedLearningRate.min_delta">
+<code class="descname">min_delta</code><em class="property"> = 0.0001</em><a class="headerlink" href="#rsCNN.configs.CallbackReducedLearningRate.min_delta" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.CallbackReducedLearningRate.patience">
+<code class="descname">patience</code><em class="property"> = 10</em><a class="headerlink" href="#rsCNN.configs.CallbackReducedLearningRate.patience" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.configs.create_config_from_file">
+<code class="descclassname">rsCNN.configs.</code><code class="descname">create_config_from_file</code><span class="sig-paren">(</span><em>dir_config</em>, <em>filename</em><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.create_config_from_file" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#rsCNN.configs.Config" title="rsCNN.configs.Config"><code class="xref py py-class docutils literal notranslate"><span class="pre">Config</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.configs.create_config_template">
+<code class="descclassname">rsCNN.configs.</code><code class="descname">create_config_template</code><span class="sig-paren">(</span><em>architecture_name</em>, <em>dir_config</em>, <em>filename=None</em><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.create_config_template" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.configs.save_config_to_file">
+<code class="descclassname">rsCNN.configs.</code><code class="descname">save_config_to_file</code><span class="sig-paren">(</span><em>config</em>, <em>dir_config</em>, <em>filename=None</em>, <em>include_sections=None</em><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.save_config_to_file" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.configs.compare_network_configs_get_differing_items">
+<code class="descclassname">rsCNN.configs.</code><code class="descname">compare_network_configs_get_differing_items</code><span class="sig-paren">(</span><em>config_a</em>, <em>config_b</em><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.compare_network_configs_get_differing_items" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.configs.ConfigFactory">
+<em class="property">class </em><code class="descclassname">rsCNN.configs.</code><code class="descname">ConfigFactory</code><a class="headerlink" href="#rsCNN.configs.ConfigFactory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="rsCNN.configs.ConfigFactory.create_config">
+<code class="descname">create_config</code><span class="sig-paren">(</span><em>config_options</em><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.ConfigFactory.create_config" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#rsCNN.configs.Config" title="rsCNN.configs.Config"><code class="xref py py-class docutils literal notranslate"><span class="pre">Config</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.ConfigFactory.create_config_template">
+<code class="descname">create_config_template</code><span class="sig-paren">(</span><em>architecture_name</em><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.ConfigFactory.create_config_template" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#rsCNN.configs.Config" title="rsCNN.configs.Config"><code class="xref py py-class docutils literal notranslate"><span class="pre">Config</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.configs.Config">
+<em class="property">class </em><code class="descclassname">rsCNN.configs.</code><code class="descname">Config</code><span class="sig-paren">(</span><em>raw_files=None</em>, <em>data_build=None</em>, <em>data_samples=None</em>, <em>model_training=None</em>, <em>architecture_options=None</em>, <em>callback_general=None</em>, <em>callback_tensorboard=None</em>, <em>callback_early_stopping=None</em>, <em>callback_reduced_learning_rate=None</em><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.Config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="attribute">
+<dt id="rsCNN.configs.Config.raw_files">
+<code class="descname">raw_files</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.Config.raw_files" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.Config.data_build">
+<code class="descname">data_build</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.Config.data_build" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.Config.data_samples">
+<code class="descname">data_samples</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.Config.data_samples" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.Config.model_training">
+<code class="descname">model_training</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.Config.model_training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.Config.architecture_options">
+<code class="descname">architecture_options</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.Config.architecture_options" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.Config.callback_general">
+<code class="descname">callback_general</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.Config.callback_general" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.Config.callback_tensorboard">
+<code class="descname">callback_tensorboard</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.Config.callback_tensorboard" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.Config.callback_early_stopping">
+<code class="descname">callback_early_stopping</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.Config.callback_early_stopping" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configs.Config.callback_reduced_learning_rate">
+<code class="descname">callback_reduced_learning_rate</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.configs.Config.callback_reduced_learning_rate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.Config.get_config_as_dict">
+<code class="descname">get_config_as_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.Config.get_config_as_dict" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.Config.check_config_validity">
+<code class="descname">check_config_validity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.Config.check_config_validity" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configs.Config.get_config_errors">
+<code class="descname">get_config_errors</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.configs.Config.get_config_errors" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-rsCNN.data_management"></span><span class="target" id="module-rsCNN.evaluation"></span><dl class="function">
+<dt id="rsCNN.evaluation.create_model_report_from_experiment">
+<code class="descclassname">rsCNN.evaluation.</code><code class="descname">create_model_report_from_experiment</code><span class="sig-paren">(</span><em>experiment</em><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.evaluation.create_model_report_from_experiment" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.evaluation.create_model_report">
+<code class="descclassname">rsCNN.evaluation.</code><code class="descname">create_model_report</code><span class="sig-paren">(</span><em>model</em>, <em>config</em>, <em>train_sequence</em>, <em>validation_sequence=None</em>, <em>history=None</em><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.evaluation.create_model_report" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.evaluation.create_preliminary_model_report_from_experiment">
+<code class="descclassname">rsCNN.evaluation.</code><code class="descname">create_preliminary_model_report_from_experiment</code><span class="sig-paren">(</span><em>experiment</em><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.evaluation.create_preliminary_model_report_from_experiment" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.evaluation.create_preliminary_model_report">
+<code class="descclassname">rsCNN.evaluation.</code><code class="descname">create_preliminary_model_report</code><span class="sig-paren">(</span><em>model</em>, <em>config</em>, <em>train_sequence</em>, <em>validation_sequence=None</em><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.evaluation.create_preliminary_model_report" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.evaluation.create_model_comparison_report">
+<code class="descclassname">rsCNN.evaluation.</code><code class="descname">create_model_comparison_report</code><span class="sig-paren">(</span><em>dir_out</em>, <em>filename=None</em>, <em>dirs_histories=None</em>, <em>paths_histories=None</em><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.evaluation.create_model_comparison_report" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<span class="target" id="module-rsCNN.networks"></span><span class="target" id="module-rsCNN.templates"></span><span class="target" id="module-rsCNN.utils.logging"></span><dl class="function">
+<dt id="rsCNN.utils.logging.get_root_logger">
+<code class="descclassname">rsCNN.utils.logging.</code><code class="descname">get_root_logger</code><span class="sig-paren">(</span><em>log_outfile=None</em><span class="sig-paren">)</span><a class="headerlink" href="#rsCNN.utils.logging.get_root_logger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a root logger configured to log to stdout and optionally to a log file. Note that rsCNN log messages will
+also appear in the log files, so this is probably useful even if you don’t write your own logging messages.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>log_outfile</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – file to which logs should be written.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Logger</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Logger configured for logging.</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">logger</span> <span class="o">=</span> <span class="n">get_root_logger</span><span class="p">(</span><span class="s1">&#39;logfile.out&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="s1">&#39;INFO&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;This log message will be in logfile.out&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;This log message will not appear because the log level is set to info.&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">rsCNN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Global Center for Discovery and Conservation Science.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
