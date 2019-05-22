@@ -22,7 +22,7 @@ def read_map_subset(datasets: List, upper_lefts: List[List[int]], window_diamete
         file_array = np.zeros((window_diameter, window_diameter, file_set.RasterCount))
         for _b in range(file_set.RasterCount):
             file_array[:, :, _b] = file_set.GetRasterBand(
-                _b+1).ReadAsArray(file_upper_left[0], file_upper_left[1], window_diameter, window_diameter)
+                _b+1).ReadAsArray(int(file_upper_left[0]), int(file_upper_left[1]), window_diameter, window_diameter)
 
         if (nodata_value is not None):
             file_array[file_array == nodata_value] = np.nan
