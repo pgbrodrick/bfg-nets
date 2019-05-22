@@ -730,7 +730,6 @@ def build_training_data_ordered(
         assert not np.all(weights[0] == 0), 'After weights must not be all 0'
         _logger.debug('Delete in order to flush output')
         # WEIGHTS SHOULD NOT BE ALL 0
-        _save_built_data_files(features, responses, weights, config)
         del features, responses, weights
 
     _remove_munged_data_files(config)
@@ -738,6 +737,7 @@ def build_training_data_ordered(
     _logger.debug('Store data build config sections')
     _save_built_data_config_sections_to_verify_successful(config)
     features, responses, weights = _load_built_data_files(config, writeable=False)
+    assert not np.all(weights[0] == 0), 'Final load weights must not be all 0'
     return features, responses, weights, feature_band_types, response_band_types
 
 
