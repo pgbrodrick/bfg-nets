@@ -1,11 +1,10 @@
+import logging
 import os
 import pickle
 from typing import Union
 
-from rsCNN.utils import logging
 
-
-_logger = logging.get_child_logger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 FILENAME_HISTORY = 'history.pkl'

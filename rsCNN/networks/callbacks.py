@@ -1,4 +1,5 @@
 import datetime
+import logging
 import os
 from typing import List
 
@@ -6,10 +7,9 @@ import keras
 
 from rsCNN.configs import Config
 from rsCNN.networks import histories, models
-from rsCNN.utils import logging
 
 
-_logger = logging.get_child_logger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 _DIR_TENSORBOARD = 'tensorboard'

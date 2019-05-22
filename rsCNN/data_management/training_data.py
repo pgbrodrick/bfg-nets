@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 import re
@@ -16,9 +17,9 @@ from rsCNN.data_management import scalers
 from rsCNN.data_management import shared
 # TODO:  remove * imports
 from rsCNN.utils.general import *
-from rsCNN.utils import logging
 
-_logger = logging.get_child_logger(__name__)
+
+_logger = logging.getLogger(__name__)
 
 
 _FILENAME_BUILT_DATA_CONFIG_SUFFIX = 'built_data_config.yaml'
