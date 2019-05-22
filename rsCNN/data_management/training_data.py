@@ -729,10 +729,9 @@ def build_training_data_ordered(
         weights = calculate_categorical_weights(responses, weights, config)
         assert not np.all(weights[0] == 0), 'After weights must not be all 0'
         _logger.debug('Delete in order to flush output')
-        # WEIGHTS SHOULD NOT BE ALL 0
         del features, responses, weights
 
-    _remove_munged_data_files(config)
+    _remove_temporary_data_files(config)
 
     _logger.debug('Store data build config sections')
     _save_built_data_config_sections_to_verify_successful(config)
@@ -937,7 +936,7 @@ def build_training_data_from_response_points(
         weights = calculate_categorical_weights(responses, weights, config)
         del features, responses, weights
 
-    _remove_munged_data_files(config)
+    _remove_temporary_data_files(config)
 
     _save_built_data_config_sections_to_verify_successful(config)
     features, responses, weights = _load_built_data_files(config, writeable=False)
@@ -1079,7 +1078,7 @@ def _save_built_data_config_sections_to_verify_successful(config: configs.Config
         config, os.path.dirname(filepath), os.path.basename(filepath), include_sections=['raw_files', 'data_build'])
 
 
-def _remove_munged_data_files(config: configs.Config) -> None:
+def _remove_temporary_data_files(config: configs.Config) -> None:
     _logger.debug('Remove temporary munge files')
     if os.path.exists(_get_temporary_features_filepath(config)):
         os.remove(_get_temporary_features_filepath(config))
