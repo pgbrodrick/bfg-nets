@@ -16,6 +16,8 @@ _DIR_TENSORBOARD = 'tensorboard'
 
 
 class HistoryCheckpoint(keras.callbacks.Callback):
+    """A custom Keras callback for checkpointing model training history and associated information.
+    """
     # TODO:  review logged logs from the below methods to determine what should be logged
 
     def __init__(self, dir_out, existing_history=None, period=1, verbose=0):
@@ -93,7 +95,16 @@ class HistoryCheckpoint(keras.callbacks.Callback):
         histories.save_history(combined_history, self.dir_out)
 
 
-def get_callbacks(config: Config, existing_history: dict) -> List[keras.callbacks.Callback]:
+def get_model_callbacks(config: Config, existing_history: dict) -> List[keras.callbacks.Callback]:
+    """Creates model callbacks from a rsCNN config.
+
+    Args:
+        config: rsCNN config.
+        existing_history: Existing model training history if the model has already been partially or completely trained.
+
+    Returns:
+        List of model callbacks.
+    """
     callbacks = [
         HistoryCheckpoint(
             dir_out=config.model_training.dir_out,
