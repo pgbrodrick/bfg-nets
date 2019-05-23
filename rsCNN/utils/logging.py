@@ -11,7 +11,7 @@ def get_root_logger(log_outfile: str = None) -> logging.Logger:
     also appear in the log files, so this is probably useful even if you don't write your own logging messages.
 
     Args:
-        log_outfile: file to which logs should be written.
+        log_outfile: File to which logs should be written.
 
     Returns:
         Logger configured for logging.

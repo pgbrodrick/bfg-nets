@@ -11,7 +11,19 @@ _logger = logging.getLogger(__name__)
 FILENAME_MODEL = 'model.h5'
 
 
+# TODO:  switch to single parameter for paths
+
 def load_model(dir_model: str, custom_objects: dict = None, filename: str = None) -> Union[keras.models.Model, None]:
+    """Loads model from serialized file.
+
+    Args:
+        dir_model: directory
+        custom_objects: Custom objects necessary to build model, including loss functions
+        filename: filename
+
+    Returns:
+        Keras model object if it exists at path.
+    """
     filepath = os.path.join(dir_model, filename or FILENAME_MODEL)
     if not os.path.exists(filepath):
         _logger.debug('Model not loaded; file does not exist at {}'.format(filepath))
@@ -21,6 +33,16 @@ def load_model(dir_model: str, custom_objects: dict = None, filename: str = None
 
 
 def save_model(model: keras.models.Model, dir_model: str, filename: str = None) -> None:
+    """Saves model to serialized file.
+
+    Args:
+        model: Keras model object.
+        dir_model: directory
+        filename: filename
+
+    Returns:
+        None.
+    """
     if not os.path.exists(dir_model):
         _logger.debug('Create directory to save model at {}'.format(dir_model))
         os.makedirs(dir_model)
