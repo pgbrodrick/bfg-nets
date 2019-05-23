@@ -1,17 +1,20 @@
+.. rsCNN documentation master file, created by
+   sphinx-quickstart on Thu May 23 11:34:20 2019.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
 Welcome to rsCNN's documentation!
 =================================
 
-.. automodule:: rsCNN.configs
-.. automodule:: rsCNN.data_management
-.. automodule:: rsCNN.evaluation
-.. automodule:: rsCNN.networks
-.. automodule:: rsCNN.templates
-.. automodule:: rsCNN.utils.logging
-
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
    :caption: Contents:
 
+   configs
+   data_management
+   evaluation
+   networks
+   utils
 
 
 Indices and tables
