@@ -53,22 +53,6 @@ def save_config_to_file(config: 'Config', dir_config: str, filename: str = None,
         yaml.dump(config_out, file_, default_flow_style=False)
 
 
-def compare_network_configs_get_differing_items(config_a, config_b):
-    # TODO:  update for new classes
-    differing_items = list()
-    all_sections = set(list(config_a.keys()) + list(config_b.keys()))
-    for section in all_sections:
-        section_a = config_a.get(section, dict())
-        section_b = config_b.get(section, dict())
-        all_keys = set(list(section_a.keys()) + list(section_b.keys()))
-        for key in all_keys:
-            value_a = section_a.get(key, None)
-            value_b = section_b.get(key, None)
-            if value_a != value_b:
-                differing_items.append((section, key, value_a, value_b))
-    return differing_items
-
-
 class ConfigFactory(object):
 
     def __init__(self) -> None:
@@ -92,9 +76,9 @@ class ConfigFactory(object):
             populated_sections[section_name] = populated_section
         # Populate architecture options given architecture name
         architecture_name = populated_sections['model_training'].architecture_name
-        architecture_options = rsCNN.architectures.config_sections.get_architecture_config_section(architecture_name)
-        architecture_options.set_config_options(config_copy.get('architecture_options', dict()), is_template)
-        populated_sections['architecture_options'] = architecture_options
+        architecture = rsCNN.architectures.config_sections.get_architecture_config_section(architecture_name)
+        architecture.set_config_options(config_copy.get('architecture', dict()), is_template)
+        populated_sections['architecture'] = architecture
         return Config(**populated_sections)
 
 
@@ -103,7 +87,7 @@ class Config(object):
     data_build = None
     data_samples = None
     model_training = None
-    architecture_options = None
+    architecture = None
     callback_general = None
     callback_tensorboard = None
     callback_early_stopping = None
@@ -115,8 +99,7 @@ class Config(object):
             data_build: rsCNN.configs.sections.DataBuild = None,
             data_samples: rsCNN.configs.sections.DataSamples = None,
             model_training: rsCNN.configs.sections.ModelTraining = None,
-            # TODO:  fix this reference
-            architecture_options: 'BaseArchitectureOptions' = None,
+            architecture: rsCNN.architectures.config_sections.BaseArchitectureConfigSection = None,
             callback_general: rsCNN.configs.sections.CallbackGeneral = None,
             callback_tensorboard: rsCNN.configs.sections.CallbackTensorboard = None,
             callback_early_stopping: rsCNN.configs.sections.CallbackEarlyStopping = None,
@@ -133,7 +116,7 @@ class Config(object):
         self.data_build = data_build
         self.data_samples = data_samples
         self.model_training = model_training
-        self.architecture_options = architecture_options
+        self.architecture = architecture
         self.callback_general = callback_general
         self.callback_tensorboard = callback_tensorboard
         self.callback_early_stopping = callback_early_stopping
@@ -147,13 +130,8 @@ class Config(object):
             config[section_name] = populated_section.get_config_options_as_dict()
             if config_section is rsCNN.configs.sections.ModelTraining:
                 # Given ordered output, architecture options make the most sense after model training options
-                config['architecture_options'] = self.architecture_options.get_config_options_as_dict()
+                config['architecture'] = self.architecture.get_config_options_as_dict()
         return config
-
-    def _check_config_validity(self) -> bool:
-        if self.get_config_errors():
-            return False
-        return True
 
     def get_config_errors(self) -> list:
         errors = list()
@@ -162,5 +140,5 @@ class Config(object):
             populated_section = getattr(self, section_name)
             errors.extend(populated_section.check_config_validity())
             if config_section is rsCNN.configs.sections.ModelTraining:
-                errors.extend(self.architecture_options.check_config_validity())
+                errors.extend(self.architecture.check_config_validity())
         return errors

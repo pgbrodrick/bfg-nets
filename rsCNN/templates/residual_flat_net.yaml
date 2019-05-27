@@ -39,7 +39,16 @@ model_training:
   max_epochs: 100
   optimizer: adam
   weighted: false
-architecture_options: {}
+architecture:
+  block_structure: [2, 2, 2, 2]
+  filters: REQUIRED
+  inshape: REQUIRED
+  kernel_size: [3, 3]
+  n_classes: REQUIRED
+  output_activation: REQUIRED
+  padding: same
+  use_batch_norm: false
+  use_initial_colorspace_transformation_layer: false
 callback_general:
   checkpoint_periods: 5
   use_terminate_on_nan: true

@@ -4,7 +4,7 @@ import re
 from typing import Dict, List
 
 import rsCNN.data_management.scalers
-import rsCNN.architectures.options
+import rsCNN.architectures.config_sections
 
 
 # TODO:  add documentation for how to handle this file
