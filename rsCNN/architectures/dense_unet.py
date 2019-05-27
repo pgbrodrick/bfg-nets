@@ -3,16 +3,16 @@ from typing import Tuple
 import keras
 from keras.layers import BatchNormalization, Concatenate, Conv2D, Conv2DTranspose, MaxPooling2D, ReLU, UpSampling2D
 
-import rsCNN.architectures.config_sections
+from rsCNN.architectures import config_sections
 
 
 # TODO:  implement optional bottleneck layers
 
 
 class ArchitectureConfigSection(
-    rsCNN.architectures.config_sections.BlockMixin,
-    rsCNN.architectures.config_sections.GrowthMixin,
-    rsCNN.architectures.config_sections.BaseArchitectureConfigSection
+    config_sections.BlockMixin,
+    config_sections.GrowthMixin,
+    config_sections.BaseArchitectureConfigSection
 ):
     pass
 
@@ -21,15 +21,15 @@ def create_model(
         inshape: Tuple[int, int, int],
         n_classes: int,
         output_activation: str,
-        block_structure: Tuple[int, ...] = rsCNN.architectures.config_sections.DEFAULT_BLOCK_STRUCTURE,
-        filters: int = rsCNN.architectures.config_sections.DEFAULT_FILTERS,
-        kernel_size: Tuple[int, int] = rsCNN.architectures.config_sections.DEFAULT_KERNEL_SIZE,
-        padding: str = rsCNN.architectures.config_sections.DEFAULT_PADDING,
-        pool_size: Tuple[int, int] = rsCNN.architectures.config_sections.DEFAULT_POOL_SIZE,
-        use_batch_norm: bool = rsCNN.architectures.config_sections.DEFAULT_USE_BATCH_NORM,
-        use_growth: bool = rsCNN.architectures.config_sections.DEFAULT_USE_GROWTH,
+        block_structure: Tuple[int, ...] = config_sections.DEFAULT_BLOCK_STRUCTURE,
+        filters: int = config_sections.DEFAULT_FILTERS,
+        kernel_size: Tuple[int, int] = config_sections.DEFAULT_KERNEL_SIZE,
+        padding: str = config_sections.DEFAULT_PADDING,
+        pool_size: Tuple[int, int] = config_sections.DEFAULT_POOL_SIZE,
+        use_batch_norm: bool = config_sections.DEFAULT_USE_BATCH_NORM,
+        use_growth: bool = config_sections.DEFAULT_USE_GROWTH,
         use_initial_colorspace_transformation_layer: bool =
-    rsCNN.architectures.config_sections.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
+    config_sections.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
 ) -> keras.models.Model:
 
     # Initial convolution

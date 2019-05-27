@@ -3,17 +3,14 @@ import logging
 import re
 from typing import Dict, List
 
-import rsCNN.data_management.scalers
-import rsCNN.architectures.config_sections
+from rsCNN.configuration import DEFAULT_OPTIONAL_VALUE, DEFAULT_REQUIRED_VALUE
+from rsCNN.data_management import scalers
 
 
 # TODO:  add documentation for how to handle this file
 # TODO:  check downstream that len raw filename lists match len scalers if len scalers > 1
 
 _logger = logging.getLogger(__name__)
-
-DEFAULT_REQUIRED_VALUE = 'REQUIRED'
-DEFAULT_OPTIONAL_VALUE = 'OPTIONAL'
 
 
 class BaseConfigSection(object):
@@ -223,11 +220,11 @@ class DataSamples(BaseConfigSection):
         # TODO
         errors = list()
         for scaler_name in self.feature_scaler_names:
-            if not rsCNN.data_management.scalers.check_scaler_exists(scaler_name):
+            if not scalers.check_scaler_exists(scaler_name):
                 errors.append('feature_scaler_names contains a scaler name that does not exist:  {}'.format(
                     scaler_name))
         for scaler_name in self.response_scaler_names:
-            if not rsCNN.data_management.scalers.check_scaler_exists(scaler_name):
+            if not scalers.check_scaler_exists(scaler_name):
                 errors.append('response_scaler_names contains a scaler name that does not exist:  {}'.format(
                     scaler_name))
         return errors
