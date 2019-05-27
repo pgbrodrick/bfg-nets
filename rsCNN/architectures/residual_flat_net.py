@@ -3,30 +3,27 @@ from typing import Tuple
 import keras
 from keras.layers import BatchNormalization, Conv2D
 
-from rsCNN.configs.shared import ConfigOption
-from rsCNN.networks.architectures import shared
+import rsCNN.architectures.shared
 
 
-DEFAULT_BLOCK_STRUCTURE = (2, 2, 2, 2)
-
-
-class ArchitectureOptions(shared.BaseArchitectureOptions):
-    block_structure = None
-    _config_options_extra = [
-        ConfigOption('block_structure', DEFAULT_BLOCK_STRUCTURE, tuple),
-    ]
+class ArchitectureOptions(
+    rsCNN.architectures.shared.BlockMixin,
+    rsCNN.architectures.shared.BaseArchitectureOptions
+):
+    pass
 
 
 def create_model(
         inshape: Tuple[int, int, int],
         n_classes: int,
         output_activation: str,
-        block_structure: Tuple[int, ...] = DEFAULT_BLOCK_STRUCTURE,
-        filters: int = shared.DEFAULT_FILTERS,
-        kernel_size: Tuple[int, int] = shared.DEFAULT_KERNEL_SIZE,
-        padding: str = shared.DEFAULT_PADDING,
-        use_batch_norm: bool = shared.DEFAULT_USE_BATCH_NORM,
-        use_initial_colorspace_transformation_layer: bool = shared.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
+        block_structure: Tuple[int, ...] = rsCNN.architectures.shared.DEFAULT_BLOCK_STRUCTURE,
+        filters: int = rsCNN.architectures.shared.DEFAULT_FILTERS,
+        kernel_size: Tuple[int, int] = rsCNN.architectures.shared.DEFAULT_KERNEL_SIZE,
+        padding: str = rsCNN.architectures.shared.DEFAULT_PADDING,
+        use_batch_norm: bool = rsCNN.architectures.shared.DEFAULT_USE_BATCH_NORM,
+        use_initial_colorspace_transformation_layer: bool =
+            rsCNN.architectures.shared.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
 ) -> keras.models.Model:
 
     # Initial convolution

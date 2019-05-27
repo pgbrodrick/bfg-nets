@@ -3,49 +3,33 @@ from typing import Tuple
 import keras
 from keras.layers import BatchNormalization, Concatenate, Conv2D, Conv2DTranspose, MaxPooling2D, ReLU, UpSampling2D
 
-from rsCNN.configs.shared import ConfigOption
-from rsCNN.networks.architectures import shared
+import rsCNN.architectures.shared
 
 
 # TODO:  implement optional bottleneck layers
 
 
-DEFAULT_BLOCK_STRUCTURE = (2, 2, 2, 2)
-DEFAULT_FILTERS = 12
-DEFAULT_POOL_SIZE = (2, 2)
-DEFAULT_USE_GROWTH = False
-
-
-class ArchitectureOptions(shared.BaseArchitectureOptions):
-    block_structure = None
-    filters = None
-    pool_size = None
-    use_growth = None
-    _config_options_extra = [
-        ConfigOption('block_structure', DEFAULT_BLOCK_STRUCTURE, tuple),
-        ConfigOption('filters', DEFAULT_FILTERS, int),
-        ConfigOption('pool_size', DEFAULT_POOL_SIZE, tuple),
-        ConfigOption('use_growth', DEFAULT_USE_GROWTH, bool),
-    ]
-
-    def check_config_validity(self):
-        # TODO:  assert that block_structure has more than one layer in each block for dense purposes, this will cause
-        #  an error as written but, more importantly, it doesn't make any sense for this architecture
-        return super().check_config_validity()
+class ArchitectureOptions(
+    rsCNN.architectures.shared.BlockMixin,
+    rsCNN.architectures.shared.GrowthMixin,
+    rsCNN.architectures.shared.BaseArchitectureOptions
+):
+    pass
 
 
 def create_model(
         inshape: Tuple[int, int, int],
         n_classes: int,
         output_activation: str,
-        block_structure: Tuple[int, ...] = DEFAULT_BLOCK_STRUCTURE,
-        filters: int = DEFAULT_FILTERS,
-        kernel_size: Tuple[int, int] = shared.DEFAULT_KERNEL_SIZE,
-        padding: str = shared.DEFAULT_PADDING,
-        pool_size: Tuple[int, int] = DEFAULT_POOL_SIZE,
-        use_batch_norm: bool = shared.DEFAULT_USE_BATCH_NORM,
-        use_growth: bool = DEFAULT_USE_GROWTH,
-        use_initial_colorspace_transformation_layer: bool = shared.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
+        block_structure: Tuple[int, ...] = rsCNN.architectures.shared.DEFAULT_BLOCK_STRUCTURE,
+        filters: int = rsCNN.architectures.shared.DEFAULT_FILTERS,
+        kernel_size: Tuple[int, int] = rsCNN.architectures.shared.DEFAULT_KERNEL_SIZE,
+        padding: str = rsCNN.architectures.shared.DEFAULT_PADDING,
+        pool_size: Tuple[int, int] = rsCNN.architectures.shared.DEFAULT_POOL_SIZE,
+        use_batch_norm: bool = rsCNN.architectures.shared.DEFAULT_USE_BATCH_NORM,
+        use_growth: bool = rsCNN.architectures.shared.DEFAULT_USE_GROWTH,
+        use_initial_colorspace_transformation_layer: bool =
+            rsCNN.architectures.shared.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
 ) -> keras.models.Model:
 
     # Initial convolution

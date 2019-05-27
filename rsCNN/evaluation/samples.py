@@ -1,8 +1,9 @@
 import keras
 import numpy as np
 
-from rsCNN import configs
-from rsCNN.data_management import scalers, sequences
+import rsCNN.configs
+import rsCNN.data_management.scalers
+import rsCNN.data_management.sequences
 
 
 class Samples(object):
@@ -32,9 +33,9 @@ class Samples(object):
 
     def __init__(
             self,
-            data_sequence: sequences.BaseSequence,
+            data_sequence: rsCNN.data_management.sequences.BaseSequence,
             model: keras.Model,
-            config: configs.Config,
+            config: rsCNN.configs.Config,
             data_sequence_label: str = None
     ) -> None:
         self.data_sequence = data_sequence
@@ -67,11 +68,11 @@ class Samples(object):
         self.num_responses = self.trans_responses.shape[-1]
 
     def _set_has_transforms(self) -> None:
-        if type(self.data_sequence.feature_scaler) is scalers.NullScaler:
+        if type(self.data_sequence.feature_scaler) is rsCNN.data_management.scalers.NullScaler:
             self.has_features_transform = False
         else:
             self.has_features_transform = True
-        if type(self.data_sequence.response_scaler) is scalers.NullScaler:
+        if type(self.data_sequence.response_scaler) is rsCNN.data_management.scalers.NullScaler:
             self.has_responses_transform = False
         else:
             self.has_responses_transform = True

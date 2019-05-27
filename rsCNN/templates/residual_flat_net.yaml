@@ -1,54 +1,44 @@
 raw_files:
-  feature_files: REQUIRED
-  response_files: REQUIRED
-  boundary_files: REQUIRED
-  feature_data_type: REQUIRED
-  response_data_type: REQUIRED
+  feature_files: null
+  response_files: null
+  boundary_files: null
+  feature_data_type: null
+  response_data_type: null
   feature_nodata_value: -9999
   response_nodata_value: -9999
-  boundary_bad_value: REQUIRED
+  boundary_bad_value: null
   ignore_projections: false
 data_build:
-  random_seed: 0
-  dir_out: REQUIRED
-  filename_prefix_out: REQUIRED
+  dir_out: .
+  filename_prefix_out: ''
   response_data_format: FCN
-  max_samples: REQUIRED
-  window_radius: REQUIRED
-  loss_window_radius: REQUIRED
+  random_seed: 1
+  max_samples: null
   number_folds: 10
   validation_fold: 0
-  test_fold: 1
+  test_fold: null
+  window_radius: null
+  loss_window_radius: null
   feature_mean_centering: false
   feature_nodata_maximum_fraction: 0.0
-  response_min_value: REQUIRED
-  response_max_value: REQUIRED
-  response_background_value: REQUIRED
+  response_min_value: null
+  response_max_value: null
+  response_background_value: null
 data_samples:
   apply_random_transformations: false
   batch_size: 100
-  feature_scaler_names: REQUIRED
-  response_scaler_names: REQUIRED
+  feature_scaler_names: null
+  response_scaler_names: null
   feature_nodata_encoding: -10.0
 model_training:
-  dir_out: REQUIRED
+  dir_out: .
   verbosity: 1
   assert_gpu: false
   architecture_name: residual_flat_net
-  loss_metric: REQUIRED
+  loss_metric: null
   max_epochs: 100
   optimizer: adam
   weighted: false
-architecture_options:
-  block_structure: [2, 2, 2, 2]
-  filters: 64
-  inshape: REQUIRED
-  kernel_size: [3, 3]
-  n_classes: REQUIRED
-  output_activation: REQUIRED
-  padding: same
-  use_batch_norm: true
-  use_initial_colorspace_transformation_layer: false
 callback_general:
   checkpoint_periods: 5
   use_terminate_on_nan: true
