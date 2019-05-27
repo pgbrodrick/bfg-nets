@@ -14,6 +14,9 @@ from rsCNN.utils.general import *
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
 
+# TODO:  this should be moved to the evaluation module
+
+
 def apply_model_to_raster(
         cnn: keras.Model,
         data_container: Dataset,

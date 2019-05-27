@@ -8,7 +8,7 @@ from rsCNN.architectures import config_sections
 from rsCNN.configuration import configs
 from rsCNN.data_management.training_data import Dataset
 from rsCNN.data_management.sequences import BaseSequence
-from rsCNN.networks import callbacks, histories, losses, models
+from rsCNN.experiments import callbacks, histories, losses, models
 from rsCNN.utils import gpus
 
 
