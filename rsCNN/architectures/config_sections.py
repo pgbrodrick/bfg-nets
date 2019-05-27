@@ -25,8 +25,8 @@ DEFAULT_REQUIRED_VALUE = 'REQUIRED'
 DEFAULT_OPTIONAL_VALUE = 'OPTIONAL'
 
 
-class BaseArchitectureOptions(rsCNN.configs.sections.BaseConfigSection):
-    """Base class for architecture options, includes options that are generic to all architectures.
+class BaseArchitectureConfigSection(rsCNN.configs.sections.BaseConfigSection):
+    """Base class for architecture config section, includes options that are generic to all architectures.
     """
     _filters_type = int
     filters = DEFAULT_REQUIRED_VALUE
@@ -91,25 +91,27 @@ class GrowthMixin(object):
     use_growth = DEFAULT_USE_GROWTH
 
 
-def create_model_from_architecture_options(architecture_name: str, architecture_options: BaseArchitectureOptions) \
-        -> keras.models.Model:
+def create_model_from_architecture_config_section(
+        architecture_name: str,
+        architecture_config_section: BaseArchitectureConfigSection
+) -> keras.models.Model:
     """Creates a Keras model for a specific architecture using the provided options.
 
     # TODO:  figure out how to populate names automatically
     Args:
         architecture_name: Architecture to create. Currently available architectures are:  alex_net, dense_flat_net,
         dense_unet, dilation_net, flat_net, residual_dilation_net, residual_flat_net, residual_unet, and unet.
-        architecture_options: Options for the specified architecture.
+        architecture_config_section: Options for the specified architecture.
 
     Returns:
         Keras model object.
     """
     architecture_module = _import_architecture_module(architecture_name)
-    kwargs = {key: getattr(architecture_options, key) for key in architecture_options.get_option_keys()}
+    kwargs = {key: getattr(architecture_config_section, key) for key in architecture_config_section.get_option_keys()}
     return architecture_module.create_model(**kwargs)
 
 
-def get_architecture_options(architecture_name: str) -> BaseArchitectureOptions:
+def get_architecture_config_section(architecture_name: str) -> BaseArchitectureConfigSection:
     """Gets architecture options for the specified architecture.
 
     # TODO:  figure out how to populate names automatically
@@ -121,7 +123,7 @@ def get_architecture_options(architecture_name: str) -> BaseArchitectureOptions:
         Options for the specified architecture.
     """
     architecture_module = _import_architecture_module(architecture_name)
-    return architecture_module.ArchitectureOptions()
+    return architecture_module.ArchitectureConfigSection()
 
 
 def _import_architecture_module(architecture_name: str) -> ModuleType:

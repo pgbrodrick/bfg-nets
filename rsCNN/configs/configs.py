@@ -5,7 +5,7 @@ import os
 
 import yaml
 
-import rsCNN.architectures.options
+import rsCNN.architectures.config_sections
 import rsCNN.configs.sections
 
 
@@ -92,7 +92,7 @@ class ConfigFactory(object):
             populated_sections[section_name] = populated_section
         # Populate architecture options given architecture name
         architecture_name = populated_sections['model_training'].architecture_name
-        architecture_options = rsCNN.architectures.options.get_architecture_options(architecture_name)
+        architecture_options = rsCNN.architectures.config_sections.get_architecture_config_section(architecture_name)
         architecture_options.set_config_options(config_copy.get('architecture_options', dict()), is_template)
         populated_sections['architecture_options'] = architecture_options
         return Config(**populated_sections)
