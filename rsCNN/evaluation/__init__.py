@@ -6,10 +6,11 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 from rsCNN.configuration import configs
+from rsCNN.data_management.training_data import Dataset
 from rsCNN.data_management.sequences import BaseSequence
 from rsCNN.evaluation import comparisons, inputs, networks, results, samples
 from rsCNN.evaluation.histories import plot_history
-from rsCNN.networks import experiments, histories
+from rsCNN.experiments import experiments, histories
 
 
 plt.switch_backend('Agg')  # Needed for remote server plotting
@@ -27,9 +28,9 @@ _FILENAME_PRELIMINARY_MODEL_REPORT = 'model_overview.pdf'
 #  and incorrect near deep water. Is this something we can generalize for remote sensing problems?
 
 
-def create_model_report_from_experiment(experiment: experiments.Experiment):
+def create_model_report_from_experiment(experiment: experiments.Experiment, dataset: Dataset) -> None:
     return create_model_report(
-        experiment.model, experiment.config, experiment.train_sequence, experiment.validation_sequence,
+        experiment.model, experiment.config, dataset.training_sequence, dataset.validation_sequence,
         experiment.history
     )
 
@@ -37,7 +38,7 @@ def create_model_report_from_experiment(experiment: experiments.Experiment):
 def create_model_report(
         model: keras.Model,
         config: configs.Config,
-        train_sequence: BaseSequence,
+        training_sequence: BaseSequence,
         validation_sequence: BaseSequence = None,
         history: dict = None
 ) -> None:
@@ -48,7 +49,7 @@ def create_model_report(
         # Plot model summary
         _add_figures(networks.print_model_summary(model), pdf)
         # Plot training sequence figures
-        sampled = samples.Samples(train_sequence, model, config, data_sequence_label='Training')
+        sampled = samples.Samples(training_sequence, model, config, data_sequence_label='Training')
         if config.architecture.output_activation == 'softmax':
             _add_figures(results.print_classification_report(sampled), pdf)
             _add_figures(results.plot_confusion_matrix(sampled), pdf)
@@ -81,16 +82,16 @@ def create_model_report(
             _add_figures(plot_history(history), pdf)
 
 
-def create_preliminary_model_report_from_experiment(experiment: experiments.Experiment):
+def create_preliminary_model_report_from_experiment(experiment: experiments.Experiment, dataset: Dataset) -> None:
     return create_preliminary_model_report(
-        experiment.model, experiment.config, experiment.train_sequence, experiment.validation_sequence
+        experiment.model, experiment.config, dataset.training_sequence, dataset.validation_sequence
     )
 
 
 def create_preliminary_model_report(
         model: keras.Model,
         config: configs.Config,
-        train_sequence: BaseSequence,
+        training_sequence: BaseSequence,
         validation_sequence: BaseSequence = None,
 ) -> None:
     # TODO:  combine with other model report function, just have if statements to avoid plots that can't be created
@@ -99,13 +100,13 @@ def create_preliminary_model_report(
         # Plot model summary
         _add_figures(networks.print_model_summary(model), pdf)
         # Plot training sequence figures
-        sampled = samples.Samples(train_sequence, model, config, data_sequence_label='Training')
+        sampled = samples.Samples(training_sequence, model, config, data_sequence_label='Training')
         _add_figures(inputs.plot_raw_and_transformed_input_samples(sampled), pdf)
         _add_figures(results.single_sequence_prediction_histogram(sampled), pdf)
         del sampled
         # Plot validation sequence figures
         if validation_sequence is not None:
-            sampled = samples.Samples(train_sequence, model, config, data_sequence_label='Validation')
+            sampled = samples.Samples(training_sequence, model, config, data_sequence_label='Validation')
             _add_figures(inputs.plot_raw_and_transformed_input_samples(sampled), pdf)
             _add_figures(results.single_sequence_prediction_histogram(sampled), pdf)
             del sampled

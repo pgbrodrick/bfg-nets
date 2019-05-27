@@ -6,7 +6,7 @@ from typing import List
 import keras
 
 from rsCNN.configuration import configs
-from rsCNN.networks import experiments, histories
+from rsCNN.experiments import experiments, histories
 
 
 _logger = logging.getLogger(__name__)
