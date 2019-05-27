@@ -1,4 +1,9 @@
-import rsCNN.configs
+import importlib
+from types import ModuleType
+
+import keras
+
+import rsCNN.configs.sections
 
 
 # Global parameters
@@ -16,28 +21,31 @@ DEFAULT_NUM_LAYERS = 8
 DEFAULT_POOL_SIZE = (2, 2)
 DEFAULT_USE_GROWTH = False
 
+DEFAULT_REQUIRED_VALUE = 'REQUIRED'
+DEFAULT_OPTIONAL_VALUE = 'OPTIONAL'
 
-class BaseArchitectureOptions(rsCNN.configs.BaseConfigSection):
+
+class BaseArchitectureOptions(rsCNN.configs.sections.BaseConfigSection):
     """Base class for architecture options, includes options that are generic to all architectures.
     """
     _filters_type = int
-    filters = rsCNN.configs.DEFAULT_REQUIRED_VALUE
+    filters = DEFAULT_REQUIRED_VALUE
     """int: Number of filters to use for initial convolutions, may increase in architectures that support the use_growth
     option."""
     _inshape_type = tuple
-    inshape = rsCNN.configs.DEFAULT_REQUIRED_VALUE
+    inshape = DEFAULT_REQUIRED_VALUE
     """tuple: The inshape of sample arrays passed to the model; e.g., 128x128x4 for a 128x128 image with four bands or
     channels."""
     _kernel_size_type = tuple
     kernel_size = DEFAULT_KERNEL_SIZE
     """tuple: The kernel size used for convolutions. Most often (3, 3) for a 3x3 kernel."""
     _n_classes_type = int
-    n_classes = rsCNN.configs.DEFAULT_REQUIRED_VALUE
+    n_classes = DEFAULT_REQUIRED_VALUE
     """int: The number of classes (filters) used in the final network layer. Example 1:  if the network is being trained
     to predict a single continuous variable, this should be 1. Example 2:  if the network is being trained to classify 
     pixels into five classes, this should be 5."""
     _output_activation_type = str
-    output_activation = rsCNN.configs.DEFAULT_REQUIRED_VALUE
+    output_activation = DEFAULT_REQUIRED_VALUE
     """str: The activation type for the final output layer. See Keras documentation for more details and available 
     options."""
     _padding_type = str
@@ -81,3 +89,44 @@ class FlatMixin(object):
 class GrowthMixin(object):
     _use_growth_type = bool
     use_growth = DEFAULT_USE_GROWTH
+
+
+def create_model_from_architecture_options(architecture_name: str, architecture_options: BaseArchitectureOptions) \
+        -> keras.models.Model:
+    """Creates a Keras model for a specific architecture using the provided options.
+
+    # TODO:  figure out how to populate names automatically
+    Args:
+        architecture_name: Architecture to create. Currently available architectures are:  alex_net, dense_flat_net,
+        dense_unet, dilation_net, flat_net, residual_dilation_net, residual_flat_net, residual_unet, and unet.
+        architecture_options: Options for the specified architecture.
+
+    Returns:
+        Keras model object.
+    """
+    architecture_module = _import_architecture_module(architecture_name)
+    kwargs = {key: getattr(architecture_options, key) for key in architecture_options.get_option_keys()}
+    return architecture_module.create_model(**kwargs)
+
+
+def get_architecture_options(architecture_name: str) -> BaseArchitectureOptions:
+    """Gets architecture options for the specified architecture.
+
+    # TODO:  figure out how to populate names automatically
+    Args:
+        architecture_name: Architecture to create. Currently available architectures are:  alex_net, dense_flat_net,
+        dense_unet, dilation_net, flat_net, residual_dilation_net, residual_flat_net, residual_unet, and unet.
+
+    Returns:
+        Options for the specified architecture.
+    """
+    architecture_module = _import_architecture_module(architecture_name)
+    return architecture_module.ArchitectureOptions()
+
+
+def _import_architecture_module(architecture_name: str) -> ModuleType:
+    try:
+        architecture_module = importlib.import_module('rsCNN.architectures.{}'.format(architecture_name))
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError('Architecture {} is not a valid architecture'.format(architecture_name))
+    return architecture_module
