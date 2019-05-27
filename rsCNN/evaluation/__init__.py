@@ -5,7 +5,7 @@ import keras
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
-from rsCNN import configs
+from rsCNN.configuration import configs
 from rsCNN.data_management.sequences import BaseSequence
 from rsCNN.evaluation import comparisons, inputs, networks, results, samples
 from rsCNN.evaluation.histories import plot_history
@@ -49,7 +49,7 @@ def create_model_report(
         _add_figures(networks.print_model_summary(model), pdf)
         # Plot training sequence figures
         sampled = samples.Samples(train_sequence, model, config, data_sequence_label='Training')
-        if config.architecture_options.output_activation == 'softmax':
+        if config.architecture.output_activation == 'softmax':
             _add_figures(results.print_classification_report(sampled), pdf)
             _add_figures(results.plot_confusion_matrix(sampled), pdf)
         _add_figures(inputs.plot_raw_and_transformed_input_samples(sampled), pdf)
@@ -57,14 +57,14 @@ def create_model_report(
         _add_figures(results.plot_raw_and_transformed_prediction_samples(sampled), pdf)
         _add_figures(networks.plot_network_feature_progression(sampled, compact=True), pdf)
         _add_figures(networks.plot_network_feature_progression(sampled, compact=False), pdf)
-        if config.architecture_options.output_activation == 'softmax':
+        if config.architecture.output_activation == 'softmax':
             _add_figures(results.plot_spatial_categorical_error(sampled), pdf)
         else:
             _add_figures(results.plot_spatial_regression_error(sampled), pdf)
         # Plot validation sequence figures
         if validation_sequence is not None:
             sampled = samples.Samples(validation_sequence, model, config, data_sequence_label='Validation')
-            if config.architecture_options.output_activation == 'softmax':
+            if config.architecture.output_activation == 'softmax':
                 _add_figures(results.print_classification_report(sampled), pdf)
                 _add_figures(results.plot_confusion_matrix(sampled), pdf)
             _add_figures(inputs.plot_raw_and_transformed_input_samples(sampled), pdf)
@@ -72,7 +72,7 @@ def create_model_report(
             _add_figures(results.plot_raw_and_transformed_prediction_samples(sampled), pdf)
             _add_figures(networks.plot_network_feature_progression(sampled, compact=True), pdf)
             _add_figures(networks.plot_network_feature_progression(sampled, compact=False), pdf)
-            if config.architecture_options.output_activation == 'softmax':
+            if config.architecture.output_activation == 'softmax':
                 _add_figures(results.plot_spatial_categorical_error(sampled), pdf)
             else:
                 _add_figures(results.plot_spatial_regression_error(sampled), pdf)

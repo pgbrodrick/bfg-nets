@@ -5,8 +5,8 @@ import os
 
 import yaml
 
-import rsCNN.architectures.config_sections
-import rsCNN.configs.sections
+from rsCNN.architectures import config_sections
+from rsCNN.configuration import sections
 
 
 _logger = logging.getLogger(__name__)
@@ -69,14 +69,14 @@ class ConfigFactory(object):
         config_copy = copy.deepcopy(config_options)  # Use a copy because config options are popped from the dict
         # Population config sections with the provided configuration options, tracking errors
         populated_sections = dict()
-        for config_section in rsCNN.configs.sections.get_config_sections():
+        for config_section in sections.get_config_sections():
             section_name = config_section.get_config_name_as_snake_case()
             populated_section = config_section()
             populated_section.set_config_options(config_copy.get(section_name, dict()), is_template)
             populated_sections[section_name] = populated_section
         # Populate architecture options given architecture name
         architecture_name = populated_sections['model_training'].architecture_name
-        architecture = rsCNN.architectures.config_sections.get_architecture_config_section(architecture_name)
+        architecture = config_sections.get_architecture_config_section(architecture_name)
         architecture.set_config_options(config_copy.get('architecture', dict()), is_template)
         populated_sections['architecture'] = architecture
         return Config(**populated_sections)
@@ -95,15 +95,15 @@ class Config(object):
 
     def __init__(
             self,
-            raw_files: rsCNN.configs.sections.RawFiles = None,
-            data_build: rsCNN.configs.sections.DataBuild = None,
-            data_samples: rsCNN.configs.sections.DataSamples = None,
-            model_training: rsCNN.configs.sections.ModelTraining = None,
-            architecture: rsCNN.architectures.config_sections.BaseArchitectureConfigSection = None,
-            callback_general: rsCNN.configs.sections.CallbackGeneral = None,
-            callback_tensorboard: rsCNN.configs.sections.CallbackTensorboard = None,
-            callback_early_stopping: rsCNN.configs.sections.CallbackEarlyStopping = None,
-            callback_reduced_learning_rate: rsCNN.configs.sections.CallbackReducedLearningRate = None
+            raw_files: sections.RawFiles = None,
+            data_build: sections.DataBuild = None,
+            data_samples: sections.DataSamples = None,
+            model_training: sections.ModelTraining = None,
+            architecture: config_sections.BaseArchitectureConfigSection = None,
+            callback_general: sections.CallbackGeneral = None,
+            callback_tensorboard: sections.CallbackTensorboard = None,
+            callback_early_stopping: sections.CallbackEarlyStopping = None,
+            callback_reduced_learning_rate: sections.CallbackReducedLearningRate = None
     ) -> None:
         # Note:  it's undesireable to have so many parameters passed to the __init__ method and have so much boilerplate
         # code, but I've chosen to write it this way because we can use Python typing and modern IDEs to autocomplete
@@ -124,21 +124,21 @@ class Config(object):
 
     def get_config_as_dict(self) -> dict:
         config = OrderedDict()
-        for config_section in rsCNN.configs.sections.get_config_sections():
+        for config_section in sections.get_config_sections():
             section_name = config_section.get_config_name_as_snake_case()
             populated_section = getattr(self, section_name)
             config[section_name] = populated_section.get_config_options_as_dict()
-            if config_section is rsCNN.configs.sections.ModelTraining:
+            if config_section is sections.ModelTraining:
                 # Given ordered output, architecture options make the most sense after model training options
                 config['architecture'] = self.architecture.get_config_options_as_dict()
         return config
 
     def get_config_errors(self) -> list:
         errors = list()
-        for config_section in rsCNN.configs.sections.get_config_sections():
+        for config_section in sections.get_config_sections():
             section_name = config_section.get_config_name_as_snake_case()
             populated_section = getattr(self, section_name)
             errors.extend(populated_section.check_config_validity())
-            if config_section is rsCNN.configs.sections.ModelTraining:
+            if config_section is sections.ModelTraining:
                 errors.extend(self.architecture.check_config_validity())
         return errors

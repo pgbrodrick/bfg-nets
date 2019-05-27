@@ -5,7 +5,7 @@ from typing import List
 
 import keras
 
-from rsCNN.configs import Config
+from rsCNN.configuration import configs
 from rsCNN.networks import histories, models
 
 
@@ -95,7 +95,7 @@ class HistoryCheckpoint(keras.callbacks.Callback):
         histories.save_history(combined_history, self.dir_out)
 
 
-def get_model_callbacks(config: Config, existing_history: dict) -> List[keras.callbacks.Callback]:
+def get_model_callbacks(config: configs.Config, existing_history: dict) -> List[keras.callbacks.Callback]:
     """Creates model callbacks from a rsCNN config.
 
     Args:

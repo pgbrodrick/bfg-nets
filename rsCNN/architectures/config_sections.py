@@ -3,7 +3,7 @@ from types import ModuleType
 
 import keras
 
-import rsCNN.configs.sections
+from rsCNN.configuration import DEFAULT_REQUIRED_VALUE, sections
 
 
 # Global parameters
@@ -21,11 +21,8 @@ DEFAULT_NUM_LAYERS = 8
 DEFAULT_POOL_SIZE = (2, 2)
 DEFAULT_USE_GROWTH = False
 
-DEFAULT_REQUIRED_VALUE = 'REQUIRED'
-DEFAULT_OPTIONAL_VALUE = 'OPTIONAL'
 
-
-class BaseArchitectureConfigSection(rsCNN.configs.sections.BaseConfigSection):
+class BaseArchitectureConfigSection(sections.BaseConfigSection):
     """Base class for architecture config section, includes options that are generic to all architectures.
     """
     _filters_type = int

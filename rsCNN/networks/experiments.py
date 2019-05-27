@@ -5,9 +5,10 @@ import keras
 import keras.backend as K
 import numpy as np
 
-from rsCNN import configs
+from rsCNN.architectures import config_sections
+from rsCNN.configuration import configs
 from rsCNN.data_management.sequences import BaseSequence
-from rsCNN.networks import architectures, callbacks, histories, losses, models
+from rsCNN.networks import callbacks, histories, losses, models
 from rsCNN.utils import gpus
 
 
@@ -46,7 +47,7 @@ class Experiment(object):
         _logger.info('Building or loading model')
         loss_function = losses.cropped_loss(
             self.config.model_training.loss_metric,
-            self.config.architecture_options.inshape[0],
+            self.config.architecture.inshape[0],
             2 * self.config.data_build.loss_window_radius,
             self.config.model_training.weighted
         )
@@ -61,8 +62,8 @@ class Experiment(object):
             # TODO:  do we want to warn or raise or nothing if the network type doesn't match the model type?
         else:
             _logger.debug('History does not exist in model out directory, creating new model')
-            self.model = architectures.create_model_from_architecture_options(
-                self.config.model_training.architecture_name, self.config.architecture_options)
+            self.model = config_sections.create_model_from_architecture_config_section(
+                self.config.model_training.architecture_name, self.config.architecture)
             self.model.compile(loss=loss_function, optimizer=self.config.model_training.optimizer)
             self.history['model_name'] = self.config.model_training.dir_out
         # TODO:  reimplement multiple GPUs

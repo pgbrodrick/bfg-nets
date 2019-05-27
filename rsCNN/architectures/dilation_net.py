@@ -3,7 +3,7 @@ from typing import Tuple
 import keras
 from keras.layers import BatchNormalization, Conv2D
 
-import rsCNN.architectures.config_sections
+from rsCNN.architectures import config_sections
 
 
 DEFAULT_DILATION_RATE = 2
@@ -11,9 +11,9 @@ DEFAULT_NUM_LAYERS = 8
 
 
 class ArchitectureConfigSection(
-    rsCNN.architectures.config_sections.DilationMixin,
-    rsCNN.architectures.config_sections.FlatMixin,
-    rsCNN.architectures.config_sections.BaseArchitectureConfigSection
+    config_sections.DilationMixin,
+    config_sections.FlatMixin,
+    config_sections.BaseArchitectureConfigSection
 ):
     pass
 
@@ -22,14 +22,14 @@ def create_model(
         inshape: Tuple[int, int, int],
         n_classes: int,
         output_activation: str,
-        dilation_rate: int = rsCNN.architectures.config_sections.DEFAULT_DILATION_RATE,
-        filters: int = rsCNN.architectures.config_sections.DEFAULT_FILTERS,
-        kernel_size: Tuple[int, int] = rsCNN.architectures.config_sections.DEFAULT_KERNEL_SIZE,
-        num_layers: int = rsCNN.architectures.config_sections.DEFAULT_NUM_LAYERS,
-        padding: str = rsCNN.architectures.config_sections.DEFAULT_PADDING,
-        use_batch_norm: bool = rsCNN.architectures.config_sections.DEFAULT_USE_BATCH_NORM,
+        dilation_rate: int = config_sections.DEFAULT_DILATION_RATE,
+        filters: int = config_sections.DEFAULT_FILTERS,
+        kernel_size: Tuple[int, int] = config_sections.DEFAULT_KERNEL_SIZE,
+        num_layers: int = config_sections.DEFAULT_NUM_LAYERS,
+        padding: str = config_sections.DEFAULT_PADDING,
+        use_batch_norm: bool = config_sections.DEFAULT_USE_BATCH_NORM,
         use_initial_colorspace_transformation_layer: bool =
-    rsCNN.architectures.config_sections.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
+    config_sections.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
 ) -> keras.models.Model:
     inlayer = keras.layers.Input(inshape)
 

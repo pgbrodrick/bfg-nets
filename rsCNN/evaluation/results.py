@@ -86,7 +86,7 @@ def _plot_predictions_page(
     #  that the regression or categorical plot check below is going to be wrong in some cases. We can wait to see how
     #  Phil handles data types in the data config.
     nrows = len(range_samples)
-    has_softmax = sampled.config.architecture_options.output_activation == 'softmax'
+    has_softmax = sampled.config.architecture.output_activation == 'softmax'
     num_responses_plots = 2 * len(range_responses)
     num_predictions_plots = num_responses_plots
     num_regression_plots = 2 * int(not has_softmax)
@@ -225,7 +225,7 @@ def _plot_spatial_error(
     max_responses_per_page = max_responses_per_row * max_rows_per_page
     num_pages = min(max_pages, np.ceil(sampled.num_responses / max_responses_per_page))
 
-    inshape = sampled.config.architecture_options.inshape
+    inshape = sampled.config.architecture.inshape
     loss_window_radius = sampled.config.data_build.loss_window_radius
     buffer = int((inshape[0] - loss_window_radius * 2) / 2)
 
