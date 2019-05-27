@@ -2,6 +2,7 @@ from collections import OrderedDict
 import copy
 import logging
 import os
+from typing import Dict
 
 import yaml
 
@@ -92,6 +93,25 @@ def save_config_to_file(config: 'Config', filepath: str, include_sections: list 
         config_out = {section: config_out[section] for section in include_sections}
     with open(filepath, 'w') as file_:
         yaml.dump(config_out, file_, default_flow_style=False)
+
+
+def get_config_differences(config_a: 'Config', config_b: 'Config') -> Dict:
+    differing_items = dict()
+    dict_a = config_a.get_config_as_dict()
+    dict_b = config_b.get_config_as_dict()
+    all_sections = set(list(dict_a.keys()) + list(dict_b.keys()))
+    for section in all_sections:
+        section_a = dict_a.get(section, dict())
+        section_b = dict_b.get(section, dict())
+        all_options = set(list(section_a.keys()) + list(section_b.keys()))
+        for option in all_options:
+            value_a = section_a.get(option, None)
+            value_b = section_b.get(option, None)
+            if value_a != value_b:
+                _logger.debug('Configs have different values for option {} in section {}:  {} and {}'.format(
+                    option, section, value_a, value_b))
+                differing_items.setdefault(section, dict())[option] = (value_a, value_b)
+    return differing_items
 
 
 class Config(object):
