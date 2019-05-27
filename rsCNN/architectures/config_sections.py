@@ -66,30 +66,53 @@ class BaseArchitectureConfigSection(sections.BaseConfigSection):
 # TODO:  documentation
 
 class AutoencoderMixin(object):
+    """
+    Mixin for architectures with autoencoder downsampling/upsampling characteristics.
+    """
     _min_conv_width_type = int
     min_conv_width = DEFAULT_MIN_CONV_WIDTH
+    """int: Minimum convolution width at the end of downsampling steps."""
     _pool_size_type = tuple
     pool_size = DEFAULT_POOL_SIZE
+    """tuple: Pooling and upsampling size during each downsampling/upsampling step."""
 
 
 class BlockMixin(object):
+    """
+    Mixin for architectures with block / layer patterns.
+    """
     _block_structure_type = tuple
     block_structure = DEFAULT_BLOCK_STRUCTURE
+    """tuple: The number of layers in each network block. The length of the tuple is the number of network blocks and
+    the value at each index i is the number of layers in block i. Example: (2, 3, 4) configures a network where
+    the first block has two layers, the second block has three layers, and the third block has four layers."""
 
 
 class DilationMixin(object):
+    """
+    Mixin for architectures with dilated convolutions.
+    """
     _dilation_rate_type = int
     dilation_rate = DEFAULT_DILATION_RATE
+    """int: The dilation rate for dilated convolutions."""
 
 
 class FlatMixin(object):
+    """
+    Mixin for flat architectures.
+    """
     _num_layers_type = int
     num_layers = DEFAULT_NUM_LAYERS
+    """int: The number of layers in the network."""
 
 
 class GrowthMixin(object):
+    """
+    Mixin for architectures where growth in the number of filters could be useful.
+    """
     _use_growth_type = bool
     use_growth = DEFAULT_USE_GROWTH
+    """bool: Whether to increase the number of filters at each layer in the network."""
 
 
 def create_model_from_architecture_config_section(
@@ -98,10 +121,9 @@ def create_model_from_architecture_config_section(
 ) -> keras.models.Model:
     """Creates a Keras model for a specific architecture using the provided options.
 
-    # TODO:  figure out how to populate names automatically
     Args:
-        architecture_name: Architecture to create. Currently available architectures are:  alex_net, dense_flat_net,
-        dense_unet, dilation_net, flat_net, residual_dilation_net, residual_flat_net, residual_unet, and unet.
+        architecture_name: Architecture to create. Get a list of currently available architectures using
+        rsCNN.architectures.get_available_architectures().
         architecture_config_section: Options for the specified architecture.
 
     Returns:
@@ -115,10 +137,9 @@ def create_model_from_architecture_config_section(
 def get_architecture_config_section(architecture_name: str) -> BaseArchitectureConfigSection:
     """Gets architecture options for the specified architecture.
 
-    # TODO:  figure out how to populate names automatically
     Args:
-        architecture_name: Architecture to create. Currently available architectures are:  alex_net, dense_flat_net,
-        dense_unet, dilation_net, flat_net, residual_dilation_net, residual_flat_net, residual_unet, and unet.
+        architecture_name: Architecture to create. Get a list of currently available architectures using
+        rsCNN.architectures.get_available_architectures().
 
     Returns:
         Options for the specified architecture.

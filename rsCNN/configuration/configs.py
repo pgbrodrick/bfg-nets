@@ -75,6 +75,7 @@ def save_config_to_file(config: 'Config', filepath: str, include_sections: list 
     Returns:
         None
     """
+
     def _represent_dictionary_order(self, dict_data):
         # via https://stackoverflow.com/questions/31605131/dumping-a-dictionary-to-a-yaml-file-while-preserving-order
         return self.represent_mapping('tag:yaml.org,2002:map', dict_data.items())
