@@ -1,44 +1,45 @@
 raw_files:
-  feature_files: null
-  response_files: null
-  boundary_files: null
-  feature_data_type: null
-  response_data_type: null
+  feature_files: REQUIRED
+  response_files: REQUIRED
+  boundary_files: OPTIONAL
+  feature_data_type: REQUIRED
+  response_data_type: REQUIRED
   feature_nodata_value: -9999
   response_nodata_value: -9999
-  boundary_bad_value: null
+  boundary_bad_value: OPTIONAL
   ignore_projections: false
 data_build:
   dir_out: .
   filename_prefix_out: ''
   response_data_format: FCN
   random_seed: 1
-  max_samples: null
+  max_samples: REQUIRED
   number_folds: 10
   validation_fold: 0
-  test_fold: null
-  window_radius: null
-  loss_window_radius: null
+  test_fold: OPTIONAL
+  window_radius: REQUIRED
+  loss_window_radius: REQUIRED
   feature_mean_centering: false
   feature_nodata_maximum_fraction: 0.0
-  response_min_value: null
-  response_max_value: null
-  response_background_value: null
+  response_min_value: OPTIONAL
+  response_max_value: OPTIONAL
+  response_background_value: OPTIONAL
 data_samples:
   apply_random_transformations: false
   batch_size: 100
-  feature_scaler_names: null
-  response_scaler_names: null
+  feature_scaler_names: REQUIRED
+  response_scaler_names: REQUIRED
   feature_nodata_encoding: -10.0
 model_training:
   dir_out: .
   verbosity: 1
   assert_gpu: false
   architecture_name: alex_net
-  loss_metric: null
+  loss_metric: REQUIRED
   max_epochs: 100
   optimizer: adam
   weighted: false
+architecture_options: {}
 callback_general:
   checkpoint_periods: 5
   use_terminate_on_nan: true

@@ -3,14 +3,14 @@ from typing import Tuple
 import keras
 from keras.layers import BatchNormalization, Concatenate, Conv2D, MaxPooling2D, UpSampling2D
 
-import rsCNN.architectures.shared
+import rsCNN.architectures.options
 
 
 class ArchitectureOptions(
-    rsCNN.architectures.shared.AutoencoderMixin,
-    rsCNN.architectures.shared.BlockMixin,
-    rsCNN.architectures.shared.GrowthMixin,
-    rsCNN.architectures.shared.BaseArchitectureOptions
+    rsCNN.architectures.options.AutoencoderMixin,
+    rsCNN.architectures.options.BlockMixin,
+    rsCNN.architectures.options.GrowthMixin,
+    rsCNN.architectures.options.BaseArchitectureOptions
 ):
     pass
 
@@ -19,16 +19,16 @@ def create_model(
         inshape: Tuple[int, int, int],
         n_classes: int,
         output_activation: str,
-        block_structure: Tuple[int, ...] = rsCNN.architectures.shared.DEFAULT_BLOCK_STRUCTURE,
-        filters: int = rsCNN.architectures.shared.DEFAULT_FILTERS,
-        kernel_size: Tuple[int, int] = rsCNN.architectures.shared.DEFAULT_KERNEL_SIZE,
-        min_conv_width: int = rsCNN.architectures.shared.DEFAULT_MIN_CONV_WIDTH,
-        padding: str = rsCNN.architectures.shared.DEFAULT_PADDING,
-        pool_size: Tuple[int, int] = rsCNN.architectures.shared.DEFAULT_POOL_SIZE,
-        use_batch_norm: bool = rsCNN.architectures.shared.DEFAULT_USE_BATCH_NORM,
-        use_growth: bool = rsCNN.architectures.shared.DEFAULT_USE_GROWTH,
+        block_structure: Tuple[int, ...] = rsCNN.architectures.options.DEFAULT_BLOCK_STRUCTURE,
+        filters: int = rsCNN.architectures.options.DEFAULT_FILTERS,
+        kernel_size: Tuple[int, int] = rsCNN.architectures.options.DEFAULT_KERNEL_SIZE,
+        min_conv_width: int = rsCNN.architectures.options.DEFAULT_MIN_CONV_WIDTH,
+        padding: str = rsCNN.architectures.options.DEFAULT_PADDING,
+        pool_size: Tuple[int, int] = rsCNN.architectures.options.DEFAULT_POOL_SIZE,
+        use_batch_norm: bool = rsCNN.architectures.options.DEFAULT_USE_BATCH_NORM,
+        use_growth: bool = rsCNN.architectures.options.DEFAULT_USE_GROWTH,
         use_initial_colorspace_transformation_layer: bool =
-                rsCNN.architectures.shared.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
+    rsCNN.architectures.options.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
 ) -> keras.models.Model:
 
     input_width = inshape[0]
