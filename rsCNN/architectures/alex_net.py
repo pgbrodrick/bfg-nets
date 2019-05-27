@@ -3,40 +3,32 @@ from typing import Tuple
 import keras
 from keras.layers import BatchNormalization, Conv2D, Dense, Flatten, MaxPooling2D
 
-from rsCNN.configs.shared import ConfigOption
-from rsCNN.networks.architectures import shared
+import rsCNN.architectures.shared
 
 
-DEFAULT_BLOCK_STRUCTURE = (1, 1, 1, 1)
-DEFAULT_MIN_CONV_WIDTH = 8
-DEFAULT_POOL_SIZE = (2, 2)
-DEFAULT_USE_GROWTH = False
-
-
-class ArchitectureOptions(shared.BaseArchitectureOptions):
-    dilation_rate = None
-    num_layers = None
-    _config_options_extra = [
-        ConfigOption('block_structure', DEFAULT_BLOCK_STRUCTURE, tuple),
-        ConfigOption('min_conv_width', DEFAULT_MIN_CONV_WIDTH, int),
-        ConfigOption('pool_size', DEFAULT_POOL_SIZE, tuple),
-        ConfigOption('use_growth', DEFAULT_USE_GROWTH, bool),
-    ]
+class ArchitectureOptions(
+    rsCNN.architectures.shared.AutoencoderMixin,
+    rsCNN.architectures.shared.BlockMixin,
+    rsCNN.architectures.shared.GrowthMixin,
+    rsCNN.architectures.shared.BaseArchitectureOptions
+):
+    pass
 
 
 def create_model(
         inshape: Tuple[int, int, int],
         n_classes: int,
         output_activation: str,
-        block_structure: Tuple[int, ...] = DEFAULT_BLOCK_STRUCTURE,
-        filters: int = shared.DEFAULT_FILTERS,
-        kernel_size: Tuple[int, int] = shared.DEFAULT_KERNEL_SIZE,
-        min_conv_width: int = DEFAULT_MIN_CONV_WIDTH,
-        padding: str = shared.DEFAULT_PADDING,
-        pool_size: Tuple[int, int] = DEFAULT_POOL_SIZE,
-        use_batch_norm: bool = shared.DEFAULT_USE_BATCH_NORM,
-        use_growth: bool = DEFAULT_USE_GROWTH,
-        use_initial_colorspace_transformation_layer: bool = shared.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
+        block_structure: Tuple[int, ...] = rsCNN.architectures.shared.DEFAULT_BLOCK_STRUCTURE,
+        filters: int = rsCNN.architectures.shared.DEFAULT_FILTERS,
+        kernel_size: Tuple[int, int] = rsCNN.architectures.shared.DEFAULT_KERNEL_SIZE,
+        min_conv_width: int = rsCNN.architectures.shared.DEFAULT_MIN_CONV_WIDTH,
+        padding: str = rsCNN.architectures.shared.DEFAULT_PADDING,
+        pool_size: Tuple[int, int] = rsCNN.architectures.shared.DEFAULT_POOL_SIZE,
+        use_batch_norm: bool = rsCNN.architectures.shared.DEFAULT_USE_BATCH_NORM,
+        use_growth: bool = rsCNN.architectures.shared.DEFAULT_USE_GROWTH,
+        use_initial_colorspace_transformation_layer: bool =
+            rsCNN.architectures.shared.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
 ) -> keras.models.Model:
 
     input_width = inshape[0]

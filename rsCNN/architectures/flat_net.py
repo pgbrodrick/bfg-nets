@@ -3,31 +3,27 @@ from typing import Tuple
 import keras
 from keras.layers import BatchNormalization, Conv2D
 
-from rsCNN.configs.shared import ConfigOption
-from rsCNN.networks.architectures import shared
+import rsCNN.architectures.shared
 
 
-DEFAULT_NUM_LAYERS = 8
-
-
-class ArchitectureOptions(shared.BaseArchitectureOptions):
-    dilation_rate = None
-    num_layers = None
-    _config_options_extra = [
-        ConfigOption('num_layers', DEFAULT_NUM_LAYERS, int),
-    ]
+class ArchitectureOptions(
+    rsCNN.architectures.shared.FlatMixin,
+    rsCNN.architectures.shared.BaseArchitectureOptions
+):
+    pass
 
 
 def create_model(
         inshape: Tuple[int, int, int],
         n_classes: int,
         output_activation: str,
-        filters: int = shared.DEFAULT_FILTERS,
-        kernel_size: Tuple[int, int] = shared.DEFAULT_KERNEL_SIZE,
-        num_layers: int = DEFAULT_NUM_LAYERS,
-        padding: str = shared.DEFAULT_PADDING,
-        use_batch_norm: bool = shared.DEFAULT_USE_BATCH_NORM,
-        use_initial_colorspace_transformation_layer: bool = shared.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
+        filters: int = rsCNN.architectures.shared.DEFAULT_FILTERS,
+        kernel_size: Tuple[int, int] = rsCNN.architectures.shared.DEFAULT_KERNEL_SIZE,
+        num_layers: int = rsCNN.architectures.shared.DEFAULT_NUM_LAYERS,
+        padding: str = rsCNN.architectures.shared.DEFAULT_PADDING,
+        use_batch_norm: bool = rsCNN.architectures.shared.DEFAULT_USE_BATCH_NORM,
+        use_initial_colorspace_transformation_layer: bool =
+            rsCNN.architectures.shared.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
 ) -> keras.models.Model:
     """ Construct a flat style network with flexible shape
 
