@@ -16,13 +16,14 @@ _DIR_TENSORBOARD = 'tensorboard'
 
 
 class HistoryCheckpoint(keras.callbacks.Callback):
-    """A custom Keras callback for checkpointing model training history and associated information.
     """
-    # TODO:  review logged logs from the below methods to determine what should be logged
+    A custom Keras callback for checkpointing model training history and associated information.
+    """
 
     def __init__(self, dir_out, existing_history=None, period=1, verbose=0):
         super().__init__()
         # TODO:  remove this log line
+        # NOTE:  model has no attributes at this point, we need this info to know how to implement parallel models
         if hasattr(self, 'model'):
             _logger.debug('init model attributes and methods:  {}'.format(dir(self.model)))
             if hasattr(self.model, 'model'):
@@ -37,11 +38,6 @@ class HistoryCheckpoint(keras.callbacks.Callback):
         self.epoch_begin = None
 
     def on_train_begin(self, logs=None):
-        # TODO:  remove this log line
-        if hasattr(self, 'model'):
-            _logger.debug('train begin model attributes and methods:  {}'.format(dir(self.model)))
-            if hasattr(self.model, 'model'):
-                _logger.debug('train begin model.model attributes and methods:  {}'.format(dir(self.model.model)))
         _logger.debug('Beginning network training')
         _logger.debug('on_training_begin logs: {}'.format(logs))
         for key in ('epoch_start', 'epoch_finish'):
