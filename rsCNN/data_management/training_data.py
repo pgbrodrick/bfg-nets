@@ -102,7 +102,32 @@ def build_or_load_rawfile_data(config: configs.Config, rebuild: bool = False):
 
         data_container.feature_band_types = feature_band_types
         data_container.response_band_types = response_band_types
-
+    """
+    TODO:  Phil:  we shouldn't be assigning attributes to data_container, data_container should assign attributes to 
+    itself, and this will also simplify the API. Currently:
+    
+    # Create dataset
+    data_container = training_data.build_or_load_rawfile_data(config, rebuild=False)
+    data_container.build_or_load_scalers()
+    # Create sequences
+    train_folds = [idx for idx in range(config.data_build.number_folds)
+                   if idx not in (config.data_build.validation_fold, config.data_build.test_fold)]
+    training_sequence = sequences.build_memmapped_sequence(
+        data_container, train_folds, batch_size=config.data_samples.batch_size)
+    validation_sequence = sequences.build_memmapped_sequence(
+        data_container, [config.data_build.validation_fold], batch_size=config.data_samples.batch_size)
+        
+    Instead:
+    
+    data_container = DataContainer(config)
+    data_container.build_formatted_data_files() <-- takes a while, so should be explicit, should pass if already built
+    data_container.load_data_sequences() <-- should handle scalers and all sequences being created
+    
+    Are memmapped loads free? If so, then don't save features/responses/weights from build_formatted step. If not,
+    then save to the data_container, but don't do anything with them.
+    
+    Also, can we be consistent about the name of dataset or data_container? Use one for the class and instance names?
+    """
     data_container.features = features
     data_container.responses = responses
     data_container.weights = weights
@@ -381,26 +406,30 @@ def read_segmentation_chunk(f_sets: List[tuple],
 
 
 class Dataset:
-
     """ A container class that holds all sorts of data objects
     """
+    # TODO:  Phil:  note that I moved these attribute definitions to the class itself, not the init, so that we can
+    #  a) document them more easily and b) so that they're part of the class definition for IDE / other introspection.
+    #  Please delete this after you see it.
+    config = None
+    features = list()
+    responses = list()
+    weights = list()
+    training_sequence = None
+    validation_sequence = None
+
+    feature_band_types = None
+    response_band_types = None
+    feature_raw_band_types = None
+    response_raw_band_types = None
+
+    # TODO:  not used!
+    feature_scalers = list()
+    response_scalers = list()
+
+    train_folds = None
 
     def __init__(self, config: configs.Config):
-        self.features = []
-        self.responses = []
-        self.weights = []
-
-        self.feature_band_types = None
-        self.response_band_types = None
-        self.feature_raw_band_types = None
-        self.response_raw_band_types = None
-
-        # TODO:  not used!
-        self.feature_scalers = []
-        self.response_scalers = []
-
-        self.train_folds = None
-
         self.config = config
 
     def build_or_load_scalers(self, rebuild=False):
