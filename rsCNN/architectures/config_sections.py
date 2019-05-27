@@ -61,6 +61,10 @@ class BaseArchitectureConfigSection(rsCNN.configs.sections.BaseConfigSection):
     """bool: Whether to use an initial colorspace transformation layer. There is evidence that model-learned color
     transformations can be more effective than other types of transformations."""
 
+    def get_option_keys(self):
+        # TODO:  figure out why the inherited get_option_keys is not returning anything. Maybe because of mixins?
+        return [key for key in dir(self) if not key.startswith('_') and not callable(getattr(self, key))]
+
 
 # TODO:  documentation
 
