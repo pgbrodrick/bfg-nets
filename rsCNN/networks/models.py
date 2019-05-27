@@ -8,23 +8,19 @@ import keras
 _logger = logging.getLogger(__name__)
 
 
-FILENAME_MODEL = 'model.h5'
+DEFAULT_FILENAME_MODEL = 'model.h5'
 
 
-# TODO:  switch to single parameter for paths
-
-def load_model(dir_model: str, custom_objects: dict = None, filename: str = None) -> Union[keras.models.Model, None]:
+def load_model(filepath: str, custom_objects: dict = None) -> Union[keras.models.Model, None]:
     """Loads model from serialized file.
 
     Args:
-        dir_model: directory
-        custom_objects: Custom objects necessary to build model, including loss functions
-        filename: filename
+        filepath: Filepath from which model is loaded.
+        custom_objects: Custom objects necessary to build model, including loss functions.
 
     Returns:
         Keras model object if it exists at path.
     """
-    filepath = os.path.join(dir_model, filename or FILENAME_MODEL)
     if not os.path.exists(filepath):
         _logger.debug('Model not loaded; file does not exist at {}'.format(filepath))
         return None
@@ -32,20 +28,18 @@ def load_model(dir_model: str, custom_objects: dict = None, filename: str = None
     return keras.models.load_model(filepath, custom_objects=custom_objects)
 
 
-def save_model(model: keras.models.Model, dir_model: str, filename: str = None) -> None:
+def save_model(model: keras.models.Model, filepath: str) -> None:
     """Saves model to serialized file.
 
     Args:
         model: Keras model object.
-        dir_model: directory
-        filename: filename
+        filepath: Filepath to which model is saved.
 
     Returns:
         None.
     """
-    if not os.path.exists(dir_model):
-        _logger.debug('Create directory to save model at {}'.format(dir_model))
-        os.makedirs(dir_model)
-    filepath = os.path.join(dir_model, filename or FILENAME_MODEL)
+    if not os.path.exists(os.path.dirname(filepath)):
+        _logger.debug('Create directory to save model at {}'.format(os.path.dirname(filepath)))
+        os.makedirs(os.path.dirname(filepath))
     _logger.debug('Save model to {}'.format(filepath))
     model.save(filepath, overwrite=True)

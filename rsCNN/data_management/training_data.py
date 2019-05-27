@@ -1074,8 +1074,7 @@ def _save_built_data_files(
 def _save_built_data_config_sections_to_verify_successful(config: configs.Config) -> None:
     filepath = _get_built_data_config_filepath(config)
     _logger.debug('Saving built data config sections to {}'.format(filepath))
-    configs.save_config_to_file(
-        config, os.path.dirname(filepath), os.path.basename(filepath), include_sections=['raw_files', 'data_build'])
+    configs.save_config_to_file(config, filepath, include_sections=['raw_files', 'data_build'])
 
 
 def _remove_temporary_data_files(config: configs.Config) -> None:
