@@ -12,28 +12,69 @@ from rsCNN.configuration import sections
 _logger = logging.getLogger(__name__)
 
 
-FILENAME_CONFIG = 'config.yaml'
+DEFAULT_FILENAME_CONFIG = 'config.yaml'
 
 
-def create_config_from_file(dir_config: str, filename: str) -> 'Config':
-    filepath = os.path.join(dir_config, filename or FILENAME_CONFIG)
+def create_config_from_file(filepath: str) -> 'Config':
+    """Creates a Config object from a YAML file.
+
+    Args:
+        filepath: Filepath to existing YAML file.
+
+    Returns:
+        Config object with parsed YAML file attributes.
+    """
     assert os.path.exists(filepath), 'No config file found at {}'.format(filepath)
     _logger.debug('Loading config file from {}'.format(filepath))
     with open(filepath) as file_:
         raw_config = yaml.safe_load(file_)
-    config_factory = ConfigFactory()
-    return config_factory.create_config(raw_config)
+    return _create_config(raw_config, is_template=False)
 
 
-def create_config_template(architecture_name: str, dir_config: str, filename: str = None) -> None:
-    _logger.debug('Creating config template for architecture {} at {}'.format(
-        architecture_name, os.path.join(dir_config, filename)))
-    config_factory = ConfigFactory()
-    config = config_factory.create_config_template(architecture_name)
-    save_config_to_file(config, dir_config, filename)
+def create_config_template(architecture_name: str, filepath: str) -> None:
+    """Creates a template YAML file for creating Configs for a given architecture.
+
+    Args:
+        architecture_name: Name of available architecture.
+        filepath: Filepath to which template YAML file is saved.
+
+    Returns:
+        None
+    """
+    _logger.debug('Creating config template for architecture {} at {}'.format(architecture_name, filepath))
+    config_options = {'model_training': {'architecture_name': architecture_name}}
+    config = _create_config(config_options, is_template=True)
+    save_config_to_file(config, filepath)
 
 
-def save_config_to_file(config: 'Config', dir_config: str, filename: str = None, include_sections: list = None) -> None:
+def _create_config(config_options: dict, is_template: bool) -> 'Config':
+    config_copy = copy.deepcopy(config_options)  # Use a copy because config options are popped from the dict
+    # Population config sections with the provided configuration options, tracking errors
+    populated_sections = dict()
+    for config_section in sections.get_config_sections():
+        section_name = config_section.get_config_name_as_snake_case()
+        populated_section = config_section()
+        populated_section.set_config_options(config_copy.get(section_name, dict()), is_template)
+        populated_sections[section_name] = populated_section
+    # Populate architecture options given architecture name
+    architecture_name = populated_sections['model_training'].architecture_name
+    architecture = config_sections.get_architecture_config_section(architecture_name)
+    architecture.set_config_options(config_copy.get('architecture', dict()), is_template)
+    populated_sections['architecture'] = architecture
+    return Config(**populated_sections)
+
+
+def save_config_to_file(config: 'Config', filepath: str, include_sections: list = None) -> None:
+    """Saves/serializes a Config object to a YAML file.
+
+    Args:
+        config: Config object.
+        filepath: Filepath to which YAML file is saved.
+        include_sections: Config sections that should be included. All config sections are included if None.
+
+    Returns:
+        None
+    """
     def _represent_dictionary_order(self, dict_data):
         # via https://stackoverflow.com/questions/31605131/dumping-a-dictionary-to-a-yaml-file-while-preserving-order
         return self.represent_mapping('tag:yaml.org,2002:map', dict_data.items())
@@ -44,7 +85,6 @@ def save_config_to_file(config: 'Config', dir_config: str, filename: str = None,
     yaml.add_representer(OrderedDict, _represent_dictionary_order)
     yaml.add_representer(list, _represent_list_inline)
     config_out = config.get_config_as_dict()
-    filepath = os.path.join(dir_config, filename or FILENAME_CONFIG)
     _logger.debug('Saving config file to {}'.format(filepath))
     if include_sections:
         _logger.debug('Only saving config sections: {}'.format(', '.join(include_sections)))
@@ -53,45 +93,29 @@ def save_config_to_file(config: 'Config', dir_config: str, filename: str = None,
         yaml.dump(config_out, file_, default_flow_style=False)
 
 
-class ConfigFactory(object):
-
-    def __init__(self) -> None:
-        return
-
-    def create_config(self, config_options: dict) -> 'Config':
-        return self._create_config(config_options, is_template=False)
-
-    def create_config_template(self, architecture_name: str) -> 'Config':
-        config_options = {'model_training': {'architecture_name': architecture_name}}
-        return self._create_config(config_options, is_template=True)
-
-    def _create_config(self, config_options: dict, is_template: bool) -> 'Config':
-        config_copy = copy.deepcopy(config_options)  # Use a copy because config options are popped from the dict
-        # Population config sections with the provided configuration options, tracking errors
-        populated_sections = dict()
-        for config_section in sections.get_config_sections():
-            section_name = config_section.get_config_name_as_snake_case()
-            populated_section = config_section()
-            populated_section.set_config_options(config_copy.get(section_name, dict()), is_template)
-            populated_sections[section_name] = populated_section
-        # Populate architecture options given architecture name
-        architecture_name = populated_sections['model_training'].architecture_name
-        architecture = config_sections.get_architecture_config_section(architecture_name)
-        architecture.set_config_options(config_copy.get('architecture', dict()), is_template)
-        populated_sections['architecture'] = architecture
-        return Config(**populated_sections)
-
-
 class Config(object):
+    """
+    Handles the reading and formatting of raw data files, the building and training of models and architectures, and
+    the evaluation and reporting of training and validation results.
+    """
     raw_files = None
+    """sections.RawFiles: RawFiles config section."""
     data_build = None
+    """sections.DataBuild: DataBuild config section."""
     data_samples = None
+    """sections.DataSamples: DataSamples config section."""
     model_training = None
+    """sections.ModelTraining: ModelTraining config section."""
     architecture = None
+    """sections.Architecture: Architecture config section."""
     callback_general = None
+    """sections.CallbacksGeneral: CallbacksGeneral config section."""
     callback_tensorboard = None
+    """sections.Tensorboard: Tensorboard config section."""
     callback_early_stopping = None
+    """sections.EarlyStopping: EarlyStopping config section."""
     callback_reduced_learning_rate = None
+    """sections.CallBackReducedLearningRate: CallBackReducedLearningRate config section."""
 
     def __init__(
             self,
@@ -123,6 +147,11 @@ class Config(object):
         self.callback_reduced_learning_rate = callback_reduced_learning_rate
 
     def get_config_as_dict(self) -> dict:
+        """Get configuration options as a nested dictionary with delineated sections.
+
+        Returns:
+            Configuration options as a nested dictionary with delineated sections.
+        """
         config = OrderedDict()
         for config_section in sections.get_config_sections():
             section_name = config_section.get_config_name_as_snake_case()
@@ -134,6 +163,11 @@ class Config(object):
         return config
 
     def get_config_errors(self) -> list:
+        """Get errors with the configuration options by checking the validity of each config section.
+
+        Returns:
+            List of errors associated with the current configuration.
+        """
         errors = list()
         for config_section in sections.get_config_sections():
             section_name = config_section.get_config_name_as_snake_case()

@@ -6,7 +6,7 @@ from typing import List
 import keras
 
 from rsCNN.configuration import configs
-from rsCNN.networks import histories, models
+from rsCNN.networks import experiments, histories
 
 
 _logger = logging.getLogger(__name__)
@@ -92,7 +92,7 @@ class HistoryCheckpoint(keras.callbacks.Callback):
                 'Parallel models are doing something unusual with histories. Tell Nick and let\'s debug.'
             new_history = self.model.model.history
         combined_history = histories.combine_histories(self.existing_history, new_history)
-        histories.save_history(combined_history, self.dir_out)
+        histories.save_history(combined_history, experiments.get_history_filepath(self.dir_out))
 
 
 def get_model_callbacks(config: configs.Config, existing_history: dict) -> List[keras.callbacks.Callback]:
@@ -113,7 +113,7 @@ def get_model_callbacks(config: configs.Config, existing_history: dict) -> List[
             verbose=config.model_training.verbosity,
         ),
         keras.callbacks.ModelCheckpoint(
-            os.path.join(config.model_training.dir_out, models.FILENAME_MODEL),
+            experiments.get_model_filepath(config.model_training.dir_out),
             period=config.callback_general.checkpoint_periods,
             verbose=config.model_training.verbosity,
         ),

@@ -30,7 +30,7 @@ class Experiment(object):
         self.resume = resume
 
         if os.path.exists(self.config.model_training.dir_out):
-            if histories.load_history(self.config.model_training.dir_out):
+            if histories.load_history(get_history_filepath(self.config.model_training.dir_out)):
                 assert self.resume, 'Resume must be true to continue training an existing model'
             # TODO:  do we need to assert that the configs are the same still?
             #original_config = network_configs.load_network_config(self.network_config['model']['dir_out'])
@@ -41,7 +41,7 @@ class Experiment(object):
             #        differing_items)
         else:
             os.makedirs(self.config.model_training.dir_out)
-            configs.save_config_to_file(self.config, self.config.model_training.dir_out)
+            configs.save_config_to_file(self.config, get_config_filepath(self.config.model_training.dir_out))
 
     def build_or_load_model(self):
         _logger.info('Building or loading model')
@@ -51,7 +51,7 @@ class Experiment(object):
             2 * self.config.data_build.loss_window_radius,
             self.config.model_training.weighted
         )
-        self.history = histories.load_history(self.config.model_training.dir_out) or dict()
+        self.history = histories.load_history(get_history_filepath(self.config.model_training.dir_out))
         if self.history:
             _logger.debug('History exists in out directory, loading model from same location')
             self.model = models.load_model(
@@ -61,11 +61,11 @@ class Experiment(object):
                 K.set_value(self.model.optimizer.lr, self.history['lr'][-1])
             # TODO:  do we want to warn or raise or nothing if the network type doesn't match the model type?
         else:
-            _logger.debug('History does not exist in model out directory, creating new model')
+            _logger.debug('History does not exist in model out directory, creating new history and model')
+            self.history = {'model_name': self.config.model_training.dir_out}
             self.model = config_sections.create_model_from_architecture_config_section(
                 self.config.model_training.architecture_name, self.config.architecture)
             self.model.compile(loss=loss_function, optimizer=self.config.model_training.optimizer)
-            self.history['model_name'] = self.config.model_training.dir_out
         # TODO:  reimplement multiple GPUs
         #n_gpu_avail = gpus.get_count_available_gpus()
         #_logger.debug('Using multiple GPUs with {} available'.format(n_gpu_avail))
@@ -129,5 +129,17 @@ class Experiment(object):
             initial_epoch=len(self.history.get('lr', list())),
         )
         self.history = histories.combine_histories(self.history, new_history.history)
-        histories.save_history(self.history, self.config.model_training.dir_out)
-        models.save_model(self.model, self.config.model_training.dir_out)
+        histories.save_history(self.history, get_history_filepath(self.config.model_training.dir_out))
+        models.save_model(self.model, get_model_filepath(self.config.model_training.dir_out))
+
+
+def get_config_filepath(dir_out: str) -> str:
+    return os.path.join(dir_out, configs.DEFAULT_FILENAME_CONFIG)
+
+
+def get_history_filepath(dir_out: str) -> str:
+    return os.path.join(dir_out, histories.DEFAULT_FILENAME_HISTORY)
+
+
+def get_model_filepath(dir_out: str) -> str:
+    return os.path.join(dir_out, models.DEFAULT_FILENAME_MODEL)
