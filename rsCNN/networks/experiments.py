@@ -6,6 +6,7 @@ import numpy as np
 
 from rsCNN.architectures import config_sections
 from rsCNN.configuration import configs
+from rsCNN.data_management.training_data import Dataset
 from rsCNN.data_management.sequences import BaseSequence
 from rsCNN.networks import callbacks, histories, losses, models
 from rsCNN.utils import gpus
@@ -13,6 +14,8 @@ from rsCNN.utils import gpus
 
 _logger = logging.getLogger(__name__)
 
+
+# TODO:  document this file
 
 class Experiment(object):
     config = None
@@ -25,9 +28,6 @@ class Experiment(object):
     """bool: Whether an existing history object was loaded from the model training directory."""
     loaded_existing_model = None
     """bool: Whether an existing model object was loaded from the model training directory."""
-    train_sequence = None
-    validation_sequence = None
-    test_sequence = None
 
     def __init__(self, config: configs.Config) -> None:
         self.config = config
@@ -93,15 +93,17 @@ class Experiment(object):
             self.model.compile(loss=loss_function, optimizer=self.config.model_training.optimizer)
         """
 
-    def fit_network(
+    def fit_model_with_dataset(self, dataset: Dataset, resume_training: bool = False) -> None:
+        return self.fit_model_with_sequences(dataset.training_sequence, dataset.validation_sequence, resume_training)
+
+    def fit_model_with_sequences(
             self,
-            train_sequence: BaseSequence,
+            training_sequence: BaseSequence,
             validation_sequence: BaseSequence = None,
             resume_training: bool = False
-    ) -> None:
+    ):
         if self.history:
             assert resume_training, 'Resume must be true to continue training an existing model'
-
         if self.config.model_training.assert_gpu:
             gpus.assert_gpu_available()
 
@@ -109,9 +111,8 @@ class Experiment(object):
 
         # TODO:  Check whether psutil.cpu_count gives the right answer on SLURM, i.e., the number of CPUs available to
         #  the job and not the total number on the instance.
-
         new_history = self.model.fit_generator(
-            train_sequence,
+            training_sequence,
             epochs=self.config.model_training.max_epochs,
             verbose=self.config.model_training.verbosity,
             callbacks=model_callbacks,
