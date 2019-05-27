@@ -3,17 +3,17 @@ from typing import Tuple
 import keras
 from keras.layers import BatchNormalization, Conv2D
 
-import rsCNN.architectures.options
+import rsCNN.architectures.config_sections
 
 
 DEFAULT_DILATION_RATE = 2
 DEFAULT_NUM_LAYERS = 8
 
 
-class ArchitectureOptions(
-    rsCNN.architectures.options.DilationMixin,
-    rsCNN.architectures.options.FlatMixin,
-    rsCNN.architectures.options.BaseArchitectureOptions
+class ArchitectureConfigSection(
+    rsCNN.architectures.config_sections.DilationMixin,
+    rsCNN.architectures.config_sections.FlatMixin,
+    rsCNN.architectures.config_sections.BaseArchitectureConfigSection
 ):
     pass
 
@@ -22,14 +22,14 @@ def create_model(
         inshape: Tuple[int, int, int],
         n_classes: int,
         output_activation: str,
-        dilation_rate: int = rsCNN.architectures.options.DEFAULT_DILATION_RATE,
-        filters: int = rsCNN.architectures.options.DEFAULT_FILTERS,
-        kernel_size: Tuple[int, int] = rsCNN.architectures.options.DEFAULT_KERNEL_SIZE,
-        num_layers: int = rsCNN.architectures.options.DEFAULT_NUM_LAYERS,
-        padding: str = rsCNN.architectures.options.DEFAULT_PADDING,
-        use_batch_norm: bool = rsCNN.architectures.options.DEFAULT_USE_BATCH_NORM,
+        dilation_rate: int = rsCNN.architectures.config_sections.DEFAULT_DILATION_RATE,
+        filters: int = rsCNN.architectures.config_sections.DEFAULT_FILTERS,
+        kernel_size: Tuple[int, int] = rsCNN.architectures.config_sections.DEFAULT_KERNEL_SIZE,
+        num_layers: int = rsCNN.architectures.config_sections.DEFAULT_NUM_LAYERS,
+        padding: str = rsCNN.architectures.config_sections.DEFAULT_PADDING,
+        use_batch_norm: bool = rsCNN.architectures.config_sections.DEFAULT_USE_BATCH_NORM,
         use_initial_colorspace_transformation_layer: bool =
-    rsCNN.architectures.options.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
+    rsCNN.architectures.config_sections.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
 ) -> keras.models.Model:
     inlayer = keras.layers.Input(inshape)
 
