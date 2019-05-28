@@ -25,7 +25,7 @@ def create_model(
         block_structure: Tuple[int, ...] = config_sections.DEFAULT_BLOCK_STRUCTURE,
         filters: int = config_sections.DEFAULT_FILTERS,
         kernel_size: Tuple[int, int] = config_sections.DEFAULT_KERNEL_SIZE,
-        min_conv_width: 1,  # TODO:  we need to kill this parameter, it doesn't do anything except a simple check
+        min_conv_width = None,  # TODO:  we need to kill this parameter, it doesn't do anything except a simple check
         padding: str = config_sections.DEFAULT_PADDING,
         pool_size: Tuple[int, int] = config_sections.DEFAULT_POOL_SIZE,
         use_batch_norm: bool = config_sections.DEFAULT_USE_BATCH_NORM,
