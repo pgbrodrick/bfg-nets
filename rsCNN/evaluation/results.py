@@ -89,8 +89,8 @@ def _plot_predictions_page(
     has_softmax = sampled.config.architecture.output_activation == 'softmax'
     num_responses_plots = 2 * len(range_responses)
     num_predictions_plots = num_responses_plots
-    num_regression_plots = 2 * int(not has_softmax)
-    num_categorical_plots = 2 * int(has_softmax)
+    num_regression_plots = 2 * len(range_responses) * int(not has_softmax)
+    num_categorical_plots = 2 * len(range_responses) * int(has_softmax)
     num_weights_plots = 1
     ncols = (num_responses_plots + num_predictions_plots + num_regression_plots + num_categorical_plots +
              num_weights_plots)
