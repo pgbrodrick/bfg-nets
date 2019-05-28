@@ -55,7 +55,9 @@ class Experiment(object):
                 get_model_filepath(self.config.model_training.dir_out)))
             self.loaded_existing_model = True
             self.model = models.load_model(
-                self.config.model_training.dir_out, custom_objects={'_cropped_loss': loss_function})
+                get_model_filepath(self.config.model_training.dir_out),
+                custom_objects={'_cropped_loss': loss_function}
+            )
         else:
             _logger.debug('Building new model, no model exists at {}'.format(
                 get_model_filepath(self.config.model_training.dir_out)))
