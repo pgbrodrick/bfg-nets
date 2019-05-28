@@ -12,7 +12,7 @@ import ogr
 import rasterio.features
 from tqdm import tqdm
 
-from rsCNN import configs
+from rsCNN.configuration import configs
 from rsCNN.data_management import scalers
 from rsCNN.data_management import shared
 # TODO:  remove * imports
