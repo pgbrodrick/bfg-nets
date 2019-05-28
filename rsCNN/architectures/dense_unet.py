@@ -10,6 +10,7 @@ from rsCNN.architectures import config_sections
 
 
 class ArchitectureConfigSection(
+    config_sections.AutoencoderMixin,
     config_sections.BlockMixin,
     config_sections.GrowthMixin,
     config_sections.BaseArchitectureConfigSection
