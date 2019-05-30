@@ -595,13 +595,12 @@ def build_training_data_ordered(
     _logger.debug('Pre-compute all subset locations')
     all_site_upper_lefts = []
     all_site_xy_locations = []
-    gdal_datasets = []
     reference_subset_geotransforms = []
     for _site in range(0, len(config.raw_files.feature_files)):
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
                         for loc_file in config.raw_files.feature_files[_site]]
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
-        boundary_set = _get_boundary_sets_from_boundary_files(config)[_site]
+        boundary_set = common_io._get_site_boundary_set(config,_site)
 
         all_set_upper_lefts, xy_sample_locations = common_io.get_all_interior_extent_subset_pixel_locations(\
                                                   gdal_datasets = [feature_sets, response_sets, [bs for bs in [boundary_set] if bs is not None]],\
@@ -611,7 +610,6 @@ def build_training_data_ordered(
 
         all_site_upper_lefts.append(all_set_upper_lefts)
         all_site_xy_locations.append(xy_sample_locations)
-        gdal_datasets.append([feature_sets, response_sets, boundary_set])
 
 
         ref_trans = feature_sets[0].GetGeoTransform()
@@ -628,20 +626,25 @@ def build_training_data_ordered(
     progress_bar = tqdm(total=config.data_build.max_samples, ncols=80)
 
     _sample_index = 0
-    _site = 0
-    _site_xy_index = np.zeros(len(gdal_datasets)).astype(int).tolist()
-    while (_sample_index < config.data_build.max_samples and len(gdal_datasets) > 0):
+    _rs_index = 0
+    remaining_sites = list(range(len(config.raw_files.feature_files)))
+    _site_xy_index = np.zeros(len(remaining_sites)).astype(int).tolist()
+    while (_sample_index < config.data_build.max_samples and len(remaining_sites) > 0):
+        _site = remaining_sites[_rs_index]
 
-        [feature_sets, response_sets, boundary_set] = gdal_datasets[_site]
+        feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
+                        for loc_file in config.raw_files.feature_files[_site]]
+        response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
+        boundary_set = common_io._get_site_boundary_set(config,_site)
 
         while _site_xy_index[_site] < len(all_site_upper_lefts[_site]):
 
-            [f_ul, r_ul, b_ul] = all_site_upper_lefts[_site]
+            [f_ul, r_ul, [b_ul]] = all_site_upper_lefts[_site]
 
             local_boundary_vector_file = None
             local_boundary_upper_left = None
             if (b_ul is not None):
-                local_boundary_upper_left = b_ul + all_site_xy_locations[_site][_site_xy_index, :]
+                local_boundary_upper_left = b_ul + all_site_xy_locations[_site][_site_xy_index[_site], :]
             subset_geotransform = None
             if (reference_subset_geotransforms[_site] is not None):
                 ref_trans = reference_subset_geotransforms[_site]
@@ -663,12 +666,7 @@ def build_training_data_ordered(
             if (_site_xy_index[_site] >= len(all_site_xy_locations[_site])):
                 _logger.debug('All locations in site {} have been checked.'.format(config.raw_files.feature_files[_site][0]))
 
-                _site_xy_index.pop(_site)
-                all_site_xy_locations.pop(_site)
-                all_site_upper_lefts.pop(_site)
-                reference_subset_geotransforms.pop(_site)
-                popped = gdal_datasets.pop(_site)
-
+                popped = remaining_sites.pop(_rs)
 
             if local_feature is not None:
                 _logger.debug('Save sample data; {} samples saved'.format(_sample_index + 1))
@@ -678,11 +676,14 @@ def build_training_data_ordered(
                 progress_bar.update(1)
 
                 if (popped is not None):
-                    _site += 1
+                    _rs_index += 1
 
                 break
 
     progress_bar.close()
+    del all_site_upper_lefts
+    del all_site_xy_locations
+    del reference_subset_geotransforms
 
 
     features = _resize_munged_features(features, _sample_index, config)
@@ -758,7 +759,7 @@ def build_training_data_from_response_points(
         _logger.debug('Open feature and response datasets for site {}'.format(_site))
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.feature_files[_site]]
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
-        boundary_set = _get_boundary_sets_from_boundary_files(config)[_site]
+        boundary_set = common_io._get_site_boundary_set(config,_site)
 
         _logger.debug('Calculate overlapping extent')
         [f_ul, r_ul, b_ul], x_px_size, y_px_size = common_io.get_overlapping_extent(
@@ -848,7 +849,7 @@ def build_training_data_from_response_points(
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
                         for loc_file in config.raw_files.feature_files[_site]]
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
-        boundary_set = _get_boundary_sets_from_boundary_files(config)[_site]
+        boundary_set = common_io._get_site_boundary_set(config,_site)
 
         _logger.debug('Calculate interior rectangle location and extent')
         [f_ul, r_ul, b_ul], x_px_size, y_px_size = common_io.get_overlapping_extent(
@@ -981,15 +982,6 @@ def _check_built_data_files_exist(config: configs.Config) -> bool:
 
 ################### File/Dataset Opening Functions ##############################
 
-
-# TODO:  improve typing return
-def _get_boundary_sets_from_boundary_files(config: configs.Config) -> List:
-    if not config.raw_files.boundary_files:
-        boundary_sets = [None] * len(config.raw_files.feature_files)
-    else:
-        boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) if loc_file is not None else None
-                         for loc_file in config.raw_files.boundary_files]
-    return boundary_sets
 
 
 def _create_munged_features_responses_data_files(config: configs.Config, num_features: int, num_responses: int) \

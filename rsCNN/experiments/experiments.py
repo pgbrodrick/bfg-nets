@@ -44,6 +44,7 @@ class Experiment(object):
 
     def build_or_load_model(self):
         _logger.info('Building or loading model')
+        print(self.config.architecture.inshape)
         loss_function = losses.cropped_loss(
             self.config.model_training.loss_metric,
             self.config.architecture.inshape[0],
