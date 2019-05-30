@@ -167,8 +167,7 @@ def one_hot_encode_array(raw_band_types: List[str], array: np.array, memmap_file
     return array, band_types
 
 
-# TODO:  improve typing return
-def _get_boundary_sets_from_boundary_files(config: configs.Config) -> List:
+def get_boundary_sets_from_boundary_files(config: configs.Config) -> List[gdal.Dataset]:
     if not config.raw_files.boundary_files:
         boundary_sets = [None] * len(config.raw_files.feature_files)
     else:
@@ -177,8 +176,7 @@ def _get_boundary_sets_from_boundary_files(config: configs.Config) -> List:
     return boundary_sets
 
 
-# TODO:  improve typing return
-def _get_site_boundary_set(config: configs.Config,_site) -> List:
+def get_site_boundary_set(config: configs.Config, _site) -> gdal.Dataset:
     
     if not config.raw_files.boundary_files:
         boundary_set = None
