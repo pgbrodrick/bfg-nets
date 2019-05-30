@@ -11,10 +11,12 @@ from rsCNN.data_management.sequences import BaseSequence
 from rsCNN.evaluation import comparisons, inputs, networks, results, samples
 from rsCNN.evaluation.histories import plot_history
 from rsCNN.experiments import experiments, histories
+import logging
 
 
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
+_logger = logging.getLogger(__name__)
 
 _FILENAME_MODEL_COMPARISON = 'model_comparison.pdf'
 _FILENAME_MODEL_REPORT = 'model_performance.pdf'

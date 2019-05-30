@@ -2,6 +2,7 @@ from typing import List
 
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 import sklearn.metrics
 
@@ -38,7 +39,9 @@ def plot_confusion_matrix(sampled: samples.Samples) -> [plt.Figure]:
             value_format = '.2f'
             max_ = 1
         im = ax.imshow(matrix, interpolation='nearest', vmin=0, vmax=max_, cmap=shared.COLORMAP_METRICS)
-        ax.figure.colorbar(im, ax=ax, )
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="5%", pad=0.05)
+        ax.figure.colorbar(im, ax=cax, )
         ax.set(xticks=np.arange(matrix.shape[1]), yticks=np.arange(matrix.shape[0]), xticklabels=classes,
                yticklabels=classes, title=title, ylabel='True label', xlabel='Predicted label')
         # Matrix element labels
