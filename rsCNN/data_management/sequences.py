@@ -198,7 +198,6 @@ class MemmappedSequence(BaseSequence):
                  index * self.batch_size < self.cum_samples_per_array[current_array+1])):
                 break
             current_array += 1
-            q = 1
 
         # grab the the appropriate number of samples from the current array
         sample_index = int(index * self.batch_size - self.cum_samples_per_array[current_array])
@@ -209,7 +208,6 @@ class MemmappedSequence(BaseSequence):
 
         # if the current array didn't have enough samples in it, roll forward to the next one (and keep
         # doing so until we have enough samples)
-        # TODO: probably need a safety here so we terminate at the point where we hit the first sample grabbed....only applies for very small datasets or very large batch_sizes, but we shoudl safeguard anyway.
         while (batch_features.shape[0] < self.batch_size):
             sample_index = 0
             current_array += 1

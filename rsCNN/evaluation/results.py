@@ -93,7 +93,7 @@ def _plot_predictions_page(
     num_responses_plots = 2 * len(range_responses)
     num_predictions_plots = num_responses_plots
     num_regression_plots = 2 * len(range_responses) * int(not has_softmax)
-    num_categorical_plots = 2 * len(range_responses) * int(has_softmax)
+    num_categorical_plots = 2 * int(has_softmax)
     num_weights_plots = 1
     ncols = (num_responses_plots + num_predictions_plots + num_regression_plots + num_categorical_plots +
              num_weights_plots)
@@ -116,10 +116,8 @@ def _plot_predictions_page(
                     sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
         # Note: if softmax aka categorical, then we only need one plot per sample, not per response
         if has_softmax:
-            # TODO:  we're not really "plotting softmax", what's a better name for this? It's escaping me!
-            shared.plot_softmax(sampled, idx_sample, axes.__next__(), idx_sample == 0, False)
-            # TODO:  same naming issue here
-            shared.plot_error_categorical(sampled, idx_sample, axes.__next__(), idx_sample == 0, False)
+            shared.plot_max_likelihood(sampled, idx_sample, axes.__next__(), idx_sample == 0, False)
+            shared.plot_binary_error(sampled, idx_sample, axes.__next__(), idx_sample == 0, False)
         shared.plot_weights(sampled, idx_sample, axes.__next__(), idx_sample == 0, False)
     return fig
 

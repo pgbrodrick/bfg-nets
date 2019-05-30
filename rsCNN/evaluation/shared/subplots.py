@@ -111,10 +111,9 @@ def _plot_sample_attribute(
         ax.set_ylabel('Sample\n{}'.format(idx_sample))
 
 
-def plot_softmax(sampled: samples.Samples, idx_sample: int, ax: plt.Axes, add_xlabel: bool, add_ylabel: bool) -> None:
+def plot_max_likelihood(sampled: samples.Samples, idx_sample: int, ax: plt.Axes, add_xlabel: bool, add_ylabel: bool) -> None:
     # Note:  this assumes that the softmax applied to all prediction axes and that there was no transformation applied
     #  to the categorical data.
-    # TODO:  Phil:  are we going to have issues if a transformation was applied to categorical data? I think so?
     min_ = 0
     max_ = sampled.num_responses - 1
     assert not colormaps.check_is_categorical_colormap_repeated(sampled.num_responses), \
@@ -124,8 +123,7 @@ def plot_softmax(sampled: samples.Samples, idx_sample: int, ax: plt.Axes, add_xl
     ax.set_xticks([])
     ax.set_yticks([])
     if add_xlabel:
-        # TODO:  Phil:  better label?
-        ax.set_xlabel('Softmax\nCategories\n{}\n{}'.format(_format_number(min_), _format_number(max_)))
+        ax.set_xlabel('Max Likelihood\nCategories\n{}\n{}'.format(_format_number(min_), _format_number(max_)))
         ax.xaxis.set_label_position('top')
     if add_ylabel:
         ax.set_ylabel('Sample\n{}'.format(idx_sample))
@@ -149,7 +147,7 @@ def plot_weights(sampled: samples.Samples, idx_sample: int, ax: plt.Axes, add_xl
         ax.set_ylabel('Sample\n{}'.format(idx_sample))
 
 
-def plot_error_categorical(
+def plot_binary_error(
         sampled: samples.Samples,
         idx_sample: int,
         ax: plt.Axes,
@@ -158,7 +156,6 @@ def plot_error_categorical(
 ) -> None:
     # Note:  this assumes that the softmax applied to all prediction axes and that there was no transformation applied
     #  to the categorical data.
-    # TODO:  Phil:  are we going to have issues if a transformation was applied to categorical data? I think so?
     min_ = 0
     max_ = 1
     actual = np.argmax(sampled.raw_responses[idx_sample, :], axis=-1)
@@ -167,8 +164,7 @@ def plot_error_categorical(
     ax.set_xticks([])
     ax.set_yticks([])
     if add_xlabel:
-        # TODO:  Phil:  better label?
-        ax.set_xlabel('Categorical\nErrors\n{}\n{}'.format(_format_number(min_), _format_number(max_)))
+        ax.set_xlabel('Correct\nCategory\nFalse\nTrue')
         ax.xaxis.set_label_position('top')
     if add_ylabel:
         ax.set_ylabel('Sample\n{}'.format(idx_sample))
