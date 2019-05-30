@@ -2,6 +2,7 @@ from typing import List
 
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
+import matplotlib
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 import sklearn.metrics
@@ -27,6 +28,7 @@ def plot_confusion_matrix(sampled: samples.Samples) -> [plt.Figure]:
     confusion_matrix = sklearn.metrics.confusion_matrix(actual, predicted, labels=classes)
     normed_matrix = confusion_matrix.astype(float) / confusion_matrix.sum(axis=1)[:, np.newaxis]
     fig, axes = plt.subplots(figsize=(16, 8), nrows=1, ncols=2)
+
     for idx_ax, ax in enumerate(axes):
         if idx_ax == 0:
             title = 'Confusion matrix, with counts'
@@ -39,17 +41,22 @@ def plot_confusion_matrix(sampled: samples.Samples) -> [plt.Figure]:
             value_format = '.2f'
             max_ = 1
         im = ax.imshow(matrix, interpolation='nearest', vmin=0, vmax=max_, cmap=shared.COLORMAP_METRICS)
+
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.05)
-        plt.colorbar(im, ax=cax, )
+        fig.colorbar(im, cax=cax)
+
         ax.set(xticks=np.arange(matrix.shape[1]), yticks=np.arange(matrix.shape[0]), xticklabels=classes,
                yticklabels=classes, title=title, ylabel='True label', xlabel='Predicted label')
+
         # Matrix element labels
         for i in range(matrix.shape[0]):
             for j in range(matrix.shape[1]):
                 ax.text(j, i, format(matrix[i, j], value_format), ha='center', va='center',
                         color='white' if matrix[i, j] > max_ / 2. else 'black')
+
     fig.suptitle('{} Sequence Confusion Matrix'.format(sampled.data_sequence_label or ''))
+    plt.tight_layout(h_pad=1)
     return [fig]
 
 
