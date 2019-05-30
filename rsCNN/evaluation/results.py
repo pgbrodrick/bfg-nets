@@ -41,7 +41,7 @@ def plot_confusion_matrix(sampled: samples.Samples) -> [plt.Figure]:
         im = ax.imshow(matrix, interpolation='nearest', vmin=0, vmax=max_, cmap=shared.COLORMAP_METRICS)
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.05)
-        ax.figure.colorbar(im, ax=cax, )
+        plt.colorbar(im, ax=cax, )
         ax.set(xticks=np.arange(matrix.shape[1]), yticks=np.arange(matrix.shape[0]), xticklabels=classes,
                yticklabels=classes, title=title, ylabel='True label', xlabel='Predicted label')
         # Matrix element labels
