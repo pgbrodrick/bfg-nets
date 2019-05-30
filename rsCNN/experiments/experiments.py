@@ -105,7 +105,7 @@ class Experiment(object):
             validation_sequence: BaseSequence = None,
             resume_training: bool = False
     ):
-        if self.history:
+        if self.loaded_existing_model:
             assert resume_training, 'Resume must be true to continue training an existing model'
         if self.config.model_training.assert_gpu:
             gpus.assert_gpu_available()

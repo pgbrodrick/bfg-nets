@@ -46,9 +46,9 @@ def create_model_report(
     #  update the function definitions to match
     filepath_report = os.path.join(config.model_training.dir_out, _FILENAME_MODEL_REPORT)
     with PdfPages(filepath_report) as pdf:
-        # Plot model summary
+        _logger.info('Plot Summary')
         _add_figures(networks.print_model_summary(model), pdf)
-        # Plot training sequence figures
+        _logger.info('Plot Training Sequence Figures')
         sampled = samples.Samples(training_sequence, model, config, data_sequence_label='Training')
         if config.architecture.output_activation == 'softmax':
             _add_figures(results.print_classification_report(sampled), pdf)
@@ -62,7 +62,7 @@ def create_model_report(
             _add_figures(results.plot_spatial_categorical_error(sampled), pdf)
         else:
             _add_figures(results.plot_spatial_regression_error(sampled), pdf)
-        # Plot validation sequence figures
+        _logger.info('Plot Validation Sequence Figures')
         if validation_sequence is not None:
             sampled = samples.Samples(validation_sequence, model, config, data_sequence_label='Validation')
             if config.architecture.output_activation == 'softmax':
@@ -77,7 +77,7 @@ def create_model_report(
                 _add_figures(results.plot_spatial_categorical_error(sampled), pdf)
             else:
                 _add_figures(results.plot_spatial_regression_error(sampled), pdf)
-        # Model history
+        _logger.info('Plot Model History')
         if history:
             _add_figures(plot_history(history), pdf)
 
