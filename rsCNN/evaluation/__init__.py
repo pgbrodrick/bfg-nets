@@ -54,7 +54,7 @@ def create_model_report(
         sampled = samples.Samples(training_sequence, model, config, data_sequence_label='Training')
         if config.architecture.output_activation == 'softmax':
             _add_figures(results.print_classification_report(sampled), pdf)
-            _add_figures(results.plot_confusion_matrix(sampled), pdf)
+            _add_figures(results.plot_confusion_matrix(sampled), pdf, tight=False)
         _add_figures(inputs.plot_raw_and_transformed_input_samples(sampled), pdf)
         _add_figures(results.single_sequence_prediction_histogram(sampled), pdf)
         _add_figures(results.plot_raw_and_transformed_prediction_samples(sampled), pdf)
@@ -69,7 +69,7 @@ def create_model_report(
             sampled = samples.Samples(validation_sequence, model, config, data_sequence_label='Validation')
             if config.architecture.output_activation == 'softmax':
                 _add_figures(results.print_classification_report(sampled), pdf)
-                _add_figures(results.plot_confusion_matrix(sampled), pdf)
+                _add_figures(results.plot_confusion_matrix(sampled), pdf, tight=False)
             _add_figures(inputs.plot_raw_and_transformed_input_samples(sampled), pdf)
             _add_figures(results.single_sequence_prediction_histogram(sampled), pdf)
             _add_figures(results.plot_raw_and_transformed_prediction_samples(sampled), pdf)
@@ -135,6 +135,9 @@ def create_model_comparison_report(
         _add_figures(comparisons.plot_model_timing_comparison(model_histories), pdf)
 
 
-def _add_figures(figures: List[plt.Figure], pdf: PdfPages) -> None:
+def _add_figures(figures: List[plt.Figure], pdf: PdfPages, tight: bool = True) -> None:
     for fig in figures:
-        pdf.savefig(fig, bbox_inches='tight')
+        if (tight is True):
+            pdf.savefig(fig, bbox_inches='tight')
+        else:
+            pdf.savefig(fig)
