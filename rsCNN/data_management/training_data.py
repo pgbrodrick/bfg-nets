@@ -600,7 +600,7 @@ def build_training_data_ordered(
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
                         for loc_file in config.raw_files.feature_files[_site]]
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
-        boundary_set = common_io._get_site_boundary_set(config,_site)
+        boundary_set = common_io.get_site_boundary_set(config, _site)
 
         all_set_upper_lefts, xy_sample_locations = common_io.get_all_interior_extent_subset_pixel_locations(\
                                                   gdal_datasets = [feature_sets, response_sets, [bs for bs in [boundary_set] if bs is not None]],\
@@ -636,7 +636,7 @@ def build_training_data_ordered(
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
                         for loc_file in config.raw_files.feature_files[_site]]
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
-        boundary_set = common_io._get_site_boundary_set(config,_site)
+        boundary_set = common_io.get_site_boundary_set(config, _site)
 
         while _site_xy_index[_site] < len(all_site_xy_locations[_site]):
             _logger.debug('Site index: {}'.format(_site_xy_index[_site]))
@@ -763,7 +763,7 @@ def build_training_data_from_response_points(
         _logger.debug('Open feature and response datasets for site {}'.format(_site))
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.feature_files[_site]]
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
-        boundary_set = common_io._get_site_boundary_set(config,_site)
+        boundary_set = common_io.get_site_boundary_set(config, _site)
 
         _logger.debug('Calculate overlapping extent')
         [f_ul, r_ul, b_ul], x_px_size, y_px_size = common_io.get_overlapping_extent(
@@ -853,7 +853,7 @@ def build_training_data_from_response_points(
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
                         for loc_file in config.raw_files.feature_files[_site]]
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
-        boundary_set = common_io._get_site_boundary_set(config,_site)
+        boundary_set = common_io.get_site_boundary_set(config, _site)
 
         _logger.debug('Calculate interior rectangle location and extent')
         [f_ul, r_ul, b_ul], x_px_size, y_px_size = common_io.get_overlapping_extent(
