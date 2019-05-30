@@ -5,8 +5,7 @@ from numpy import matlib
 import os
 from typing import List
 
-import numpy as np
-import numpy.matlib
+from rsCNN.configuration import configs
 
 
 _logger = logging.getLogger(__name__)
@@ -166,3 +165,33 @@ def one_hot_encode_array(raw_band_types: List[str], array: np.array, memmap_file
         for _r in range(len(un_array)):
             band_types.insert(cat_band_locations[_c], 'B' + str(int(_c)))
     return array, band_types
+
+
+# TODO:  improve typing return
+def _get_boundary_sets_from_boundary_files(config: configs.Config) -> List:
+    if not config.raw_files.boundary_files:
+        boundary_sets = [None] * len(config.raw_files.feature_files)
+    else:
+        boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) if loc_file is not None else None
+                         for loc_file in config.raw_files.boundary_files]
+    return boundary_sets
+
+
+# TODO:  improve typing return
+def _get_site_boundary_set(config: configs.Config,_site) -> List:
+    
+    if not config.raw_files.boundary_files:
+        boundary_set = None
+    else:
+        boundary_set = gdal.Open(config.raw_files.boundary_files[_site], gdal.GA_ReadOnly)     
+    
+    return boundary_set
+
+
+
+
+
+
+
+
+
