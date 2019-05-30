@@ -2,6 +2,7 @@ from typing import Union
 
 from matplotlib import patches
 import matplotlib.pyplot as plt
+import matplotlib.cm
 import numpy as np
 
 from rsCNN.evaluation import samples
@@ -134,7 +135,11 @@ def plot_weights(sampled: samples.Samples, idx_sample: int, ax: plt.Axes, add_xl
     min_, max_ = sampled.weights_range[0, :]
     weights = sampled.weights[idx_sample, :].copy()
     weights[weights == 0] = np.nan
-    ax.imshow(weights, vmin=min_, vmax=max_, cmap=colormaps.COLORMAP_WEIGHTS)
+
+    weight_cmap = matplotlib.cm.get_cmap(colormaps.COLORMAP_WEIGHTS)
+    weight_cmap.set_bad('red')
+
+    ax.imshow(weights, vmin=min_, vmax=max_, cmap=weight_cmap)
     ax.set_xticks([])
     ax.set_yticks([])
     if add_xlabel:
