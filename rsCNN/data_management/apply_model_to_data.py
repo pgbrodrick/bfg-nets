@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from tqdm import tqdm
 
-from rsCNN.data_management import shared
+from rsCNN.data_management import common_io
 from rsCNN.data_management.training_data import Dataset
 from rsCNN.utils.general import *
 
@@ -89,11 +89,11 @@ def apply_model_to_raster(
 
         write_ul = []
         for row in rowlist:
-            d, m = shared.read_map_subset([feature_set],
-                                          [[col, row]],
-                                          config.data_build.window_radius*2,
-                                          mask=None,
-                                          nodata_value=config.raw_files.feature_nodata_value)
+            d, m = common_io.read_map_subset([feature_set],
+                                             [[col, row]],
+                                             config.data_build.window_radius * 2,
+                                             mask=None,
+                                             nodata_value=config.raw_files.feature_nodata_value)
             if (d is None):
                 continue
 
@@ -105,7 +105,7 @@ def apply_model_to_raster(
         images = np.stack(images)
         images = images.reshape((images.shape[0], images.shape[1], images.shape[2], feature_set.RasterCount))
 
-        images, image_band_types = shared.one_hot_encode_array(data_container.feature_raw_band_types, images)
+        images, image_band_types = common_io.one_hot_encode_array(data_container.feature_raw_band_types, images)
 
         if (config.data_build.feature_mean_centering is True):
             images -= np.nanmean(images, axis=(1, 2))[:, np.newaxis, np.newaxis, :]
