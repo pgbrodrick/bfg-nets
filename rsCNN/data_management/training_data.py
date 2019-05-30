@@ -631,13 +631,15 @@ def build_training_data_ordered(
     _site_xy_index = np.zeros(len(remaining_sites)).astype(int).tolist()
     while (_sample_index < config.data_build.max_samples and len(remaining_sites) > 0):
         _site = remaining_sites[_rs_index]
+        _logger.debug('Reading loop: Site {}'.format(_site))
 
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
                         for loc_file in config.raw_files.feature_files[_site]]
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
         boundary_set = common_io._get_site_boundary_set(config,_site)
 
-        while _site_xy_index[_site] < len(all_site_upper_lefts[_site]):
+        while _site_xy_index[_site] < len(all_site_xy_locations[_site]):
+            _logger.debug('Site index: {}'.format(_site_xy_index[_site]))
 
             [f_ul, r_ul, [b_ul]] = all_site_upper_lefts[_site]
 
@@ -666,7 +668,7 @@ def build_training_data_ordered(
             if (_site_xy_index[_site] >= len(all_site_xy_locations[_site])):
                 _logger.debug('All locations in site {} have been checked.'.format(config.raw_files.feature_files[_site][0]))
 
-                popped = remaining_sites.pop(_rs)
+                popped = remaining_sites.pop(_rs_index)
 
             if local_feature is not None:
                 _logger.debug('Save sample data; {} samples saved'.format(_sample_index + 1))
@@ -677,6 +679,8 @@ def build_training_data_ordered(
 
                 if (popped is not None):
                     _rs_index += 1
+                    if (_rs_index >= len(remaining_sites)):
+                        _rs_index = 0
 
                 break
 
