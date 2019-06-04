@@ -25,13 +25,13 @@ def create_model(
         block_structure: Tuple[int, ...] = config_sections.DEFAULT_BLOCK_STRUCTURE,
         filters: int = config_sections.DEFAULT_FILTERS,
         kernel_size: Tuple[int, int] = config_sections.DEFAULT_KERNEL_SIZE,
-        min_conv_width: 1,  # TODO:  we need to kill this parameter, it doesn't do anything except a simple check
+        min_conv_width=1,  # TODO:  we need to kill this parameter, it doesn't do anything except a simple check
         padding: str = config_sections.DEFAULT_PADDING,
         pool_size: Tuple[int, int] = config_sections.DEFAULT_POOL_SIZE,
         use_batch_norm: bool = config_sections.DEFAULT_USE_BATCH_NORM,
         use_growth: bool = config_sections.DEFAULT_USE_GROWTH,
         use_initial_colorspace_transformation_layer: bool =
-            config_sections.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
+        config_sections.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
 ) -> keras.models.Model:
 
     # Initial convolution
@@ -76,9 +76,11 @@ def create_model(
             conv = Conv2D(filters=filters, kernel_size=(1, 1), padding=padding)(conv)
             conv = MaxPooling2D(pool_size=pool_size, padding=padding)(conv)
 
-    # Iterate through dense blocks in upsampling path, not repeating the first block, which connects the downsampling
+    # Iterate through dense blocks in upsampling path, not repeating the last block, which connects the downsampling
     # and upsampling paths
-    for idx_block, (num_layers, passthrough) in enumerate(zip(block_structure[1:], reversed(passthrough_layers))):
+    decoder_block_structure = reversed(block_structure[:-1])
+    passthrough_layers = reversed(passthrough_layers)
+    for idx_block, (num_layers, passthrough) in enumerate(zip(decoder_block_structure, passthrough_layers)):
         conv = Conv2DTranspose(filters=filters, kernel_size=kernel_size, padding=padding, strides=pool_size)(conv)
         conv = Concatenate()([passthrough, conv])
         # Iterate through layers in dense block
