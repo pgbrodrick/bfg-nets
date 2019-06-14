@@ -769,7 +769,7 @@ def build_training_data_from_response_points(
         boundary_set = common_io.get_site_boundary_set(config, _site)
 
         _logger.debug('Calculate overlapping extent')
-        [f_ul, r_ul, b_ul], x_px_size, y_px_size = common_io.get_overlapping_extent(
+        [f_ul, r_ul, [b_ul]], x_px_size, y_px_size = common_io.get_overlapping_extent(
             [feature_sets, response_sets, [bs for bs in [boundary_set] if bs is not None]])
 
         x_sample_points = []
@@ -859,7 +859,7 @@ def build_training_data_from_response_points(
         boundary_set = common_io.get_site_boundary_set(config, _site)
 
         _logger.debug('Calculate interior rectangle location and extent')
-        [f_ul, r_ul, b_ul], x_px_size, y_px_size = common_io.get_overlapping_extent(
+        [f_ul, r_ul, [b_ul]], x_px_size, y_px_size = common_io.get_overlapping_extent(
             [feature_sets, response_sets, [bs for bs in [boundary_set] if bs is not None]])
 
         # xy_sample_locations is current the response centers, but we need to use the pixel ULs.  So subtract
