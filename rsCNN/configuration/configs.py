@@ -50,7 +50,7 @@ def create_config_template(architecture_name: str, filepath: str) -> None:
 
 def _create_config(config_options: dict, is_template: bool) -> 'Config':
     config_copy = copy.deepcopy(config_options)  # Use a copy because config options are popped from the dict
-    # Population config sections with the provided configuration options, tracking errors
+    # Populate config sections with the provided configuration options, tracking errors
     populated_sections = dict()
     for config_section in sections.get_config_sections():
         section_name = config_section.get_config_name_as_snake_case()

@@ -42,6 +42,9 @@ class BaseConfigSection(object):
         for key in self.get_option_keys():
             if key in config_options:
                 value = config_options.pop(key)
+                # YAML reads None in as a string
+                if value == 'None':
+                    value = None
                 _logger.debug('Setting option "{}" to provided value "{}"'.format(key, value))
             else:
                 value = getattr(self, key)
