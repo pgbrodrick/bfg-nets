@@ -1020,8 +1020,8 @@ def _open_temporary_features_responses_data_files(config: configs.Config, num_fe
     responses_dataset = h5py.File(responses_filepath, read_type)
 
 
-    features = features_dataset.create('features', shape_features, dtype=np.float32, chunks=True)
-    responses = responses_dataset.create('responses', shape_responses, dtype=np.float32, chunks=True)
+    features = features_dataset.create_dataset('features', shape_features, dtype=np.float32, chunks=True)
+    responses = responses_dataset.create_dataset('responses', shape_responses, dtype=np.float32, chunks=True)
     return features, responses
 
 
