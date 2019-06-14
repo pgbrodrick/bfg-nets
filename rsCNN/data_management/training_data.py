@@ -680,6 +680,8 @@ def build_training_data_ordered(
                 _logger.debug('Save sample data; {} samples saved'.format(_sample_index + 1))
                 features[_sample_index, ...] = local_feature.copy()
                 responses[_sample_index, ...] = local_response.copy()
+                _logger.debug('Reload feature and response files.')
+                features, responses = _load_temporary_features_responses_data_files(config)
                 _sample_index += 1
                 progress_bar.update(1)
 
@@ -690,8 +692,6 @@ def build_training_data_ordered(
 
                 site_read_count += 1
                 if (site_read_count > num_reads_per_site):
-                    _logger.debug('Max samples per iteration per site reached.  Reload feature and response files.')
-                    features, responses = _load_temporary_features_responses_data_files(config)
                     break
 
     progress_bar.close()
