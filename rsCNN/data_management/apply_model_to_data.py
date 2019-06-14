@@ -3,6 +3,7 @@ import os
 import gdal
 import keras
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import matplotlib.gridspec as gridspec
 from tqdm import tqdm
 
@@ -166,13 +167,14 @@ def maximum_likelihood_classification(
     dataset = gdal.Open(likelihood_file, gdal.GA_ReadOnly)
     n_classes = dataset.RasterCount
 
+
     output = np.zeros((dataset.RasterYSize, dataset.RasterXSize))
-    output[dataset.GetRasterBand(1).ReadAsArray() == nodata_value] = nodata_value
+    output[dataset.GetRasterBand(1).ReadAsArray() == dataset.GetRasterBand(1).GetNoDataValue()] = output_nodata_value
 
     for line in tqdm(np.arange(0, dataset.RasterYSize).astype(int), ncols=80):
         prob = dataset.ReadAsArray(0, line, dataset.RasterXSize, 1)
         output[line, :] = np.argmax(prob)
-        output[np.any(prob == config.response_nodata_value, axis=0)] = output_nodata_value
+        output[np.any(prob == output_nodata_value, axis=0)] = output_nodata_value
 
     if (make_tif):
         driver = gdal.GetDriverByName('GTiff')
@@ -184,16 +186,6 @@ def maximum_likelihood_classification(
         outDataset.GetRasterBand(1).WriteArray(output, 0, 0)
         del outDataset
     if (make_png):
-        if (feature_band_to_plot is not None):
-            gs1 = gridspec.GridSpec(1, 2)
-            ax = plt.subplot(gs1[0, 0])
-            feat_set = gdal.Open(f, gdal.GA_ReadOnly)
-            feat = feat_set.GetRasterBand(feature_band_to_plot+1).ReadAsArray().astype(float)
-            feat[feat == config.raw_files.feature_nodata_value] = np.nan
-            plt.imshow(feat)
-            plt.axis('off')
-
-            ax = plt.subplot(gs1[0, 1])
 
         output[output == output_nodata_value] = np.nan
         cmap = mpl.cm.Set1_r
