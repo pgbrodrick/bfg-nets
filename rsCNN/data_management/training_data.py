@@ -56,6 +56,9 @@ def rasterize_vector(vector_file, geotransform, output_shape):
 
 
 def build_or_load_rawfile_data(config: configs.Config, rebuild: bool = False):
+
+    #TODO: put this data container build into the load if not rebuild, and only do checks if you can't read in
+    # from the file.....requires dumping data_container into an output file in the save directory (good idea anyway)
     data_container = Dataset(config)
     data_container.check_input_files(
         config.raw_files.feature_files, config.raw_files.response_files,
