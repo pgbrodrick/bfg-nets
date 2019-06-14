@@ -59,7 +59,7 @@ def build_or_load_rawfile_data(config: configs.Config, rebuild: bool = False):
 
     #TODO: put this data container build into the load if not rebuild, and only do checks if you can't read in
     # from the file.....requires dumping data_container into an output file in the save directory (good idea anyway)
-    data_container = Dataset(config)
+    data_container = Data_Container(config)
     data_container.check_input_files(
         config.raw_files.feature_files, config.raw_files.response_files,
         config.raw_files.boundary_files
@@ -408,12 +408,9 @@ def read_segmentation_chunk(f_sets: List[tuple],
     return local_feature, local_response
 
 
-class Dataset:
+class Data_Container:
     """ A container class that holds all sorts of data objects
     """
-    # TODO:  Phil:  note that I moved these attribute definitions to the class itself, not the init, so that we can
-    #  a) document them more easily and b) so that they're part of the class definition for IDE / other introspection.
-    #  Please delete this after you see it.
     config = None
     features = list()
     responses = list()
@@ -624,8 +621,9 @@ def build_training_data_ordered(
         reference_subset_geotransforms.append(subset_geotransform)
 
 
+    num_reads_per_site = int(np.floor(config.data_build.max_samples / len(config.raw_files.feature_files)))
 
-    _logger.debug('Step through sites in order and grab one sample from each until max samples')
+    _logger.debug('Step through sites in order and grab {} sample from each until max samples'.format(num_reads_per_site))
     progress_bar = tqdm(total=config.data_build.max_samples, ncols=80)
 
     _sample_index = 0
@@ -642,6 +640,7 @@ def build_training_data_ordered(
         boundary_set = common_io.get_site_boundary_set(config, _site)
 
         while _site_xy_index[_site] < len(all_site_xy_locations[_site]):
+            site_read_count = 0
             _logger.debug('Site index: {}'.format(_site_xy_index[_site]))
 
             [f_ul, r_ul, [b_ul]] = all_site_upper_lefts[_site]
@@ -685,7 +684,9 @@ def build_training_data_ordered(
                     if (_rs_index >= len(remaining_sites)):
                         _rs_index = 0
 
-                break
+                site_read_count += 1
+                if (site_read_count > num_reads_per_site):
+                    break
 
     progress_bar.close()
     del all_site_upper_lefts
