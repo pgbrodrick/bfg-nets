@@ -43,7 +43,7 @@ class BaseConfigSection(object):
             if key in config_options:
                 value = config_options.pop(key)
                 # YAML reads None in as a string
-                if value == 'None':
+                if value in ('None', 'none'):
                     value = None
                 _logger.debug('Setting option "{}" to provided value "{}"'.format(key, value))
             else:
