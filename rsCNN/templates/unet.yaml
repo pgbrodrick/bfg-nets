@@ -14,6 +14,7 @@ data_build:
   response_data_format: FCN
   random_seed: 1
   max_samples: REQUIRED
+  max_memmap_size_gb: 10
   number_folds: 10
   validation_fold: 0
   test_fold: OPTIONAL

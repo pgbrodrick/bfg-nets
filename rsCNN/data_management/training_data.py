@@ -582,14 +582,18 @@ def build_training_data_ordered(
     if (isinstance(config.data_build.max_samples, list)):
         if (len(config.data_build.max_samples) != len(config.raw_files.feature_files)):
             raise Exception('max_samples must equal feature_files length, or be an integer.')
-    # TODO:  move to checks
-    # TODO:  fix max size issue, but force for now to prevent overly sized sets
+
     n_features = int(np.sum([len(feat_type) for feat_type in feature_raw_band_types]))
     n_responses = int(np.sum([len(resp_type) for resp_type in response_raw_band_types]))
-    assert config.data_build.max_samples * (config.data_build.window_radius*2)**2 * \
-        n_features / 1024.**3 < 10, 'max_samples too large'
 
-    features, responses = _create_munged_features_responses_data_files(config, n_features, n_responses)
+    # TODO:  move to checks
+    feature_memmap_size_gb = n_features*4*config.data_build.max_samples* (config.data_build.window_radius*2)**2 / 1024.**3
+    assert feature_memmap_size_gb < config.data_build.max_memmap_size_gb
+
+    response_memmap_size_gb = n_responses*4*config.data_build.max_samples* (config.data_build.window_radius*2)**2 / 1024.**3
+    assert response_memmap_size_gb < config.data_build.max_memmap_size_gb
+
+    features, responses = _create_temporary_features_responses_data_files(config, n_features, n_responses)
     _log_munged_data_information(features, responses)
 
     _logger.debug('Pre-compute all subset locations')
@@ -686,6 +690,8 @@ def build_training_data_ordered(
 
                 site_read_count += 1
                 if (site_read_count > num_reads_per_site):
+                    _logger.debug('Max samples per iteration per site reached.  Reload feature and response files.')
+                    features, responses = _load_temporary_features_responses_data_files(config)
                     break
 
     progress_bar.close()
@@ -992,7 +998,7 @@ def _check_built_data_files_exist(config: configs.Config) -> bool:
 
 
 
-def _create_munged_features_responses_data_files(config: configs.Config, num_features: int, num_responses: int) \
+def _create_temporary_features_responses_data_files(config: configs.Config, num_features: int, num_responses: int) \
         -> Tuple[np.array, np.array]:
     basename = _get_memmap_basename(config)
     shape = [config.data_build.max_samples, config.data_build.window_radius * 2, config.data_build.window_radius * 2]
@@ -1010,6 +1016,17 @@ def _create_munged_features_responses_data_files(config: configs.Config, num_fea
         shape_responses, responses_filepath))
     responses = np.memmap(responses_filepath, dtype=np.float32, mode='w+', shape=shape_responses)
     return features, responses
+
+
+def _load_temporary_features_responses_data_files(config: configs.Config) -> Tuple[np.array, np.array]:
+    features_filepath = _get_temporary_features_filepath(config)
+    responses_filepath = _get_temporary_responses_filepath(config)
+
+    features = np.memmap(features_filepath, dtype=np.float32, mode='r+')
+    responses = np.memmap(responses_filepath, dtype=np.float32, mode='r+')
+
+    return features, responses
+
 
 
 def _create_temporary_weights_data_files(config: configs.Config, num_samples: int) -> np.array:
