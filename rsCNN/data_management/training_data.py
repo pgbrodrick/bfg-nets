@@ -681,7 +681,7 @@ def build_training_data_ordered(
                 features[_sample_index, ...] = local_feature.copy()
                 responses[_sample_index, ...] = local_response.copy()
                 _logger.debug('Reload feature and response files.')
-                features, responses = _open_temporary_features_responses_data_files(config)
+                features, responses = _open_temporary_features_responses_data_files(config, n_features, n_responses)
                 _sample_index += 1
                 progress_bar.update(1)
 
