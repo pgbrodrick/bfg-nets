@@ -30,6 +30,8 @@ class Experiment(object):
     """bool: Whether an existing model object was loaded from the model training directory."""
 
     def __init__(self, config: configs.Config) -> None:
+        errors = config.get_human_readable_config_errors()
+        assert not errors, errors
         self.config = config
         if not os.path.exists(self.config.model_training.dir_out):
             os.makedirs(self.config.model_training.dir_out)
@@ -134,7 +136,7 @@ class Experiment(object):
         """Calculate model memory footprint. Shamelessly copied from (but not tested rigorously):
         https://stackoverflow.com/questions/43137288/how-to-determine-needed-memory-of-keras-model.
         Args:
-            batch_size:
+            batch_size:  Batch size for training.
 
         Returns:
             Model memory footprint in gigabytes.
