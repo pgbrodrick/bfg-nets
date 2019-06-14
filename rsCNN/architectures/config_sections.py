@@ -63,8 +63,6 @@ class BaseArchitectureConfigSection(sections.BaseConfigSection):
         return [key for key in dir(self) if not key.startswith('_') and not callable(getattr(self, key))]
 
 
-# TODO:  documentation
-
 class AutoencoderMixin(object):
     """
     Mixin for architectures with autoencoder downsampling/upsampling characteristics.
