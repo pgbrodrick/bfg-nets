@@ -184,7 +184,7 @@ class Config(object):
         return config
 
     def get_config_errors(self) -> list:
-        """Get errors with the configuration options by checking the validity of each config section.
+        """Get configuration option errors by checking the validity of each config section.
 
         Returns:
             List of errors associated with the current configuration.
@@ -197,3 +197,14 @@ class Config(object):
             if config_section is sections.ModelTraining:
                 errors.extend(self.architecture.check_config_validity())
         return errors
+
+    def get_human_readable_config_errors(self) -> str:
+        """Generates a human-readable string of configuration option errors.
+
+        Returns:
+            Human-readable string of configuration option errors.
+        """
+        errors = self.get_config_errors()
+        if not errors:
+            return ''
+        return 'List of configuration section and option errors is as follows:\n' + '\n'.join(error for error in errors)
