@@ -57,7 +57,7 @@ def get_overlapping_extent(dataset_list_of_lists: List[List[gdal.Dataset]]):
         if (len(local_list) == 0):
             local_list.append(None)
 
-        local_list = np.array(local_list).astype(int)
+        local_list = np.array(local_list)
         return_ul_list.append(local_list)
     return return_ul_list, x_len, y_len
 
