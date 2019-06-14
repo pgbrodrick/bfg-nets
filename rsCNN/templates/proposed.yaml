@@ -33,6 +33,7 @@ data_build:
   response_data_format: FCN
   data_build_category: or
   max_samples: REQUIRED
+  max_memmap_size_gb: 10
   window_radius: REQUIRED
   loss_window_radius: REQUIRED
   number_folds: 10
