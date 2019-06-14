@@ -6,6 +6,7 @@ from typing import List, Tuple
 
 import fiona
 import gdal
+import h5py
 import numpy as np
 import numpy.matlib
 import ogr
@@ -681,7 +682,6 @@ def build_training_data_ordered(
                 features[_sample_index, ...] = local_feature.copy()
                 responses[_sample_index, ...] = local_response.copy()
                 _logger.debug('Reload feature and response files.')
-                features, responses = _open_temporary_features_responses_data_files(config, n_features, n_responses)
                 _sample_index += 1
                 progress_bar.update(1)
 
@@ -999,7 +999,7 @@ def _check_built_data_files_exist(config: configs.Config) -> bool:
 
 
 def _open_temporary_features_responses_data_files(config: configs.Config, num_features: int, num_responses: int, \
-                                                  read_type: str = 'r+') -> Tuple[np.array, np.array]:
+                                                  read_type: str = 'w') -> Tuple[np.array, np.array]:
     basename = _get_memmap_basename(config)
     shape = [config.data_build.max_samples, config.data_build.window_radius * 2, config.data_build.window_radius * 2]
     shape_features = tuple(shape + [num_features])
@@ -1008,13 +1008,20 @@ def _open_temporary_features_responses_data_files(config: configs.Config, num_fe
     features_filepath = _get_temporary_features_filepath(config)
     responses_filepath = _get_temporary_responses_filepath(config)
 
-    _logger.debug('Create temporary munged features data file with shape {} at {}'.format(
-        shape_features, features_filepath))
-    features = np.memmap(features_filepath, dtype=np.float32, mode=read_type, shape=shape_features)
+    #_logger.debug('Create temporary munged features data file with shape {} at {}'.format(
+    #    shape_features, features_filepath))
+    #features = np.memmap(features_filepath, dtype=np.float32, mode=read_type, shape=shape_features)
 
-    _logger.debug('Create temporary munged responses data file with shape {} at {}'.format(
-        shape_responses, responses_filepath))
-    responses = np.memmap(responses_filepath, dtype=np.float32, mode=read_type, shape=shape_responses)
+    #_logger.debug('Create temporary munged responses data file with shape {} at {}'.format(
+    #    shape_responses, responses_filepath))
+    #responses = np.memmap(responses_filepath, dtype=np.float32, mode=read_type, shape=shape_responses)
+
+    features_dataset = h5py.File(features_filepath, read_type)
+    responses_dataset = h5py.File(responses_filepath, read_type)
+
+
+    features = features_dataset.create('features', shape_features, dtype=np.float32, chunks=True)
+    responses = responses_dataset.create('responses', shape_responses, dtype=np.float32, chunks=True)
     return features, responses
 
 
