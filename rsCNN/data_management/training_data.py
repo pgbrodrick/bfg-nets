@@ -10,7 +10,10 @@ import h5py
 import numpy as np
 import numpy.matlib
 import ogr
+import psutil
 import rasterio.features
+import subprocess
+from pympler import muppy, summary
 from tqdm import tqdm
 
 from rsCNN.configuration import configs
@@ -364,6 +367,7 @@ def read_segmentation_chunk(f_sets: List[tuple],
                             feature_upper_lefts: List[List[int]],
                             response_upper_lefts: List[List[int]],
                             config: configs.Config,
+                            sample_index: int,
                             boundary_vector_file: str = None,
                             boundary_subset_geotransform: tuple = None,
                             b_set=None,
@@ -378,12 +382,12 @@ def read_segmentation_chunk(f_sets: List[tuple],
                            config.raw_files.boundary_bad_value)
 
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
-        return None, None
+        return False
 
     local_response, mask = common_io.read_map_subset(r_sets, response_upper_lefts,
                                                      window_diameter, mask, config.raw_files.response_nodata_value)
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
-        return None, None
+        return False
 
     if (config.data_build.response_min_value is not None):
         local_response[local_response < config.data_build.response_min_value] = np.nan
@@ -392,21 +396,26 @@ def read_segmentation_chunk(f_sets: List[tuple],
     mask[np.any(np.isnan(local_response), axis=-1)] = True
 
     if (mask is None):
-        return None, None
+        return False
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
-        return None, None
+        return False
 
     local_feature, mask = common_io.read_map_subset(f_sets, feature_upper_lefts,
                                                     window_diameter, mask, config.raw_files.feature_nodata_value)
 
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
-        return None, None
+        return False
 
     # Final check (propogate mask forward), and return
     local_feature[mask, :] = np.nan
     local_response[mask, :] = np.nan
 
-    return local_feature, local_response
+
+    features, responses = _open_temporary_features_responses_data_files(config, local_feature.shape[-1], local_response.shape[-1], read_type='r+')
+    features[sample_index,...] = local_feature
+    responses[sample_index,...] = local_response
+
+    return True
 
 
 class Data_Container:
@@ -635,6 +644,7 @@ def build_training_data_ordered(
     _rs_index = 0
     remaining_sites = list(range(len(config.raw_files.feature_files)))
     _site_xy_index = np.zeros(len(remaining_sites)).astype(int).tolist()
+    all_strings = []
     while (_sample_index < config.data_build.max_samples and len(remaining_sites) > 0):
         _site = remaining_sites[_rs_index]
         _logger.debug('Reading loop: Site {}'.format(_site))
@@ -661,27 +671,24 @@ def build_training_data_ordered(
                 subset_geotransform[3] = ref_trans[_site][3] + (f_ul[0][1] + all_site_xy_locations[_site_xy_index[_site], 1]) * ref_trans[5]
                 local_boundary_vector_file = config.raw_files.boundary_files[_site]
 
-            local_feature, local_response = read_segmentation_chunk(feature_sets,
-                                                                    response_sets,
-                                                                    f_ul + all_site_xy_locations[_site][_site_xy_index[_site], :],
-                                                                    r_ul + all_site_xy_locations[_site][_site_xy_index[_site], :],
-                                                                    config,
-                                                                    boundary_vector_file=local_boundary_vector_file,
-                                                                    boundary_upper_left=local_boundary_upper_left,
-                                                                    b_set=boundary_set,
-                                                                    boundary_subset_geotransform=subset_geotransform)
+            success = read_segmentation_chunk(feature_sets,
+                                              response_sets,
+                                              f_ul + all_site_xy_locations[_site][_site_xy_index[_site], :],
+                                              r_ul + all_site_xy_locations[_site][_site_xy_index[_site], :],
+                                              config,
+                                              _sample_index,
+                                              boundary_vector_file=local_boundary_vector_file,
+                                              boundary_upper_left=local_boundary_upper_left,
+                                              b_set=boundary_set,
+                                              boundary_subset_geotransform=subset_geotransform)
+
             _site_xy_index[_site] += 1
             popped = None
             if (_site_xy_index[_site] >= len(all_site_xy_locations[_site])):
                 _logger.debug('All locations in site {} have been checked.'.format(config.raw_files.feature_files[_site][0]))
-
                 popped = remaining_sites.pop(_rs_index)
 
-            if local_feature is not None:
-                _logger.debug('Save sample data; {} samples saved'.format(_sample_index + 1))
-                features[_sample_index, ...] = local_feature.copy()
-                responses[_sample_index, ...] = local_response.copy()
-                _logger.debug('Reload feature and response files.')
+            if success is True:
                 _sample_index += 1
                 progress_bar.update(1)
 
@@ -691,7 +698,7 @@ def build_training_data_ordered(
                         _rs_index = 0
 
                 site_read_count += 1
-                if (site_read_count > num_reads_per_site):
+                if (site_read_count > num_reads_per_site or _sample_index >= config.data_build.max_samples):
                     break
 
     progress_bar.close()
@@ -999,7 +1006,7 @@ def _check_built_data_files_exist(config: configs.Config) -> bool:
 
 
 def _open_temporary_features_responses_data_files(config: configs.Config, num_features: int, num_responses: int, \
-                                                  read_type: str = 'w') -> Tuple[np.array, np.array]:
+                                                  read_type: str = 'w+') -> Tuple[np.array, np.array]:
     basename = _get_memmap_basename(config)
     shape = [config.data_build.max_samples, config.data_build.window_radius * 2, config.data_build.window_radius * 2]
     shape_features = tuple(shape + [num_features])
@@ -1008,20 +1015,23 @@ def _open_temporary_features_responses_data_files(config: configs.Config, num_fe
     features_filepath = _get_temporary_features_filepath(config)
     responses_filepath = _get_temporary_responses_filepath(config)
 
-    #_logger.debug('Create temporary munged features data file with shape {} at {}'.format(
-    #    shape_features, features_filepath))
-    #features = np.memmap(features_filepath, dtype=np.float32, mode=read_type, shape=shape_features)
+    _logger.debug('Create temporary munged features data file with shape {} at {}'.format(
+        shape_features, features_filepath))
+    features = np.memmap(features_filepath, dtype=np.float32, mode=read_type, shape=shape_features)
 
-    #_logger.debug('Create temporary munged responses data file with shape {} at {}'.format(
-    #    shape_responses, responses_filepath))
-    #responses = np.memmap(responses_filepath, dtype=np.float32, mode=read_type, shape=shape_responses)
+    _logger.debug('Create temporary munged responses data file with shape {} at {}'.format(
+        shape_responses, responses_filepath))
+    responses = np.memmap(responses_filepath, dtype=np.float32, mode=read_type, shape=shape_responses)
 
-    features_dataset = h5py.File(features_filepath, read_type)
-    responses_dataset = h5py.File(responses_filepath, read_type)
+    #features_dataset = h5py.File(features_filepath, read_type)
+    #responses_dataset = h5py.File(responses_filepath, read_type)
 
-
-    features = features_dataset.create_dataset('features', shape_features, dtype=np.float32, chunks=True)
-    responses = responses_dataset.create_dataset('responses', shape_responses, dtype=np.float32, chunks=True)
+    #if (read_type == 'w'):
+    #    features = features_dataset.create_dataset('features', shape_features, dtype=np.float32, chunks=True)
+    #    responses = responses_dataset.create_dataset('responses', shape_responses, dtype=np.float32, chunks=True)
+    #else:
+    #    features = features_dataset['features']
+    #    responses = responses_dataset['responses']
     return features, responses
 
 
