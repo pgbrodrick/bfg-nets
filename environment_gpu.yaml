@@ -3,11 +3,5 @@ channels:
   - defaults
   - conda-forge
 dependencies:
-  - _tflow_select=2.1.0
   - cudatoolkit=9.2
-  - cudnn=7.6.0
-  - cupti=9.2.148
-  - libgcc-ng=9.1.0
-  - libgfortran-ng=7.3.0
-  - libstdcxx-ng=9.1.0
   - tensorflow-gpu=1.13.1
