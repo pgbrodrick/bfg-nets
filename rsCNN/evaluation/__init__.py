@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 from rsCNN.configuration import configs
-from rsCNN.data_management.training_data import Data_Container
+from rsCNN.data_management.data_core import Data_Container
 from rsCNN.data_management.sequences import BaseSequence
 from rsCNN.evaluation import comparisons, inputs, networks, results, samples
 from rsCNN.evaluation.histories import plot_history
