@@ -16,8 +16,8 @@ Cheers,
 1. Startup GPU node
 1. `conda env create -n envname --file=environment.yaml`
 
-## CPU-compatible via pip
+## CPU-compatible via pip with conda
 
-1. Install Python 3.7.3 or higher
+1. Install conda
+1. `conda env create -n envname python=3.7.3
 1. pip install -r requirements.txt
-
