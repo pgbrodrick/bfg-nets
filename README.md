@@ -14,10 +14,11 @@ Cheers,
 
 1. Install conda
 1. Startup GPU node
-1. `conda env create -n envname --file=environment.yaml`
+1. `conda env create --name=myenv --file=environment_GPU.yaml`
+1. `conda activate myenv`
+1. `conda install --file=environment.yaml`
 
-## CPU-compatible via pip with conda
+## CPU-compatible with conda
 
 1. Install conda
-1. `conda env create -n envname python=3.7.3
-1. pip install -r requirements.txt
+1. `conda env create --name=envname --file=environment.yaml`
