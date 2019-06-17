@@ -3,7 +3,6 @@ channels:
   - defaults
   - conda-forge
 dependencies:
-  - _tflow_select=2.1.0
   - absl-py=0.7.1
   - affine=2.2.2
   - astor=0.7.1
@@ -18,9 +17,6 @@ dependencies:
   - click=7.0
   - click-plugins=1.1.1
   - cligj=0.5.0
-  - cudatoolkit=9.2
-  - cudnn=7.6.0
-  - cupti=9.2.148
   - curl=7.64.1
   - cycler=0.10.0
   - dbus=1.13.6
@@ -59,7 +55,6 @@ dependencies:
   - libffi=3.2.1
   - libgcc-ng=9.1.0
   - libgdal=2.3.3
-  - libgfortran-ng=7.3.0
   - libkml=1.3.0
   - libnetcdf=4.6.1
   - libpng=1.6.37
@@ -67,7 +62,6 @@ dependencies:
   - libprotobuf=3.8.0
   - libspatialite=4.3.0a
   - libssh2=1.8.2
-  - libstdcxx-ng=9.1.0
   - libtiff=4.0.10
   - libuuid=1.0.3
   - libxcb=1.13
@@ -110,7 +104,6 @@ dependencies:
   - snuggs=1.4.6
   - sqlite=3.28.0
   - tensorboard=1.13.1
-  - tensorflow=1.13.1
   - tensorflow-base=1.13.1
   - tensorflow-estimator=1.13.0
   - tensorflow-gpu=1.13.1
