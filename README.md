@@ -1,13 +1,37 @@
 # rsCNN
-Hey there, you've found rsCNN - our attempt to make a package that facilitates the use of CNNs in the context of remote sensing (or even large lab images).  This came as an extention of [ecoCNN](https://github.com/pgbrodrick/ecoCNN) (see [Uncovering ecological patterns with convolutional neural networks](https://www.sciencedirect.com/science/article/pii/S0169534719300862?via%3Dihub)), but here we wanted to make things into more of a package that we could easily extend and modify.  So, if you've found you're way here, don't write much code, and want to pull read a more linearly written set of code, you might want to check out [ecoCNN](https://github.com/pgbrodrick/ecoCNN).  But if you're interested in *using* the package more, this is the place for you.
 
-We welcome contributions by the community, and want everyone to have access to this - but we also want to be clear that it's a work in progress, not perfect, and evolving based on the projects we happen to be working on.  If you have particular feature requests, let us know, and if we can find time or they align with our interests, we'll try to add them in.
+## Motivation
 
-Cheers,
+rsCNN is a package for using convolutional neural networks in remote sensing projects. This is an internal research tool that manages several components of the research pipeline, from building data to training models to reporting and visualizing results. The primary goals of rsCNN are to save time by not rewriting boilerplate code, reduce errors by reusing trusted code, and explore models more deeply by using standardized configuration files. 
 
-[Phil Brodrick](https://www.philbrodrick.com) and [Nick Fabina](http://nsfabina.github.io/)
+As an internal research tool, rsCNN is a living codebase that is currently targeted toward our research projects and interests. It also comes with the disclaimer that it is a by-product of our existing research commitments and is not guaranteed to be bug-free, as well as not having extensive test coverage or other best practices. While we're working in that direction, we wanted to provide everyone access to rsCNN in the hopes that others would find it useful.
 
+We welcome contributions to rsCNN. Please reach out if you'd like to discuss the package further.
 
+## Alternatives
+
+rsCNN is an extension of [ecoCNN](https://github.com/pgbrodrick/ecoCNN), which was published with the paper "[Uncovering ecological patterns with convolutional neural networks](https://www.sciencedirect.com/science/article/pii/S0169534719300862?via%3Dihub)". ecoCNN is recommended for "just getting things done" or learning how to use CNNs from a smaller package, while rsCNN is recommended for those diving deeper or looking for a living codebase.
+
+## Installation
+
+### GPU-compatible
+
+This option is recommended because GPUs are orders of magnitude more efficient at training and applying neural networks.
+
+1. Install anaconda or miniconda.
+1. Startup a GPU node if working on a distributed computing environment.
+1. `conda env create --name=myenv --file=environment_GPU.yaml`
+1. `conda activate myenv`
+1. `conda env update --file=environment.yaml`
+
+## CPU-compatible
+
+1. Install anaconda or miniconda.
+1. `conda env create --name=envname --file=environment.yaml`
+
+## First steps
+
+### TODO
 # Installation
 
 ## GPU-compatible via conda (recommended)
@@ -22,3 +46,7 @@ Cheers,
 
 1. Install conda
 1. `conda env create --name=envname --file=environment.yaml`
+
+
+Cheers,
+[Phil Brodrick](https://www.philbrodrick.com) and [Nick Fabina](http://nsfabina.github.io/)
