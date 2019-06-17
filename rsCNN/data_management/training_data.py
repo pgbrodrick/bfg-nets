@@ -10,15 +10,12 @@ import h5py
 import numpy as np
 import numpy.matlib
 import ogr
-import psutil
 import rasterio.features
-import subprocess
-from pympler import muppy, summary
 from tqdm import tqdm
 
 from rsCNN.configuration import configs
 from rsCNN.data_management import scalers
-from rsCNN.data_management import common_io
+from rsCNN.data_management import common_io, ooc_functions
 # TODO:  remove * imports
 from rsCNN.utils.general import *
 
@@ -713,8 +710,8 @@ def build_training_data_ordered(
 
     _logger.debug('Shuffle data to avoid fold assignment biases')
     perm = np.random.permutation(features.shape[0])
-    features = features[perm, :]
-    responses = responses[perm, :]
+    features = ooc_functions.permute_array(features, _get_temporary_features_filepath(config), perm)
+    responses = ooc_functions.permute_array(features, _get_temporary_responses_filepath(config), perm)
     del perm
 
     _logger.debug('Create uniform weights')
@@ -734,10 +731,10 @@ def build_training_data_ordered(
     _log_munged_data_information(features, responses, weights)
 
     _logger.debug('One-hot encode features')
-    features, feature_band_types = common_io.one_hot_encode_array(
+    features, feature_band_types = ooc_functions.one_hot_encode_array(
         feature_raw_band_types, features, _get_temporary_features_filepath(config))
     _logger.debug('One-hot encode responses')
-    responses, response_band_types = common_io.one_hot_encode_array(
+    responses, response_band_types = ooc_functions.one_hot_encode_array(
         response_raw_band_types, responses, _get_temporary_responses_filepath(config))
     _log_munged_data_information(features, responses, weights)
 
@@ -930,17 +927,17 @@ def build_training_data_from_response_points(
 
     _logger.debug('Shuffle data to avoid fold assignment biases')
     perm = np.random.permutation(features.shape[0])
-    features = features[perm, :]
-    responses = responses[perm, :]
+    features = ooc_functions.permute_array(features, _get_temporary_features_filepath(config), perm)
+    responses = ooc_functions.permute_array(features, _get_temporary_responses_filepath(config), perm)
     del perm
 
     weights = np.ones((responses.shape[0], 1))
     _log_munged_data_information(features, responses, weights)
 
     # one hot encode
-    features, feature_band_types = common_io.one_hot_encode_array(
+    features, feature_band_types = ooc_functions.one_hot_encode_array(
         feature_raw_band_types, features, _get_temporary_features_filepath(config))
-    responses, response_band_types = common_io.one_hot_encode_array(
+    responses, response_band_types = ooc_functions.one_hot_encode_array(
         response_raw_band_types, responses, _get_temporary_responses_filepath(config))
     _log_munged_data_information(features, responses, weights)
 
