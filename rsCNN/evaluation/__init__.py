@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 from rsCNN.configuration import configs
-from rsCNN.data_management.training_data import Dataset
+from rsCNN.data_management.data_core import Data_Container
 from rsCNN.data_management.sequences import BaseSequence
 from rsCNN.evaluation import comparisons, inputs, networks, results, samples
 from rsCNN.evaluation.histories import plot_history
@@ -29,7 +29,7 @@ _FILENAME_PRELIMINARY_MODEL_REPORT = 'model_overview.pdf'
 #  and incorrect near deep water. Is this something we can generalize for remote sensing problems?
 
 
-def create_model_report_from_experiment(experiment: experiments.Experiment, dataset: Dataset) -> None:
+def create_model_report_from_experiment(experiment: experiments.Experiment, dataset: Data_Container) -> None:
     return create_model_report(
         experiment.model, experiment.config, dataset.training_sequence, dataset.validation_sequence,
         experiment.history
@@ -83,7 +83,7 @@ def create_model_report(
             _add_figures(plot_history(history), pdf)
 
 
-def create_preliminary_model_report_from_experiment(experiment: experiments.Experiment, dataset: Dataset) -> None:
+def create_preliminary_model_report_from_experiment(experiment: experiments.Experiment, dataset: Data_Container) -> None:
     return create_preliminary_model_report(
         experiment.model, experiment.config, dataset.training_sequence, dataset.validation_sequence
     )

@@ -117,6 +117,10 @@ class RawFiles(BaseConfigSection):
             if len(self.feature_files) != len(self.response_files):
                 errors.append('feature_files and response_files must have corresponding files and ' +
                               'be the same length')
+        if self.feature_data_type is None:
+            errors.append('feature_data_type must be provided')
+        if self.response_data_type is None:
+            errors.append('response_data_type must be provided')
         if self.feature_files is None:
             errors.append('feature_files must be provided')
         if self.response_files is None:
@@ -147,6 +151,9 @@ class DataBuild(BaseConfigSection):
     """int: Random seed for reproducible data generation."""
     _max_samples_type = int
     max_samples = DEFAULT_REQUIRED_VALUE
+    """int: The maximum size of any given memmap array created in GB."""
+    _max_memmap_size_gb_type = float
+    max_memmap_size_gb = 10
     """int: Maximum number of built data samples to draw from the raw data files. Sampling stops when the raw data files 
     are fully crawled or the maximum samples are reached."""
     _number_folds_type = int
