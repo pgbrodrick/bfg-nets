@@ -1,10 +1,10 @@
 
 
+import logging
 import numpy as np
 import os
 from typing import List
 
-from rsCNN.utils import logging
 import shutil
 
 _MAX_UNIQUE_RESPONSES = 100
