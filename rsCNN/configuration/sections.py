@@ -147,6 +147,9 @@ class DataBuild(BaseConfigSection):
     """int: Random seed for reproducible data generation."""
     _max_samples_type = int
     max_samples = DEFAULT_REQUIRED_VALUE
+    """int: The maximum size of any given memmap array created in GB."""
+    _max_memmap_size_gb = float
+    max_memmap_size_gb = 10
     """int: Maximum number of built data samples to draw from the raw data files. Sampling stops when the raw data files 
     are fully crawled or the maximum samples are reached."""
     _number_folds_type = int

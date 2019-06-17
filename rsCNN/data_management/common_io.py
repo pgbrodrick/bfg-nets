@@ -10,7 +10,6 @@ from rsCNN.configuration import configs
 
 _logger = logging.getLogger(__name__)
 
-_MAX_UNIQUE_RESPONSES = 100
 
 
 def upper_left_pixel(trans, interior_x, interior_y):
@@ -118,58 +117,6 @@ def read_map_subset(datasets: List, upper_lefts: List[List[int]], window_diamete
         idx += file_array.shape[-1]
 
     return local_array, mask
-
-
-def one_hot_encode_array(raw_band_types: List[str], array: np.array, memmap_file: str = None):
-
-    cat_band_locations = [idx for idx, val in enumerate(raw_band_types) if val == 'C']
-    band_types = raw_band_types.copy()
-    for _c in reversed(range(len(cat_band_locations))):
-
-        un_array = array[..., cat_band_locations[_c]]
-        un_array = np.unique(un_array[np.isfinite(un_array)])
-        assert len(un_array) < _MAX_UNIQUE_RESPONSES,\
-            'Too many ({}) unique responses found, suspected incorrect categorical specification'.format(len(un_array))
-        _logger.info('Found {} categorical responses'.format(len(un_array)))
-        _logger.debug('Cat response: {}'.format(un_array))
-
-        array_shape = list(array.shape)
-        array_shape[-1] = len(un_array) + array.shape[-1] - 1
-
-        if (memmap_file is not None):
-            cat_memmap_file = os.path.join(
-                os.path.dirname(memmap_file), str(os.path.basename(memmap_file).split('.')[0]) + '_cat.npy')
-            cat_array = np.memmap(cat_memmap_file,
-                                  dtype=np.float32,
-                                  mode='w+',
-                                  shape=tuple(array_shape))
-        else:
-            cat_array = np.zeros(tuple(array_shape))
-
-        # One hot-encode
-        for _r in range(array_shape[-1]):
-            if (_r >= cat_band_locations[_c] and _r < len(un_array)):
-                cat_array[..., _r] = np.squeeze(array[..., cat_band_locations[_c]] ==
-                                                un_array[_r - cat_band_locations[_c]])
-            else:
-                if (_r < cat_band_locations[_c]):
-                    cat_array[..., _r] = array[..., _r]
-                else:
-                    cat_array[..., _r] = array[..., _r - len(un_array) + 1]
-
-        # Force file dump, and then reload the encoded responses as the primary response
-        del array, cat_array
-
-        if (memmap_file is not None):
-            if (os.path.isfile(memmap_file)):
-                os.remove(memmap_file)
-            memmap_file = cat_memmap_file
-            array = np.memmap(memmap_file, dtype=np.float32, mode='r+', shape=tuple(array_shape))
-
-        band_types.pop(cat_band_locations[_c])
-        for _r in range(len(un_array)):
-            band_types.insert(cat_band_locations[_c], 'B' + str(int(_c)))
-    return array, band_types
 
 
 def get_boundary_sets_from_boundary_files(config: configs.Config) -> List[gdal.Dataset]:
