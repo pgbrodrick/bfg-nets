@@ -32,20 +32,23 @@ def create_config_from_file(filepath: str) -> 'Config':
     return _create_config(raw_config, is_template=False)
 
 
-def create_config_template(architecture_name: str, filepath: str) -> None:
-    """Creates a template YAML file for creating Configs for a given architecture.
+def create_config_template(architecture_name: str, filepath: str = None) -> 'Config':
+    """Creates a template version of a Config for a given architecture, with required and optional parameters
+    highlighted, and default values for other parameters. Config is returned but can optionally be written to YAML file.
 
     Args:
         architecture_name: Name of available architecture.
-        filepath: Filepath to which template YAML file is saved.
+        filepath: Filepath to which template YAML file is saved, if desired.
 
     Returns:
-        None
+        Template version of a Config.
     """
     _logger.debug('Creating config template for architecture {} at {}'.format(architecture_name, filepath))
     config_options = {'model_training': {'architecture_name': architecture_name}}
     config = _create_config(config_options, is_template=True)
-    save_config_to_file(config, filepath)
+    if filepath is not None:
+        save_config_to_file(config, filepath)
+    return config
 
 
 def _create_config(config_options: dict, is_template: bool) -> 'Config':
