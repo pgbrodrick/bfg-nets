@@ -83,7 +83,7 @@ class RawFiles(BaseConfigSection):
     _boundary_files_type = list
     boundary_files = DEFAULT_OPTIONAL_VALUE
     """list: Optional list of filepaths to boundaries. Data is built or sampled within the boundaries."""
-    _feature_data_type = str
+    _feature_data_type_type = str
     feature_data_type = DEFAULT_REQUIRED_VALUE
     """str: Data type from each input feature band.  R for Real, C for Categorical.  All C bands will be one-hot
     encoded. Can be provided as a single string value(e.g. \'C\') or as a list of lists corresponding to each
