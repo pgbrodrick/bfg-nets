@@ -83,12 +83,12 @@ class RawFiles(BaseConfigSection):
     _boundary_files_type = list
     boundary_files = DEFAULT_OPTIONAL_VALUE
     """list: Optional list of filepaths to boundaries. Data is built or sampled within the boundaries."""
-    _feature_data_type = str
+    _feature_data_type_type = str
     feature_data_type = DEFAULT_REQUIRED_VALUE
     """str: Data type from each input feature band.  R for Real, C for Categorical.  All C bands will be one-hot
     encoded. Can be provided as a single string value(e.g. \'C\') or as a list of lists corresponding to each
     band from each file in the raw input files list."""
-    _response_data_type = str
+    _response_data_type_type = str
     response_data_type = DEFAULT_REQUIRED_VALUE
     """str: Data type from each input feature band.  R for Real, C for Categorical.  All C bands will be one-hot
     encoded. Can be provided as a single string value(e.g. \'C\') or as a list of lists corresponding to each
@@ -152,7 +152,7 @@ class DataBuild(BaseConfigSection):
     _max_samples_type = int
     max_samples = DEFAULT_REQUIRED_VALUE
     """int: The maximum size of any given memmap array created in GB."""
-    _max_memmap_size_gb = float
+    _max_memmap_size_gb_type = float
     max_memmap_size_gb = 10
     """int: Maximum number of built data samples to draw from the raw data files. Sampling stops when the raw data files 
     are fully crawled or the maximum samples are reached."""
