@@ -85,7 +85,7 @@ def permute_array(source: np.array, source_filename: str, permutation: np.array)
     os.remove(source_filename)
     shutil.move(perm_memmap_file, source_filename)
 
-    source = np.meammap(source_filename, dtype=type, shape=shape, mode='r+')
+    source = np.memmap(source_filename, dtype=type, shape=shape, mode='r+')
     return source
 
 
