@@ -16,7 +16,7 @@ Cheers,
 1. Startup GPU node
 1. `conda env create --name=myenv --file=environment_GPU.yaml`
 1. `conda activate myenv`
-1. `conda install --file=environment.yaml`
+1. `conda env update --file=environment.yaml`
 
 ## CPU-compatible with conda
 
