@@ -9,3 +9,15 @@ Cheers,
 
 
 # Installation
+
+## GPU-compatible via conda (recommended)
+
+1. Install conda
+1. Startup GPU node
+1. `conda env create -n envname --file=environment.yaml`
+
+## CPU-compatible via pip
+
+1. Install Python 3.7.3 or higher
+1. pip install -r requirements.txt
+
