@@ -8,7 +8,7 @@ import matplotlib.gridspec as gridspec
 from tqdm import tqdm
 
 from rsCNN.data_management import common_io
-from rsCNN.data_management.training_data import Dataset
+from rsCNN.data_management.training_data import Data_Container
 from rsCNN.utils.general import *
 
 
@@ -17,7 +17,7 @@ plt.switch_backend('Agg')  # Needed for remote server plotting
 
 def apply_model_to_raster(
         cnn: keras.Model,
-        data_container: Dataset,
+        data_container: Data_Container,
         feature_file: str,
         destination_basename: str,
         make_png: bool = False,
