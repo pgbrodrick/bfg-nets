@@ -88,7 +88,7 @@ class RawFiles(BaseConfigSection):
     """str: Data type from each input feature band.  R for Real, C for Categorical.  All C bands will be one-hot
     encoded. Can be provided as a single string value(e.g. \'C\') or as a list of lists corresponding to each
     band from each file in the raw input files list."""
-    _response_data_type_type = str
+    _response_data_type = str
     response_data_type = DEFAULT_REQUIRED_VALUE
     """str: Data type from each input feature band.  R for Real, C for Categorical.  All C bands will be one-hot
     encoded. Can be provided as a single string value(e.g. \'C\') or as a list of lists corresponding to each
@@ -117,6 +117,10 @@ class RawFiles(BaseConfigSection):
             if len(self.feature_files) != len(self.response_files):
                 errors.append('feature_files and response_files must have corresponding files and ' +
                               'be the same length')
+        if self.feature_data_type is None:
+            errors.append('feature_data_type must be provided')
+        if self.response_data_type is None:
+            errors.append('response_data_type must be provided')
         if self.feature_files is None:
             errors.append('feature_files must be provided')
         if self.response_files is None:
