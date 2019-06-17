@@ -6,7 +6,7 @@ import numpy as np
 
 from rsCNN.architectures import config_sections
 from rsCNN.configuration import configs
-from rsCNN.data_management.training_data import Dataset
+from rsCNN.data_management.training_data import Data_Container
 from rsCNN.data_management.sequences import BaseSequence
 from rsCNN.experiments import callbacks, histories, losses, models
 from rsCNN.utils import gpus
@@ -98,7 +98,7 @@ class Experiment(object):
             self.model.compile(loss=loss_function, optimizer=self.config.model_training.optimizer)
         """
 
-    def fit_model_with_dataset(self, dataset: Dataset, resume_training: bool = False) -> None:
+    def fit_model_with_dataset(self, dataset: Data_Container, resume_training: bool = False) -> None:
         return self.fit_model_with_sequences(dataset.training_sequence, dataset.validation_sequence, resume_training)
 
     def fit_model_with_sequences(
