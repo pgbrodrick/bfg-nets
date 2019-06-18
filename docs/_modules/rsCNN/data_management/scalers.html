@@ -70,7 +70,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">savename</span> <span class="o">=</span> <span class="n">savename_base</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">is_fitted</span> <span class="o">=</span> <span class="kc">False</span>
 
-    <span class="c1">#TODO: In all of the below, handle (IE ignore) transformations on categorical data</span>
+    <span class="c1"># TODO: In all of the below, handle (IE ignore) transformations on categorical data</span>
 <div class="viewcode-block" id="BaseGlobalScaler.fit"><a class="viewcode-back" href="../../../rsCNN.data_management.scalers.html#rsCNN.data_management.scalers.BaseGlobalScaler.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_array</span><span class="p">):</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_fitted</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;Scaler has already been fit to data&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_fit</span><span class="p">(</span><span class="n">image_array</span><span class="p">)</span>
