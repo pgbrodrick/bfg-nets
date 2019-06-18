@@ -28,25 +28,3 @@ This option is recommended because GPUs are orders of magnitude more efficient a
 
 1. Install anaconda or miniconda.
 1. `conda env create --name=envname --file=environment.yaml`
-
-## First steps
-
-### TODO
-# Installation
-
-## GPU-compatible via conda (recommended)
-
-1. Install conda
-1. Startup GPU node
-1. `conda env create --name=myenv --file=environment_GPU.yaml`
-1. `conda activate myenv`
-1. `conda env update --file=environment.yaml`
-
-## CPU-compatible with conda
-
-1. Install conda
-1. `conda env create --name=envname --file=environment.yaml`
-
-
-Cheers,
-[Phil Brodrick](https://www.philbrodrick.com) and [Nick Fabina](http://nsfabina.github.io/)
