@@ -15,9 +15,10 @@ _logger = logging.getLogger(__name__)
 
 class BaseConfigSection(object):
     _config_options = NotImplemented
+    _optional_options = None
 
     def __init__(self) -> None:
-        return
+        self._optional_options = [key for key in self.get_option_keys() if getattr(self, key) == DEFAULT_OPTIONAL_VALUE]
 
     @classmethod
     def get_config_name_as_snake_case(cls) -> str:
@@ -74,6 +75,9 @@ class BaseConfigSection(object):
                            'but the required value should be a {}.'
         for key in self.get_option_keys():
             value = getattr(self, key)
+            # Optional options can be None, regardless of their expected type
+            if value is None and key in self._optional_options:
+                continue
             type_expected = self._get_expected_type_for_option_key(key)
             if type(value) is not type_expected:
                 errors.append(message_template.format(key, self.__class__.__name__, value, type(value), type_expected))
