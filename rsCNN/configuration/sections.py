@@ -42,12 +42,26 @@ class BaseConfigSection(object):
         for key in self.get_option_keys():
             if key in config_options:
                 value = config_options.pop(key)
-                # YAML reads None in as a string
+                # PyYAML reads None in as a string
                 if value in ('None', 'none'):
                     value = None
+                # Some parameters are treated as floats, but ints are acceptable input formats
+                # Treating ints as floats is more flexible and requires fewer assumptions / accomodations in the code
+                # Example:  users are likely to provide -9999 instead of -9999.0
+                type_expected = self._get_expected_type_for_option_key(key)
+                if type(value) is int and type_expected is float:
+                    value = float(value)
+                # Some parameters are treated as tuples, but lists are acceptable input formats
+                # Treating lists as tuples is more desirable for objects that should not mutable
+                # Example:  YAML supports lists naturally, but requires more complex syntax for tuples, so users are not
+                # likely to provide tuples
+                if type(value) is list and type_expected is tuple:
+                    value = tuple(value)
                 _logger.debug('Setting option "{}" to provided value "{}"'.format(key, value))
             else:
                 value = getattr(self, key)
+                # We leave the labels for required and optional values as-is for templates, i.e., when highlights are
+                # required, otherwise we convert those labels to None
                 if not highlight_required and value in (DEFAULT_REQUIRED_VALUE, DEFAULT_OPTIONAL_VALUE):
                     value = None
                 _logger.debug('Setting option "{}" to default value "{}"'.format(key, value))
@@ -60,7 +74,7 @@ class BaseConfigSection(object):
                            'but the required value should be a {}.'
         for key in self.get_option_keys():
             value = getattr(self, key)
-            type_expected = getattr(self, '_{}_type'.format(key))
+            type_expected = self._get_expected_type_for_option_key(key)
             if type(value) is not type_expected:
                 errors.append(message_template.format(key, self.__class__.__name__, value, type(value), type_expected))
         errors.extend(self._check_config_validity())
@@ -68,6 +82,9 @@ class BaseConfigSection(object):
 
     def _check_config_validity(self) -> List[str]:
         return list()
+
+    def _get_expected_type_for_option_key(self, option_key: str) -> type:
+        return getattr(self, '_{}_type'.format(option_key))
 
 
 class RawFiles(BaseConfigSection):
