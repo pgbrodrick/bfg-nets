@@ -43,21 +43,6 @@ class BaseConfigSection(object):
         for key in self.get_option_keys():
             if key in config_options:
                 value = config_options.pop(key)
-                # PyYAML reads None in as a string
-                if value in ('None', 'none'):
-                    value = None
-                # Some parameters are treated as floats, but ints are acceptable input formats
-                # Treating ints as floats is more flexible and requires fewer assumptions / accomodations in the code
-                # Example:  users are likely to provide -9999 instead of -9999.0
-                type_expected = self._get_expected_type_for_option_key(key)
-                if type(value) is int and type_expected is float:
-                    value = float(value)
-                # Some parameters are treated as tuples, but lists are acceptable input formats
-                # Treating lists as tuples is more desirable for objects that should not mutable
-                # Example:  YAML supports lists naturally, but requires more complex syntax for tuples, so users are not
-                # likely to provide tuples
-                if type(value) is list and type_expected is tuple:
-                    value = tuple(value)
                 _logger.debug('Setting option "{}" to provided value "{}"'.format(key, value))
             else:
                 value = getattr(self, key)
@@ -66,8 +51,26 @@ class BaseConfigSection(object):
                 if not highlight_required and value in (DEFAULT_REQUIRED_VALUE, DEFAULT_OPTIONAL_VALUE):
                     value = None
                 _logger.debug('Setting option "{}" to default value "{}"'.format(key, value))
-            setattr(self, key, value)
+            setattr(self, key, self._clean_config_option_value(key, value))
         return
+
+    def _clean_config_option_value(self, option_key: str, value: any) -> any:
+        # PyYAML reads None as a string so we need to convert to the None type
+        if value in ('None', 'none'):
+            value = None
+        # Some parameters are treated as floats, but ints are acceptable input formats
+        # Treating ints as floats is more flexible and requires fewer assumptions / accomodations in the code
+        # Example:  users are likely to provide -9999 instead of -9999.0
+        type_expected = self._get_expected_type_for_option_key(option_key)
+        if type(value) is int and type_expected is float:
+            value = float(value)
+        # Some parameters are treated as tuples, but lists are acceptable input formats
+        # Treating lists as tuples is more desirable for objects that should not mutable
+        # Example:  YAML supports lists naturally, but requires more complex syntax for tuples, so users are not
+        # likely to provide tuples
+        if type(value) is list and type_expected is tuple:
+            value = tuple(value)
+        return value
 
     def check_config_validity(self) -> List[str]:
         errors = list()
@@ -173,8 +176,8 @@ class DataBuild(BaseConfigSection):
     """int: Maximum number of built data samples to draw from the raw data files. Sampling stops when the raw data files 
     are fully crawled or the maximum samples are reached."""
     _max_memmap_size_gb_type = float
-    max_memmap_size_gb = 10
-    """int: The maximum size of any given memmap array created in GB."""
+    max_memmap_size_gb = 10.0
+    """float: The maximum size of any given memmap array created in GB."""
     _number_folds_type = int
     number_folds = 10
     """int: Number of training data folds."""
