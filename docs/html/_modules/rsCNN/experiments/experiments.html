@@ -1,0 +1,301 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>rsCNN.experiments.experiments &#8212; rsCNN  documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for rsCNN.experiments.experiments</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">keras.backend</span> <span class="k">as</span> <span class="nn">K</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">rsCNN.architectures</span> <span class="k">import</span> <span class="n">config_sections</span>
+<span class="kn">from</span> <span class="nn">rsCNN.configuration</span> <span class="k">import</span> <span class="n">configs</span>
+<span class="kn">from</span> <span class="nn">rsCNN.data_management.data_core</span> <span class="k">import</span> <span class="n">Data_Container</span>
+<span class="kn">from</span> <span class="nn">rsCNN.data_management.sequences</span> <span class="k">import</span> <span class="n">BaseSequence</span>
+<span class="kn">from</span> <span class="nn">rsCNN.experiments</span> <span class="k">import</span> <span class="n">callbacks</span><span class="p">,</span> <span class="n">histories</span><span class="p">,</span> <span class="n">losses</span><span class="p">,</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">rsCNN.utils</span> <span class="k">import</span> <span class="n">gpus</span>
+
+
+<span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="c1"># TODO:  document this file</span>
+
+<div class="viewcode-block" id="Experiment"><a class="viewcode-back" href="../../../rsCNN.experiments.experiments.html#rsCNN.experiments.experiments.Experiment">[docs]</a><span class="k">class</span> <span class="nc">Experiment</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;configs.Config: rsCNN configuration object.&quot;&quot;&quot;</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;keras.models.Model: Keras model object.&quot;&quot;&quot;</span>
+    <span class="n">history</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;dict: Model training history.&quot;&quot;&quot;</span>
+    <span class="n">loaded_existing_history</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;bool: Whether an existing history object was loaded from the model training directory.&quot;&quot;&quot;</span>
+    <span class="n">loaded_existing_model</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;bool: Whether an existing model object was loaded from the model training directory.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_human_readable_config_errors</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">errors</span><span class="p">,</span> <span class="n">errors</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">get_config_filepath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">)):</span>
+            <span class="n">config_existing</span> <span class="o">=</span> <span class="n">configs</span><span class="o">.</span><span class="n">create_config_from_file</span><span class="p">(</span><span class="n">get_config_filepath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">))</span>
+            <span class="n">config_differences</span> <span class="o">=</span> <span class="n">configs</span><span class="o">.</span><span class="n">get_config_differences</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">config_existing</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="ow">not</span> <span class="n">config_differences</span><span class="p">,</span> \
+                <span class="s1">&#39;Provided configuration differs from existing configuration at </span><span class="si">{}</span><span class="s1">; differing values: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">get_config_filepath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">),</span> <span class="n">config_differences</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">configs</span><span class="o">.</span><span class="n">save_config_to_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">get_config_filepath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">))</span>
+
+<div class="viewcode-block" id="Experiment.build_or_load_model"><a class="viewcode-back" href="../../../rsCNN.experiments.experiments.html#rsCNN.experiments.experiments.Experiment.build_or_load_model">[docs]</a>    <span class="k">def</span> <span class="nf">build_or_load_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Building or loading model&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">architecture</span><span class="o">.</span><span class="n">inshape</span><span class="p">)</span>
+        <span class="n">loss_function</span> <span class="o">=</span> <span class="n">losses</span><span class="o">.</span><span class="n">cropped_loss</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">loss_metric</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">architecture</span><span class="o">.</span><span class="n">inshape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">data_build</span><span class="o">.</span><span class="n">loss_window_radius</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">weighted</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">get_model_filepath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">)):</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Loading existing model from model training directory at </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">get_model_filepath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">)))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">loaded_existing_model</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span>
+                <span class="n">get_model_filepath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">),</span>
+                <span class="n">custom_objects</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_cropped_loss&#39;</span><span class="p">:</span> <span class="n">loss_function</span><span class="p">}</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Building new model, no model exists at </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">get_model_filepath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">)))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">loaded_existing_model</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">config_sections</span><span class="o">.</span><span class="n">create_model_from_architecture_config_section</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">architecture_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">architecture</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">loss</span><span class="o">=</span><span class="n">loss_function</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">optimizer</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">get_history_filepath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">)):</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">loaded_existing_model</span><span class="p">,</span> \
+                <span class="s1">&#39;Model training history exists in model training directory, but existing model found; directory: </span><span class="si">{}</span><span class="s1">&#39;</span> \
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">)</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Loading existing history from model training directory at </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">get_history_filepath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">)))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">loaded_existing_history</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="n">histories</span><span class="o">.</span><span class="n">load_history</span><span class="p">(</span><span class="n">get_history_filepath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">))</span>
+            <span class="k">if</span> <span class="s1">&#39;lr&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">:</span>
+                <span class="n">learning_rate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;lr&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Setting learning rate to value from last training epoch: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">learning_rate</span><span class="p">))</span>
+                <span class="n">K</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">lr</span><span class="p">,</span> <span class="n">learning_rate</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">loaded_existing_model</span><span class="p">,</span> \
+                <span class="s1">&#39;Trained model exists in model training directory, but no training history found; directory: </span><span class="si">{}</span><span class="s1">&#39;</span> \
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">loaded_existing_history</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;model_name&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">}</span>
+        <span class="sd">&quot;&quot;&quot;    </span>
+<span class="sd">        # TODO:  reimplement multiple GPUs</span>
+<span class="sd">        #n_gpu_avail = gpus.get_count_available_gpus()</span>
+<span class="sd">        #_logger.debug(&#39;Using multiple GPUs with {} available&#39;.format(n_gpu_avail))</span>
+<span class="sd">        n_gpu_avail = 1</span>
+<span class="sd">        if (n_gpu_avail &gt; 1):</span>
+<span class="sd">            self._original_model = self.model</span>
+<span class="sd">            self.model = keras.utils.multi_gpu_model(self._original_model, gpus=n_gpu_avail, cpu_relocation=True)</span>
+<span class="sd">            self.model.callback_model = self._original_model</span>
+<span class="sd">            self.model.compile(loss=loss_function, optimizer=self.config.model_training.optimizer)</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+
+<div class="viewcode-block" id="Experiment.fit_model_with_dataset"><a class="viewcode-back" href="../../../rsCNN.experiments.experiments.html#rsCNN.experiments.experiments.Experiment.fit_model_with_dataset">[docs]</a>    <span class="k">def</span> <span class="nf">fit_model_with_dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">Data_Container</span><span class="p">,</span> <span class="n">resume_training</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_model_with_sequences</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">training_sequence</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">validation_sequence</span><span class="p">,</span> <span class="n">resume_training</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Experiment.fit_model_with_sequences"><a class="viewcode-back" href="../../../rsCNN.experiments.experiments.html#rsCNN.experiments.experiments.Experiment.fit_model_with_sequences">[docs]</a>    <span class="k">def</span> <span class="nf">fit_model_with_sequences</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">training_sequence</span><span class="p">:</span> <span class="n">BaseSequence</span><span class="p">,</span>
+            <span class="n">validation_sequence</span><span class="p">:</span> <span class="n">BaseSequence</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">resume_training</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">loaded_existing_model</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">resume_training</span><span class="p">,</span> <span class="s1">&#39;Resume must be true to continue training an existing model&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">assert_gpu</span><span class="p">:</span>
+            <span class="n">gpus</span><span class="o">.</span><span class="n">assert_gpu_available</span><span class="p">()</span>
+
+        <span class="n">model_callbacks</span> <span class="o">=</span> <span class="n">callbacks</span><span class="o">.</span><span class="n">get_model_callbacks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span>
+
+        <span class="c1"># TODO:  Check whether psutil.cpu_count gives the right answer on SLURM, i.e., the number of CPUs available to</span>
+        <span class="c1">#  the job and not the total number on the instance.</span>
+        <span class="n">new_history</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">fit_generator</span><span class="p">(</span>
+            <span class="n">training_sequence</span><span class="p">,</span>
+            <span class="n">epochs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">max_epochs</span><span class="p">,</span>
+            <span class="n">verbose</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">verbosity</span><span class="p">,</span>
+            <span class="n">callbacks</span><span class="o">=</span><span class="n">model_callbacks</span><span class="p">,</span>
+            <span class="n">validation_data</span><span class="o">=</span><span class="n">validation_sequence</span><span class="p">,</span>
+            <span class="n">max_queue_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="c1"># workers=psutil.cpu_count(logical=True),</span>
+            <span class="c1"># use_multiprocessing=True,</span>
+            <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">initial_epoch</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lr&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">())),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="n">histories</span><span class="o">.</span><span class="n">combine_histories</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">,</span> <span class="n">new_history</span><span class="o">.</span><span class="n">history</span><span class="p">)</span>
+        <span class="n">histories</span><span class="o">.</span><span class="n">save_history</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">,</span> <span class="n">get_history_filepath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">))</span>
+        <span class="n">models</span><span class="o">.</span><span class="n">save_model</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">get_model_filepath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Experiment.calculate_model_memory_footprint"><a class="viewcode-back" href="../../../rsCNN.experiments.experiments.html#rsCNN.experiments.experiments.Experiment.calculate_model_memory_footprint">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_model_memory_footprint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Calculate model memory footprint. Shamelessly copied from (but not tested rigorously):</span>
+<span class="sd">        https://stackoverflow.com/questions/43137288/how-to-determine-needed-memory-of-keras-model.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            batch_size:  Batch size for training.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Model memory footprint in gigabytes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">shapes_mem_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">layers</span><span class="p">:</span>
+            <span class="n">single_layer_mem</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">l</span><span class="o">.</span><span class="n">output_shape</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">single_layer_mem</span> <span class="o">*=</span> <span class="n">s</span>
+            <span class="n">shapes_mem_count</span> <span class="o">+=</span> <span class="n">single_layer_mem</span>
+
+        <span class="n">trainable_count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">([</span><span class="n">K</span><span class="o">.</span><span class="n">count_params</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">trainable_weights</span><span class="p">)])</span>
+        <span class="n">non_trainable_count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">([</span><span class="n">K</span><span class="o">.</span><span class="n">count_params</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">non_trainable_weights</span><span class="p">)])</span>
+
+        <span class="k">if</span> <span class="n">K</span><span class="o">.</span><span class="n">floatx</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;float16&#39;</span><span class="p">:</span>
+            <span class="n">number_size</span> <span class="o">=</span> <span class="mf">2.0</span>
+        <span class="k">elif</span> <span class="n">K</span><span class="o">.</span><span class="n">floatx</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;float32&#39;</span><span class="p">:</span>
+            <span class="n">number_size</span> <span class="o">=</span> <span class="mf">4.0</span>
+        <span class="k">if</span> <span class="n">K</span><span class="o">.</span><span class="n">floatx</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;float64&#39;</span><span class="p">:</span>
+            <span class="n">number_size</span> <span class="o">=</span> <span class="mf">8.0</span>
+
+        <span class="n">total_memory</span> <span class="o">=</span> <span class="n">number_size</span><span class="o">*</span><span class="p">(</span><span class="n">batch_size</span><span class="o">*</span><span class="n">shapes_mem_count</span> <span class="o">+</span> <span class="n">trainable_count</span> <span class="o">+</span> <span class="n">non_trainable_count</span><span class="p">)</span>
+        <span class="n">gbytes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">total_memory</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1024.0</span> <span class="o">**</span> <span class="mi">3</span><span class="p">),</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">gbytes</span></div></div>
+
+
+<div class="viewcode-block" id="get_config_filepath"><a class="viewcode-back" href="../../../rsCNN.experiments.experiments.html#rsCNN.experiments.experiments.get_config_filepath">[docs]</a><span class="k">def</span> <span class="nf">get_config_filepath</span><span class="p">(</span><span class="n">dir_out</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Get the default config path for experiments.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dir_out: Experiment directory.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Filepath to config.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dir_out</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">DEFAULT_FILENAME_CONFIG</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_history_filepath"><a class="viewcode-back" href="../../../rsCNN.experiments.experiments.html#rsCNN.experiments.experiments.get_history_filepath">[docs]</a><span class="k">def</span> <span class="nf">get_history_filepath</span><span class="p">(</span><span class="n">dir_out</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Get the default model training history path for experiments.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dir_out: Experiment directory.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Filepath to model training history.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dir_out</span><span class="p">,</span> <span class="n">histories</span><span class="o">.</span><span class="n">DEFAULT_FILENAME_HISTORY</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_model_filepath"><a class="viewcode-back" href="../../../rsCNN.experiments.experiments.html#rsCNN.experiments.experiments.get_model_filepath">[docs]</a><span class="k">def</span> <span class="nf">get_model_filepath</span><span class="p">(</span><span class="n">dir_out</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Get the default model path for experiments.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dir_out: Experiment directory.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Filepath to model.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dir_out</span><span class="p">,</span> <span class="n">models</span><span class="o">.</span><span class="n">DEFAULT_FILENAME_MODEL</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">rsCNN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../rsCNN.html">rsCNN package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Global Center for Discovery and Conservation Science.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

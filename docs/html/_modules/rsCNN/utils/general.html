@@ -1,0 +1,248 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>rsCNN.utils.general &#8212; rsCNN  documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for rsCNN.utils.general</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="k">import</span> <span class="n">griddata</span>
+
+
+<span class="c1"># TODO a good portion of this should move over to scaling</span>
+
+
+<span class="n">VALUE_NO_DATA</span> <span class="o">=</span> <span class="o">-</span><span class="mi">9999</span>
+
+
+<div class="viewcode-block" id="scale_vector"><a class="viewcode-back" href="../../../rsCNN.utils.general.html#rsCNN.utils.general.scale_vector">[docs]</a><span class="k">def</span> <span class="nf">scale_vector</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="n">flag</span><span class="p">,</span> <span class="n">nodata_value</span><span class="o">=</span><span class="n">VALUE_NO_DATA</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Scale a 1-d numpy array in a specified maner, ignoring nodata values.</span>
+<span class="sd">    Arguments:</span>
+<span class="sd">    dat - input vector to be scaled</span>
+<span class="sd">    flag - an indicator of the chosen scaling option</span>
+
+<span class="sd">    Keyword Aguments:</span>
+<span class="sd">    ndoata_value - value to be ignored, None of no nodata_value specified</span>
+
+<span class="sd">    Return:</span>
+<span class="sd">    The offset and gain scaling factors, in a two-value list form.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">flag</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">flag</span> <span class="o">==</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">nodata_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dat</span><span class="p">),</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dat</span><span class="p">[</span><span class="n">dat</span> <span class="o">!=</span> <span class="n">nodata_value</span><span class="p">]),</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">flag</span> <span class="o">==</span> <span class="s1">&#39;mean_std&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">nodata_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dat</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">dat</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dat</span><span class="p">[</span><span class="n">dat</span> <span class="o">!=</span> <span class="n">nodata_value</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">dat</span><span class="p">[</span><span class="n">dat</span> <span class="o">!=</span> <span class="n">nodata_value</span><span class="p">])]</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">flag</span> <span class="o">==</span> <span class="s1">&#39;minmax&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">nodata_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dat</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dat</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dat</span><span class="p">[</span><span class="n">dat</span> <span class="o">!=</span> <span class="n">nodata_value</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dat</span><span class="p">[</span><span class="n">dat</span> <span class="o">!=</span> <span class="n">nodata_value</span><span class="p">])]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="scale_image"><a class="viewcode-back" href="../../../rsCNN.utils.general.html#rsCNN.utils.general.scale_image">[docs]</a><span class="k">def</span> <span class="nf">scale_image</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">flag</span><span class="p">,</span> <span class="n">nodata_value</span><span class="o">=</span><span class="n">VALUE_NO_DATA</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Scale an image based on preset flag.</span>
+<span class="sd">    Arguments:</span>
+<span class="sd">    image - 3d array with assumed dimensions y,x,band </span>
+<span class="sd">    flag - scaling flag to use (None if no scaling)</span>
+
+<span class="sd">    Return:</span>
+<span class="sd">    An image matching the input image dimension with scaling applied to it.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">flag</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">image</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">flag</span> <span class="o">==</span> <span class="s1">&#39;mean_std&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">scale_image_mean_std</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">nodata_value</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">flag</span> <span class="o">==</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">scale_image_mean</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">nodata_value</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">flag</span> <span class="o">==</span> <span class="s1">&#39;minmax&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">scale_image_minmax</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">nodata_value</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Unknown scaling flag&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="scale_image_mean_std"><a class="viewcode-back" href="../../../rsCNN.utils.general.html#rsCNN.utils.general.scale_image_mean_std">[docs]</a><span class="k">def</span> <span class="nf">scale_image_mean_std</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">nodata_value</span><span class="o">=</span><span class="n">VALUE_NO_DATA</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Mean center and standard-deviation normalize an image.</span>
+<span class="sd">    Arguments:</span>
+<span class="sd">    image - 3d array with assumed dimensions y,x,band </span>
+
+<span class="sd">    Keyword Aguments:</span>
+<span class="sd">    ndoata_value - value to be ignored, None of no nodata speified</span>
+
+<span class="sd">    Return:</span>
+<span class="sd">    Image with per-band mean centering and std normalization applied</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">nodata_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">image</span> <span class="o">==</span> <span class="n">nodata_value</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]):</span>
+        <span class="n">image</span><span class="p">[</span><span class="n">nodata_mask</span><span class="p">,</span> <span class="n">b</span><span class="p">]</span> <span class="o">=</span> <span class="n">image</span><span class="p">[</span><span class="n">nodata_mask</span><span class="p">,</span> <span class="n">b</span><span class="p">]</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">image</span><span class="p">[</span><span class="n">nodata_mask</span><span class="p">,</span> <span class="n">b</span><span class="p">])</span>
+        <span class="n">std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">image</span><span class="p">[</span><span class="n">nodata_mask</span><span class="p">,</span> <span class="n">b</span><span class="p">])</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">std</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">image</span><span class="p">[</span><span class="n">nodata_mask</span><span class="p">,</span> <span class="n">b</span><span class="p">]</span> <span class="o">=</span> <span class="n">image</span><span class="p">[</span><span class="n">nodata_mask</span><span class="p">,</span> <span class="n">b</span><span class="p">]</span> <span class="o">/</span> <span class="n">std</span>
+    <span class="k">return</span> <span class="n">image</span></div>
+
+
+<div class="viewcode-block" id="scale_image_mean"><a class="viewcode-back" href="../../../rsCNN.utils.general.html#rsCNN.utils.general.scale_image_mean">[docs]</a><span class="k">def</span> <span class="nf">scale_image_mean</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">nodata_value</span><span class="o">=</span><span class="n">VALUE_NO_DATA</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Mean center an image.</span>
+<span class="sd">    Arguments:</span>
+<span class="sd">    image - 3d array with assumed dimensions y,x,band </span>
+
+<span class="sd">    Keyword Aguments:</span>
+<span class="sd">    ndoata_value - value to be ignored, None of no nodata speified</span>
+
+<span class="sd">    Return:</span>
+<span class="sd">    Image with per-band mean centering applied</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">nodata_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">image</span> <span class="o">==</span> <span class="n">nodata_value</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]):</span>
+        <span class="n">image</span><span class="p">[</span><span class="n">nodata_mask</span><span class="p">,</span> <span class="n">b</span><span class="p">]</span> <span class="o">=</span> <span class="n">image</span><span class="p">[</span><span class="n">nodata_mask</span><span class="p">,</span> <span class="n">b</span><span class="p">]</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">image</span><span class="p">[</span><span class="n">nodata_mask</span><span class="p">,</span> <span class="n">b</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">image</span></div>
+
+
+<div class="viewcode-block" id="scale_image_minmax"><a class="viewcode-back" href="../../../rsCNN.utils.general.html#rsCNN.utils.general.scale_image_minmax">[docs]</a><span class="k">def</span> <span class="nf">scale_image_minmax</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">nodata_value</span><span class="o">=</span><span class="n">VALUE_NO_DATA</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Scale image based on local mins and maxes.</span>
+<span class="sd">    Arguments:</span>
+<span class="sd">    image - 3d array with assumed dimensions y,x,band </span>
+
+<span class="sd">    Keyword Aguments:</span>
+<span class="sd">    ndoata_value - value to be ignored, None of no nodata speified</span>
+
+<span class="sd">    Return:</span>
+<span class="sd">    Image with per-band minmax scaling applied</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">nodata_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">image</span> <span class="o">==</span> <span class="n">nodata_value</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]):</span>
+        <span class="n">mm</span> <span class="o">=</span> <span class="n">scale_vector</span><span class="p">(</span><span class="n">image</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">b</span><span class="p">],</span> <span class="s1">&#39;minmax&#39;</span><span class="p">,</span> <span class="n">nodata_value</span><span class="o">=</span><span class="n">nodata_value</span><span class="p">)</span>
+        <span class="n">image</span><span class="p">[</span><span class="n">nodata_mask</span><span class="p">,</span> <span class="n">b</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">image</span><span class="p">[</span><span class="n">nodata_mask</span><span class="p">,</span> <span class="n">b</span><span class="p">]</span> <span class="o">-</span> <span class="n">mm</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">mm</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">image</span></div>
+
+
+<div class="viewcode-block" id="fill_nearest_neighbor"><a class="viewcode-back" href="../../../rsCNN.utils.general.html#rsCNN.utils.general.fill_nearest_neighbor">[docs]</a><span class="k">def</span> <span class="nf">fill_nearest_neighbor</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=</span><span class="n">VALUE_NO_DATA</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Fill in missing values in an image using a nearest neighbor approach.</span>
+<span class="sd">    Arguments:</span>
+<span class="sd">    image - 3d array with assumed dimensions y,x,band </span>
+
+<span class="sd">    Keyword Aguments:</span>
+<span class="sd">    ndoata_value - value to be ignored, None of no nodata speified</span>
+
+<span class="sd">    Return:</span>
+<span class="sd">    Image with nodata_value values filled in with their nearest neighbors.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">nodata_sum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">image</span> <span class="o">==</span> <span class="n">VALUE_NO_DATA</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">nodata_sum</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">nodata_sum</span> <span class="o">&lt;</span> <span class="n">image</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
+        <span class="n">ims</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">x_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matlib</span><span class="o">.</span><span class="n">repmat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ims</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">ims</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">ims</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">y_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matlib</span><span class="o">.</span><span class="n">repmat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ims</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">ims</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="n">ims</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ims</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">):</span>
+            <span class="n">image</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">ims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">ims</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">ims</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+            <span class="n">image_nodata</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">image</span> <span class="o">==</span> <span class="n">nodata</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">image</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="n">image_nodata</span> <span class="o">=</span> <span class="n">image</span> <span class="o">==</span> <span class="n">nodata</span>
+
+        <span class="n">image</span><span class="p">[</span><span class="n">image_nodata</span><span class="p">]</span> <span class="o">=</span> <span class="n">griddata</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">x_arr</span><span class="p">[</span><span class="n">image_nodata</span><span class="p">],</span> <span class="n">y_arr</span><span class="p">[</span><span class="n">image_nodata</span><span class="p">]])),</span>
+                                       <span class="n">image</span><span class="p">[</span><span class="n">image_nodata</span><span class="p">],</span> <span class="p">(</span><span class="n">x_arr</span><span class="p">[</span><span class="n">image_nodata</span><span class="p">],</span> <span class="n">y_arr</span><span class="p">[</span><span class="n">image_nodata</span><span class="p">]),</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">ims</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">image</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">rsCNN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../rsCNN.html">rsCNN package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Global Center for Discovery and Conservation Science.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

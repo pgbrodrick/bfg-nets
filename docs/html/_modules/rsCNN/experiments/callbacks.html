@@ -1,0 +1,248 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>rsCNN.experiments.callbacks &#8212; rsCNN  documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for rsCNN.experiments.callbacks</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span>
+
+<span class="kn">import</span> <span class="nn">keras</span>
+
+<span class="kn">from</span> <span class="nn">rsCNN.configuration</span> <span class="k">import</span> <span class="n">configs</span>
+<span class="kn">from</span> <span class="nn">rsCNN.experiments</span> <span class="k">import</span> <span class="n">experiments</span><span class="p">,</span> <span class="n">histories</span>
+
+
+<span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="n">_DIR_TENSORBOARD</span> <span class="o">=</span> <span class="s1">&#39;tensorboard&#39;</span>
+
+
+<div class="viewcode-block" id="HistoryCheckpoint"><a class="viewcode-back" href="../../../rsCNN.experiments.callbacks.html#rsCNN.experiments.callbacks.HistoryCheckpoint">[docs]</a><span class="k">class</span> <span class="nc">HistoryCheckpoint</span><span class="p">(</span><span class="n">keras</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">Callback</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A custom Keras callback for checkpointing model training history and associated information.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dir_out</span><span class="p">,</span> <span class="n">existing_history</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="c1"># TODO:  remove this log line</span>
+        <span class="c1"># NOTE:  model has no attributes at this point, we need this info to know how to implement parallel models</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;model&#39;</span><span class="p">):</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;init model attributes and methods:  </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)))</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;model&#39;</span><span class="p">):</span>
+                <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;init model.model attributes and methods:  </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">model</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dir_out</span> <span class="o">=</span> <span class="n">dir_out</span>
+        <span class="k">if</span> <span class="n">existing_history</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">existing_history</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">existing_history</span> <span class="o">=</span> <span class="n">existing_history</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">period</span> <span class="o">=</span> <span class="n">period</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epochs_since_last_save</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epoch_begin</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="HistoryCheckpoint.on_train_begin"><a class="viewcode-back" href="../../../rsCNN.experiments.callbacks.html#rsCNN.experiments.callbacks.HistoryCheckpoint.on_train_begin">[docs]</a>    <span class="k">def</span> <span class="nf">on_train_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">logs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Beginning network training&#39;</span><span class="p">)</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;on_training_begin logs: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">logs</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;epoch_start&#39;</span><span class="p">,</span> <span class="s1">&#39;epoch_finish&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">existing_history</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">list</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">existing_history</span><span class="p">[</span><span class="s1">&#39;train_start&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">on_train_begin</span><span class="p">(</span><span class="n">logs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="HistoryCheckpoint.on_train_end"><a class="viewcode-back" href="../../../rsCNN.experiments.callbacks.html#rsCNN.experiments.callbacks.HistoryCheckpoint.on_train_end">[docs]</a>    <span class="k">def</span> <span class="nf">on_train_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">logs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Ending network training&#39;</span><span class="p">)</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;on_training_end logs: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">logs</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">existing_history</span><span class="p">[</span><span class="s1">&#39;train_finish&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_save_history</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="HistoryCheckpoint.on_batch_begin"><a class="viewcode-back" href="../../../rsCNN.experiments.callbacks.html#rsCNN.experiments.callbacks.HistoryCheckpoint.on_batch_begin">[docs]</a>    <span class="k">def</span> <span class="nf">on_batch_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">logs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Beginning new batch&#39;</span><span class="p">)</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;on_batch_begin logs: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">logs</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="HistoryCheckpoint.on_batch_end"><a class="viewcode-back" href="../../../rsCNN.experiments.callbacks.html#rsCNN.experiments.callbacks.HistoryCheckpoint.on_batch_end">[docs]</a>    <span class="k">def</span> <span class="nf">on_batch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">logs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Ending batch&#39;</span><span class="p">)</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;on_batch_end logs: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">logs</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="HistoryCheckpoint.on_epoch_begin"><a class="viewcode-back" href="../../../rsCNN.experiments.callbacks.html#rsCNN.experiments.callbacks.HistoryCheckpoint.on_epoch_begin">[docs]</a>    <span class="k">def</span> <span class="nf">on_epoch_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">logs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Beginning new epoch&#39;</span><span class="p">)</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;on_epoch_begin logs: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">logs</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epoch_begin</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="HistoryCheckpoint.on_epoch_end"><a class="viewcode-back" href="../../../rsCNN.experiments.callbacks.html#rsCNN.experiments.callbacks.HistoryCheckpoint.on_epoch_end">[docs]</a>    <span class="k">def</span> <span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">logs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Ending epoch&#39;</span><span class="p">)</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;on_epoch_end logs: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">logs</span><span class="p">))</span>
+        <span class="c1"># Update times</span>
+        <span class="n">epoch_end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">existing_history</span><span class="p">[</span><span class="s1">&#39;epoch_start&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epoch_begin</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">existing_history</span><span class="p">[</span><span class="s1">&#39;epoch_finish&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">epoch_end</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epoch_begin</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1"># Save if necessary</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epochs_since_last_save</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">epochs_since_last_save</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">period</span><span class="p">:</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Checkpointing&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_save_history</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">epochs_since_last_save</span> <span class="o">=</span> <span class="mi">0</span></div>
+
+    <span class="k">def</span> <span class="nf">_save_history</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Save model history&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;history&#39;</span><span class="p">):</span>
+            <span class="n">new_history</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">history</span>
+        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;model&#39;</span><span class="p">):</span>
+            <span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;history&#39;</span><span class="p">),</span> \
+                <span class="s1">&#39;Parallel models are doing something unusual with histories. Tell Nick and let</span><span class="se">\&#39;</span><span class="s1">s debug.&#39;</span>
+            <span class="n">new_history</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">history</span>
+        <span class="n">combined_history</span> <span class="o">=</span> <span class="n">histories</span><span class="o">.</span><span class="n">combine_histories</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">existing_history</span><span class="p">,</span> <span class="n">new_history</span><span class="p">)</span>
+        <span class="n">histories</span><span class="o">.</span><span class="n">save_history</span><span class="p">(</span><span class="n">combined_history</span><span class="p">,</span> <span class="n">experiments</span><span class="o">.</span><span class="n">get_history_filepath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dir_out</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="get_model_callbacks"><a class="viewcode-back" href="../../../rsCNN.experiments.callbacks.html#rsCNN.experiments.callbacks.get_model_callbacks">[docs]</a><span class="k">def</span> <span class="nf">get_model_callbacks</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span><span class="p">,</span> <span class="n">existing_history</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">keras</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">Callback</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Creates model callbacks from a rsCNN config.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        config: rsCNN config.</span>
+<span class="sd">        existing_history: Existing model training history if the model has already been partially or completely trained.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List of model callbacks.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">callbacks</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">HistoryCheckpoint</span><span class="p">(</span>
+            <span class="n">dir_out</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">,</span>
+            <span class="n">existing_history</span><span class="o">=</span><span class="n">existing_history</span><span class="p">,</span>
+            <span class="n">period</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">callback_general</span><span class="o">.</span><span class="n">checkpoint_periods</span><span class="p">,</span>
+            <span class="n">verbose</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">verbosity</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">keras</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">ModelCheckpoint</span><span class="p">(</span>
+            <span class="n">experiments</span><span class="o">.</span><span class="n">get_model_filepath</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">),</span>
+            <span class="n">period</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">callback_general</span><span class="o">.</span><span class="n">checkpoint_periods</span><span class="p">,</span>
+            <span class="n">verbose</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">verbosity</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">callback_early_stopping</span><span class="o">.</span><span class="n">use_callback</span><span class="p">:</span>
+        <span class="n">callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">keras</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">EarlyStopping</span><span class="p">(</span>
+                <span class="n">monitor</span><span class="o">=</span><span class="s1">&#39;loss&#39;</span><span class="p">,</span>
+                <span class="n">min_delta</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">callback_early_stopping</span><span class="o">.</span><span class="n">min_delta</span><span class="p">,</span>
+                <span class="n">patience</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">callback_early_stopping</span><span class="o">.</span><span class="n">patience</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">callback_reduced_learning_rate</span><span class="o">.</span><span class="n">use_callback</span><span class="p">:</span>
+        <span class="n">callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">keras</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">ReduceLROnPlateau</span><span class="p">(</span>
+                <span class="n">monitor</span><span class="o">=</span><span class="s1">&#39;loss&#39;</span><span class="p">,</span>
+                <span class="n">factor</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">callback_reduced_learning_rate</span><span class="o">.</span><span class="n">factor</span><span class="p">,</span>
+                <span class="n">min_delta</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">callback_reduced_learning_rate</span><span class="o">.</span><span class="n">min_delta</span><span class="p">,</span>
+                <span class="n">patience</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">callback_reduced_learning_rate</span><span class="o">.</span><span class="n">patience</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">callback_tensorboard</span><span class="o">.</span><span class="n">use_callback</span><span class="p">:</span>
+        <span class="n">dir_out</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">,</span> <span class="n">_DIR_TENSORBOARD</span><span class="p">)</span>
+        <span class="n">callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">keras</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">TensorBoard</span><span class="p">(</span>
+                <span class="n">dir_out</span><span class="p">,</span>
+                <span class="n">histogram_freq</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">callback_tensorboard</span><span class="o">.</span><span class="n">histogram_freq</span><span class="p">,</span>
+                <span class="n">write_graph</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">callback_tensorboard</span><span class="o">.</span><span class="n">write_graph</span><span class="p">,</span>
+                <span class="n">write_grads</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">callback_tensorboard</span><span class="o">.</span><span class="n">write_grads</span><span class="p">,</span>
+                <span class="n">write_images</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">callback_tensorboard</span><span class="o">.</span><span class="n">write_images</span><span class="p">,</span>
+                <span class="n">update_freq</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">callback_tensorboard</span><span class="o">.</span><span class="n">update_freq</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">callback_general</span><span class="o">.</span><span class="n">use_terminate_on_nan</span><span class="p">:</span>
+        <span class="n">callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">keras</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">TerminateOnNaN</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">callbacks</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">rsCNN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../rsCNN.html">rsCNN package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Global Center for Discovery and Conservation Science.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

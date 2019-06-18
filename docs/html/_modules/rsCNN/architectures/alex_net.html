@@ -1,0 +1,174 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>rsCNN.architectures.alex_net &#8212; rsCNN  documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for rsCNN.architectures.alex_net</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span> <span class="nn">keras</span>
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="k">import</span> <span class="n">BatchNormalization</span><span class="p">,</span> <span class="n">Conv2D</span><span class="p">,</span> <span class="n">Dense</span><span class="p">,</span> <span class="n">Flatten</span><span class="p">,</span> <span class="n">MaxPooling2D</span>
+
+<span class="kn">from</span> <span class="nn">rsCNN.architectures</span> <span class="k">import</span> <span class="n">config_sections</span>
+
+
+<div class="viewcode-block" id="ArchitectureConfigSection"><a class="viewcode-back" href="../../../rsCNN.architectures.alex_net.html#rsCNN.architectures.alex_net.ArchitectureConfigSection">[docs]</a><span class="k">class</span> <span class="nc">ArchitectureConfigSection</span><span class="p">(</span>
+    <span class="n">config_sections</span><span class="o">.</span><span class="n">AutoencoderMixin</span><span class="p">,</span>
+    <span class="n">config_sections</span><span class="o">.</span><span class="n">BlockMixin</span><span class="p">,</span>
+    <span class="n">config_sections</span><span class="o">.</span><span class="n">GrowthMixin</span><span class="p">,</span>
+    <span class="n">config_sections</span><span class="o">.</span><span class="n">BaseArchitectureConfigSection</span>
+<span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="create_model"><a class="viewcode-back" href="../../../rsCNN.architectures.alex_net.html#rsCNN.architectures.alex_net.create_model">[docs]</a><span class="k">def</span> <span class="nf">create_model</span><span class="p">(</span>
+        <span class="n">inshape</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+        <span class="n">n_classes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">output_activation</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">block_structure</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">config_sections</span><span class="o">.</span><span class="n">DEFAULT_BLOCK_STRUCTURE</span><span class="p">,</span>
+        <span class="n">filters</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">config_sections</span><span class="o">.</span><span class="n">DEFAULT_FILTERS</span><span class="p">,</span>
+        <span class="n">kernel_size</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">config_sections</span><span class="o">.</span><span class="n">DEFAULT_KERNEL_SIZE</span><span class="p">,</span>
+        <span class="n">min_conv_width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">config_sections</span><span class="o">.</span><span class="n">DEFAULT_MIN_CONV_WIDTH</span><span class="p">,</span>
+        <span class="n">padding</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">config_sections</span><span class="o">.</span><span class="n">DEFAULT_PADDING</span><span class="p">,</span>
+        <span class="n">pool_size</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">config_sections</span><span class="o">.</span><span class="n">DEFAULT_POOL_SIZE</span><span class="p">,</span>
+        <span class="n">use_batch_norm</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">config_sections</span><span class="o">.</span><span class="n">DEFAULT_USE_BATCH_NORM</span><span class="p">,</span>
+        <span class="n">use_growth</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">config_sections</span><span class="o">.</span><span class="n">DEFAULT_USE_GROWTH</span><span class="p">,</span>
+        <span class="n">use_initial_colorspace_transformation_layer</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span>
+    <span class="n">config_sections</span><span class="o">.</span><span class="n">DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">:</span>
+
+    <span class="n">input_width</span> <span class="o">=</span> <span class="n">inshape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">minimum_width</span> <span class="o">=</span> <span class="n">input_width</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">**</span> <span class="nb">len</span><span class="p">(</span><span class="n">block_structure</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">minimum_width</span> <span class="o">&gt;=</span> <span class="n">min_conv_width</span><span class="p">,</span> \
+        <span class="s1">&#39;The convolution width in the last encoding block (</span><span class="si">{}</span><span class="s1">) is less than &#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">minimum_width</span><span class="p">)</span> <span class="o">+</span> \
+        <span class="s1">&#39;the minimum specified width (</span><span class="si">{}</span><span class="s1">). Either reduce &#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">min_conv_width</span><span class="p">)</span> <span class="o">+</span> \
+        <span class="s1">&#39;the number of blocks in block_structure (currently </span><span class="si">{}</span><span class="s1">) or &#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">block_structure</span><span class="p">))</span> <span class="o">+</span> \
+        <span class="s1">&#39;the value of min_conv_width.&#39;</span>
+
+    <span class="n">layers_pass_through</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+    <span class="c1"># Encodings</span>
+    <span class="n">inlayer</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">inshape</span><span class="p">)</span>
+    <span class="n">encoder</span> <span class="o">=</span> <span class="n">inlayer</span>
+
+    <span class="k">if</span> <span class="n">use_initial_colorspace_transformation_layer</span><span class="p">:</span>
+        <span class="n">intermediate_color_depth</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">inshape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">encoder</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="n">intermediate_color_depth</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">)(</span><span class="n">inlayer</span><span class="p">)</span>
+        <span class="n">encoder</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="n">inshape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">)(</span><span class="n">encoder</span><span class="p">)</span>
+        <span class="n">encoder</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">()(</span><span class="n">encoder</span><span class="p">)</span>
+
+    <span class="c1"># Each encoder block has a number of subblocks</span>
+    <span class="k">for</span> <span class="n">num_subblocks</span> <span class="ow">in</span> <span class="n">block_structure</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">idx_sublayer</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_subblocks</span><span class="p">):</span>
+            <span class="c1"># Each subblock has a number of convolutions</span>
+            <span class="n">encoder</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="n">filters</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="n">kernel_size</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">)(</span><span class="n">encoder</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">use_batch_norm</span><span class="p">:</span>
+                <span class="n">encoder</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">()(</span><span class="n">encoder</span><span class="p">)</span>
+        <span class="c1"># Each encoder block passes its pre-pooled layers through to the decoder</span>
+        <span class="n">layers_pass_through</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">encoder</span><span class="p">)</span>
+        <span class="n">encoder</span> <span class="o">=</span> <span class="n">MaxPooling2D</span><span class="p">(</span><span class="n">pool_size</span><span class="o">=</span><span class="n">pool_size</span><span class="p">)(</span><span class="n">encoder</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">use_growth</span><span class="p">:</span>
+            <span class="n">filters</span> <span class="o">*=</span> <span class="mi">2</span>
+
+    <span class="n">encoder</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="n">filters</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="n">kernel_size</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">)(</span><span class="n">encoder</span><span class="p">)</span>
+    <span class="n">output_layer</span> <span class="o">=</span> <span class="n">Flatten</span><span class="p">()(</span><span class="n">encoder</span><span class="p">)</span>
+    <span class="n">output_layer</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="n">units</span><span class="o">=</span><span class="n">filters</span><span class="p">)(</span><span class="n">output_layer</span><span class="p">)</span>
+    <span class="n">output_layer</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="n">units</span><span class="o">=</span><span class="n">filters</span><span class="p">)(</span><span class="n">output_layer</span><span class="p">)</span>
+    <span class="n">output_layer</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="n">units</span><span class="o">=</span><span class="n">n_classes</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">output_activation</span><span class="p">)(</span><span class="n">output_layer</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">inlayer</span><span class="p">],</span> <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">output_layer</span><span class="p">])</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">rsCNN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../rsCNN.html">rsCNN package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../architectures.html">rsCNN.architectures</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Global Center for Discovery and Conservation Science.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

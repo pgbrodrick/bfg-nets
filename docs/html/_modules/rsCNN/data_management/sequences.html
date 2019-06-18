@@ -1,0 +1,326 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>rsCNN.data_management.sequences &#8212; rsCNN  documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for rsCNN.data_management.sequences</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span> <span class="nn">keras</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">rsCNN.data_management.scalers</span> <span class="k">import</span> <span class="n">BaseGlobalScaler</span>
+<span class="kn">from</span> <span class="nn">rsCNN.data_management.data_core</span> <span class="k">import</span> <span class="n">Data_Container</span>
+
+
+<span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="c1"># TODO: this is almost certainly the wrong place for this</span>
+<div class="viewcode-block" id="build_memmapped_sequence"><a class="viewcode-back" href="../../../rsCNN.data_management.sequences.html#rsCNN.data_management.sequences.build_memmapped_sequence">[docs]</a><span class="k">def</span> <span class="nf">build_memmapped_sequence</span><span class="p">(</span><span class="n">data_container</span><span class="p">:</span> <span class="n">Data_Container</span><span class="p">,</span> <span class="n">fold_indices</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">rebuild</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This function does the following, considering the rebuild parameter at each step:</span>
+<span class="sd">            2) load/initialize/fit scalers</span>
+<span class="sd">            3) initiate train/validation/test sequences as components of Experiment</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">assert</span> <span class="n">data_container</span><span class="o">.</span><span class="n">features</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;data_container must have loaded feature numpy files&#39;</span>
+    <span class="k">assert</span> <span class="n">data_container</span><span class="o">.</span><span class="n">responses</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;data_container must have loaded responses numpy files&#39;</span>
+    <span class="k">assert</span> <span class="n">data_container</span><span class="o">.</span><span class="n">weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;data_container must have loaded weight numpy files&#39;</span>
+
+    <span class="k">assert</span> <span class="n">data_container</span><span class="o">.</span><span class="n">feature_scaler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;Feature scaler must be defined&#39;</span>
+    <span class="k">assert</span> <span class="n">data_container</span><span class="o">.</span><span class="n">response_scaler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;Response scaler must be defined&#39;</span>
+
+    <span class="n">data_sequence</span> <span class="o">=</span> <span class="n">MemmappedSequence</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">data_container</span><span class="o">.</span><span class="n">features</span><span class="p">[</span><span class="n">_f</span><span class="p">]</span> <span class="k">for</span> <span class="n">_f</span> <span class="ow">in</span> <span class="n">fold_indices</span><span class="p">],</span>
+        <span class="p">[</span><span class="n">data_container</span><span class="o">.</span><span class="n">responses</span><span class="p">[</span><span class="n">_r</span><span class="p">]</span> <span class="k">for</span> <span class="n">_r</span> <span class="ow">in</span> <span class="n">fold_indices</span><span class="p">],</span>
+        <span class="p">[</span><span class="n">data_container</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">_w</span><span class="p">]</span> <span class="k">for</span> <span class="n">_w</span> <span class="ow">in</span> <span class="n">fold_indices</span><span class="p">],</span>
+        <span class="n">data_container</span><span class="o">.</span><span class="n">feature_scaler</span><span class="p">,</span>
+        <span class="n">data_container</span><span class="o">.</span><span class="n">response_scaler</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">,</span>
+        <span class="n">apply_random_transforms</span><span class="o">=</span><span class="n">data_container</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">data_samples</span><span class="o">.</span><span class="n">apply_random_transformations</span><span class="p">,</span>
+        <span class="n">feature_mean_centering</span><span class="o">=</span><span class="n">data_container</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">data_build</span><span class="o">.</span><span class="n">feature_mean_centering</span><span class="p">,</span>
+        <span class="n">nan_replacement_value</span><span class="o">=</span><span class="n">data_container</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">data_samples</span><span class="o">.</span><span class="n">feature_nodata_encoding</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">data_sequence</span></div>
+
+
+<div class="viewcode-block" id="BaseSequence"><a class="viewcode-back" href="../../../rsCNN.data_management.sequences.html#rsCNN.data_management.sequences.BaseSequence">[docs]</a><span class="k">class</span> <span class="nc">BaseSequence</span><span class="p">(</span><span class="n">keras</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">Sequence</span><span class="p">):</span>
+    <span class="n">feature_scaler</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">response_scaler</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">apply_random_transforms</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">feature_scaler</span><span class="p">:</span> <span class="n">BaseGlobalScaler</span><span class="p">,</span>
+            <span class="n">response_scaler</span><span class="p">:</span> <span class="n">BaseGlobalScaler</span><span class="p">,</span>
+            <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+            <span class="n">apply_random_transforms</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="n">nan_replacement_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feature_scaler</span> <span class="o">=</span> <span class="n">feature_scaler</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">response_scaler</span> <span class="o">=</span> <span class="n">response_scaler</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">apply_random_transforms</span> <span class="o">=</span> <span class="n">apply_random_transforms</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nan_replacement_value</span> <span class="o">=</span> <span class="n">nan_replacement_value</span>
+
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Method is required for Keras functionality. Should return steps_per_epoch.&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">]]:</span>
+        <span class="c1"># Method is required for Keras functionality</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Get batch </span><span class="si">{}</span><span class="s1"> with </span><span class="si">{}</span><span class="s1"> items via sequence&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">))</span>
+        <span class="n">features</span><span class="p">,</span> <span class="n">responses</span><span class="p">,</span> <span class="n">weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_features_responses_weights</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_transformed_sample</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">responses</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BaseSequence.get_raw_and_transformed_sample"><a class="viewcode-back" href="../../../rsCNN.data_management.sequences.html#rsCNN.data_management.sequences.BaseSequence.get_raw_and_transformed_sample">[docs]</a>    <span class="k">def</span> <span class="nf">get_raw_and_transformed_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> \
+            <span class="n">Tuple</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">]],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">]]]:</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Get batch </span><span class="si">{}</span><span class="s1"> with </span><span class="si">{}</span><span class="s1"> items via sequence&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">))</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Get features, responses, and weights&#39;</span><span class="p">)</span>
+        <span class="n">raw_features</span><span class="p">,</span> <span class="n">raw_responses</span><span class="p">,</span> <span class="n">raw_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_features_responses_weights</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+        <span class="n">trans_features</span><span class="p">,</span> <span class="n">trans_responses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_transformed_sample</span><span class="p">(</span>
+            <span class="n">raw_features</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="n">raw_responses</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="n">raw_weights</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">raw_responses</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">weight</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">response</span><span class="p">,</span> <span class="n">weight</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">raw_responses</span><span class="p">,</span> <span class="n">raw_weights</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="p">((</span><span class="n">raw_features</span><span class="p">,</span> <span class="n">raw_responses</span><span class="p">),</span> <span class="p">(</span><span class="n">trans_features</span><span class="p">,</span> <span class="n">trans_responses</span><span class="p">))</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_transformed_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_features</span><span class="p">,</span> <span class="n">raw_responses</span><span class="p">,</span> <span class="n">raw_weights</span><span class="p">)</span> <span class="o">-&gt;</span> \
+            <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">]]:</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Optionally modify features, responses, and weights prior to scaling&#39;</span><span class="p">)</span>
+        <span class="c1"># Reusing names to avoid creating new, large objects</span>
+        <span class="n">raw_features</span><span class="p">,</span> <span class="n">raw_responses</span><span class="p">,</span> <span class="n">raw_weights</span> <span class="o">=</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">_modify_features_responses_weights_before_scaling</span><span class="p">(</span><span class="n">raw_features</span><span class="p">,</span> <span class="n">raw_responses</span><span class="p">,</span> <span class="n">raw_weights</span><span class="p">)</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Scale features&#39;</span><span class="p">)</span>
+        <span class="n">raw_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scale_features</span><span class="p">(</span><span class="n">raw_features</span><span class="p">)</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Scale responses&#39;</span><span class="p">)</span>
+        <span class="n">raw_responses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scale_responses</span><span class="p">(</span><span class="n">raw_responses</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nan_replacement_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Convert nan features to </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nan_replacement_value</span><span class="p">))</span>
+            <span class="n">raw_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_replace_nan_data_values</span><span class="p">(</span><span class="n">raw_features</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nan_replacement_value</span><span class="p">)</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Convert nan responses to </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nan_replacement_value</span><span class="p">))</span>
+            <span class="n">raw_responses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_replace_nan_data_values</span><span class="p">(</span><span class="n">raw_responses</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nan_replacement_value</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">raw_features</span><span class="p">)),</span> \
+                <span class="s1">&#39;Some feature values are nan but nan_replacement_value not provided in data config. Please provide &#39;</span> <span class="o">+</span> \
+                <span class="s1">&#39;a nan_replacement_value to transform features correctly.&#39;</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Append weights to responses for loss function calculations&#39;</span><span class="p">)</span>
+        <span class="n">raw_responses</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">weight</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">response</span><span class="p">,</span> <span class="n">weight</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">raw_responses</span><span class="p">,</span> <span class="n">raw_weights</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply_random_transforms</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Apply random transformations to features and responses&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_apply_random_transformations</span><span class="p">(</span><span class="n">raw_features</span><span class="p">,</span> <span class="n">raw_responses</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Random transformations not applied to features and responses&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">raw_features</span><span class="p">,</span> <span class="n">raw_responses</span>
+
+    <span class="k">def</span> <span class="nf">_get_features_responses_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">]]:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s1">&#39;Custom Sequences must implement _get_features_responses_weights for training and reporting to work. &#39;</span> <span class="o">+</span>
+            <span class="s1">&#39;See method header for expected arguments and returned objects.&#39;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_replace_nan_data_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">],</span> <span class="n">replacement_value</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">idx_array</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)):</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">idx_array</span><span class="p">][</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">idx_array</span><span class="p">])]</span> <span class="o">=</span> <span class="n">replacement_value</span>
+        <span class="k">return</span> <span class="n">data</span>
+
+    <span class="k">def</span> <span class="nf">_modify_features_responses_weights_before_scaling</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">],</span>
+            <span class="n">responses</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">],</span>
+            <span class="n">weights</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">]]:</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;No preliminary modifications applied to features, responses, or weights&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">features</span><span class="p">,</span> <span class="n">responses</span><span class="p">,</span> <span class="n">weights</span>
+
+    <span class="k">def</span> <span class="nf">_scale_features</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">feature_scaler</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">feature</span><span class="p">)</span> <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="n">features</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_scale_responses</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">responses</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">response_scaler</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">response</span><span class="p">)</span> <span class="k">for</span> <span class="n">response</span> <span class="ow">in</span> <span class="n">responses</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_apply_random_transformations</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">],</span>
+            <span class="n">responses</span><span class="p">:</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">]:</span>
+        <span class="c1"># Flip top to bottom</span>
+        <span class="k">if</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">:</span>
+            <span class="n">features</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">responses</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">responses</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="c1"># Flip side to side</span>
+        <span class="k">if</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">:</span>
+            <span class="n">features</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">responses</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">responses</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># Rotate 0, 1, 2, or 3 times</span>
+        <span class="n">num_rotations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">())</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rot90</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">num_rotations</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">responses</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rot90</span><span class="p">(</span><span class="n">responses</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">num_rotations</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">features</span><span class="p">,</span> <span class="n">responses</span></div>
+
+
+<div class="viewcode-block" id="MemmappedSequence"><a class="viewcode-back" href="../../../rsCNN.data_management.sequences.html#rsCNN.data_management.sequences.MemmappedSequence">[docs]</a><span class="k">class</span> <span class="nc">MemmappedSequence</span><span class="p">(</span><span class="n">BaseSequence</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">features</span><span class="p">,</span>
+            <span class="n">responses</span><span class="p">,</span>
+            <span class="n">weights</span><span class="p">,</span>
+            <span class="n">feature_scaler</span><span class="p">:</span> <span class="n">BaseGlobalScaler</span><span class="p">,</span>
+            <span class="n">response_scaler</span><span class="p">:</span> <span class="n">BaseGlobalScaler</span><span class="p">,</span>
+            <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+            <span class="n">apply_random_transforms</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+            <span class="n">feature_mean_centering</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="n">nan_replacement_value</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">features</span> <span class="o">=</span> <span class="n">features</span>  <span class="c1"># a list of numpy arrays, each of which is (n,y,x,f)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">responses</span> <span class="o">=</span> <span class="n">responses</span>  <span class="c1"># a list of numpy arrays, each of which is (n,y,x,r)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">=</span> <span class="n">weights</span>  <span class="c1"># a list of numpy arrays, each of which is (n,y,x,1)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">feature_scaler</span><span class="o">=</span><span class="n">feature_scaler</span><span class="p">,</span> <span class="n">response_scaler</span><span class="o">=</span><span class="n">response_scaler</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+                         <span class="n">apply_random_transforms</span><span class="o">=</span><span class="n">apply_random_transforms</span><span class="p">,</span> <span class="n">nan_replacement_value</span><span class="o">=</span><span class="n">nan_replacement_value</span><span class="p">)</span>
+
+        <span class="c1"># Determine the cumulative number of total samples across arrays - we&#39;re going to use</span>
+        <span class="c1"># it to roll between files when extracting samples</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cum_samples_per_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">_array</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cum_samples_per_array</span><span class="p">[</span><span class="n">_array</span><span class="p">]</span> <span class="o">=</span> <span class="n">features</span><span class="p">[</span><span class="n">_array</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">cum_samples_per_array</span><span class="p">[</span><span class="n">_array</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">feature_mean_centering</span> <span class="o">=</span> <span class="n">feature_mean_centering</span>
+
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Method is required for Keras functionality, a.k.a. steps_per_epoch in fit_generator</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cum_samples_per_array</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_mean_center</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">data</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:]</span>
+
+    <span class="k">def</span> <span class="nf">_get_features_responses_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">]]:</span>
+        <span class="c1"># start by finding which array we&#39;re starting in, based on the input index, batch size,</span>
+        <span class="c1"># and the number of samples per array</span>
+        <span class="n">current_array</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="n">current_array</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cum_samples_per_array</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">((</span><span class="n">index</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cum_samples_per_array</span><span class="p">[</span><span class="n">current_array</span><span class="p">]</span> <span class="ow">and</span>
+                 <span class="n">index</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">cum_samples_per_array</span><span class="p">[</span><span class="n">current_array</span><span class="o">+</span><span class="mi">1</span><span class="p">])):</span>
+                <span class="k">break</span>
+            <span class="n">current_array</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># grab the the appropriate number of samples from the current array</span>
+        <span class="n">sample_index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">index</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cum_samples_per_array</span><span class="p">[</span><span class="n">current_array</span><span class="p">])</span>
+
+        <span class="n">batch_features</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">[</span><span class="n">current_array</span><span class="p">])[</span><span class="n">sample_index</span><span class="p">:</span><span class="n">sample_index</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">batch_responses</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">responses</span><span class="p">[</span><span class="n">current_array</span><span class="p">])[</span><span class="n">sample_index</span><span class="p">:</span><span class="n">sample_index</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">batch_weights</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">current_array</span><span class="p">])[</span><span class="n">sample_index</span><span class="p">:</span><span class="n">sample_index</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># if the current array didn&#39;t have enough samples in it, roll forward to the next one (and keep</span>
+        <span class="c1"># doing so until we have enough samples)</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">batch_features</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">):</span>
+            <span class="n">sample_index</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">current_array</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">current_array</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">)):</span>
+                <span class="k">break</span>
+
+            <span class="n">stop_ind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">-</span> <span class="n">batch_features</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">batch_features</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">batch_features</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">[</span><span class="n">current_array</span><span class="p">])[</span>
+                                       <span class="n">sample_index</span><span class="p">:</span><span class="n">stop_ind</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">batch_responses</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">batch_responses</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">responses</span><span class="p">[</span><span class="n">current_array</span><span class="p">])[</span>
+                                        <span class="n">sample_index</span><span class="p">:</span><span class="n">stop_ind</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">batch_weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">batch_weights</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">current_array</span><span class="p">])[</span><span class="n">sample_index</span><span class="p">:</span><span class="n">stop_ind</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">feature_mean_centering</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">):</span>
+            <span class="n">batch_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mean_center</span><span class="p">(</span><span class="n">batch_features</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">batch_features</span><span class="p">],</span> <span class="p">[</span><span class="n">batch_responses</span><span class="p">],</span> <span class="p">[</span><span class="n">batch_weights</span><span class="p">]</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">rsCNN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../rsCNN.html">rsCNN package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Global Center for Discovery and Conservation Science.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

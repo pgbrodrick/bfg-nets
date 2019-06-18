@@ -1,0 +1,839 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>rsCNN.configuration.sections module &#8212; rsCNN  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="rsCNN.data_management package" href="rsCNN.data_management.html" />
+    <link rel="prev" title="rsCNN.configuration.configs module" href="rsCNN.configuration.configs.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-rsCNN.configuration.sections">
+<span id="rscnn-configuration-sections-module"></span><h1>rsCNN.configuration.sections module<a class="headerlink" href="#module-rsCNN.configuration.sections" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="rsCNN.configuration.sections.BaseConfigSection">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.configuration.sections.</code><code class="sig-name descname">BaseConfigSection</code><a class="reference internal" href="_modules/rsCNN/configuration/sections.html#BaseConfigSection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.configuration.sections.BaseConfigSection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="rsCNN.configuration.sections.BaseConfigSection.get_config_name_as_snake_case">
+<em class="property">classmethod </em><code class="sig-name descname">get_config_name_as_snake_case</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/configuration/sections.html#BaseConfigSection.get_config_name_as_snake_case"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.configuration.sections.BaseConfigSection.get_config_name_as_snake_case" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configuration.sections.BaseConfigSection.get_config_options_as_dict">
+<code class="sig-name descname">get_config_options_as_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/configuration/sections.html#BaseConfigSection.get_config_options_as_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.configuration.sections.BaseConfigSection.get_config_options_as_dict" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, &lt;built-in function any&gt;]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configuration.sections.BaseConfigSection.get_option_keys">
+<code class="sig-name descname">get_option_keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/configuration/sections.html#BaseConfigSection.get_option_keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.configuration.sections.BaseConfigSection.get_option_keys" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configuration.sections.BaseConfigSection.set_config_options">
+<code class="sig-name descname">set_config_options</code><span class="sig-paren">(</span><em class="sig-param">config_options</em>, <em class="sig-param">highlight_required</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/configuration/sections.html#BaseConfigSection.set_config_options"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.configuration.sections.BaseConfigSection.set_config_options" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.configuration.sections.BaseConfigSection.check_config_validity">
+<code class="sig-name descname">check_config_validity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/configuration/sections.html#BaseConfigSection.check_config_validity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.configuration.sections.BaseConfigSection.check_config_validity" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.configuration.sections.RawFiles">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.configuration.sections.</code><code class="sig-name descname">RawFiles</code><a class="reference internal" href="_modules/rsCNN/configuration/sections.html#RawFiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.configuration.sections.RawFiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#rsCNN.configuration.sections.BaseConfigSection" title="rsCNN.configuration.sections.BaseConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.configuration.sections.BaseConfigSection</span></code></a></p>
+<p>Raw file configuration, information necessary to locate and parse the raw files.</p>
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.RawFiles.feature_files">
+<code class="sig-name descname">feature_files</code><em class="property"> = 'REQUIRED'</em><a class="headerlink" href="#rsCNN.configuration.sections.RawFiles.feature_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of filepaths to raw feature rasters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.RawFiles.response_files">
+<code class="sig-name descname">response_files</code><em class="property"> = 'REQUIRED'</em><a class="headerlink" href="#rsCNN.configuration.sections.RawFiles.response_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of filepaths to raw response rasters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.RawFiles.boundary_files">
+<code class="sig-name descname">boundary_files</code><em class="property"> = 'OPTIONAL'</em><a class="headerlink" href="#rsCNN.configuration.sections.RawFiles.boundary_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>Optional list of filepaths to boundaries. Data is built or sampled within the boundaries.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.RawFiles.feature_data_type">
+<code class="sig-name descname">feature_data_type</code><em class="property"> = 'REQUIRED'</em><a class="headerlink" href="#rsCNN.configuration.sections.RawFiles.feature_data_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Data type from each input feature band.  R for Real, C for Categorical.  All C bands will be one-hot
+encoded. Provided as a list of lists corresponding to each band from each file in the raw input files list.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.RawFiles.response_data_type">
+<code class="sig-name descname">response_data_type</code><em class="property"> = 'REQUIRED'</em><a class="headerlink" href="#rsCNN.configuration.sections.RawFiles.response_data_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Data type from each input feature band.  R for Real, C for Categorical.  All C bands will be one-hot
+encoded. Provided as a list of lists corresponding to each band from each file in the raw input files list.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.RawFiles.feature_nodata_value">
+<code class="sig-name descname">feature_nodata_value</code><em class="property"> = -9999</em><a class="headerlink" href="#rsCNN.configuration.sections.RawFiles.feature_nodata_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Value that denotes missing data in feature files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.RawFiles.response_nodata_value">
+<code class="sig-name descname">response_nodata_value</code><em class="property"> = -9999</em><a class="headerlink" href="#rsCNN.configuration.sections.RawFiles.response_nodata_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Value that denotes missing data in response files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.RawFiles.boundary_bad_value">
+<code class="sig-name descname">boundary_bad_value</code><em class="property"> = 'OPTIONAL'</em><a class="headerlink" href="#rsCNN.configuration.sections.RawFiles.boundary_bad_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Value that denotes out-of-bounds areas in boundary files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.RawFiles.ignore_projections">
+<code class="sig-name descname">ignore_projections</code><em class="property"> = False</em><a class="headerlink" href="#rsCNN.configuration.sections.RawFiles.ignore_projections" title="Permalink to this definition">¶</a></dt>
+<dd><p>Should projection differences between feature and response files be ignored? This option ‘ +
+‘should only be true if the user is confident that projections are identical despite encodings.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.configuration.sections.DataBuild">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.configuration.sections.</code><code class="sig-name descname">DataBuild</code><a class="reference internal" href="_modules/rsCNN/configuration/sections.html#DataBuild"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.configuration.sections.DataBuild" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#rsCNN.configuration.sections.BaseConfigSection" title="rsCNN.configuration.sections.BaseConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.configuration.sections.BaseConfigSection</span></code></a></p>
+<p>Data build configuration, information necessary to structure and format the built data files</p>
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.DataBuild.dir_out">
+<code class="sig-name descname">dir_out</code><em class="property"> = '.'</em><a class="headerlink" href="#rsCNN.configuration.sections.DataBuild.dir_out" title="Permalink to this definition">¶</a></dt>
+<dd><p>Directory to which built data files are saved.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.DataBuild.filename_prefix_out">
+<code class="sig-name descname">filename_prefix_out</code><em class="property"> = ''</em><a class="headerlink" href="#rsCNN.configuration.sections.DataBuild.filename_prefix_out" title="Permalink to this definition">¶</a></dt>
+<dd><p>Optional prefix for built data filenames, useful for organizing or tracking built data files
+from different build strategies.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.DataBuild.response_data_format">
+<code class="sig-name descname">response_data_format</code><em class="property"> = 'FCN'</em><a class="headerlink" href="#rsCNN.configuration.sections.DataBuild.response_data_format" title="Permalink to this definition">¶</a></dt>
+<dd><p>Either CNN for convolutional neural network or FCN for fully convolutional network.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.DataBuild.random_seed">
+<code class="sig-name descname">random_seed</code><em class="property"> = 1</em><a class="headerlink" href="#rsCNN.configuration.sections.DataBuild.random_seed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Random seed for reproducible data generation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.DataBuild.max_samples">
+<code class="sig-name descname">max_samples</code><em class="property"> = 'REQUIRED'</em><a class="headerlink" href="#rsCNN.configuration.sections.DataBuild.max_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum number of built data samples to draw from the raw data files. Sampling stops when the raw data files
+are fully crawled or the maximum samples are reached.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.DataBuild.max_built_data_gb">
+<code class="sig-name descname">max_built_data_gb</code><em class="property"> = 10.0</em><a class="headerlink" href="#rsCNN.configuration.sections.DataBuild.max_built_data_gb" title="Permalink to this definition">¶</a></dt>
+<dd><p>The maximum size of any given memmap array created in GB.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.DataBuild.number_folds">
+<code class="sig-name descname">number_folds</code><em class="property"> = 10</em><a class="headerlink" href="#rsCNN.configuration.sections.DataBuild.number_folds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of training data folds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.DataBuild.validation_fold">
+<code class="sig-name descname">validation_fold</code><em class="property"> = 0</em><a class="headerlink" href="#rsCNN.configuration.sections.DataBuild.validation_fold" title="Permalink to this definition">¶</a></dt>
+<dd><p>Index of fold to use for validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.DataBuild.test_fold">
+<code class="sig-name descname">test_fold</code><em class="property"> = 'OPTIONAL'</em><a class="headerlink" href="#rsCNN.configuration.sections.DataBuild.test_fold" title="Permalink to this definition">¶</a></dt>
+<dd><p>Index of fold to use for testing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.DataBuild.window_radius">
+<code class="sig-name descname">window_radius</code><em class="property"> = 'REQUIRED'</em><a class="headerlink" href="#rsCNN.configuration.sections.DataBuild.window_radius" title="Permalink to this definition">¶</a></dt>
+<dd><p>Window radius determines the full image size as 2x the window radius</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.DataBuild.loss_window_radius">
+<code class="sig-name descname">loss_window_radius</code><em class="property"> = 'REQUIRED'</em><a class="headerlink" href="#rsCNN.configuration.sections.DataBuild.loss_window_radius" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loss window radius determines the internal image window to use for loss calculations during model
+training.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.DataBuild.feature_mean_centering">
+<code class="sig-name descname">feature_mean_centering</code><em class="property"> = False</em><a class="headerlink" href="#rsCNN.configuration.sections.DataBuild.feature_mean_centering" title="Permalink to this definition">¶</a></dt>
+<dd><p>Should features be mean centered?</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.DataBuild.feature_nodata_maximum_fraction">
+<code class="sig-name descname">feature_nodata_maximum_fraction</code><em class="property"> = 0.0</em><a class="headerlink" href="#rsCNN.configuration.sections.DataBuild.feature_nodata_maximum_fraction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Only include built data samples with a lower proportion of missing feature data values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.DataBuild.response_min_value">
+<code class="sig-name descname">response_min_value</code><em class="property"> = 'OPTIONAL'</em><a class="headerlink" href="#rsCNN.configuration.sections.DataBuild.response_min_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Response values below this minimum are converted to missing data. Currently applied to all response values
+uniformly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.DataBuild.response_max_value">
+<code class="sig-name descname">response_max_value</code><em class="property"> = 'OPTIONAL'</em><a class="headerlink" href="#rsCNN.configuration.sections.DataBuild.response_max_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Response values above this maximum are converted to missing data. Currently applied to all response values
+uniformly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.DataBuild.response_background_value">
+<code class="sig-name descname">response_background_value</code><em class="property"> = 'OPTIONAL'</em><a class="headerlink" href="#rsCNN.configuration.sections.DataBuild.response_background_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Built data samples containing only this response are discarded and not included in the final built data
+files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.configuration.sections.DataSamples">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.configuration.sections.</code><code class="sig-name descname">DataSamples</code><a class="reference internal" href="_modules/rsCNN/configuration/sections.html#DataSamples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.configuration.sections.DataSamples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#rsCNN.configuration.sections.BaseConfigSection" title="rsCNN.configuration.sections.BaseConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.configuration.sections.BaseConfigSection</span></code></a></p>
+<p>Data sample configuration, information necessary to parse built data files and pass data to models during training</p>
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.DataSamples.apply_random_transformations">
+<code class="sig-name descname">apply_random_transformations</code><em class="property"> = False</em><a class="headerlink" href="#rsCNN.configuration.sections.DataSamples.apply_random_transformations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Should random transformations, including rotations and flips, be applied to sample images.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.DataSamples.batch_size">
+<code class="sig-name descname">batch_size</code><em class="property"> = 100</em><a class="headerlink" href="#rsCNN.configuration.sections.DataSamples.batch_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>The sample batch size for images passed to the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.DataSamples.feature_scaler_names">
+<code class="sig-name descname">feature_scaler_names</code><em class="property"> = 'REQUIRED'</em><a class="headerlink" href="#rsCNN.configuration.sections.DataSamples.feature_scaler_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Names of the scalers which are applied to each feature file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.DataSamples.response_scaler_names">
+<code class="sig-name descname">response_scaler_names</code><em class="property"> = 'REQUIRED'</em><a class="headerlink" href="#rsCNN.configuration.sections.DataSamples.response_scaler_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Names of the scalers which are applied to each response file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.DataSamples.feature_nodata_encoding">
+<code class="sig-name descname">feature_nodata_encoding</code><em class="property"> = -10.0</em><a class="headerlink" href="#rsCNN.configuration.sections.DataSamples.feature_nodata_encoding" title="Permalink to this definition">¶</a></dt>
+<dd><p>The encoding for missing data values passed to the model, given that neural networks are sensitive to
+nans.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.configuration.sections.ModelTraining">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.configuration.sections.</code><code class="sig-name descname">ModelTraining</code><a class="reference internal" href="_modules/rsCNN/configuration/sections.html#ModelTraining"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.configuration.sections.ModelTraining" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#rsCNN.configuration.sections.BaseConfigSection" title="rsCNN.configuration.sections.BaseConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.configuration.sections.BaseConfigSection</span></code></a></p>
+<p>Model training configuration, information necessary to train models from start to finish</p>
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.ModelTraining.dir_out">
+<code class="sig-name descname">dir_out</code><em class="property"> = '.'</em><a class="headerlink" href="#rsCNN.configuration.sections.ModelTraining.dir_out" title="Permalink to this definition">¶</a></dt>
+<dd><p>Directory to which new model files are saved and from which existing model files are loaded.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.ModelTraining.verbosity">
+<code class="sig-name descname">verbosity</code><em class="property"> = 1</em><a class="headerlink" href="#rsCNN.configuration.sections.ModelTraining.verbosity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Verbosity value for keras library. Either 0 for silent or 1 for verbose.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.ModelTraining.assert_gpu">
+<code class="sig-name descname">assert_gpu</code><em class="property"> = False</em><a class="headerlink" href="#rsCNN.configuration.sections.ModelTraining.assert_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assert, i.e., fail if GPUs are required and not available.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.ModelTraining.architecture_name">
+<code class="sig-name descname">architecture_name</code><em class="property"> = 'REQUIRED'</em><a class="headerlink" href="#rsCNN.configuration.sections.ModelTraining.architecture_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+<dt class="field-even">Type</dt>
+<dd class="field-even"><p>Architecture name from existing options</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.ModelTraining.loss_metric">
+<code class="sig-name descname">loss_metric</code><em class="property"> = 'REQUIRED'</em><a class="headerlink" href="#rsCNN.configuration.sections.ModelTraining.loss_metric" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loss metric to use for model training.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.ModelTraining.max_epochs">
+<code class="sig-name descname">max_epochs</code><em class="property"> = 100</em><a class="headerlink" href="#rsCNN.configuration.sections.ModelTraining.max_epochs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum number of epochs to run model training.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.ModelTraining.optimizer">
+<code class="sig-name descname">optimizer</code><em class="property"> = 'adam'</em><a class="headerlink" href="#rsCNN.configuration.sections.ModelTraining.optimizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Optimizer to use during model training.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.ModelTraining.weighted">
+<code class="sig-name descname">weighted</code><em class="property"> = False</em><a class="headerlink" href="#rsCNN.configuration.sections.ModelTraining.weighted" title="Permalink to this definition">¶</a></dt>
+<dd><p>Should underrepresented classes be overweighted during model training</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.configuration.sections.CallbackGeneral">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.configuration.sections.</code><code class="sig-name descname">CallbackGeneral</code><a class="reference internal" href="_modules/rsCNN/configuration/sections.html#CallbackGeneral"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.configuration.sections.CallbackGeneral" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#rsCNN.configuration.sections.BaseConfigSection" title="rsCNN.configuration.sections.BaseConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.configuration.sections.BaseConfigSection</span></code></a></p>
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.CallbackGeneral.checkpoint_periods">
+<code class="sig-name descname">checkpoint_periods</code><em class="property"> = 5</em><a class="headerlink" href="#rsCNN.configuration.sections.CallbackGeneral.checkpoint_periods" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of periods of model training between model state and history saves.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.CallbackGeneral.use_terminate_on_nan">
+<code class="sig-name descname">use_terminate_on_nan</code><em class="property"> = True</em><a class="headerlink" href="#rsCNN.configuration.sections.CallbackGeneral.use_terminate_on_nan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Terminate model training if nans are observed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.configuration.sections.CallbackTensorboard">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.configuration.sections.</code><code class="sig-name descname">CallbackTensorboard</code><a class="reference internal" href="_modules/rsCNN/configuration/sections.html#CallbackTensorboard"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.configuration.sections.CallbackTensorboard" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#rsCNN.configuration.sections.BaseConfigSection" title="rsCNN.configuration.sections.BaseConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.configuration.sections.BaseConfigSection</span></code></a></p>
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.CallbackTensorboard.use_callback">
+<code class="sig-name descname">use_callback</code><em class="property"> = True</em><a class="headerlink" href="#rsCNN.configuration.sections.CallbackTensorboard.use_callback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use the Tensorboard callback to enable Tensorboard by saving necessary data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.CallbackTensorboard.update_freq">
+<code class="sig-name descname">update_freq</code><em class="property"> = 'epoch'</em><a class="headerlink" href="#rsCNN.configuration.sections.CallbackTensorboard.update_freq" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.CallbackTensorboard.histogram_freq">
+<code class="sig-name descname">histogram_freq</code><em class="property"> = 0</em><a class="headerlink" href="#rsCNN.configuration.sections.CallbackTensorboard.histogram_freq" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.CallbackTensorboard.write_graph">
+<code class="sig-name descname">write_graph</code><em class="property"> = True</em><a class="headerlink" href="#rsCNN.configuration.sections.CallbackTensorboard.write_graph" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.CallbackTensorboard.write_grads">
+<code class="sig-name descname">write_grads</code><em class="property"> = False</em><a class="headerlink" href="#rsCNN.configuration.sections.CallbackTensorboard.write_grads" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.CallbackTensorboard.write_images">
+<code class="sig-name descname">write_images</code><em class="property"> = True</em><a class="headerlink" href="#rsCNN.configuration.sections.CallbackTensorboard.write_images" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.configuration.sections.CallbackEarlyStopping">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.configuration.sections.</code><code class="sig-name descname">CallbackEarlyStopping</code><a class="reference internal" href="_modules/rsCNN/configuration/sections.html#CallbackEarlyStopping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.configuration.sections.CallbackEarlyStopping" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#rsCNN.configuration.sections.BaseConfigSection" title="rsCNN.configuration.sections.BaseConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.configuration.sections.BaseConfigSection</span></code></a></p>
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.CallbackEarlyStopping.use_callback">
+<code class="sig-name descname">use_callback</code><em class="property"> = True</em><a class="headerlink" href="#rsCNN.configuration.sections.CallbackEarlyStopping.use_callback" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.CallbackEarlyStopping.min_delta">
+<code class="sig-name descname">min_delta</code><em class="property"> = 0.0001</em><a class="headerlink" href="#rsCNN.configuration.sections.CallbackEarlyStopping.min_delta" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.CallbackEarlyStopping.patience">
+<code class="sig-name descname">patience</code><em class="property"> = 50</em><a class="headerlink" href="#rsCNN.configuration.sections.CallbackEarlyStopping.patience" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.configuration.sections.CallbackReducedLearningRate">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.configuration.sections.</code><code class="sig-name descname">CallbackReducedLearningRate</code><a class="reference internal" href="_modules/rsCNN/configuration/sections.html#CallbackReducedLearningRate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.configuration.sections.CallbackReducedLearningRate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#rsCNN.configuration.sections.BaseConfigSection" title="rsCNN.configuration.sections.BaseConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.configuration.sections.BaseConfigSection</span></code></a></p>
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.CallbackReducedLearningRate.use_callback">
+<code class="sig-name descname">use_callback</code><em class="property"> = True</em><a class="headerlink" href="#rsCNN.configuration.sections.CallbackReducedLearningRate.use_callback" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.CallbackReducedLearningRate.factor">
+<code class="sig-name descname">factor</code><em class="property"> = 0.5</em><a class="headerlink" href="#rsCNN.configuration.sections.CallbackReducedLearningRate.factor" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.CallbackReducedLearningRate.min_delta">
+<code class="sig-name descname">min_delta</code><em class="property"> = 0.0001</em><a class="headerlink" href="#rsCNN.configuration.sections.CallbackReducedLearningRate.min_delta" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.configuration.sections.CallbackReducedLearningRate.patience">
+<code class="sig-name descname">patience</code><em class="property"> = 10</em><a class="headerlink" href="#rsCNN.configuration.sections.CallbackReducedLearningRate.patience" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.configuration.sections.get_config_sections">
+<code class="sig-prename descclassname">rsCNN.configuration.sections.</code><code class="sig-name descname">get_config_sections</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/configuration/sections.html#get_config_sections"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.configuration.sections.get_config_sections" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[~T]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">rsCNN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="rsCNN.html">rsCNN package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="rsCNN.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.architectures.html">rsCNN.architectures package</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="rsCNN.configuration.html">rsCNN.configuration package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="rsCNN.configuration.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.data_management.html">rsCNN.data_management package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.evaluation.html">rsCNN.evaluation package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.experiments.html">rsCNN.experiments package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.utils.html">rsCNN.utils package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="rsCNN.html">rsCNN package</a><ul>
+  <li><a href="rsCNN.configuration.html">rsCNN.configuration package</a><ul>
+      <li>Previous: <a href="rsCNN.configuration.configs.html" title="previous chapter">rsCNN.configuration.configs module</a></li>
+      <li>Next: <a href="rsCNN.data_management.html" title="next chapter">rsCNN.data_management package</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Global Center for Discovery and Conservation Science.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/rsCNN.configuration.sections.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

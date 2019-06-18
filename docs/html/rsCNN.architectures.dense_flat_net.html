@@ -1,0 +1,141 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>rsCNN.architectures.dense_flat_net module &#8212; rsCNN  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="rsCNN.architectures.dense_unet module" href="rsCNN.architectures.dense_unet.html" />
+    <link rel="prev" title="rsCNN.architectures.config_sections module" href="rsCNN.architectures.config_sections.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-rsCNN.architectures.dense_flat_net">
+<span id="rscnn-architectures-dense-flat-net-module"></span><h1>rsCNN.architectures.dense_flat_net module<a class="headerlink" href="#module-rsCNN.architectures.dense_flat_net" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="rsCNN.architectures.dense_flat_net.ArchitectureConfigSection">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.architectures.dense_flat_net.</code><code class="sig-name descname">ArchitectureConfigSection</code><a class="reference internal" href="_modules/rsCNN/architectures/dense_flat_net.html#ArchitectureConfigSection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.architectures.dense_flat_net.ArchitectureConfigSection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="rsCNN.architectures.config_sections.html#rsCNN.architectures.config_sections.BlockMixin" title="rsCNN.architectures.config_sections.BlockMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.architectures.config_sections.BlockMixin</span></code></a>, <a class="reference internal" href="rsCNN.architectures.config_sections.html#rsCNN.architectures.config_sections.GrowthMixin" title="rsCNN.architectures.config_sections.GrowthMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.architectures.config_sections.GrowthMixin</span></code></a>, <a class="reference internal" href="rsCNN.architectures.config_sections.html#rsCNN.architectures.config_sections.BaseArchitectureConfigSection" title="rsCNN.architectures.config_sections.BaseArchitectureConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.architectures.config_sections.BaseArchitectureConfigSection</span></code></a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.architectures.dense_flat_net.create_model">
+<code class="sig-prename descclassname">rsCNN.architectures.dense_flat_net.</code><code class="sig-name descname">create_model</code><span class="sig-paren">(</span><em class="sig-param">inshape</em>, <em class="sig-param">n_classes</em>, <em class="sig-param">output_activation</em>, <em class="sig-param">block_structure=(2</em>, <em class="sig-param">2</em>, <em class="sig-param">2</em>, <em class="sig-param">2)</em>, <em class="sig-param">filters=64</em>, <em class="sig-param">kernel_size=(3</em>, <em class="sig-param">3)</em>, <em class="sig-param">padding='same'</em>, <em class="sig-param">use_batch_norm=False</em>, <em class="sig-param">use_growth=False</em>, <em class="sig-param">use_initial_colorspace_transformation_layer=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/architectures/dense_flat_net.html#create_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.architectures.dense_flat_net.create_model" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">rsCNN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="rsCNN.html">rsCNN package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="rsCNN.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="rsCNN.architectures.html">rsCNN.architectures package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="rsCNN.architectures.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.configuration.html">rsCNN.configuration package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.data_management.html">rsCNN.data_management package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.evaluation.html">rsCNN.evaluation package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.experiments.html">rsCNN.experiments package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.utils.html">rsCNN.utils package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="rsCNN.html">rsCNN package</a><ul>
+  <li><a href="rsCNN.architectures.html">rsCNN.architectures package</a><ul>
+      <li>Previous: <a href="rsCNN.architectures.config_sections.html" title="previous chapter">rsCNN.architectures.config_sections module</a></li>
+      <li>Next: <a href="rsCNN.architectures.dense_unet.html" title="next chapter">rsCNN.architectures.dense_unet module</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Global Center for Discovery and Conservation Science.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/rsCNN.architectures.dense_flat_net.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -26,28 +26,6 @@ def create_model(
     config_sections.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
 ) -> keras.models.Model:
     """ Construct a flat style network with flexible shape
-
-    Arguments:
-    inshape - tuple/list
-      Designates the input shape of an image to be passed to
-      the network.
-    n_classes - int
-      The number of classes the network is meant to regress
-    kwargs - dict
-      A dictionary of optional keyword arguments, which may contain
-      extra keywords.  Values to use are:
-
-      conv_pattern - tuple/list
-        Designates the (repeating) order of convolution filter sizes.
-      conv_depth - int/str
-        If integer, a fixed number of convolution filters to use
-        in the network.  If 'growth' tells the network to grow
-        in depth to maintain a constant number of neurons.
-      use_batch_norm - bool
-        Whether or not to use batch normalization after each layer.
-
-    Returns:
-      A flexible flat style network keras network.
     """
     inlayer = keras.layers.Input(inshape)
 

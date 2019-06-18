@@ -1,0 +1,322 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>rsCNN.data_management.data_core module &#8212; rsCNN  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="rsCNN.data_management.ooc_functions module" href="rsCNN.data_management.ooc_functions.html" />
+    <link rel="prev" title="rsCNN.data_management.common_io module" href="rsCNN.data_management.common_io.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-rsCNN.data_management.data_core">
+<span id="rscnn-data-management-data-core-module"></span><h1>rsCNN.data_management.data_core module<a class="headerlink" href="#module-rsCNN.data_management.data_core" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="rsCNN.data_management.data_core.Data_Container">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.data_management.data_core.</code><code class="sig-name descname">Data_Container</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/data_core.html#Data_Container"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.data_core.Data_Container" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A container class that holds all sorts of data objects</p>
+<dl class="attribute">
+<dt id="rsCNN.data_management.data_core.Data_Container.features">
+<code class="sig-name descname">features</code><em class="property"> = []</em><a class="headerlink" href="#rsCNN.data_management.data_core.Data_Container.features" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.data_management.data_core.Data_Container.responses">
+<code class="sig-name descname">responses</code><em class="property"> = []</em><a class="headerlink" href="#rsCNN.data_management.data_core.Data_Container.responses" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.data_management.data_core.Data_Container.weights">
+<code class="sig-name descname">weights</code><em class="property"> = []</em><a class="headerlink" href="#rsCNN.data_management.data_core.Data_Container.weights" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.data_management.data_core.Data_Container.training_sequence">
+<code class="sig-name descname">training_sequence</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.data_management.data_core.Data_Container.training_sequence" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.data_management.data_core.Data_Container.validation_sequence">
+<code class="sig-name descname">validation_sequence</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.data_management.data_core.Data_Container.validation_sequence" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.data_management.data_core.Data_Container.feature_band_types">
+<code class="sig-name descname">feature_band_types</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.data_management.data_core.Data_Container.feature_band_types" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.data_management.data_core.Data_Container.response_band_types">
+<code class="sig-name descname">response_band_types</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.data_management.data_core.Data_Container.response_band_types" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.data_management.data_core.Data_Container.feature_raw_band_types">
+<code class="sig-name descname">feature_raw_band_types</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.data_management.data_core.Data_Container.feature_raw_band_types" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.data_management.data_core.Data_Container.response_raw_band_types">
+<code class="sig-name descname">response_raw_band_types</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.data_management.data_core.Data_Container.response_raw_band_types" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.data_management.data_core.Data_Container.feature_scalers">
+<code class="sig-name descname">feature_scalers</code><em class="property"> = []</em><a class="headerlink" href="#rsCNN.data_management.data_core.Data_Container.feature_scalers" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.data_management.data_core.Data_Container.response_scalers">
+<code class="sig-name descname">response_scalers</code><em class="property"> = []</em><a class="headerlink" href="#rsCNN.data_management.data_core.Data_Container.response_scalers" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.data_management.data_core.Data_Container.train_folds">
+<code class="sig-name descname">train_folds</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.data_management.data_core.Data_Container.train_folds" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.data_management.data_core.Data_Container.config">
+<code class="sig-name descname">config</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.data_management.data_core.Data_Container.config" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.data_management.data_core.Data_Container.build_or_load_scalers">
+<code class="sig-name descname">build_or_load_scalers</code><span class="sig-paren">(</span><em class="sig-param">rebuild=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/data_core.html#Data_Container.build_or_load_scalers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.data_core.Data_Container.build_or_load_scalers" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.data_management.data_core.Data_Container.check_input_files">
+<code class="sig-name descname">check_input_files</code><span class="sig-paren">(</span><em class="sig-param">f_file_list</em>, <em class="sig-param">r_file_list</em>, <em class="sig-param">b_file_list</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/data_core.html#Data_Container.check_input_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.data_core.Data_Container.check_input_files" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.data_management.data_core.Data_Container.get_band_types">
+<code class="sig-name descname">get_band_types</code><span class="sig-paren">(</span><em class="sig-param">file_list</em>, <em class="sig-param">band_types</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/data_core.html#Data_Container.get_band_types"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.data_core.Data_Container.get_band_types" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.data_core.create_built_data_output_directory">
+<code class="sig-prename descclassname">rsCNN.data_management.data_core.</code><code class="sig-name descname">create_built_data_output_directory</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/data_core.html#create_built_data_output_directory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.data_core.create_built_data_output_directory" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.data_core.get_temporary_features_filepath">
+<code class="sig-prename descclassname">rsCNN.data_management.data_core.</code><code class="sig-name descname">get_temporary_features_filepath</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/data_core.html#get_temporary_features_filepath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.data_core.get_temporary_features_filepath" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.data_core.get_temporary_responses_filepath">
+<code class="sig-prename descclassname">rsCNN.data_management.data_core.</code><code class="sig-name descname">get_temporary_responses_filepath</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/data_core.html#get_temporary_responses_filepath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.data_core.get_temporary_responses_filepath" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.data_core.get_temporary_weights_filepath">
+<code class="sig-prename descclassname">rsCNN.data_management.data_core.</code><code class="sig-name descname">get_temporary_weights_filepath</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/data_core.html#get_temporary_weights_filepath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.data_core.get_temporary_weights_filepath" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.data_core.get_temporary_data_filepaths">
+<code class="sig-prename descclassname">rsCNN.data_management.data_core.</code><code class="sig-name descname">get_temporary_data_filepaths</code><span class="sig-paren">(</span><em class="sig-param">config</em>, <em class="sig-param">filename_suffix</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/data_core.html#get_temporary_data_filepaths"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.data_core.get_temporary_data_filepaths" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.data_core.get_built_features_filepaths">
+<code class="sig-prename descclassname">rsCNN.data_management.data_core.</code><code class="sig-name descname">get_built_features_filepaths</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/data_core.html#get_built_features_filepaths"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.data_core.get_built_features_filepaths" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.data_core.get_built_responses_filepaths">
+<code class="sig-prename descclassname">rsCNN.data_management.data_core.</code><code class="sig-name descname">get_built_responses_filepaths</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/data_core.html#get_built_responses_filepaths"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.data_core.get_built_responses_filepaths" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.data_core.get_built_weights_filepaths">
+<code class="sig-prename descclassname">rsCNN.data_management.data_core.</code><code class="sig-name descname">get_built_weights_filepaths</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/data_core.html#get_built_weights_filepaths"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.data_core.get_built_weights_filepaths" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.data_core.get_built_data_config_filepath">
+<code class="sig-prename descclassname">rsCNN.data_management.data_core.</code><code class="sig-name descname">get_built_data_config_filepath</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/data_core.html#get_built_data_config_filepath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.data_core.get_built_data_config_filepath" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.data_core.get_built_data_filepaths">
+<code class="sig-prename descclassname">rsCNN.data_management.data_core.</code><code class="sig-name descname">get_built_data_filepaths</code><span class="sig-paren">(</span><em class="sig-param">config</em>, <em class="sig-param">filename_suffix</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/data_core.html#get_built_data_filepaths"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.data_core.get_built_data_filepaths" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.data_core.get_memmap_basename">
+<code class="sig-prename descclassname">rsCNN.data_management.data_core.</code><code class="sig-name descname">get_memmap_basename</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/data_core.html#get_memmap_basename"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.data_core.get_memmap_basename" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">rsCNN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="rsCNN.html">rsCNN package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="rsCNN.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.architectures.html">rsCNN.architectures package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.configuration.html">rsCNN.configuration package</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="rsCNN.data_management.html">rsCNN.data_management package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="rsCNN.data_management.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.evaluation.html">rsCNN.evaluation package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.experiments.html">rsCNN.experiments package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.utils.html">rsCNN.utils package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="rsCNN.html">rsCNN package</a><ul>
+  <li><a href="rsCNN.data_management.html">rsCNN.data_management package</a><ul>
+      <li>Previous: <a href="rsCNN.data_management.common_io.html" title="previous chapter">rsCNN.data_management.common_io module</a></li>
+      <li>Next: <a href="rsCNN.data_management.ooc_functions.html" title="next chapter">rsCNN.data_management.ooc_functions module</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Global Center for Discovery and Conservation Science.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/rsCNN.data_management.data_core.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,197 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>rsCNN.data_management.ooc_functions &#8212; rsCNN  documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for rsCNN.data_management.ooc_functions</h1><div class="highlight"><pre>
+<span></span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span>
+
+<span class="kn">import</span> <span class="nn">shutil</span>
+
+<span class="n">_MAX_UNIQUE_RESPONSES</span> <span class="o">=</span> <span class="mi">100</span>
+
+<span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<div class="viewcode-block" id="one_hot_encode_array"><a class="viewcode-back" href="../../../rsCNN.data_management.ooc_functions.html#rsCNN.data_management.ooc_functions.one_hot_encode_array">[docs]</a><span class="k">def</span> <span class="nf">one_hot_encode_array</span><span class="p">(</span><span class="n">raw_band_types</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">array</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span> <span class="n">memmap_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+
+    <span class="n">cat_band_locations</span> <span class="o">=</span> <span class="p">[</span><span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">raw_band_types</span><span class="p">)</span> <span class="k">if</span> <span class="n">val</span> <span class="o">==</span> <span class="s1">&#39;C&#39;</span><span class="p">]</span>
+    <span class="n">band_types</span> <span class="o">=</span> <span class="n">raw_band_types</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">_c</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cat_band_locations</span><span class="p">))):</span>
+
+        <span class="n">un_array</span> <span class="o">=</span> <span class="n">array</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">cat_band_locations</span><span class="p">[</span><span class="n">_c</span><span class="p">]]</span>
+        <span class="n">un_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">un_array</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">un_array</span><span class="p">)])</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">un_array</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">_MAX_UNIQUE_RESPONSES</span><span class="p">,</span>\
+            <span class="s1">&#39;Too many (</span><span class="si">{}</span><span class="s1">) unique responses found, suspected incorrect categorical specification&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">un_array</span><span class="p">))</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Found </span><span class="si">{}</span><span class="s1"> categorical responses&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">un_array</span><span class="p">)))</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Cat response: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">un_array</span><span class="p">))</span>
+
+        <span class="n">array_shape</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">array_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">un_array</span><span class="p">)</span> <span class="o">+</span> <span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">memmap_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">cat_memmap_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">memmap_file</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">memmap_file</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="s1">&#39;_cat.npy&#39;</span><span class="p">)</span>
+            <span class="n">cat_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">memmap</span><span class="p">(</span><span class="n">cat_memmap_file</span><span class="p">,</span>
+                                  <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+                                  <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;w+&#39;</span><span class="p">,</span>
+                                  <span class="n">shape</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">array_shape</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cat_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">array_shape</span><span class="p">))</span>
+
+        <span class="c1"># One hot-encode</span>
+        <span class="k">for</span> <span class="n">_r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">array_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">_r</span> <span class="o">&gt;=</span> <span class="n">cat_band_locations</span><span class="p">[</span><span class="n">_c</span><span class="p">]</span> <span class="ow">and</span> <span class="n">_r</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">un_array</span><span class="p">)):</span>
+                <span class="n">cat_array</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">_r</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">array</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">cat_band_locations</span><span class="p">[</span><span class="n">_c</span><span class="p">]]</span> <span class="o">==</span>
+                                                <span class="n">un_array</span><span class="p">[</span><span class="n">_r</span> <span class="o">-</span> <span class="n">cat_band_locations</span><span class="p">[</span><span class="n">_c</span><span class="p">]])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">_r</span> <span class="o">&lt;</span> <span class="n">cat_band_locations</span><span class="p">[</span><span class="n">_c</span><span class="p">]):</span>
+                    <span class="n">cat_array</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">_r</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">_r</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">cat_array</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">_r</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">_r</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">un_array</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># Force file dump, and then reload the encoded responses as the primary response</span>
+        <span class="k">del</span> <span class="n">array</span><span class="p">,</span> <span class="n">cat_array</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">memmap_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">memmap_file</span><span class="p">)):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">memmap_file</span><span class="p">)</span>
+            <span class="n">memmap_file</span> <span class="o">=</span> <span class="n">cat_memmap_file</span>
+            <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">memmap</span><span class="p">(</span><span class="n">memmap_file</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r+&#39;</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">array_shape</span><span class="p">))</span>
+
+        <span class="n">band_types</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">cat_band_locations</span><span class="p">[</span><span class="n">_c</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">_r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">un_array</span><span class="p">)):</span>
+            <span class="n">band_types</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">cat_band_locations</span><span class="p">[</span><span class="n">_c</span><span class="p">],</span> <span class="s1">&#39;B&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">_c</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">array</span><span class="p">,</span> <span class="n">band_types</span></div>
+
+
+<div class="viewcode-block" id="permute_array"><a class="viewcode-back" href="../../../rsCNN.data_management.ooc_functions.html#rsCNN.data_management.ooc_functions.permute_array">[docs]</a><span class="k">def</span> <span class="nf">permute_array</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span> <span class="n">source_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">permutation</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
+    <span class="n">perm_memmap_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">source_filename</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">source_filename</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="s1">&#39;_perm.npy&#39;</span><span class="p">)</span>
+
+    <span class="n">shape</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">shape</span>
+    <span class="nb">type</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">dtype</span>
+
+    <span class="n">dest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">memmap</span><span class="p">(</span><span class="n">perm_memmap_file</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">type</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;w+&#39;</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">permutation</span><span class="p">)):</span>
+        <span class="n">dest</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">source</span><span class="p">[</span><span class="n">permutation</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="o">...</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">del</span> <span class="n">dest</span><span class="p">,</span> <span class="n">source</span>
+            <span class="n">source</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">memmap</span><span class="p">(</span><span class="n">source_filename</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">type</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r+&#39;</span><span class="p">)</span>
+            <span class="n">dest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">memmap</span><span class="p">(</span><span class="n">perm_memmap_file</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">type</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r+&#39;</span><span class="p">)</span>
+
+    <span class="k">del</span> <span class="n">source</span><span class="p">,</span> <span class="n">dest</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">source_filename</span><span class="p">)</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">perm_memmap_file</span><span class="p">,</span> <span class="n">source_filename</span><span class="p">)</span>
+
+    <span class="n">source</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">memmap</span><span class="p">(</span><span class="n">source_filename</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">type</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r+&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">source</span></div>
+
+
+
+
+
+
+
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">rsCNN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../rsCNN.html">rsCNN package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Global Center for Discovery and Conservation Science.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

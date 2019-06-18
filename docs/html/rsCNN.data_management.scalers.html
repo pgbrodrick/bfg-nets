@@ -1,0 +1,318 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>rsCNN.data_management.scalers module &#8212; rsCNN  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="rsCNN.data_management.sequences module" href="rsCNN.data_management.sequences.html" />
+    <link rel="prev" title="rsCNN.data_management.ooc_functions module" href="rsCNN.data_management.ooc_functions.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-rsCNN.data_management.scalers">
+<span id="rscnn-data-management-scalers-module"></span><h1>rsCNN.data_management.scalers module<a class="headerlink" href="#module-rsCNN.data_management.scalers" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="rsCNN.data_management.scalers.check_scaler_exists">
+<code class="sig-prename descclassname">rsCNN.data_management.scalers.</code><code class="sig-name descname">check_scaler_exists</code><span class="sig-paren">(</span><em class="sig-param">scaler_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#check_scaler_exists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.check_scaler_exists" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.scalers.get_scaler">
+<code class="sig-prename descclassname">rsCNN.data_management.scalers.</code><code class="sig-name descname">get_scaler</code><span class="sig-paren">(</span><em class="sig-param">scaler_name</em>, <em class="sig-param">scaler_options</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#get_scaler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.get_scaler" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#rsCNN.data_management.scalers.BaseGlobalScaler" title="rsCNN.data_management.scalers.BaseGlobalScaler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseGlobalScaler</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.data_management.scalers.BaseGlobalScaler">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.data_management.scalers.</code><code class="sig-name descname">BaseGlobalScaler</code><span class="sig-paren">(</span><em class="sig-param">savename_base=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#BaseGlobalScaler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.BaseGlobalScaler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Scalers handle the process of transforming data prior to fitting or predicting using the neural network, as
+well as inverse transforming the data for applications or review afterwards. In this case, we use readily available
+scalers from the scikit-learn package to handle the nitty-gritty of the transform and inverse transform, and we use
+the Scaler class to handle the nitty-gritty of reshaping and otherwise handling the image arrays.</p>
+<dl class="attribute">
+<dt id="rsCNN.data_management.scalers.BaseGlobalScaler.scaler_name">
+<code class="sig-name descname">scaler_name</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.data_management.scalers.BaseGlobalScaler.scaler_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.data_management.scalers.BaseGlobalScaler.savename">
+<code class="sig-name descname">savename</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.data_management.scalers.BaseGlobalScaler.savename" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.data_management.scalers.BaseGlobalScaler.fit">
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param">image_array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#BaseGlobalScaler.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.BaseGlobalScaler.fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.data_management.scalers.BaseGlobalScaler.inverse_transform">
+<code class="sig-name descname">inverse_transform</code><span class="sig-paren">(</span><em class="sig-param">image_array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#BaseGlobalScaler.inverse_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.BaseGlobalScaler.inverse_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.data_management.scalers.BaseGlobalScaler.transform">
+<code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param">image_array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#BaseGlobalScaler.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.BaseGlobalScaler.transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.data_management.scalers.BaseGlobalScaler.fit_transform">
+<code class="sig-name descname">fit_transform</code><span class="sig-paren">(</span><em class="sig-param">image_array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#BaseGlobalScaler.fit_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.BaseGlobalScaler.fit_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.data_management.scalers.BaseGlobalScaler.save">
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#BaseGlobalScaler.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.BaseGlobalScaler.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.data_management.scalers.BaseGlobalScaler.load">
+<code class="sig-name descname">load</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#BaseGlobalScaler.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.BaseGlobalScaler.load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.data_management.scalers.BaseSklearnScaler">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.data_management.scalers.</code><code class="sig-name descname">BaseSklearnScaler</code><span class="sig-paren">(</span><em class="sig-param">savename_base</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#BaseSklearnScaler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.BaseSklearnScaler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#rsCNN.data_management.scalers.BaseGlobalScaler" title="rsCNN.data_management.scalers.BaseGlobalScaler"><code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.data_management.scalers.BaseGlobalScaler</span></code></a></p>
+<dl class="attribute">
+<dt id="rsCNN.data_management.scalers.BaseSklearnScaler.scaler">
+<code class="sig-name descname">scaler</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.data_management.scalers.BaseSklearnScaler.scaler" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.data_management.scalers.BaseSklearnScaler.inverse_transform">
+<code class="sig-name descname">inverse_transform</code><span class="sig-paren">(</span><em class="sig-param">image_array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#BaseSklearnScaler.inverse_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.BaseSklearnScaler.inverse_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.data_management.scalers.BaseSklearnScaler.transform">
+<code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param">image_array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#BaseSklearnScaler.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.BaseSklearnScaler.transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.data_management.scalers.BaseSklearnScaler.save">
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#BaseSklearnScaler.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.BaseSklearnScaler.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.data_management.scalers.BaseSklearnScaler.load">
+<code class="sig-name descname">load</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#BaseSklearnScaler.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.BaseSklearnScaler.load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.data_management.scalers.NullScaler">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.data_management.scalers.</code><code class="sig-name descname">NullScaler</code><span class="sig-paren">(</span><em class="sig-param">savename_base</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#NullScaler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.NullScaler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#rsCNN.data_management.scalers.BaseGlobalScaler" title="rsCNN.data_management.scalers.BaseGlobalScaler"><code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.data_management.scalers.BaseGlobalScaler</span></code></a></p>
+<dl class="method">
+<dt id="rsCNN.data_management.scalers.NullScaler.inverse_transform">
+<code class="sig-name descname">inverse_transform</code><span class="sig-paren">(</span><em class="sig-param">image_array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#NullScaler.inverse_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.NullScaler.inverse_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.data_management.scalers.NullScaler.transform">
+<code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param">image_array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#NullScaler.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.NullScaler.transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.data_management.scalers.NullScaler.save">
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#NullScaler.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.NullScaler.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.data_management.scalers.NullScaler.load">
+<code class="sig-name descname">load</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#NullScaler.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.NullScaler.load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.data_management.scalers.ConstantScaler">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.data_management.scalers.</code><code class="sig-name descname">ConstantScaler</code><span class="sig-paren">(</span><em class="sig-param">savename_base</em>, <em class="sig-param">constant_scaler=None</em>, <em class="sig-param">constant_offset=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#ConstantScaler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.ConstantScaler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#rsCNN.data_management.scalers.BaseGlobalScaler" title="rsCNN.data_management.scalers.BaseGlobalScaler"><code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.data_management.scalers.BaseGlobalScaler</span></code></a></p>
+<dl class="attribute">
+<dt id="rsCNN.data_management.scalers.ConstantScaler.constant_scaler">
+<code class="sig-name descname">constant_scaler</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.data_management.scalers.ConstantScaler.constant_scaler" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.data_management.scalers.ConstantScaler.constant_offset">
+<code class="sig-name descname">constant_offset</code><em class="property"> = None</em><a class="headerlink" href="#rsCNN.data_management.scalers.ConstantScaler.constant_offset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.data_management.scalers.ConstantScaler.inverse_transform">
+<code class="sig-name descname">inverse_transform</code><span class="sig-paren">(</span><em class="sig-param">image_array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#ConstantScaler.inverse_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.ConstantScaler.inverse_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.data_management.scalers.ConstantScaler.transform">
+<code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param">image_array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#ConstantScaler.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.ConstantScaler.transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.data_management.scalers.ConstantScaler.save">
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#ConstantScaler.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.ConstantScaler.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.data_management.scalers.ConstantScaler.load">
+<code class="sig-name descname">load</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#ConstantScaler.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.ConstantScaler.load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.data_management.scalers.StandardScaler">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.data_management.scalers.</code><code class="sig-name descname">StandardScaler</code><span class="sig-paren">(</span><em class="sig-param">savename_base</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#StandardScaler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.StandardScaler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#rsCNN.data_management.scalers.BaseSklearnScaler" title="rsCNN.data_management.scalers.BaseSklearnScaler"><code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.data_management.scalers.BaseSklearnScaler</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.data_management.scalers.MinMaxScaler">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.data_management.scalers.</code><code class="sig-name descname">MinMaxScaler</code><span class="sig-paren">(</span><em class="sig-param">savename_base</em>, <em class="sig-param">feature_range=(-1</em>, <em class="sig-param">1)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#MinMaxScaler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.MinMaxScaler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#rsCNN.data_management.scalers.BaseSklearnScaler" title="rsCNN.data_management.scalers.BaseSklearnScaler"><code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.data_management.scalers.BaseSklearnScaler</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.data_management.scalers.RobustScaler">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.data_management.scalers.</code><code class="sig-name descname">RobustScaler</code><span class="sig-paren">(</span><em class="sig-param">savename_base</em>, <em class="sig-param">quantile_range=(10.0</em>, <em class="sig-param">90.0)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#RobustScaler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.RobustScaler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#rsCNN.data_management.scalers.BaseSklearnScaler" title="rsCNN.data_management.scalers.BaseSklearnScaler"><code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.data_management.scalers.BaseSklearnScaler</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.data_management.scalers.PowerScaler">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.data_management.scalers.</code><code class="sig-name descname">PowerScaler</code><span class="sig-paren">(</span><em class="sig-param">savename_base</em>, <em class="sig-param">method='box-cox'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#PowerScaler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.PowerScaler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#rsCNN.data_management.scalers.BaseSklearnScaler" title="rsCNN.data_management.scalers.BaseSklearnScaler"><code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.data_management.scalers.BaseSklearnScaler</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.data_management.scalers.QuantileUniformScaler">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.data_management.scalers.</code><code class="sig-name descname">QuantileUniformScaler</code><span class="sig-paren">(</span><em class="sig-param">savename_base</em>, <em class="sig-param">output_distribution='uniform'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/scalers.html#QuantileUniformScaler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.scalers.QuantileUniformScaler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#rsCNN.data_management.scalers.BaseSklearnScaler" title="rsCNN.data_management.scalers.BaseSklearnScaler"><code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.data_management.scalers.BaseSklearnScaler</span></code></a></p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">rsCNN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="rsCNN.html">rsCNN package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="rsCNN.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.architectures.html">rsCNN.architectures package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.configuration.html">rsCNN.configuration package</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="rsCNN.data_management.html">rsCNN.data_management package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="rsCNN.data_management.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.evaluation.html">rsCNN.evaluation package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.experiments.html">rsCNN.experiments package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.utils.html">rsCNN.utils package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="rsCNN.html">rsCNN package</a><ul>
+  <li><a href="rsCNN.data_management.html">rsCNN.data_management package</a><ul>
+      <li>Previous: <a href="rsCNN.data_management.ooc_functions.html" title="previous chapter">rsCNN.data_management.ooc_functions module</a></li>
+      <li>Next: <a href="rsCNN.data_management.sequences.html" title="next chapter">rsCNN.data_management.sequences module</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Global Center for Discovery and Conservation Science.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/rsCNN.data_management.scalers.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

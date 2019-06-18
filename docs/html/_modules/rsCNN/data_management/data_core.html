@@ -1,0 +1,334 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>rsCNN.data_management.data_core &#8212; rsCNN  documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for rsCNN.data_management.data_core</h1><div class="highlight"><pre>
+<span></span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">gdal</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">rsCNN.configuration</span> <span class="k">import</span> <span class="n">configs</span>
+<span class="kn">from</span> <span class="nn">rsCNN.data_management</span> <span class="k">import</span> <span class="n">scalers</span>
+
+
+<span class="n">_FILENAME_BUILT_DATA_CONFIG_SUFFIX</span> <span class="o">=</span> <span class="s1">&#39;built_data_config.yaml&#39;</span>
+<span class="n">_FILENAME_FEATURES_SUFFIX</span> <span class="o">=</span> <span class="s1">&#39;features_</span><span class="si">{}</span><span class="s1">.npy&#39;</span>
+<span class="n">_FILENAME_FEATURES_TEMPORARY_SUFFIX</span> <span class="o">=</span> <span class="s1">&#39;_features_memmap_temporary.npy&#39;</span>
+<span class="n">_FILENAME_RESPONSES_SUFFIX</span> <span class="o">=</span> <span class="s1">&#39;responses_</span><span class="si">{}</span><span class="s1">.npy&#39;</span>
+<span class="n">_FILENAME_RESPONSES_TEMPORARY_SUFFIX</span> <span class="o">=</span> <span class="s1">&#39;_responses_memmap_temporary.npy&#39;</span>
+<span class="n">_FILENAME_WEIGHTS_SUFFIX</span> <span class="o">=</span> <span class="s1">&#39;weights_</span><span class="si">{}</span><span class="s1">.npy&#39;</span>
+<span class="n">_FILENAME_WEIGHTS_TEMPORARY_SUFFIX</span> <span class="o">=</span> <span class="s1">&#39;_weights_memmap_temporary.npy&#39;</span>
+<span class="n">_VECTORIZED_FILENAMES</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;kml&#39;</span><span class="p">,</span> <span class="s1">&#39;shp&#39;</span><span class="p">)</span>
+
+
+<span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Data_Container"><a class="viewcode-back" href="../../../rsCNN.data_management.data_core.html#rsCNN.data_management.data_core.Data_Container">[docs]</a><span class="k">class</span> <span class="nc">Data_Container</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; A container class that holds all sorts of data objects</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">features</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="n">responses</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="n">weights</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="n">training_sequence</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">validation_sequence</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">feature_band_types</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">response_band_types</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">feature_raw_band_types</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">response_raw_band_types</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1"># TODO:  not used!</span>
+    <span class="n">feature_scalers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="n">response_scalers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+    <span class="n">train_folds</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+
+<div class="viewcode-block" id="Data_Container.build_or_load_scalers"><a class="viewcode-back" href="../../../rsCNN.data_management.data_core.html#rsCNN.data_management.data_core.Data_Container.build_or_load_scalers">[docs]</a>    <span class="k">def</span> <span class="nf">build_or_load_scalers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rebuild</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+        <span class="c1"># TODO:  I think this worked only if feature_scaler_name was a string, but it was also possible to be a list</span>
+        <span class="c1">#  according to the DataConfig, in which case it would error out. This needs to be updated for multiple scalers.</span>
+        <span class="c1">#  Specifically, the feature_scaler and response_scaler assignments need to be vectorized.</span>
+        <span class="n">basename</span> <span class="o">=</span> <span class="n">get_memmap_basename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+        <span class="n">feat_scaler_atr</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;savename_base&#39;</span><span class="p">:</span> <span class="n">basename</span> <span class="o">+</span> <span class="s1">&#39;_feature_scaler&#39;</span><span class="p">}</span>
+        <span class="n">feature_scaler</span> <span class="o">=</span> <span class="n">scalers</span><span class="o">.</span><span class="n">get_scaler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">data_samples</span><span class="o">.</span><span class="n">feature_scaler_names</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">feat_scaler_atr</span><span class="p">)</span>
+        <span class="n">resp_scaler_atr</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;savename_base&#39;</span><span class="p">:</span> <span class="n">basename</span> <span class="o">+</span> <span class="s1">&#39;_response_scaler&#39;</span><span class="p">}</span>
+        <span class="n">response_scaler</span> <span class="o">=</span> <span class="n">scalers</span><span class="o">.</span><span class="n">get_scaler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">data_samples</span><span class="o">.</span><span class="n">response_scaler_names</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">resp_scaler_atr</span><span class="p">)</span>
+        <span class="n">feature_scaler</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+        <span class="n">response_scaler</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_folds</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">data_build</span><span class="o">.</span><span class="n">number_folds</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">data_build</span><span class="o">.</span><span class="n">validation_fold</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">data_build</span><span class="o">.</span><span class="n">test_fold</span><span class="p">)]</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">feature_scaler</span><span class="o">.</span><span class="n">is_fitted</span> <span class="ow">is</span> <span class="kc">False</span> <span class="ow">or</span> <span class="n">rebuild</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">):</span>
+            <span class="c1"># TODO: do better</span>
+            <span class="n">feature_scaler</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">train_folds</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+            <span class="n">feature_scaler</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">response_scaler</span><span class="o">.</span><span class="n">is_fitted</span> <span class="ow">is</span> <span class="kc">False</span> <span class="ow">or</span> <span class="n">rebuild</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">):</span>
+            <span class="c1"># TODO: do better</span>
+            <span class="n">response_scaler</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">responses</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">train_folds</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+            <span class="n">response_scaler</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">feature_scaler</span> <span class="o">=</span> <span class="n">feature_scaler</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">response_scaler</span> <span class="o">=</span> <span class="n">response_scaler</span></div>
+
+<div class="viewcode-block" id="Data_Container.check_input_files"><a class="viewcode-back" href="../../../rsCNN.data_management.data_core.html#rsCNN.data_management.data_core.Data_Container.check_input_files">[docs]</a>    <span class="k">def</span> <span class="nf">check_input_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f_file_list</span><span class="p">,</span> <span class="n">r_file_list</span><span class="p">,</span> <span class="n">b_file_list</span><span class="p">):</span>
+
+        <span class="c1"># f = feature, r = response, b = boundary</span>
+
+        <span class="c1"># file lists r and f are expected a list of lists.  The outer list is a series of sites (location a, b, etc.).</span>
+        <span class="c1"># The inner list is a series of files associated with that site (band x, y, z).  Each site must have the</span>
+        <span class="c1"># same number of files, and each file from each site must have the same number of bands, in the same order.</span>
+        <span class="c1"># file list b is a list for each site, with one boundary file expected to be the interior boundary for all</span>
+        <span class="c1"># bands.</span>
+        <span class="c1"># TODO:  move these checks to configs.py</span>
+        <span class="c1"># Check that feature and response files are lists</span>
+        <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">,</span> <span class="s1">&#39;Feature files must be a list of lists&#39;</span>
+        <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">r_file_list</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">,</span> <span class="s1">&#39;Response files must be a list of lists&#39;</span>
+
+        <span class="c1"># Checks on the matching numbers of sites</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">r_file_list</span><span class="p">),</span> <span class="s1">&#39;Feature and response site lists must be the same length&#39;</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;At least one feature and response site is required&#39;</span>
+        <span class="k">if</span> <span class="n">b_file_list</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">b_file_list</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">),</span> \
+                <span class="s1">&#39;Boundary and feature file lists must be the same length. Boundary list: </span><span class="si">{}</span><span class="s1">. Feature list: </span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">b_file_list</span><span class="p">,</span> <span class="n">f_file_list</span><span class="p">)</span>
+
+        <span class="c1"># Checks that we have lists of lists for f and r</span>
+        <span class="k">for</span> <span class="n">_f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">)):</span>
+            <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">[</span><span class="n">_f</span><span class="p">])</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">,</span> <span class="s1">&#39;Features at site </span><span class="si">{}</span><span class="s1"> are not as a list&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_f</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">r_file_list</span><span class="p">[</span><span class="n">_f</span><span class="p">])</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">,</span> <span class="s1">&#39;Responses at site </span><span class="si">{}</span><span class="s1"> are not as a list&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_f</span><span class="p">)</span>
+
+        <span class="c1"># Checks that all files can be opened by gdal</span>
+        <span class="k">for</span> <span class="n">_site</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">)):</span>
+            <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">])</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">,</span> <span class="s1">&#39;Features at site </span><span class="si">{}</span><span class="s1"> are not as a list&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_site</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">r_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">])</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">,</span> <span class="s1">&#39;Responses at site </span><span class="si">{}</span><span class="s1"> are not as a list&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_site</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">_band</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">])):</span>
+                <span class="k">assert</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">][</span><span class="n">_band</span><span class="p">],</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GA_ReadOnly</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span>\
+                    <span class="s1">&#39;Could not open feature site </span><span class="si">{}</span><span class="s1">, file </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_site</span><span class="p">,</span> <span class="n">_band</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">_band</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">])):</span>
+                <span class="k">assert</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">r_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">][</span><span class="n">_band</span><span class="p">],</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GA_ReadOnly</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span>\
+                    <span class="s1">&#39;Could not open response site </span><span class="si">{}</span><span class="s1">, file </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_site</span><span class="p">,</span> <span class="n">_band</span><span class="p">)</span>
+
+        <span class="c1"># Checks on the number of files per site</span>
+        <span class="n">num_f_files_per_site</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">num_r_files_per_site</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">r_file_list</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">_site</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">)):</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">])</span> <span class="o">==</span> <span class="n">num_f_files_per_site</span><span class="p">,</span> \
+                <span class="s1">&#39;Inconsistent number of feature files at site </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_site</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">r_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">])</span> <span class="o">==</span> <span class="n">num_r_files_per_site</span><span class="p">,</span> \
+                <span class="s1">&#39;Inconsistent number of response files at site </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_site</span><span class="p">)</span>
+
+        <span class="c1"># Checks on the number of bands per file</span>
+        <span class="n">num_f_bands_per_file</span> <span class="o">=</span> <span class="p">[</span><span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GA_ReadOnly</span><span class="p">)</span><span class="o">.</span><span class="n">RasterCount</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">f_file_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="n">num_r_bands_per_file</span> <span class="o">=</span> <span class="p">[</span><span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GA_ReadOnly</span><span class="p">)</span><span class="o">.</span><span class="n">RasterCount</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">r_file_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="k">for</span> <span class="n">_site</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">_file</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">])):</span>
+                <span class="k">assert</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">][</span><span class="n">_file</span><span class="p">],</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GA_ReadOnly</span><span class="p">)</span><span class="o">.</span><span class="n">RasterCount</span> <span class="o">==</span> <span class="n">num_f_bands_per_file</span><span class="p">[</span><span class="n">_file</span><span class="p">],</span>\
+                    <span class="s1">&#39;Inconsistent number of feature bands in site </span><span class="si">{}</span><span class="s1">, file </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_site</span><span class="p">,</span> <span class="n">_band</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">_file</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">])):</span>
+                <span class="k">assert</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">r_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">][</span><span class="n">_file</span><span class="p">],</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GA_ReadOnly</span><span class="p">)</span><span class="o">.</span><span class="n">RasterCount</span> <span class="o">==</span> <span class="n">num_r_bands_per_file</span><span class="p">[</span><span class="n">_file</span><span class="p">],</span>\
+                    <span class="s1">&#39;Inconsistent number of response bands in site </span><span class="si">{}</span><span class="s1">, file </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_site</span><span class="p">,</span> <span class="n">_band</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Data_Container.get_band_types"><a class="viewcode-back" href="../../../rsCNN.data_management.data_core.html#rsCNN.data_management.data_core.Data_Container.get_band_types">[docs]</a>    <span class="k">def</span> <span class="nf">get_band_types</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_list</span><span class="p">,</span> <span class="n">band_types</span><span class="p">):</span>
+
+        <span class="n">valid_band_types</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;R&#39;</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">]</span>
+        <span class="c1"># 3 options are available for specifying band_types:</span>
+        <span class="c1"># 1) band_types is None - assume all bands are real</span>
+        <span class="c1"># 2) band_types is a list of strings within valid_band_types - assume each band from the associated file is the</span>
+        <span class="c1">#    specified type, requires len(band_types) == len(file_list[0])</span>
+        <span class="c1"># 3) band_types is list of lists (of strings, contained in valid_band_types), with the outer list referring to</span>
+        <span class="c1">#    files and the inner list referring to bands</span>
+
+        <span class="n">num_bands_per_file</span> <span class="o">=</span> <span class="p">[</span><span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GA_ReadOnly</span><span class="p">)</span><span class="o">.</span><span class="n">RasterCount</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">file_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+
+        <span class="c1"># Nonetype, option 1 from above, auto-generate</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">band_types</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">_file</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">file_list</span><span class="p">[</span><span class="mi">0</span><span class="p">])):</span>
+                <span class="n">output_raw_band_types</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+                <span class="n">output_raw_band_types</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="s1">&#39;R&#39;</span> <span class="k">for</span> <span class="n">_band</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_bands_per_file</span><span class="p">[</span><span class="n">_file</span><span class="p">])])</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">band_types</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">,</span> <span class="s1">&#39;band_types must be None or a list&#39;</span>
+
+            <span class="c1"># List of lists, option 3 from above - just check components</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">band_types</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">_file</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">band_types</span><span class="p">)):</span>
+                    <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">band_types</span><span class="p">[</span><span class="n">_file</span><span class="p">])</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">,</span> \
+                        <span class="s1">&#39;If one element of band_types is a list, all elements must be lists&#39;</span>
+                    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">band_types</span><span class="p">[</span><span class="n">_file</span><span class="p">])</span> <span class="o">==</span> <span class="n">num_bands_per_file</span><span class="p">[</span><span class="n">_file</span><span class="p">],</span> \
+                        <span class="s1">&#39;File </span><span class="si">{}</span><span class="s1"> has wrong number of band types&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_file</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">_band</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">band_types</span><span class="p">[</span><span class="n">_file</span><span class="p">])):</span>
+                        <span class="k">assert</span> <span class="n">band_types</span><span class="p">[</span><span class="n">_file</span><span class="p">][</span><span class="n">_band</span><span class="p">]</span> <span class="ow">in</span> <span class="n">valid_band_types</span><span class="p">,</span> \
+                            <span class="s1">&#39;Invalid band types at file </span><span class="si">{}</span><span class="s1">, band </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_file</span><span class="p">,</span> <span class="n">_band</span><span class="p">)</span>
+
+                <span class="n">output_raw_band_types</span> <span class="o">=</span> <span class="n">band_types</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># List of values valid_band_types, option 2 from above - convert to list of lists</span>
+                <span class="n">output_raw_band_types</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">_file</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">band_types</span><span class="p">)):</span>
+                    <span class="k">assert</span> <span class="n">band_types</span><span class="p">[</span><span class="n">_file</span><span class="p">]</span> <span class="ow">in</span> <span class="n">valid_band_types</span><span class="p">,</span> <span class="s1">&#39;Invalid band type at File </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_file</span><span class="p">)</span>
+                    <span class="n">output_raw_band_types</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">band_types</span><span class="p">[</span><span class="n">_file</span><span class="p">]</span> <span class="k">for</span> <span class="n">_band</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_bands_per_file</span><span class="p">[</span><span class="n">_file</span><span class="p">])])</span>
+
+        <span class="c1"># since it&#39;s more convenient, flatten this list of lists into a list before returning</span>
+        <span class="n">output_raw_band_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span> <span class="k">for</span> <span class="n">sublist</span> <span class="ow">in</span> <span class="n">output_raw_band_types</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">sublist</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">output_raw_band_types</span></div></div>
+
+
+
+<span class="c1">################### Filepath Nomenclature Functions ##############################</span>
+
+
+<div class="viewcode-block" id="create_built_data_output_directory"><a class="viewcode-back" href="../../../rsCNN.data_management.data_core.html#rsCNN.data_management.data_core.create_built_data_output_directory">[docs]</a><span class="k">def</span> <span class="nf">create_built_data_output_directory</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">data_build</span><span class="o">.</span><span class="n">dir_out</span><span class="p">):</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Create built data output directory at </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">data_build</span><span class="o">.</span><span class="n">dir_out</span><span class="p">))</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">data_build</span><span class="o">.</span><span class="n">dir_out</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_temporary_features_filepath"><a class="viewcode-back" href="../../../rsCNN.data_management.data_core.html#rsCNN.data_management.data_core.get_temporary_features_filepath">[docs]</a><span class="k">def</span> <span class="nf">get_temporary_features_filepath</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">get_temporary_data_filepaths</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">_FILENAME_FEATURES_TEMPORARY_SUFFIX</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_temporary_responses_filepath"><a class="viewcode-back" href="../../../rsCNN.data_management.data_core.html#rsCNN.data_management.data_core.get_temporary_responses_filepath">[docs]</a><span class="k">def</span> <span class="nf">get_temporary_responses_filepath</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">get_temporary_data_filepaths</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">_FILENAME_RESPONSES_TEMPORARY_SUFFIX</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_temporary_weights_filepath"><a class="viewcode-back" href="../../../rsCNN.data_management.data_core.html#rsCNN.data_management.data_core.get_temporary_weights_filepath">[docs]</a><span class="k">def</span> <span class="nf">get_temporary_weights_filepath</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">get_temporary_data_filepaths</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">_FILENAME_WEIGHTS_TEMPORARY_SUFFIX</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_temporary_data_filepaths"><a class="viewcode-back" href="../../../rsCNN.data_management.data_core.html#rsCNN.data_management.data_core.get_temporary_data_filepaths">[docs]</a><span class="k">def</span> <span class="nf">get_temporary_data_filepaths</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span><span class="p">,</span> <span class="n">filename_suffix</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">get_memmap_basename</span><span class="p">(</span><span class="n">config</span><span class="p">)</span> <span class="o">+</span> <span class="n">filename_suffix</span></div>
+
+
+<div class="viewcode-block" id="get_built_features_filepaths"><a class="viewcode-back" href="../../../rsCNN.data_management.data_core.html#rsCNN.data_management.data_core.get_built_features_filepaths">[docs]</a><span class="k">def</span> <span class="nf">get_built_features_filepaths</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">get_built_data_filepaths</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">_FILENAME_FEATURES_SUFFIX</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_built_responses_filepaths"><a class="viewcode-back" href="../../../rsCNN.data_management.data_core.html#rsCNN.data_management.data_core.get_built_responses_filepaths">[docs]</a><span class="k">def</span> <span class="nf">get_built_responses_filepaths</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">get_built_data_filepaths</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">_FILENAME_RESPONSES_SUFFIX</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_built_weights_filepaths"><a class="viewcode-back" href="../../../rsCNN.data_management.data_core.html#rsCNN.data_management.data_core.get_built_weights_filepaths">[docs]</a><span class="k">def</span> <span class="nf">get_built_weights_filepaths</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">get_built_data_filepaths</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">_FILENAME_WEIGHTS_SUFFIX</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_built_data_config_filepath"><a class="viewcode-back" href="../../../rsCNN.data_management.data_core.html#rsCNN.data_management.data_core.get_built_data_config_filepath">[docs]</a><span class="k">def</span> <span class="nf">get_built_data_config_filepath</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">get_built_data_filepaths</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">_FILENAME_BUILT_DATA_CONFIG_SUFFIX</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="get_built_data_filepaths"><a class="viewcode-back" href="../../../rsCNN.data_management.data_core.html#rsCNN.data_management.data_core.get_built_data_filepaths">[docs]</a><span class="k">def</span> <span class="nf">get_built_data_filepaths</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span><span class="p">,</span> <span class="n">filename_suffix</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">basename</span> <span class="o">=</span> <span class="n">get_memmap_basename</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+    <span class="n">filepaths</span> <span class="o">=</span> <span class="p">[</span><span class="n">basename</span> <span class="o">+</span> <span class="n">filename_suffix</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idx_fold</span><span class="p">)</span> <span class="k">for</span> <span class="n">idx_fold</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">data_build</span><span class="o">.</span><span class="n">number_folds</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="n">filepaths</span></div>
+
+
+<div class="viewcode-block" id="get_memmap_basename"><a class="viewcode-back" href="../../../rsCNN.data_management.data_core.html#rsCNN.data_management.data_core.get_memmap_basename">[docs]</a><span class="k">def</span> <span class="nf">get_memmap_basename</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">filepath_separator</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">data_build</span><span class="o">.</span><span class="n">filename_prefix_out</span> <span class="o">+</span> <span class="s1">&#39;_&#39;</span> <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">data_build</span><span class="o">.</span><span class="n">filename_prefix_out</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">data_build</span><span class="o">.</span><span class="n">dir_out</span><span class="p">,</span> <span class="n">filepath_separator</span><span class="p">)</span></div>
+
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">rsCNN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../rsCNN.html">rsCNN package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Global Center for Discovery and Conservation Science.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

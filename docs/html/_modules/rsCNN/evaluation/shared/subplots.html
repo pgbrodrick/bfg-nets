@@ -1,0 +1,341 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>rsCNN.evaluation.shared.subplots &#8212; rsCNN  documentation</title>
+    <link rel="stylesheet" href="../../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for rsCNN.evaluation.shared.subplots</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Union</span>
+
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="k">import</span> <span class="n">patches</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">matplotlib.cm</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">rsCNN.evaluation</span> <span class="k">import</span> <span class="n">samples</span>
+<span class="kn">from</span> <span class="nn">rsCNN.evaluation.shared</span> <span class="k">import</span> <span class="n">colormaps</span>
+
+
+<span class="n">plt</span><span class="o">.</span><span class="n">switch_backend</span><span class="p">(</span><span class="s1">&#39;Agg&#39;</span><span class="p">)</span>  <span class="c1"># Needed for remote server plotting</span>
+
+
+<span class="n">_FLOAT_DECIMALS</span> <span class="o">=</span> <span class="mi">2</span>
+
+
+<div class="viewcode-block" id="plot_raw_features"><a class="viewcode-back" href="../../../../rsCNN.evaluation.shared.subplots.html#rsCNN.evaluation.shared.subplots.plot_raw_features">[docs]</a><span class="k">def</span> <span class="nf">plot_raw_features</span><span class="p">(</span>
+        <span class="n">sampled</span><span class="p">:</span> <span class="n">samples</span><span class="o">.</span><span class="n">Samples</span><span class="p">,</span>
+        <span class="n">idx_sample</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">idx_feature</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">,</span>
+        <span class="n">add_xlabel</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">add_ylabel</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">_plot_sample_attribute</span><span class="p">(</span><span class="n">sampled</span><span class="p">,</span> <span class="n">idx_sample</span><span class="p">,</span> <span class="n">idx_feature</span><span class="p">,</span> <span class="s1">&#39;raw_features&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">add_xlabel</span><span class="p">,</span> <span class="n">add_ylabel</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="plot_transformed_features"><a class="viewcode-back" href="../../../../rsCNN.evaluation.shared.subplots.html#rsCNN.evaluation.shared.subplots.plot_transformed_features">[docs]</a><span class="k">def</span> <span class="nf">plot_transformed_features</span><span class="p">(</span>
+        <span class="n">sampled</span><span class="p">:</span> <span class="n">samples</span><span class="o">.</span><span class="n">Samples</span><span class="p">,</span>
+        <span class="n">idx_sample</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">idx_feature</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">,</span>
+        <span class="n">add_xlabel</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">add_ylabel</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">_plot_sample_attribute</span><span class="p">(</span><span class="n">sampled</span><span class="p">,</span> <span class="n">idx_sample</span><span class="p">,</span> <span class="n">idx_feature</span><span class="p">,</span> <span class="s1">&#39;trans_features&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">add_xlabel</span><span class="p">,</span> <span class="n">add_ylabel</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="plot_raw_responses"><a class="viewcode-back" href="../../../../rsCNN.evaluation.shared.subplots.html#rsCNN.evaluation.shared.subplots.plot_raw_responses">[docs]</a><span class="k">def</span> <span class="nf">plot_raw_responses</span><span class="p">(</span>
+        <span class="n">sampled</span><span class="p">:</span> <span class="n">samples</span><span class="o">.</span><span class="n">Samples</span><span class="p">,</span>
+        <span class="n">idx_sample</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">idx_response</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">,</span>
+        <span class="n">add_xlabel</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">add_ylabel</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">_plot_sample_attribute</span><span class="p">(</span><span class="n">sampled</span><span class="p">,</span> <span class="n">idx_sample</span><span class="p">,</span> <span class="n">idx_response</span><span class="p">,</span> <span class="s1">&#39;raw_responses&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">add_xlabel</span><span class="p">,</span> <span class="n">add_ylabel</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="plot_transformed_responses"><a class="viewcode-back" href="../../../../rsCNN.evaluation.shared.subplots.html#rsCNN.evaluation.shared.subplots.plot_transformed_responses">[docs]</a><span class="k">def</span> <span class="nf">plot_transformed_responses</span><span class="p">(</span>
+        <span class="n">sampled</span><span class="p">:</span> <span class="n">samples</span><span class="o">.</span><span class="n">Samples</span><span class="p">,</span>
+        <span class="n">idx_sample</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">idx_response</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">,</span>
+        <span class="n">add_xlabel</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">add_ylabel</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">_plot_sample_attribute</span><span class="p">(</span><span class="n">sampled</span><span class="p">,</span> <span class="n">idx_sample</span><span class="p">,</span> <span class="n">idx_response</span><span class="p">,</span> <span class="s1">&#39;trans_responses&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">add_xlabel</span><span class="p">,</span> <span class="n">add_ylabel</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="plot_raw_predictions"><a class="viewcode-back" href="../../../../rsCNN.evaluation.shared.subplots.html#rsCNN.evaluation.shared.subplots.plot_raw_predictions">[docs]</a><span class="k">def</span> <span class="nf">plot_raw_predictions</span><span class="p">(</span>
+        <span class="n">sampled</span><span class="p">:</span> <span class="n">samples</span><span class="o">.</span><span class="n">Samples</span><span class="p">,</span>
+        <span class="n">idx_sample</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">idx_response</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">,</span>
+        <span class="n">add_xlabel</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">add_ylabel</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">_plot_sample_attribute</span><span class="p">(</span><span class="n">sampled</span><span class="p">,</span> <span class="n">idx_sample</span><span class="p">,</span> <span class="n">idx_response</span><span class="p">,</span> <span class="s1">&#39;raw_predictions&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">add_xlabel</span><span class="p">,</span> <span class="n">add_ylabel</span><span class="p">)</span>
+    <span class="n">add_internal_window_to_subplot</span><span class="p">(</span><span class="n">sampled</span><span class="p">,</span> <span class="n">ax</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="plot_transformed_predictions"><a class="viewcode-back" href="../../../../rsCNN.evaluation.shared.subplots.html#rsCNN.evaluation.shared.subplots.plot_transformed_predictions">[docs]</a><span class="k">def</span> <span class="nf">plot_transformed_predictions</span><span class="p">(</span>
+        <span class="n">sampled</span><span class="p">:</span> <span class="n">samples</span><span class="o">.</span><span class="n">Samples</span><span class="p">,</span>
+        <span class="n">idx_sample</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">idx_response</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">,</span>
+        <span class="n">add_xlabel</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">add_ylabel</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">_plot_sample_attribute</span><span class="p">(</span><span class="n">sampled</span><span class="p">,</span> <span class="n">idx_sample</span><span class="p">,</span> <span class="n">idx_response</span><span class="p">,</span> <span class="s1">&#39;trans_predictions&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">add_xlabel</span><span class="p">,</span> <span class="n">add_ylabel</span><span class="p">)</span>
+    <span class="n">add_internal_window_to_subplot</span><span class="p">(</span><span class="n">sampled</span><span class="p">,</span> <span class="n">ax</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_plot_sample_attribute</span><span class="p">(</span>
+        <span class="n">sampled</span><span class="p">:</span> <span class="n">samples</span><span class="o">.</span><span class="n">Samples</span><span class="p">,</span>
+        <span class="n">idx_sample</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">idx_axis</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">attribute_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">,</span>
+        <span class="n">add_xlabel</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">add_ylabel</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">attribute_values</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sampled</span><span class="p">,</span> <span class="n">attribute_name</span><span class="p">)[</span><span class="n">idx_sample</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="n">idx_axis</span><span class="p">]</span>
+    <span class="n">range_</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sampled</span><span class="p">,</span> <span class="n">attribute_name</span> <span class="o">+</span> <span class="s1">&#39;_range&#39;</span><span class="p">)</span>
+    <span class="c1"># TODO:  this is a hack to account for transformed values that are nans, should be fixed when we have proper nan</span>
+    <span class="c1">#  handling elsewhere in the code</span>
+    <span class="k">if</span> <span class="n">attribute_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;trans_features&#39;</span><span class="p">,</span> <span class="s1">&#39;trans_responses&#39;</span><span class="p">,</span> <span class="s1">&#39;trans_predictions&#39;</span><span class="p">):</span>
+        <span class="n">attribute_values</span> <span class="o">=</span> <span class="n">attribute_values</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">attribute_values</span><span class="p">[</span><span class="n">attribute_values</span> <span class="o">==</span> <span class="n">sampled</span><span class="o">.</span><span class="n">data_sequence</span><span class="o">.</span><span class="n">nan_replacement_value</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="n">x_label</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">word</span><span class="o">.</span><span class="n">capitalize</span><span class="p">()</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">attribute_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">word</span> <span class="o">!=</span> <span class="s1">&#39;raw&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+    <span class="n">min_</span><span class="p">,</span> <span class="n">max_</span> <span class="o">=</span> <span class="n">range_</span><span class="p">[</span><span class="n">idx_axis</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">attribute_values</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">min_</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">max_</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([])</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([])</span>
+    <span class="k">if</span> <span class="n">add_xlabel</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="se">\n</span><span class="si">{}</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x_label</span><span class="p">,</span> <span class="n">idx_axis</span><span class="p">,</span> <span class="n">_format_number</span><span class="p">(</span><span class="n">min_</span><span class="p">),</span> <span class="n">_format_number</span><span class="p">(</span><span class="n">max_</span><span class="p">)))</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_label_position</span><span class="p">(</span><span class="s1">&#39;top&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">add_ylabel</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Sample</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idx_sample</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="plot_max_likelihood"><a class="viewcode-back" href="../../../../rsCNN.evaluation.shared.subplots.html#rsCNN.evaluation.shared.subplots.plot_max_likelihood">[docs]</a><span class="k">def</span> <span class="nf">plot_max_likelihood</span><span class="p">(</span><span class="n">sampled</span><span class="p">:</span> <span class="n">samples</span><span class="o">.</span><span class="n">Samples</span><span class="p">,</span> <span class="n">idx_sample</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">,</span> <span class="n">add_xlabel</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">add_ylabel</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># Note:  this assumes that the softmax applied to all prediction axes and that there was no transformation applied</span>
+    <span class="c1">#  to the categorical data.</span>
+    <span class="n">min_</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">max_</span> <span class="o">=</span> <span class="n">sampled</span><span class="o">.</span><span class="n">num_responses</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">colormaps</span><span class="o">.</span><span class="n">check_is_categorical_colormap_repeated</span><span class="p">(</span><span class="n">sampled</span><span class="o">.</span><span class="n">num_responses</span><span class="p">),</span> \
+        <span class="s1">&#39;Number of categorical responses is greater than length of colormap, figure out how to handle gracefully&#39;</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">sampled</span><span class="o">.</span><span class="n">raw_predictions</span><span class="p">[</span><span class="n">idx_sample</span><span class="p">,</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span> <span class="n">vmin</span><span class="o">=</span><span class="n">min_</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">max_</span><span class="p">,</span>
+              <span class="n">cmap</span><span class="o">=</span><span class="n">colormaps</span><span class="o">.</span><span class="n">COLORMAP_CATEGORICAL</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([])</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([])</span>
+    <span class="k">if</span> <span class="n">add_xlabel</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Max Likelihood</span><span class="se">\n</span><span class="s1">Categories</span><span class="se">\n</span><span class="si">{}</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_format_number</span><span class="p">(</span><span class="n">min_</span><span class="p">),</span> <span class="n">_format_number</span><span class="p">(</span><span class="n">max_</span><span class="p">)))</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_label_position</span><span class="p">(</span><span class="s1">&#39;top&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">add_ylabel</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Sample</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idx_sample</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="plot_weights"><a class="viewcode-back" href="../../../../rsCNN.evaluation.shared.subplots.html#rsCNN.evaluation.shared.subplots.plot_weights">[docs]</a><span class="k">def</span> <span class="nf">plot_weights</span><span class="p">(</span><span class="n">sampled</span><span class="p">:</span> <span class="n">samples</span><span class="o">.</span><span class="n">Samples</span><span class="p">,</span> <span class="n">idx_sample</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">,</span> <span class="n">add_xlabel</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">add_ylabel</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">min_</span><span class="p">,</span> <span class="n">max_</span> <span class="o">=</span> <span class="n">sampled</span><span class="o">.</span><span class="n">weights_range</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">weights</span> <span class="o">=</span> <span class="n">sampled</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">idx_sample</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">weights</span><span class="p">[</span><span class="n">weights</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="n">weight_cmap</span> <span class="o">=</span> <span class="n">matplotlib</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="n">colormaps</span><span class="o">.</span><span class="n">COLORMAP_WEIGHTS</span><span class="p">)</span>
+    <span class="n">weight_cmap</span><span class="o">.</span><span class="n">set_bad</span><span class="p">(</span><span class="s1">&#39;red&#39;</span><span class="p">)</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">min_</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">max_</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">weight_cmap</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([])</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([])</span>
+    <span class="k">if</span> <span class="n">add_xlabel</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Weights</span><span class="se">\n</span><span class="si">{}</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_format_number</span><span class="p">(</span><span class="n">min_</span><span class="p">),</span> <span class="n">_format_number</span><span class="p">(</span><span class="n">max_</span><span class="p">)))</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_label_position</span><span class="p">(</span><span class="s1">&#39;top&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">add_ylabel</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Sample</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idx_sample</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="plot_binary_error"><a class="viewcode-back" href="../../../../rsCNN.evaluation.shared.subplots.html#rsCNN.evaluation.shared.subplots.plot_binary_error">[docs]</a><span class="k">def</span> <span class="nf">plot_binary_error</span><span class="p">(</span>
+        <span class="n">sampled</span><span class="p">:</span> <span class="n">samples</span><span class="o">.</span><span class="n">Samples</span><span class="p">,</span>
+        <span class="n">idx_sample</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">,</span>
+        <span class="n">add_xlabel</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">add_ylabel</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># Note:  this assumes that the softmax applied to all prediction axes and that there was no transformation applied</span>
+    <span class="c1">#  to the categorical data.</span>
+    <span class="n">min_</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">max_</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">actual</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">sampled</span><span class="o">.</span><span class="n">raw_responses</span><span class="p">[</span><span class="n">idx_sample</span><span class="p">,</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">predicted</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">sampled</span><span class="o">.</span><span class="n">raw_predictions</span><span class="p">[</span><span class="n">idx_sample</span><span class="p">,</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">predicted</span> <span class="o">==</span> <span class="n">actual</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">min_</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">max_</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">colormaps</span><span class="o">.</span><span class="n">COLORMAP_ERROR</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([])</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([])</span>
+    <span class="k">if</span> <span class="n">add_xlabel</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Correct</span><span class="se">\n</span><span class="s1">Category</span><span class="se">\n</span><span class="s1">False</span><span class="se">\n</span><span class="s1">True&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_label_position</span><span class="p">(</span><span class="s1">&#39;top&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">add_ylabel</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Sample</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idx_sample</span><span class="p">))</span>
+    <span class="n">add_internal_window_to_subplot</span><span class="p">(</span><span class="n">sampled</span><span class="p">,</span> <span class="n">ax</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="plot_raw_error_regression"><a class="viewcode-back" href="../../../../rsCNN.evaluation.shared.subplots.html#rsCNN.evaluation.shared.subplots.plot_raw_error_regression">[docs]</a><span class="k">def</span> <span class="nf">plot_raw_error_regression</span><span class="p">(</span>
+        <span class="n">sampled</span><span class="p">:</span> <span class="n">samples</span><span class="o">.</span><span class="n">Samples</span><span class="p">,</span>
+        <span class="n">idx_sample</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">idx_response</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">,</span>
+        <span class="n">add_xlabel</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">add_ylabel</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">error</span> <span class="o">=</span> <span class="n">sampled</span><span class="o">.</span><span class="n">raw_predictions</span><span class="p">[</span><span class="n">idx_sample</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="n">idx_response</span><span class="p">]</span> <span class="o">-</span> \
+        <span class="n">sampled</span><span class="o">.</span><span class="n">raw_responses</span><span class="p">[</span><span class="n">idx_sample</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="n">idx_response</span><span class="p">]</span>
+    <span class="n">min_</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">error</span><span class="p">))</span>
+    <span class="n">max_</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">error</span><span class="p">))</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">min_</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">max_</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">colormaps</span><span class="o">.</span><span class="n">COLORMAP_ERROR</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([])</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([])</span>
+    <span class="k">if</span> <span class="n">add_xlabel</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Raw</span><span class="se">\n</span><span class="s1">Regression</span><span class="se">\n</span><span class="s1">Errors</span><span class="se">\n</span><span class="si">{}</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_format_number</span><span class="p">(</span><span class="n">min_</span><span class="p">),</span> <span class="n">_format_number</span><span class="p">(</span><span class="n">max_</span><span class="p">)))</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_label_position</span><span class="p">(</span><span class="s1">&#39;top&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">add_ylabel</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Sample</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idx_sample</span><span class="p">))</span>
+    <span class="n">add_internal_window_to_subplot</span><span class="p">(</span><span class="n">sampled</span><span class="p">,</span> <span class="n">ax</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="plot_transformed_error_regression"><a class="viewcode-back" href="../../../../rsCNN.evaluation.shared.subplots.html#rsCNN.evaluation.shared.subplots.plot_transformed_error_regression">[docs]</a><span class="k">def</span> <span class="nf">plot_transformed_error_regression</span><span class="p">(</span>
+        <span class="n">sampled</span><span class="p">:</span> <span class="n">samples</span><span class="o">.</span><span class="n">Samples</span><span class="p">,</span>
+        <span class="n">idx_sample</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">idx_response</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">,</span>
+        <span class="n">add_xlabel</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">add_ylabel</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">error</span> <span class="o">=</span> <span class="n">sampled</span><span class="o">.</span><span class="n">trans_predictions</span><span class="p">[</span><span class="n">idx_sample</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="n">idx_response</span><span class="p">]</span> <span class="o">-</span> \
+        <span class="n">sampled</span><span class="o">.</span><span class="n">trans_responses</span><span class="p">[</span><span class="n">idx_sample</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="n">idx_response</span><span class="p">]</span>
+    <span class="n">max_</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">error</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">error</span><span class="p">)]))</span>
+    <span class="n">min_</span> <span class="o">=</span> <span class="o">-</span> <span class="n">max_</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">min_</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">max_</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">colormaps</span><span class="o">.</span><span class="n">COLORMAP_ERROR</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([])</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([])</span>
+    <span class="k">if</span> <span class="n">add_xlabel</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Trans</span><span class="se">\n</span><span class="s1">Regression</span><span class="se">\n</span><span class="s1">Errors</span><span class="se">\n</span><span class="si">{}</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_format_number</span><span class="p">(</span><span class="n">min_</span><span class="p">),</span> <span class="n">_format_number</span><span class="p">(</span><span class="n">max_</span><span class="p">)))</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_label_position</span><span class="p">(</span><span class="s1">&#39;top&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">add_ylabel</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Sample</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idx_sample</span><span class="p">))</span>
+    <span class="n">add_internal_window_to_subplot</span><span class="p">(</span><span class="n">sampled</span><span class="p">,</span> <span class="n">ax</span><span class="p">)</span>
+    <span class="n">add_internal_window_to_subplot</span><span class="p">(</span><span class="n">sampled</span><span class="p">,</span> <span class="n">ax</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="add_internal_window_to_subplot"><a class="viewcode-back" href="../../../../rsCNN.evaluation.shared.subplots.html#rsCNN.evaluation.shared.subplots.add_internal_window_to_subplot">[docs]</a><span class="k">def</span> <span class="nf">add_internal_window_to_subplot</span><span class="p">(</span><span class="n">sampled</span><span class="p">:</span> <span class="n">samples</span><span class="o">.</span><span class="n">Samples</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">inshape</span> <span class="o">=</span> <span class="n">sampled</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">architecture</span><span class="o">.</span><span class="n">inshape</span>
+    <span class="n">loss_window_radius</span> <span class="o">=</span> <span class="n">sampled</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">data_build</span><span class="o">.</span><span class="n">loss_window_radius</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">loss_window_radius</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">==</span> <span class="n">inshape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="k">return</span>
+    <span class="n">buffer</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">inshape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">loss_window_radius</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">rect</span> <span class="o">=</span> <span class="n">patches</span><span class="o">.</span><span class="n">Rectangle</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">buffer</span><span class="p">),</span> <span class="n">loss_window_radius</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">loss_window_radius</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span>
+        <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;none&#39;</span>
+    <span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">rect</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_format_number</span><span class="p">(</span><span class="n">number</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="c1"># isinstance needed for multiple numpy integer and float types</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">number</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="n">_FLOAT_DECIMALS</span><span class="p">))</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">rsCNN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../rsCNN.html">rsCNN package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">Module code</a><ul>
+  <li><a href="../../evaluation.html">rsCNN.evaluation</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Global Center for Discovery and Conservation Science.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

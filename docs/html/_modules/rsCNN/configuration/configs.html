@@ -1,0 +1,313 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>rsCNN.configuration.configs &#8212; rsCNN  documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for rsCNN.configuration.configs</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Dict</span>
+
+<span class="kn">import</span> <span class="nn">yaml</span>
+
+<span class="kn">from</span> <span class="nn">rsCNN.architectures</span> <span class="k">import</span> <span class="n">config_sections</span>
+<span class="kn">from</span> <span class="nn">rsCNN.configuration</span> <span class="k">import</span> <span class="n">sections</span>
+
+
+<span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="n">DEFAULT_FILENAME_CONFIG</span> <span class="o">=</span> <span class="s1">&#39;config.yaml&#39;</span>
+
+
+<div class="viewcode-block" id="create_config_from_file"><a class="viewcode-back" href="../../../rsCNN.configuration.configs.html#rsCNN.configuration.configs.create_config_from_file">[docs]</a><span class="k">def</span> <span class="nf">create_config_from_file</span><span class="p">(</span><span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Config&#39;</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Creates a Config object from a YAML file.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        filepath: Filepath to existing YAML file.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Config object with parsed YAML file attributes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">filepath</span><span class="p">),</span> <span class="s1">&#39;No config file found at </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+    <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Loading config file from </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">filepath</span><span class="p">))</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span> <span class="k">as</span> <span class="n">file_</span><span class="p">:</span>
+        <span class="n">raw_config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">file_</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_create_config</span><span class="p">(</span><span class="n">raw_config</span><span class="p">,</span> <span class="n">is_template</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="create_config_template"><a class="viewcode-back" href="../../../rsCNN.configuration.configs.html#rsCNN.configuration.configs.create_config_template">[docs]</a><span class="k">def</span> <span class="nf">create_config_template</span><span class="p">(</span><span class="n">architecture_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Config&#39;</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Creates a template version of a Config for a given architecture, with required and optional parameters</span>
+<span class="sd">    highlighted, and default values for other parameters. Config is returned but can optionally be written to YAML file.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        architecture_name: Name of available architecture.</span>
+<span class="sd">        filepath: Filepath to which template YAML file is saved, if desired.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Template version of a Config.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Creating config template for architecture </span><span class="si">{}</span><span class="s1"> at </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">architecture_name</span><span class="p">,</span> <span class="n">filepath</span><span class="p">))</span>
+    <span class="n">config_options</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;model_training&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;architecture_name&#39;</span><span class="p">:</span> <span class="n">architecture_name</span><span class="p">}}</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">_create_config</span><span class="p">(</span><span class="n">config_options</span><span class="p">,</span> <span class="n">is_template</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">filepath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">save_config_to_file</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">filepath</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">config</span></div>
+
+
+<span class="k">def</span> <span class="nf">_create_config</span><span class="p">(</span><span class="n">config_options</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">is_template</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Config&#39;</span><span class="p">:</span>
+    <span class="n">config_copy</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">config_options</span><span class="p">)</span>  <span class="c1"># Use a copy because config options are popped from the dict</span>
+    <span class="c1"># Populate config sections with the provided configuration options, tracking errors</span>
+    <span class="n">populated_sections</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">config_section</span> <span class="ow">in</span> <span class="n">sections</span><span class="o">.</span><span class="n">get_config_sections</span><span class="p">():</span>
+        <span class="n">section_name</span> <span class="o">=</span> <span class="n">config_section</span><span class="o">.</span><span class="n">get_config_name_as_snake_case</span><span class="p">()</span>
+        <span class="n">populated_section</span> <span class="o">=</span> <span class="n">config_section</span><span class="p">()</span>
+        <span class="n">populated_section</span><span class="o">.</span><span class="n">set_config_options</span><span class="p">(</span><span class="n">config_copy</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">section_name</span><span class="p">,</span> <span class="nb">dict</span><span class="p">()),</span> <span class="n">is_template</span><span class="p">)</span>
+        <span class="n">populated_sections</span><span class="p">[</span><span class="n">section_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">populated_section</span>
+    <span class="c1"># Populate architecture options given architecture name</span>
+    <span class="n">architecture_name</span> <span class="o">=</span> <span class="n">populated_sections</span><span class="p">[</span><span class="s1">&#39;model_training&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">architecture_name</span>
+    <span class="n">architecture</span> <span class="o">=</span> <span class="n">config_sections</span><span class="o">.</span><span class="n">get_architecture_config_section</span><span class="p">(</span><span class="n">architecture_name</span><span class="p">)</span>
+    <span class="n">architecture</span><span class="o">.</span><span class="n">set_config_options</span><span class="p">(</span><span class="n">config_copy</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;architecture&#39;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">()),</span> <span class="n">is_template</span><span class="p">)</span>
+    <span class="n">populated_sections</span><span class="p">[</span><span class="s1">&#39;architecture&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">architecture</span>
+    <span class="k">return</span> <span class="n">Config</span><span class="p">(</span><span class="o">**</span><span class="n">populated_sections</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="save_config_to_file"><a class="viewcode-back" href="../../../rsCNN.configuration.configs.html#rsCNN.configuration.configs.save_config_to_file">[docs]</a><span class="k">def</span> <span class="nf">save_config_to_file</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="s1">&#39;Config&#39;</span><span class="p">,</span> <span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">include_sections</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Saves/serializes a Config object to a YAML file.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        config: Config object.</span>
+<span class="sd">        filepath: Filepath to which YAML file is saved.</span>
+<span class="sd">        include_sections: Config sections that should be included. All config sections are included if None.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_represent_dictionary_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dict_data</span><span class="p">):</span>
+        <span class="c1"># via https://stackoverflow.com/questions/31605131/dumping-a-dictionary-to-a-yaml-file-while-preserving-order</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">represent_mapping</span><span class="p">(</span><span class="s1">&#39;tag:yaml.org,2002:map&#39;</span><span class="p">,</span> <span class="n">dict_data</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">_represent_list_inline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">list_data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">represent_sequence</span><span class="p">(</span><span class="s1">&#39;tag:yaml.org,2002:seq&#39;</span><span class="p">,</span> <span class="n">list_data</span><span class="p">,</span> <span class="n">flow_style</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">yaml</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">,</span> <span class="n">_represent_dictionary_order</span><span class="p">)</span>
+    <span class="n">yaml</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">_represent_list_inline</span><span class="p">)</span>
+    <span class="n">config_out</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_config_as_dict</span><span class="p">()</span>
+    <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Saving config file to </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">filepath</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">include_sections</span><span class="p">:</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Only saving config sections: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">include_sections</span><span class="p">)))</span>
+        <span class="n">config_out</span> <span class="o">=</span> <span class="p">{</span><span class="n">section</span><span class="p">:</span> <span class="n">config_out</span><span class="p">[</span><span class="n">section</span><span class="p">]</span> <span class="k">for</span> <span class="n">section</span> <span class="ow">in</span> <span class="n">include_sections</span><span class="p">}</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file_</span><span class="p">:</span>
+        <span class="n">yaml</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">config_out</span><span class="p">,</span> <span class="n">file_</span><span class="p">,</span> <span class="n">default_flow_style</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_config_differences"><a class="viewcode-back" href="../../../rsCNN.configuration.configs.html#rsCNN.configuration.configs.get_config_differences">[docs]</a><span class="k">def</span> <span class="nf">get_config_differences</span><span class="p">(</span><span class="n">config_a</span><span class="p">:</span> <span class="s1">&#39;Config&#39;</span><span class="p">,</span> <span class="n">config_b</span><span class="p">:</span> <span class="s1">&#39;Config&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+    <span class="n">differing_items</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="n">dict_a</span> <span class="o">=</span> <span class="n">config_a</span><span class="o">.</span><span class="n">get_config_as_dict</span><span class="p">()</span>
+    <span class="n">dict_b</span> <span class="o">=</span> <span class="n">config_b</span><span class="o">.</span><span class="n">get_config_as_dict</span><span class="p">()</span>
+    <span class="n">all_sections</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">dict_a</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">dict_b</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+    <span class="k">for</span> <span class="n">section</span> <span class="ow">in</span> <span class="n">all_sections</span><span class="p">:</span>
+        <span class="n">section_a</span> <span class="o">=</span> <span class="n">dict_a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="nb">dict</span><span class="p">())</span>
+        <span class="n">section_b</span> <span class="o">=</span> <span class="n">dict_b</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="nb">dict</span><span class="p">())</span>
+        <span class="n">all_options</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">section_a</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">section_b</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="n">all_options</span><span class="p">:</span>
+            <span class="n">value_a</span> <span class="o">=</span> <span class="n">section_a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">option</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">value_b</span> <span class="o">=</span> <span class="n">section_b</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">option</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">value_a</span> <span class="o">!=</span> <span class="n">value_b</span><span class="p">:</span>
+                <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Configs have different values for option </span><span class="si">{}</span><span class="s1"> in section </span><span class="si">{}</span><span class="s1">:  </span><span class="si">{}</span><span class="s1"> and </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">option</span><span class="p">,</span> <span class="n">section</span><span class="p">,</span> <span class="n">value_a</span><span class="p">,</span> <span class="n">value_b</span><span class="p">))</span>
+                <span class="n">differing_items</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="nb">dict</span><span class="p">())[</span><span class="n">option</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">value_a</span><span class="p">,</span> <span class="n">value_b</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">differing_items</span></div>
+
+
+<div class="viewcode-block" id="Config"><a class="viewcode-back" href="../../../rsCNN.configuration.configs.html#rsCNN.configuration.configs.Config">[docs]</a><span class="k">class</span> <span class="nc">Config</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Handles the reading and formatting of raw data files, the building and training of models and architectures, and</span>
+<span class="sd">    the evaluation and reporting of training and validation results.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">raw_files</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;sections.RawFiles: RawFiles config section.&quot;&quot;&quot;</span>
+    <span class="n">data_build</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;sections.DataBuild: DataBuild config section.&quot;&quot;&quot;</span>
+    <span class="n">data_samples</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;sections.DataSamples: DataSamples config section.&quot;&quot;&quot;</span>
+    <span class="n">model_training</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;sections.ModelTraining: ModelTraining config section.&quot;&quot;&quot;</span>
+    <span class="n">architecture</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;sections.Architecture: Architecture config section.&quot;&quot;&quot;</span>
+    <span class="n">callback_general</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;sections.CallbacksGeneral: CallbacksGeneral config section.&quot;&quot;&quot;</span>
+    <span class="n">callback_tensorboard</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;sections.Tensorboard: Tensorboard config section.&quot;&quot;&quot;</span>
+    <span class="n">callback_early_stopping</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;sections.EarlyStopping: EarlyStopping config section.&quot;&quot;&quot;</span>
+    <span class="n">callback_reduced_learning_rate</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;sections.CallBackReducedLearningRate: CallBackReducedLearningRate config section.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">raw_files</span><span class="p">:</span> <span class="n">sections</span><span class="o">.</span><span class="n">RawFiles</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">data_build</span><span class="p">:</span> <span class="n">sections</span><span class="o">.</span><span class="n">DataBuild</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">data_samples</span><span class="p">:</span> <span class="n">sections</span><span class="o">.</span><span class="n">DataSamples</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">model_training</span><span class="p">:</span> <span class="n">sections</span><span class="o">.</span><span class="n">ModelTraining</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">architecture</span><span class="p">:</span> <span class="n">config_sections</span><span class="o">.</span><span class="n">BaseArchitectureConfigSection</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">callback_general</span><span class="p">:</span> <span class="n">sections</span><span class="o">.</span><span class="n">CallbackGeneral</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">callback_tensorboard</span><span class="p">:</span> <span class="n">sections</span><span class="o">.</span><span class="n">CallbackTensorboard</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">callback_early_stopping</span><span class="p">:</span> <span class="n">sections</span><span class="o">.</span><span class="n">CallbackEarlyStopping</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">callback_reduced_learning_rate</span><span class="p">:</span> <span class="n">sections</span><span class="o">.</span><span class="n">CallbackReducedLearningRate</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Note:  it&#39;s undesireable to have so many parameters passed to the __init__ method and have so much boilerplate</span>
+        <span class="c1"># code, but I&#39;ve chosen to write it this way because we can use Python typing and modern IDEs to autocomplete</span>
+        <span class="c1"># all of the attributes and subattributes in downstream scripts. For example, &quot;config.a&quot; will autocomplete to</span>
+        <span class="c1"># &quot;config.architecture&quot; and, more importantly, &quot;config.architecture.w&quot; will autocomplete to</span>
+        <span class="c1"># &quot;config.architecture.weighted&quot;. Without this autocomplete feature, the programmer is required to know the</span>
+        <span class="c1"># names of individual options and due to the nature of scientific computing and the number of parameters that</span>
+        <span class="c1"># can be configured, this becomes burdensome.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raw_files</span> <span class="o">=</span> <span class="n">raw_files</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_build</span> <span class="o">=</span> <span class="n">data_build</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_samples</span> <span class="o">=</span> <span class="n">data_samples</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_training</span> <span class="o">=</span> <span class="n">model_training</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">architecture</span> <span class="o">=</span> <span class="n">architecture</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">callback_general</span> <span class="o">=</span> <span class="n">callback_general</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">callback_tensorboard</span> <span class="o">=</span> <span class="n">callback_tensorboard</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">callback_early_stopping</span> <span class="o">=</span> <span class="n">callback_early_stopping</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">callback_reduced_learning_rate</span> <span class="o">=</span> <span class="n">callback_reduced_learning_rate</span>
+
+<div class="viewcode-block" id="Config.get_config_as_dict"><a class="viewcode-back" href="../../../rsCNN.configuration.configs.html#rsCNN.configuration.configs.Config.get_config_as_dict">[docs]</a>    <span class="k">def</span> <span class="nf">get_config_as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Get configuration options as a nested dictionary with delineated sections.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Configuration options as a nested dictionary with delineated sections.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">config_section</span> <span class="ow">in</span> <span class="n">sections</span><span class="o">.</span><span class="n">get_config_sections</span><span class="p">():</span>
+            <span class="n">section_name</span> <span class="o">=</span> <span class="n">config_section</span><span class="o">.</span><span class="n">get_config_name_as_snake_case</span><span class="p">()</span>
+            <span class="n">populated_section</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">section_name</span><span class="p">)</span>
+            <span class="n">config</span><span class="p">[</span><span class="n">section_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">populated_section</span><span class="o">.</span><span class="n">get_config_options_as_dict</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">config_section</span> <span class="ow">is</span> <span class="n">sections</span><span class="o">.</span><span class="n">ModelTraining</span><span class="p">:</span>
+                <span class="c1"># Given ordered output, architecture options make the most sense after model training options</span>
+                <span class="n">config</span><span class="p">[</span><span class="s1">&#39;architecture&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">architecture</span><span class="o">.</span><span class="n">get_config_options_as_dict</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">config</span></div>
+
+<div class="viewcode-block" id="Config.get_config_errors"><a class="viewcode-back" href="../../../rsCNN.configuration.configs.html#rsCNN.configuration.configs.Config.get_config_errors">[docs]</a>    <span class="k">def</span> <span class="nf">get_config_errors</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Get configuration option errors by checking the validity of each config section.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of errors associated with the current configuration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">config_section</span> <span class="ow">in</span> <span class="n">sections</span><span class="o">.</span><span class="n">get_config_sections</span><span class="p">():</span>
+            <span class="n">section_name</span> <span class="o">=</span> <span class="n">config_section</span><span class="o">.</span><span class="n">get_config_name_as_snake_case</span><span class="p">()</span>
+            <span class="n">populated_section</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">section_name</span><span class="p">)</span>
+            <span class="n">errors</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">populated_section</span><span class="o">.</span><span class="n">check_config_validity</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">config_section</span> <span class="ow">is</span> <span class="n">sections</span><span class="o">.</span><span class="n">ModelTraining</span><span class="p">:</span>
+                <span class="n">errors</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">architecture</span><span class="o">.</span><span class="n">check_config_validity</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">errors</span></div>
+
+<div class="viewcode-block" id="Config.get_human_readable_config_errors"><a class="viewcode-back" href="../../../rsCNN.configuration.configs.html#rsCNN.configuration.configs.Config.get_human_readable_config_errors">[docs]</a>    <span class="k">def</span> <span class="nf">get_human_readable_config_errors</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Generates a human-readable string of configuration option errors.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Human-readable string of configuration option errors.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_errors</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">errors</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">return</span> <span class="s1">&#39;List of configuration section and option errors is as follows:</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">error</span> <span class="k">for</span> <span class="n">error</span> <span class="ow">in</span> <span class="n">errors</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">rsCNN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../rsCNN.html">rsCNN package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Global Center for Discovery and Conservation Science.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

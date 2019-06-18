@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>rsCNN.configuration.check_config_parameters_not_obsolete &#8212; rsCNN  documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for rsCNN.configuration.check_config_parameters_not_obsolete</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">shlex</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span>
+
+<span class="kn">from</span> <span class="nn">rsCNN</span> <span class="k">import</span> <span class="n">architectures</span><span class="p">,</span> <span class="n">utils</span>
+<span class="kn">from</span> <span class="nn">rsCNN.configuration</span> <span class="k">import</span> <span class="n">configs</span><span class="p">,</span> <span class="n">sections</span>
+<span class="kn">from</span> <span class="nn">rsCNN.utils</span> <span class="k">import</span> <span class="n">logging</span>
+
+
+<span class="n">_logger</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">logging</span><span class="o">.</span><span class="n">get_root_logger</span><span class="p">()</span>
+<span class="n">_logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="s1">&#39;INFO&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="check_config_parameters_not_obsolete"><a class="viewcode-back" href="../../../rsCNN.configuration.check_config_parameters_not_obsolete.html#rsCNN.configuration.check_config_parameters_not_obsolete.check_config_parameters_not_obsolete">[docs]</a><span class="k">def</span> <span class="nf">check_config_parameters_not_obsolete</span><span class="p">():</span>
+    <span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Check config parameters are not obsolete&#39;</span><span class="p">)</span>
+    <span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;NOTE: this check may have false positives or negatives depending on how parameters are referenced&#39;</span><span class="p">)</span>
+    <span class="n">all_obsolete</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="n">architecture_names</span> <span class="o">=</span> <span class="n">architectures</span><span class="o">.</span><span class="n">get_available_architectures</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">idx_config</span><span class="p">,</span> <span class="n">architecture_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">architecture_names</span><span class="p">):</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">configs</span><span class="o">.</span><span class="n">create_config_template</span><span class="p">(</span><span class="n">architecture_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">idx_config</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">all_obsolete</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_check_generic_config_parameters</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
+        <span class="n">all_obsolete</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_check_architecture_config_parameters</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
+    <span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Config parameter check complete&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">all_obsolete</span></div>
+
+
+<span class="k">def</span> <span class="nf">_check_generic_config_parameters</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">all_obsolete</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">config_section</span> <span class="ow">in</span> <span class="n">sections</span><span class="o">.</span><span class="n">get_config_sections</span><span class="p">():</span>
+        <span class="n">section_name</span> <span class="o">=</span> <span class="n">config_section</span><span class="o">.</span><span class="n">get_config_name_as_snake_case</span><span class="p">()</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Check options for config section </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">section_name</span><span class="p">))</span>
+        <span class="n">section</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">section_name</span><span class="p">)</span>
+        <span class="n">obsolete</span> <span class="o">=</span> <span class="p">[</span><span class="n">option_key</span> <span class="k">for</span> <span class="n">option_key</span> <span class="ow">in</span> <span class="n">section</span><span class="o">.</span><span class="n">get_option_keys</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_option_key_in_package</span><span class="p">(</span><span class="n">option_key</span><span class="p">,</span> <span class="n">section_name</span><span class="p">)]</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s1">&#39;Config section </span><span class="si">{}</span><span class="s1"> has </span><span class="si">{}</span><span class="s1"> obsolete parameters&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">section_name</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">obsolete</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">obsolete</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">+=</span> <span class="s1">&#39;:  </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">obsolete</span><span class="p">))</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="n">all_obsolete</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">all_obsolete</span>
+
+
+<span class="k">def</span> <span class="nf">_check_architecture_config_parameters</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">obsolete</span> <span class="o">=</span> <span class="p">[</span><span class="n">option_key</span> <span class="k">for</span> <span class="n">option_key</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">architecture</span><span class="o">.</span><span class="n">get_option_keys</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">_is_option_key_in_architecture_module</span><span class="p">(</span><span class="n">option_key</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">architecture_name</span><span class="p">)]</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="s1">&#39;Architecture config section for architecture </span><span class="si">{}</span><span class="s1"> has </span><span class="si">{}</span><span class="s1"> obsolete parameters&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">architecture_name</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">obsolete</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">obsolete</span><span class="p">:</span>
+        <span class="n">message</span> <span class="o">+=</span> <span class="s1">&#39;:  </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">obsolete</span><span class="p">))</span>
+    <span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">message</span>
+
+
+<span class="k">def</span> <span class="nf">_is_option_key_in_package</span><span class="p">(</span><span class="n">option_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">config_section</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="n">string</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">.</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config_section</span><span class="p">,</span> <span class="n">option_key</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_is_string_in_package</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="s1">&#39;*.py&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_is_option_key_in_architecture_module</span><span class="p">(</span><span class="n">option_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">architecture_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">_is_string_in_package</span><span class="p">(</span><span class="n">option_key</span><span class="p">,</span> <span class="s1">&#39;architectures/</span><span class="si">{}</span><span class="s1">.py&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">architecture_name</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">_is_string_in_package</span><span class="p">(</span><span class="n">string</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">includes</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="n">command</span> <span class="o">=</span> <span class="s1">&#39;grep -rl --include=</span><span class="si">{}</span><span class="s1"> &quot;</span><span class="si">{}</span><span class="s1">&quot; </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">includes</span><span class="p">,</span> <span class="n">string</span><span class="p">,</span> <span class="n">utils</span><span class="o">.</span><span class="n">DIR_PROJECT_ROOT</span><span class="p">)</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">shlex</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">command</span><span class="p">),</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
+    <span class="n">filenames</span> <span class="o">=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span> <span class="k">for</span> <span class="n">filepath</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">filepath</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">filenames</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">check_config_parameters_not_obsolete</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">rsCNN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../rsCNN.html">rsCNN package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Global Center for Discovery and Conservation Science.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,216 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>rsCNN.data_management.training_data module &#8212; rsCNN  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="rsCNN.evaluation package" href="rsCNN.evaluation.html" />
+    <link rel="prev" title="rsCNN.data_management.sequences module" href="rsCNN.data_management.sequences.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-rsCNN.data_management.training_data">
+<span id="rscnn-data-management-training-data-module"></span><h1>rsCNN.data_management.training_data module<a class="headerlink" href="#module-rsCNN.data_management.training_data" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="rsCNN.data_management.training_data.build_or_load_rawfile_data">
+<code class="sig-prename descclassname">rsCNN.data_management.training_data.</code><code class="sig-name descname">build_or_load_rawfile_data</code><span class="sig-paren">(</span><em class="sig-param">config</em>, <em class="sig-param">rebuild=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/training_data.html#build_or_load_rawfile_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.training_data.build_or_load_rawfile_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.training_data.build_training_data_ordered">
+<code class="sig-prename descclassname">rsCNN.data_management.training_data.</code><code class="sig-name descname">build_training_data_ordered</code><span class="sig-paren">(</span><em class="sig-param">config</em>, <em class="sig-param">feature_raw_band_types</em>, <em class="sig-param">response_raw_band_types</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/training_data.html#build_training_data_ordered"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.training_data.build_training_data_ordered" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.training_data.build_training_data_from_response_points">
+<code class="sig-prename descclassname">rsCNN.data_management.training_data.</code><code class="sig-name descname">build_training_data_from_response_points</code><span class="sig-paren">(</span><em class="sig-param">config</em>, <em class="sig-param">feature_raw_band_types</em>, <em class="sig-param">response_raw_band_types</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/training_data.html#build_training_data_from_response_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.training_data.build_training_data_from_response_points" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.training_data.rasterize_vector">
+<code class="sig-prename descclassname">rsCNN.data_management.training_data.</code><code class="sig-name descname">rasterize_vector</code><span class="sig-paren">(</span><em class="sig-param">vector_file</em>, <em class="sig-param">geotransform</em>, <em class="sig-param">output_shape</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/training_data.html#rasterize_vector"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.training_data.rasterize_vector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rasterizes an input vector directly into a numpy array.
+Arguments:
+vector_file - str</p>
+<blockquote>
+<div><p>Input vector file to be rasterized.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>geotransform - list</dt><dd><p>A gdal style geotransform.</p>
+</dd>
+<dt>output_shape - tuple</dt><dd><p>The shape of the output file to be generated.</p>
+</dd>
+</dl>
+<p>Return:
+A rasterized 2-d numpy array.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.training_data.get_proj">
+<code class="sig-prename descclassname">rsCNN.data_management.training_data.</code><code class="sig-name descname">get_proj</code><span class="sig-paren">(</span><em class="sig-param">fname</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/training_data.html#get_proj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.training_data.get_proj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the projection of a raster/vector dataset.
+Arguments:
+fname - str</p>
+<blockquote>
+<div><p>Name of input file.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>is_vector - boolean</dt><dd><p>Boolean indication of whether the file is a vector or a raster.</p>
+</dd>
+</dl>
+<p>Returns:
+The projection of the input fname</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.training_data.check_projections">
+<code class="sig-prename descclassname">rsCNN.data_management.training_data.</code><code class="sig-name descname">check_projections</code><span class="sig-paren">(</span><em class="sig-param">a_files</em>, <em class="sig-param">b_files</em>, <em class="sig-param">c_files=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/training_data.html#check_projections"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.training_data.check_projections" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.training_data.check_resolutions">
+<code class="sig-prename descclassname">rsCNN.data_management.training_data.</code><code class="sig-name descname">check_resolutions</code><span class="sig-paren">(</span><em class="sig-param">a_files</em>, <em class="sig-param">b_files</em>, <em class="sig-param">c_files=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/training_data.html#check_resolutions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.training_data.check_resolutions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.training_data.calculate_categorical_weights">
+<code class="sig-prename descclassname">rsCNN.data_management.training_data.</code><code class="sig-name descname">calculate_categorical_weights</code><span class="sig-paren">(</span><em class="sig-param">responses</em>, <em class="sig-param">weights</em>, <em class="sig-param">config</em>, <em class="sig-param">batch_size=100</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/training_data.html#calculate_categorical_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.training_data.calculate_categorical_weights" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[&lt;built-in function array&gt;]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.training_data.read_mask_chunk">
+<code class="sig-prename descclassname">rsCNN.data_management.training_data.</code><code class="sig-name descname">read_mask_chunk</code><span class="sig-paren">(</span><em class="sig-param">boundary_vector_file</em>, <em class="sig-param">boundary_subset_geotransform</em>, <em class="sig-param">b_set</em>, <em class="sig-param">boundary_upper_left</em>, <em class="sig-param">window_diameter</em>, <em class="sig-param">boundary_bad_value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/training_data.html#read_mask_chunk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.training_data.read_mask_chunk" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.training_data.read_labeling_chunk">
+<code class="sig-prename descclassname">rsCNN.data_management.training_data.</code><code class="sig-name descname">read_labeling_chunk</code><span class="sig-paren">(</span><em class="sig-param">f_sets</em>, <em class="sig-param">feature_upper_lefts</em>, <em class="sig-param">config</em>, <em class="sig-param">boundary_vector_file=None</em>, <em class="sig-param">boundary_subset_geotransform=None</em>, <em class="sig-param">b_set=None</em>, <em class="sig-param">boundary_upper_left=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/training_data.html#read_labeling_chunk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.training_data.read_labeling_chunk" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.training_data.read_segmentation_chunk">
+<code class="sig-prename descclassname">rsCNN.data_management.training_data.</code><code class="sig-name descname">read_segmentation_chunk</code><span class="sig-paren">(</span><em class="sig-param">f_sets</em>, <em class="sig-param">r_sets</em>, <em class="sig-param">feature_upper_lefts</em>, <em class="sig-param">response_upper_lefts</em>, <em class="sig-param">config</em>, <em class="sig-param">sample_index</em>, <em class="sig-param">boundary_vector_file=None</em>, <em class="sig-param">boundary_subset_geotransform=None</em>, <em class="sig-param">b_set=None</em>, <em class="sig-param">boundary_upper_left=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/training_data.html#read_segmentation_chunk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.training_data.read_segmentation_chunk" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">rsCNN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="rsCNN.html">rsCNN package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="rsCNN.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.architectures.html">rsCNN.architectures package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.configuration.html">rsCNN.configuration package</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="rsCNN.data_management.html">rsCNN.data_management package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="rsCNN.data_management.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.evaluation.html">rsCNN.evaluation package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.experiments.html">rsCNN.experiments package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.utils.html">rsCNN.utils package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="rsCNN.html">rsCNN package</a><ul>
+  <li><a href="rsCNN.data_management.html">rsCNN.data_management package</a><ul>
+      <li>Previous: <a href="rsCNN.data_management.sequences.html" title="previous chapter">rsCNN.data_management.sequences module</a></li>
+      <li>Next: <a href="rsCNN.evaluation.html" title="next chapter">rsCNN.evaluation package</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Global Center for Discovery and Conservation Science.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/rsCNN.data_management.training_data.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

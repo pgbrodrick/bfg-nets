@@ -1,0 +1,165 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>rsCNN.data_management.common_io module &#8212; rsCNN  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="rsCNN.data_management.data_core module" href="rsCNN.data_management.data_core.html" />
+    <link rel="prev" title="rsCNN.data_management.apply_model_to_data module" href="rsCNN.data_management.apply_model_to_data.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-rsCNN.data_management.common_io">
+<span id="rscnn-data-management-common-io-module"></span><h1>rsCNN.data_management.common_io module<a class="headerlink" href="#module-rsCNN.data_management.common_io" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="rsCNN.data_management.common_io.upper_left_pixel">
+<code class="sig-prename descclassname">rsCNN.data_management.common_io.</code><code class="sig-name descname">upper_left_pixel</code><span class="sig-paren">(</span><em class="sig-param">trans</em>, <em class="sig-param">interior_x</em>, <em class="sig-param">interior_y</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/common_io.html#upper_left_pixel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.common_io.upper_left_pixel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.common_io.get_overlapping_extent">
+<code class="sig-prename descclassname">rsCNN.data_management.common_io.</code><code class="sig-name descname">get_overlapping_extent</code><span class="sig-paren">(</span><em class="sig-param">dataset_list_of_lists</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/common_io.html#get_overlapping_extent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.common_io.get_overlapping_extent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.common_io.get_all_interior_extent_subset_pixel_locations">
+<code class="sig-prename descclassname">rsCNN.data_management.common_io.</code><code class="sig-name descname">get_all_interior_extent_subset_pixel_locations</code><span class="sig-paren">(</span><em class="sig-param">gdal_datasets</em>, <em class="sig-param">window_radius</em>, <em class="sig-param">inner_window_radius=None</em>, <em class="sig-param">shuffle=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/common_io.html#get_all_interior_extent_subset_pixel_locations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.common_io.get_all_interior_extent_subset_pixel_locations" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.common_io.read_map_subset">
+<code class="sig-prename descclassname">rsCNN.data_management.common_io.</code><code class="sig-name descname">read_map_subset</code><span class="sig-paren">(</span><em class="sig-param">datasets</em>, <em class="sig-param">upper_lefts</em>, <em class="sig-param">window_diameter</em>, <em class="sig-param">mask=None</em>, <em class="sig-param">nodata_value=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/common_io.html#read_map_subset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.common_io.read_map_subset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.common_io.get_boundary_sets_from_boundary_files">
+<code class="sig-prename descclassname">rsCNN.data_management.common_io.</code><code class="sig-name descname">get_boundary_sets_from_boundary_files</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/common_io.html#get_boundary_sets_from_boundary_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.common_io.get_boundary_sets_from_boundary_files" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dataset</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.data_management.common_io.get_site_boundary_set">
+<code class="sig-prename descclassname">rsCNN.data_management.common_io.</code><code class="sig-name descname">get_site_boundary_set</code><span class="sig-paren">(</span><em class="sig-param">config</em>, <em class="sig-param">_site</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/data_management/common_io.html#get_site_boundary_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.data_management.common_io.get_site_boundary_set" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dataset</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">rsCNN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="rsCNN.html">rsCNN package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="rsCNN.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.architectures.html">rsCNN.architectures package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.configuration.html">rsCNN.configuration package</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="rsCNN.data_management.html">rsCNN.data_management package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="rsCNN.data_management.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.evaluation.html">rsCNN.evaluation package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.experiments.html">rsCNN.experiments package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.utils.html">rsCNN.utils package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="rsCNN.html">rsCNN package</a><ul>
+  <li><a href="rsCNN.data_management.html">rsCNN.data_management package</a><ul>
+      <li>Previous: <a href="rsCNN.data_management.apply_model_to_data.html" title="previous chapter">rsCNN.data_management.apply_model_to_data module</a></li>
+      <li>Next: <a href="rsCNN.data_management.data_core.html" title="next chapter">rsCNN.data_management.data_core module</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Global Center for Discovery and Conservation Science.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/rsCNN.data_management.common_io.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

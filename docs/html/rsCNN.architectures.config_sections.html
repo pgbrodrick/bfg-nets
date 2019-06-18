@@ -1,0 +1,435 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>rsCNN.architectures.config_sections module &#8212; rsCNN  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="rsCNN.architectures.dense_flat_net module" href="rsCNN.architectures.dense_flat_net.html" />
+    <link rel="prev" title="rsCNN.architectures.alex_net module" href="rsCNN.architectures.alex_net.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-rsCNN.architectures.config_sections">
+<span id="rscnn-architectures-config-sections-module"></span><h1>rsCNN.architectures.config_sections module<a class="headerlink" href="#module-rsCNN.architectures.config_sections" title="Permalink to this headline">¶</a></h1>
+<dl class="data">
+<dt id="rsCNN.architectures.config_sections.DEFAULT_FILTERS">
+<code class="sig-prename descclassname">rsCNN.architectures.config_sections.</code><code class="sig-name descname">DEFAULT_FILTERS</code><em class="property"> = 64</em><a class="headerlink" href="#rsCNN.architectures.config_sections.DEFAULT_FILTERS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="data">
+<dt id="rsCNN.architectures.config_sections.DEFAULT_KERNEL_SIZE">
+<code class="sig-prename descclassname">rsCNN.architectures.config_sections.</code><code class="sig-name descname">DEFAULT_KERNEL_SIZE</code><em class="property"> = (3, 3)</em><a class="headerlink" href="#rsCNN.architectures.config_sections.DEFAULT_KERNEL_SIZE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="data">
+<dt id="rsCNN.architectures.config_sections.DEFAULT_PADDING">
+<code class="sig-prename descclassname">rsCNN.architectures.config_sections.</code><code class="sig-name descname">DEFAULT_PADDING</code><em class="property"> = 'same'</em><a class="headerlink" href="#rsCNN.architectures.config_sections.DEFAULT_PADDING" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="data">
+<dt id="rsCNN.architectures.config_sections.DEFAULT_USE_BATCH_NORM">
+<code class="sig-prename descclassname">rsCNN.architectures.config_sections.</code><code class="sig-name descname">DEFAULT_USE_BATCH_NORM</code><em class="property"> = False</em><a class="headerlink" href="#rsCNN.architectures.config_sections.DEFAULT_USE_BATCH_NORM" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="data">
+<dt id="rsCNN.architectures.config_sections.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER">
+<code class="sig-prename descclassname">rsCNN.architectures.config_sections.</code><code class="sig-name descname">DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER</code><em class="property"> = False</em><a class="headerlink" href="#rsCNN.architectures.config_sections.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="data">
+<dt id="rsCNN.architectures.config_sections.DEFAULT_BLOCK_STRUCTURE">
+<code class="sig-prename descclassname">rsCNN.architectures.config_sections.</code><code class="sig-name descname">DEFAULT_BLOCK_STRUCTURE</code><em class="property"> = (2, 2, 2, 2)</em><a class="headerlink" href="#rsCNN.architectures.config_sections.DEFAULT_BLOCK_STRUCTURE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="data">
+<dt id="rsCNN.architectures.config_sections.DEFAULT_DILATION_RATE">
+<code class="sig-prename descclassname">rsCNN.architectures.config_sections.</code><code class="sig-name descname">DEFAULT_DILATION_RATE</code><em class="property"> = 2</em><a class="headerlink" href="#rsCNN.architectures.config_sections.DEFAULT_DILATION_RATE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="data">
+<dt id="rsCNN.architectures.config_sections.DEFAULT_MIN_CONV_WIDTH">
+<code class="sig-prename descclassname">rsCNN.architectures.config_sections.</code><code class="sig-name descname">DEFAULT_MIN_CONV_WIDTH</code><em class="property"> = 8</em><a class="headerlink" href="#rsCNN.architectures.config_sections.DEFAULT_MIN_CONV_WIDTH" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="data">
+<dt id="rsCNN.architectures.config_sections.DEFAULT_NUM_LAYERS">
+<code class="sig-prename descclassname">rsCNN.architectures.config_sections.</code><code class="sig-name descname">DEFAULT_NUM_LAYERS</code><em class="property"> = 8</em><a class="headerlink" href="#rsCNN.architectures.config_sections.DEFAULT_NUM_LAYERS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="data">
+<dt id="rsCNN.architectures.config_sections.DEFAULT_POOL_SIZE">
+<code class="sig-prename descclassname">rsCNN.architectures.config_sections.</code><code class="sig-name descname">DEFAULT_POOL_SIZE</code><em class="property"> = (2, 2)</em><a class="headerlink" href="#rsCNN.architectures.config_sections.DEFAULT_POOL_SIZE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="data">
+<dt id="rsCNN.architectures.config_sections.DEFAULT_USE_GROWTH">
+<code class="sig-prename descclassname">rsCNN.architectures.config_sections.</code><code class="sig-name descname">DEFAULT_USE_GROWTH</code><em class="property"> = False</em><a class="headerlink" href="#rsCNN.architectures.config_sections.DEFAULT_USE_GROWTH" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.architectures.config_sections.BaseArchitectureConfigSection">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.architectures.config_sections.</code><code class="sig-name descname">BaseArchitectureConfigSection</code><a class="reference internal" href="_modules/rsCNN/architectures/config_sections.html#BaseArchitectureConfigSection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.architectures.config_sections.BaseArchitectureConfigSection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="rsCNN.configuration.sections.html#rsCNN.configuration.sections.BaseConfigSection" title="rsCNN.configuration.sections.BaseConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">rsCNN.configuration.sections.BaseConfigSection</span></code></a></p>
+<p>Base class for architecture config section, includes options that are generic to all architectures.</p>
+<dl class="attribute">
+<dt id="rsCNN.architectures.config_sections.BaseArchitectureConfigSection.filters">
+<code class="sig-name descname">filters</code><em class="property"> = 'REQUIRED'</em><a class="headerlink" href="#rsCNN.architectures.config_sections.BaseArchitectureConfigSection.filters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of filters to use for initial convolutions, may increase in architectures that support the use_growth
+option.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.architectures.config_sections.BaseArchitectureConfigSection.inshape">
+<code class="sig-name descname">inshape</code><em class="property"> = 'REQUIRED'</em><a class="headerlink" href="#rsCNN.architectures.config_sections.BaseArchitectureConfigSection.inshape" title="Permalink to this definition">¶</a></dt>
+<dd><p>The inshape of sample arrays passed to the model; e.g., 128x128x4 for a 128x128 image with four bands or
+channels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.architectures.config_sections.BaseArchitectureConfigSection.kernel_size">
+<code class="sig-name descname">kernel_size</code><em class="property"> = (3, 3)</em><a class="headerlink" href="#rsCNN.architectures.config_sections.BaseArchitectureConfigSection.kernel_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>The kernel size used for convolutions. Most often (3, 3) for a 3x3 kernel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.architectures.config_sections.BaseArchitectureConfigSection.n_classes">
+<code class="sig-name descname">n_classes</code><em class="property"> = 'REQUIRED'</em><a class="headerlink" href="#rsCNN.architectures.config_sections.BaseArchitectureConfigSection.n_classes" title="Permalink to this definition">¶</a></dt>
+<dd><p>if the network is being trained
+to predict a single continuous variable, this should be 1. Example 2:  if the network is being trained to classify
+pixels into five classes, this should be 5.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+<dt class="field-even">Type</dt>
+<dd class="field-even"><p>The number of classes (filters) used in the final network layer. Example 1</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.architectures.config_sections.BaseArchitectureConfigSection.output_activation">
+<code class="sig-name descname">output_activation</code><em class="property"> = 'REQUIRED'</em><a class="headerlink" href="#rsCNN.architectures.config_sections.BaseArchitectureConfigSection.output_activation" title="Permalink to this definition">¶</a></dt>
+<dd><p>The activation type for the final output layer. See Keras documentation for more details and available
+options.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.architectures.config_sections.BaseArchitectureConfigSection.padding">
+<code class="sig-name descname">padding</code><em class="property"> = 'same'</em><a class="headerlink" href="#rsCNN.architectures.config_sections.BaseArchitectureConfigSection.padding" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation for more details and available options.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.architectures.config_sections.BaseArchitectureConfigSection.use_batch_norm">
+<code class="sig-name descname">use_batch_norm</code><em class="property"> = False</em><a class="headerlink" href="#rsCNN.architectures.config_sections.BaseArchitectureConfigSection.use_batch_norm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether to use batch normalization layers. Currently only implemented after convolutions, but there’s
+evidence that it may be useful before convolutions in at least some architectures or applications, and we plan on
+supporting both options in the near future.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.architectures.config_sections.BaseArchitectureConfigSection.use_initial_colorspace_transformation_layer">
+<code class="sig-name descname">use_initial_colorspace_transformation_layer</code><em class="property"> = False</em><a class="headerlink" href="#rsCNN.architectures.config_sections.BaseArchitectureConfigSection.use_initial_colorspace_transformation_layer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether to use an initial colorspace transformation layer. There is evidence that model-learned color
+transformations can be more effective than other types of transformations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.architectures.config_sections.BaseArchitectureConfigSection.get_option_keys">
+<code class="sig-name descname">get_option_keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/architectures/config_sections.html#BaseArchitectureConfigSection.get_option_keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.architectures.config_sections.BaseArchitectureConfigSection.get_option_keys" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.architectures.config_sections.AutoencoderMixin">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.architectures.config_sections.</code><code class="sig-name descname">AutoencoderMixin</code><a class="reference internal" href="_modules/rsCNN/architectures/config_sections.html#AutoencoderMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.architectures.config_sections.AutoencoderMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Mixin for architectures with autoencoder downsampling/upsampling characteristics.</p>
+<dl class="attribute">
+<dt id="rsCNN.architectures.config_sections.AutoencoderMixin.min_conv_width">
+<code class="sig-name descname">min_conv_width</code><em class="property"> = 8</em><a class="headerlink" href="#rsCNN.architectures.config_sections.AutoencoderMixin.min_conv_width" title="Permalink to this definition">¶</a></dt>
+<dd><p>Minimum convolution width at the end of downsampling steps.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="rsCNN.architectures.config_sections.AutoencoderMixin.pool_size">
+<code class="sig-name descname">pool_size</code><em class="property"> = (2, 2)</em><a class="headerlink" href="#rsCNN.architectures.config_sections.AutoencoderMixin.pool_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pooling and upsampling size during each downsampling/upsampling step.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.architectures.config_sections.BlockMixin">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.architectures.config_sections.</code><code class="sig-name descname">BlockMixin</code><a class="reference internal" href="_modules/rsCNN/architectures/config_sections.html#BlockMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.architectures.config_sections.BlockMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Mixin for architectures with block / layer patterns.</p>
+<dl class="attribute">
+<dt id="rsCNN.architectures.config_sections.BlockMixin.block_structure">
+<code class="sig-name descname">block_structure</code><em class="property"> = (2, 2, 2, 2)</em><a class="headerlink" href="#rsCNN.architectures.config_sections.BlockMixin.block_structure" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of layers in each network block. The length of the tuple is the number of network blocks and
+the value at each index i is the number of layers in block i. Example: (2, 3, 4) configures a network where
+the first block has two layers, the second block has three layers, and the third block has four layers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.architectures.config_sections.DilationMixin">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.architectures.config_sections.</code><code class="sig-name descname">DilationMixin</code><a class="reference internal" href="_modules/rsCNN/architectures/config_sections.html#DilationMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.architectures.config_sections.DilationMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Mixin for architectures with dilated convolutions.</p>
+<dl class="attribute">
+<dt id="rsCNN.architectures.config_sections.DilationMixin.dilation_rate">
+<code class="sig-name descname">dilation_rate</code><em class="property"> = 2</em><a class="headerlink" href="#rsCNN.architectures.config_sections.DilationMixin.dilation_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>The dilation rate for dilated convolutions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.architectures.config_sections.FlatMixin">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.architectures.config_sections.</code><code class="sig-name descname">FlatMixin</code><a class="reference internal" href="_modules/rsCNN/architectures/config_sections.html#FlatMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.architectures.config_sections.FlatMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Mixin for flat architectures.</p>
+<dl class="attribute">
+<dt id="rsCNN.architectures.config_sections.FlatMixin.num_layers">
+<code class="sig-name descname">num_layers</code><em class="property"> = 8</em><a class="headerlink" href="#rsCNN.architectures.config_sections.FlatMixin.num_layers" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of layers in the network.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rsCNN.architectures.config_sections.GrowthMixin">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.architectures.config_sections.</code><code class="sig-name descname">GrowthMixin</code><a class="reference internal" href="_modules/rsCNN/architectures/config_sections.html#GrowthMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.architectures.config_sections.GrowthMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Mixin for architectures where growth in the number of filters could be useful.</p>
+<dl class="attribute">
+<dt id="rsCNN.architectures.config_sections.GrowthMixin.use_growth">
+<code class="sig-name descname">use_growth</code><em class="property"> = False</em><a class="headerlink" href="#rsCNN.architectures.config_sections.GrowthMixin.use_growth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether to increase the number of filters at each layer in the network.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.architectures.config_sections.create_model_from_architecture_config_section">
+<code class="sig-prename descclassname">rsCNN.architectures.config_sections.</code><code class="sig-name descname">create_model_from_architecture_config_section</code><span class="sig-paren">(</span><em class="sig-param">architecture_name</em>, <em class="sig-param">architecture_config_section</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/architectures/config_sections.html#create_model_from_architecture_config_section"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.architectures.config_sections.create_model_from_architecture_config_section" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a Keras model for a specific architecture using the provided options.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>architecture_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Architecture to create. Get a list of currently available architectures using</p></li>
+<li><p><strong>rsCNN.architectures.get_available_architectures</strong><strong>(</strong><strong>)</strong><strong></strong> – </p></li>
+<li><p><strong>architecture_config_section</strong> (<a class="reference internal" href="#rsCNN.architectures.config_sections.BaseArchitectureConfigSection" title="rsCNN.architectures.config_sections.BaseArchitectureConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseArchitectureConfigSection</span></code></a>) – Options for the specified architecture.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Keras model object.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.architectures.config_sections.get_architecture_config_section">
+<code class="sig-prename descclassname">rsCNN.architectures.config_sections.</code><code class="sig-name descname">get_architecture_config_section</code><span class="sig-paren">(</span><em class="sig-param">architecture_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/architectures/config_sections.html#get_architecture_config_section"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.architectures.config_sections.get_architecture_config_section" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets architecture options for the specified architecture.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>architecture_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Architecture to create. Get a list of currently available architectures using</p></li>
+<li><p><strong>rsCNN.architectures.get_available_architectures</strong><strong>(</strong><strong>)</strong><strong></strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#rsCNN.architectures.config_sections.BaseArchitectureConfigSection" title="rsCNN.architectures.config_sections.BaseArchitectureConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseArchitectureConfigSection</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Options for the specified architecture.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">rsCNN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="rsCNN.html">rsCNN package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="rsCNN.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="rsCNN.architectures.html">rsCNN.architectures package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="rsCNN.architectures.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.configuration.html">rsCNN.configuration package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.data_management.html">rsCNN.data_management package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.evaluation.html">rsCNN.evaluation package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.experiments.html">rsCNN.experiments package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.utils.html">rsCNN.utils package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="rsCNN.html">rsCNN package</a><ul>
+  <li><a href="rsCNN.architectures.html">rsCNN.architectures package</a><ul>
+      <li>Previous: <a href="rsCNN.architectures.alex_net.html" title="previous chapter">rsCNN.architectures.alex_net module</a></li>
+      <li>Next: <a href="rsCNN.architectures.dense_flat_net.html" title="next chapter">rsCNN.architectures.dense_flat_net module</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Global Center for Discovery and Conservation Science.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/rsCNN.architectures.config_sections.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

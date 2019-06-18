@@ -1,0 +1,182 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>rsCNN.experiments.callbacks module &#8212; rsCNN  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="rsCNN.experiments.experiments module" href="rsCNN.experiments.experiments.html" />
+    <link rel="prev" title="rsCNN.experiments package" href="rsCNN.experiments.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-rsCNN.experiments.callbacks">
+<span id="rscnn-experiments-callbacks-module"></span><h1>rsCNN.experiments.callbacks module<a class="headerlink" href="#module-rsCNN.experiments.callbacks" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="rsCNN.experiments.callbacks.HistoryCheckpoint">
+<em class="property">class </em><code class="sig-prename descclassname">rsCNN.experiments.callbacks.</code><code class="sig-name descname">HistoryCheckpoint</code><span class="sig-paren">(</span><em class="sig-param">dir_out</em>, <em class="sig-param">existing_history=None</em>, <em class="sig-param">period=1</em>, <em class="sig-param">verbose=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/experiments/callbacks.html#HistoryCheckpoint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.experiments.callbacks.HistoryCheckpoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">keras.callbacks.Callback</span></code></p>
+<p>A custom Keras callback for checkpointing model training history and associated information.</p>
+<dl class="method">
+<dt id="rsCNN.experiments.callbacks.HistoryCheckpoint.on_train_begin">
+<code class="sig-name descname">on_train_begin</code><span class="sig-paren">(</span><em class="sig-param">logs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/experiments/callbacks.html#HistoryCheckpoint.on_train_begin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.experiments.callbacks.HistoryCheckpoint.on_train_begin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.experiments.callbacks.HistoryCheckpoint.on_train_end">
+<code class="sig-name descname">on_train_end</code><span class="sig-paren">(</span><em class="sig-param">logs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/experiments/callbacks.html#HistoryCheckpoint.on_train_end"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.experiments.callbacks.HistoryCheckpoint.on_train_end" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.experiments.callbacks.HistoryCheckpoint.on_batch_begin">
+<code class="sig-name descname">on_batch_begin</code><span class="sig-paren">(</span><em class="sig-param">batch</em>, <em class="sig-param">logs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/experiments/callbacks.html#HistoryCheckpoint.on_batch_begin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.experiments.callbacks.HistoryCheckpoint.on_batch_begin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.experiments.callbacks.HistoryCheckpoint.on_batch_end">
+<code class="sig-name descname">on_batch_end</code><span class="sig-paren">(</span><em class="sig-param">batch</em>, <em class="sig-param">logs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/experiments/callbacks.html#HistoryCheckpoint.on_batch_end"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.experiments.callbacks.HistoryCheckpoint.on_batch_end" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.experiments.callbacks.HistoryCheckpoint.on_epoch_begin">
+<code class="sig-name descname">on_epoch_begin</code><span class="sig-paren">(</span><em class="sig-param">epoch</em>, <em class="sig-param">logs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/experiments/callbacks.html#HistoryCheckpoint.on_epoch_begin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.experiments.callbacks.HistoryCheckpoint.on_epoch_begin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rsCNN.experiments.callbacks.HistoryCheckpoint.on_epoch_end">
+<code class="sig-name descname">on_epoch_end</code><span class="sig-paren">(</span><em class="sig-param">epoch</em>, <em class="sig-param">logs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/experiments/callbacks.html#HistoryCheckpoint.on_epoch_end"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.experiments.callbacks.HistoryCheckpoint.on_epoch_end" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="rsCNN.experiments.callbacks.get_model_callbacks">
+<code class="sig-prename descclassname">rsCNN.experiments.callbacks.</code><code class="sig-name descname">get_model_callbacks</code><span class="sig-paren">(</span><em class="sig-param">config</em>, <em class="sig-param">existing_history</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rsCNN/experiments/callbacks.html#get_model_callbacks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rsCNN.experiments.callbacks.get_model_callbacks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates model callbacks from a rsCNN config.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> (<a class="reference internal" href="rsCNN.configuration.configs.html#rsCNN.configuration.configs.Config" title="rsCNN.configuration.configs.Config"><code class="xref py py-class docutils literal notranslate"><span class="pre">Config</span></code></a>) – rsCNN config.</p></li>
+<li><p><strong>existing_history</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>) – Existing model training history if the model has already been partially or completely trained.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Callback</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>List of model callbacks.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">rsCNN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="rsCNN.html">rsCNN package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="rsCNN.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.architectures.html">rsCNN.architectures package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.configuration.html">rsCNN.configuration package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.data_management.html">rsCNN.data_management package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.evaluation.html">rsCNN.evaluation package</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="rsCNN.experiments.html">rsCNN.experiments package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="rsCNN.experiments.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rsCNN.utils.html">rsCNN.utils package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="rsCNN.html">rsCNN package</a><ul>
+  <li><a href="rsCNN.experiments.html">rsCNN.experiments package</a><ul>
+      <li>Previous: <a href="rsCNN.experiments.html" title="previous chapter">rsCNN.experiments package</a></li>
+      <li>Next: <a href="rsCNN.experiments.experiments.html" title="next chapter">rsCNN.experiments.experiments module</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Global Center for Discovery and Conservation Science.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/rsCNN.experiments.callbacks.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
