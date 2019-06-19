@@ -22,7 +22,7 @@ _VECTORIZED_FILENAMES = ('kml', 'shp')
 _logger = logging.getLogger(__name__)
 
 
-class Data_Container:
+class DataContainer:
     """ A container class that holds all sorts of data objects
     """
     config = None

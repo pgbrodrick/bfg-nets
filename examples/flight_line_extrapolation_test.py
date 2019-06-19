@@ -20,7 +20,7 @@ logger.setLevel(args.debug_level)
 assert os.path.isfile(args.settings_file), 'Settings file: ' + args.settings_file + ' does not exist'
 config = configs.create_config_from_file(args.settings_file)
 
-data_container = data_core.Data_Container(config)
+data_container = data_core.DataContainer(config)
 
 data_container.build_or_load_rawfile_data()
 data_container.build_or_load_scalers()
