@@ -16,7 +16,7 @@ _logger = logging.getLogger(__name__)
 DEFAULT_FILENAME_CONFIG = 'config.yaml'
 
 
-def create_config_from_file(filepath: str) -> Config:
+def create_config_from_file(filepath: str) -> 'Config':
     """Creates a Config object from a YAML file.
 
     Args:
@@ -32,7 +32,7 @@ def create_config_from_file(filepath: str) -> Config:
     return _create_config(raw_config, is_template=False)
 
 
-def create_config_template(architecture_name: str, filepath: str = None) -> Config:
+def create_config_template(architecture_name: str, filepath: str = None) -> 'Config':
     """Creates a template version of a Config for a given architecture, with required and optional parameters
     highlighted, and default values for other parameters. Config is returned but can optionally be written to YAML file.
 
@@ -51,7 +51,7 @@ def create_config_template(architecture_name: str, filepath: str = None) -> Conf
     return config
 
 
-def _create_config(config_options: dict, is_template: bool) -> Config:
+def _create_config(config_options: dict, is_template: bool) -> 'Config':
     config_copy = copy.deepcopy(config_options)  # Use a copy because config options are popped from the dict
     # Populate config sections with the provided configuration options, tracking errors
     populated_sections = dict()
@@ -68,7 +68,7 @@ def _create_config(config_options: dict, is_template: bool) -> Config:
     return Config(**populated_sections)
 
 
-def save_config_to_file(config: Config, filepath: str, include_sections: list = None) -> None:
+def save_config_to_file(config: 'Config', filepath: str, include_sections: list = None) -> None:
     """Saves/serializes a Config object to a YAML file.
 
     Args:
@@ -98,7 +98,7 @@ def save_config_to_file(config: Config, filepath: str, include_sections: list = 
         yaml.dump(config_out, file_, default_flow_style=False)
 
 
-def get_config_differences(config_a: Config, config_b: Config) -> Dict:
+def get_config_differences(config_a: 'Config', config_b: 'Config') -> Dict:
     differing_items = dict()
     dict_a = config_a.get_config_as_dict()
     dict_b = config_b.get_config_as_dict()
