@@ -68,24 +68,25 @@ def permute_array(source: np.array, source_filename: str, permutation: np.array)
         os.path.dirname(source_filename), str(os.path.basename(source_filename).split('.')[0]) + '_perm.npy')
 
     shape = source.shape
-    type = source.dtype
+    dtype = source.dtype
 
-    dest = np.memmap(perm_memmap_file, dtype=type, mode='w+', shape=shape)
+    print((perm_memmap_file,dtype,shape))
+    dest = np.memmap(perm_memmap_file, dtype=dtype, mode='w+', shape=shape)
 
     for i in range(len(permutation)):
         dest[i,...] = source[permutation[i],...]
 
         if (i % 100 == 0):
             del dest, source
-            source = np.memmap(source_filename, dtype=type, shape=shape, mode='r+')
-            dest = np.memmap(perm_memmap_file, dtype=type, shape=shape, mode='r+')
+            source = np.memmap(source_filename, dtype=dtype, shape=shape, mode='r+')
+            dest = np.memmap(perm_memmap_file, dtype=dtype, shape=shape, mode='r+')
 
     del source, dest
 
     os.remove(source_filename)
     shutil.move(perm_memmap_file, source_filename)
 
-    source = np.memmap(source_filename, dtype=type, shape=shape, mode='r+')
+    source = np.memmap(source_filename, dtype=dtype, shape=shape, mode='r+')
     return source
 
 

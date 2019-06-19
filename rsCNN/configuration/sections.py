@@ -410,6 +410,8 @@ def check_input_file_formats(f_file_list, r_file_list, b_file_list) -> List[str]
         if(len(r_file_list[_site]) != num_r_files_per_site):
             errors.append('Inconsistent number of response files at site {}'.format(_site))
 
+    return errors
+
 
 def check_input_file_validity(f_file_list, r_file_list, b_file_list) -> List[str]:
     errors = check_input_file_formats(f_file_list, r_file_list, b_file_list)

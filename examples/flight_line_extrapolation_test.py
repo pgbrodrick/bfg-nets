@@ -20,9 +20,6 @@ logger.setLevel(args.debug_level)
 assert os.path.isfile(args.settings_file), 'Settings file: ' + args.settings_file + ' does not exist'
 config = configs.create_config_from_file(args.settings_file)
 
-config.raw_files.feature_files = [['../global_cwc/dat/features/feat_subset.tif']]
-config.raw_files.response_files = [['../global_cwc/dat/responses/resp_subset.tif']]
-
 data_container = data_core.Data_Container(config)
 
 data_container.build_or_load_rawfile_data()
@@ -42,7 +39,7 @@ if (args.key == 'report' or args.key == 'all'):
     rsCNN.evaluation.create_model_report_from_experiment(experiment, data_container)
 
 if (args.key == 'apply' or args.key == 'all'):
-    application_feature_files = ['../global_cwc/dat/features/feat_subset.tif']
+    application_feature_files = config.raw_files.feature_files[0]
     application_output_basenames = ['examples/output/feat_subset_applied_cnn.tif']
     for _f in range(len(application_feature_files)):
         rsCNN.data_management.apply_model_to_data.apply_model_to_raster(experiment.model,

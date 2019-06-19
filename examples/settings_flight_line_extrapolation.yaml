@@ -1,27 +1,74 @@
-data_save_name : 'examples/munged/cwc_data_ob_test'
-data_build_category : 'ordered_continuous'
-max_samples : 30000
-window_radius : 32
-internal_window_radius : 16
-response_max_value : 10000
-response_min_value : 0
-feature_scaler_name : 'StandardScaler'
-response_scaler_name : 'StandardScaler'
-
-architecture : 'unet'
-use_batch_norm : True
-conv_depth : 'growth'
-block_structure : [1,1]
-n_layers : 10
-output_activation : 'softplus'
-n_classes : 1
-continue_training : False
-
-dir_out : 'data_overhaul_test'
-optimizer : 'adam'
-batch_size : 100
-max_epochs : 20
-n_noimprovement_repeats : 10
-output_directory : None
-validation_fold : 0
-loss_metric : 'mae'
+raw_files:
+  feature_files: [['../global_cwc/dat/features/feat_subset.tif']]
+  response_files: [['../global_cwc/dat/responses/resp_subset.tif']]
+  boundary_files: None
+  feature_data_type: ['R']
+  response_data_type: ['R']
+  feature_nodata_value: -9999
+  response_nodata_value: -9999
+  boundary_bad_value: None
+  ignore_projections: false
+data_build:
+  dir_out: ./flight_extrapolation_test
+  filename_prefix_out: 'munged_data'
+  response_data_format: FCN
+  random_seed: 1
+  max_samples: 100
+  max_memmap_size_gb: 10
+  number_folds: 10
+  validation_fold: 0
+  test_fold: None
+  window_radius: 16
+  loss_window_radius: 8
+  feature_mean_centering: false
+  feature_nodata_maximum_fraction: 0.0
+  response_min_value: 0
+  response_max_value: 10000
+  response_background_value: None
+data_samples:
+  apply_random_transformations: false
+  batch_size: 100
+  feature_scaler_names: MinMax
+  response_scaler_names: MinMax
+  feature_nodata_encoding: -10.0
+model_training:
+  dir_out: ./flight_extrapolation_test
+  verbosity: 1
+  assert_gpu: false
+  architecture_name: unet
+  loss_metric: MSE
+  max_epochs: 100
+  optimizer: adam
+  weighted: false
+architecture:
+  block_structure: [2, 2, 2, 2]
+  filters: 6
+  inshape: [64,64,3]
+  kernel_size: [3, 3]
+  min_conv_width: 8
+  n_classes: 1
+  output_activation: linear
+  padding: same
+  pool_size: [2, 2]
+  use_batch_norm: false
+  use_growth: false
+  use_initial_colorspace_transformation_layer: false
+callback_general:
+  checkpoint_periods: 5
+  use_terminate_on_nan: true
+callback_tensorboard:
+  use_callback: true
+  update_freq: epoch
+  histogram_freq: 0
+  write_graph: true
+  write_grads: false
+  write_images: true
+callback_early_stopping:
+  use_callback: true
+  min_delta: 0.0001
+  patience: 50
+callback_reduced_learning_rate:
+  use_callback: true
+  factor: 0.5
+  min_delta: 0.0001
+  patience: 10
