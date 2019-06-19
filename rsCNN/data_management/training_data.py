@@ -22,89 +22,6 @@ from rsCNN.utils.general import *
 _logger = logging.getLogger(__name__)
 
 
-def build_or_load_rawfile_data(config: configs.Config, rebuild: bool = False):
-
-    #TODO: put this data container build into the load if not rebuild, and only do checks if you can't read in
-    # from the file.....requires dumping data_container into an output file in the save directory (good idea anyway)
-    data_container = data_core.Data_Container(config)
-    data_container.check_input_files(
-        config.raw_files.feature_files, config.raw_files.response_files,
-        config.raw_files.boundary_files
-    )
-
-    data_container.feature_raw_band_types = data_container.get_band_types(
-        config.raw_files.feature_files, config.raw_files.feature_data_type)
-    data_container.response_raw_band_types = data_container.get_band_types(
-        config.raw_files.response_files, config.raw_files.response_data_type)
-
-    # Load data if it already exists
-    if _check_built_data_files_exist(config) and not rebuild:
-        features, responses, weights = _load_built_data_files(config)
-
-    else:
-        assert config.raw_files.feature_files is not [], 'feature files to pull data from are required'
-        assert config.raw_files.response_files is not [], 'response files to pull data from are required'
-        data_core.create_built_data_output_directory(config)
-
-        if (config.raw_files.ignore_projections is False):
-            check_projections(config.raw_files.feature_files,
-                              config.raw_files.response_files,
-                              config.raw_files.boundary_files
-                              )
-
-        if (config.raw_files.boundary_files is not None):
-            boundary_files = [[loc_file for loc_file in config.raw_files.boundary_files
-                               if gdal.Open(loc_file, gdal.GA_ReadOnly) is not None]]
-        else:
-            boundary_files = None
-
-        check_resolutions(config.raw_files.feature_files, config.raw_files.response_files, boundary_files)
-
-        if (config.data_build.response_data_format == 'FCN'):
-            features, responses, weights, feature_band_types, response_band_types = build_training_data_ordered(
-                config, data_container.feature_raw_band_types, data_container.response_raw_band_types)
-        elif (config.data_build.response_data_format == 'CNN'):
-            features, responses, weights, feature_band_types, response_band_types = \
-                build_training_data_from_response_points(
-                    config, data_container.feature_raw_band_types, data_container.response_raw_band_types)
-        else:
-            raise NotImplementedError('Unknown response data format')
-
-        data_container.feature_band_types = feature_band_types
-        data_container.response_band_types = response_band_types
-    """
-    TODO:  Phil:  we shouldn't be assigning attributes to data_container, data_container should assign attributes to 
-    itself, and this will also simplify the API. Currently:
-    
-    # Create dataset
-    data_container = training_data.build_or_load_rawfile_data(config, rebuild=False)
-    data_container.build_or_load_scalers()
-    # Create sequences
-    train_folds = [idx for idx in range(config.data_build.number_folds)
-                   if idx not in (config.data_build.validation_fold, config.data_build.test_fold)]
-    training_sequence = sequences.build_memmapped_sequence(
-        data_container, train_folds, batch_size=config.data_samples.batch_size)
-    validation_sequence = sequences.build_memmapped_sequence(
-        data_container, [config.data_build.validation_fold], batch_size=config.data_samples.batch_size)
-        
-    Instead:
-    
-    data_container = DataContainer(config)
-    data_container.build_formatted_data_files() <-- takes a while, so should be explicit, should pass if already built
-    data_container.load_data_sequences() <-- should handle scalers and all sequences being created
-    
-    Are memmapped loads free? If so, then don't save features/responses/weights from build_formatted step. If not,
-    then save to the data_container, but don't do anything with them.
-    
-    Also, can we be consistent about the name of dataset or data_container? Use one for the class and instance names?
-    """
-    data_container.features = features
-    data_container.responses = responses
-    data_container.weights = weights
-
-    return data_container
-
-
 # TODO:  typing
 def build_training_data_ordered(
         config: configs.Config,
@@ -275,7 +192,7 @@ def build_training_data_ordered(
     if ('C' in response_raw_band_types):
         assert np.sum(np.array(response_raw_band_types) == 'C') == 1, \
             'Weighting is currently only enabled for one categorical response variable.'
-        features, responses, weights = _load_built_data_files(config, writeable=True)
+        features, responses, weights = load_built_data_files(config, writeable=True)
         weights = calculate_categorical_weights(responses, weights, config)
         _logger.debug('Delete in order to flush output')
         del features, responses, weights
@@ -284,7 +201,7 @@ def build_training_data_ordered(
 
     _logger.debug('Store data build config sections')
     _save_built_data_config_sections_to_verify_successful(config)
-    features, responses, weights = _load_built_data_files(config, writeable=False)
+    features, responses, weights = load_built_data_files(config, writeable=False)
     return features, responses, weights, feature_band_types, response_band_types
 
 
@@ -480,14 +397,14 @@ def build_training_data_from_response_points(
     if 'C' in response_raw_band_types:
         assert np.sum(np.array(response_raw_band_types) == 'C') == 1, \
             'Weighting is currently only enabled for one categorical response variable.'
-        features, responses, weights = _load_built_data_files(config, writeable=True)
+        features, responses, weights = load_built_data_files(config, writeable=True)
         weights = calculate_categorical_weights(responses, weights, config)
         del features, responses, weights
 
     _remove_temporary_data_files(config)
 
     _save_built_data_config_sections_to_verify_successful(config)
-    features, responses, weights = _load_built_data_files(config, writeable=False)
+    features, responses, weights = load_built_data_files(config, writeable=False)
     return features, responses, weights, feature_band_types, response_band_types
 
 
@@ -552,6 +469,7 @@ def get_proj(fname):
 
 def check_projections(a_files, b_files, c_files=None):
 
+    errors = []
     loc_a_files = [item for sublist in a_files for item in sublist]
     loc_b_files = [item for sublist in b_files for item in sublist]
     if c_files is None:
@@ -571,15 +489,18 @@ def check_projections(a_files, b_files, c_files=None):
 
     for _p in range(len(a_proj)):
         if (len(c_proj) > 0):
-            assert (a_proj[_p] == b_proj[_p] and a_proj == c_proj[_p]), \
-                'Projection_mismatch between\n{}: {},\n{}: {},\n{}: {}'.format(
-                    a_proj[_p], loc_a_files[_p], b_proj[_p], loc_b_files[_p], c_proj[_p], loc_c_files[_p])
+            if (a_proj[_p] != b_proj[_p] or a_proj != c_proj[_p]):
+                errors.append('Projection_mismatch between\n{}: {},\n{}: {},\n{}: {}'.format(a_proj[_p],
+                              loc_a_files[_p], b_proj[_p], loc_b_files[_p], c_proj[_p], loc_c_files[_p]))
         else:
-            assert (a_proj[_p] == b_proj[_p]), 'Projection_mismatch between\n{}: {}\n{}: {}'.\
-                format(a_proj[_p], loc_a_files[_p], b_proj[_p], loc_b_files[_p])
+            if (a_proj[_p] != b_proj[_p]):
+                errors.append('Projection_mismatch between\n{}: {}\n{}: {}'.\
+                              format(a_proj[_p], loc_a_files[_p], b_proj[_p], loc_b_files[_p]))
+    return errors
 
 
 def check_resolutions(a_files, b_files, c_files=None):
+    errors = []
     if c_files is None:
         c_files = list()
 
@@ -602,12 +523,14 @@ def check_resolutions(a_files, b_files, c_files=None):
 
     for _p in range(len(a_res)):
         if (len(c_res) > 0):
-            assert (np.all(a_res[_p] == b_res[_p]) and np.all(a_res == c_res[_p])), \
-                'Resolution mismatch between\n{}: {},\n{}: {},\n{}: {}'.format(
-                    a_res[_p], loc_a_files[_p], b_res[_p], loc_b_files[_p], c_res[_p], loc_c_files[_p])
+            if(np.all(a_res[_p] != b_res[_p]) or np.all(a_res != c_res[_p])):
+                errors.append('Resolution mismatch between\n{}: {},\n{}: {},\n{}: {}'.format(a_res[_p],
+                              loc_a_files[_p], b_res[_p], loc_b_files[_p], c_res[_p], loc_c_files[_p]))
         else:
-            assert (np.all(a_res[_p] == b_res[_p])), 'Resolution mimatch between\n{}: {}\n{}: {}'.\
-                format(a_res[_p], loc_a_files[_p], b_res[_p], loc_b_files[_p])
+            if (np.all(a_res[_p] != b_res[_p])):
+                errors.append('Resolution mimatch between\n{}: {}\n{}: {}'.\
+                              format(a_res[_p], loc_a_files[_p], b_res[_p], loc_b_files[_p]))
+    return errors
 
 # Calculates categorical weights for a single response
 
@@ -838,7 +761,7 @@ def _create_temporary_weights_data_files(config: configs.Config, num_samples: in
     return np.memmap(weights_filepath, dtype=np.float32, mode='w+', shape=shape)
 
 
-def _load_built_data_files(config: configs.Config, writeable: bool = False) \
+def load_built_data_files(config: configs.Config, writeable: bool = False) \
         -> Tuple[List[np.array], List[np.array], List[np.array]]:
     _logger.debug('Loading built data files with writeable == {}'.format(writeable))
     feature_files = data_core.get_built_features_filepaths(config)
@@ -953,12 +876,7 @@ def _is_boundary_file_vectorized(boundary_filepath: str) -> bool:
     return str(os.path.splitext(boundary_filepath)).lower() in data_core._VECTORIZED_FILENAMES
 
 
-def _check_build_successful_and_built_data_config_sections_available(config: configs.Config) -> bool:
-    filepath = data_core.get_built_data_config_filepath(config)
-    return os.path.exists(filepath)
-
-
-def _check_built_data_files_exist(config: configs.Config) -> bool:
+def check_built_data_files_exist(config: configs.Config) -> bool:
     filepaths = \
         data_core.get_built_features_filepaths(config) + \
         data_core.get_built_responses_filepaths(config) + \

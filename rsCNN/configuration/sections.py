@@ -1,10 +1,11 @@
 from collections import OrderedDict
+import gdal
 import logging
 import re
 from typing import Dict, List
 
 from rsCNN.configuration import DEFAULT_OPTIONAL_VALUE, DEFAULT_REQUIRED_VALUE
-from rsCNN.data_management import scalers
+from rsCNN.data_management import scalers, data_core
 
 
 # TODO:  add documentation for how to handle this file
@@ -139,17 +140,12 @@ class RawFiles(BaseConfigSection):
             if len(self.feature_files) != len(self.response_files):
                 errors.append('feature_files and response_files must have corresponding files and ' +
                               'be the same length')
-        if self.feature_data_type is None:
-            errors.append('feature_data_type must be provided')
-        if self.response_data_type is None:
-            errors.append('response_data_type must be provided')
-        if self.feature_files is None:
-            errors.append('feature_files must be provided')
-        if self.response_files is None:
-            errors.append('response_files must be provided')
         if type(self.boundary_files) is list:
             if self.boundary_bad_value is None:
                 errors.append('boundary_bad_value must be provided if boundary_files is provided')
+
+        errors.extend(data_core.check_input_files(self.feature_files, self.response_files, self.boundary_files))
+
         return errors
 
 
@@ -194,7 +190,7 @@ class DataBuild(BaseConfigSection):
     loss_window_radius = DEFAULT_REQUIRED_VALUE
     """int: Loss window radius determines the internal image window to use for loss calculations during model 
     training."""
-    # TODO:  Phil:  should mean_centering be a list so that we have one item per file?
+    # TODO:  convert to a list, one instance per file
     _feature_mean_centering_type = bool
     feature_mean_centering = False
     """bool: Should features be mean centered?"""
@@ -359,3 +355,6 @@ def get_config_sections() -> List:
         RawFiles, DataBuild, DataSamples, ModelTraining, CallbackGeneral, CallbackTensorboard, CallbackEarlyStopping,
         CallbackReducedLearningRate
     ]
+
+
+

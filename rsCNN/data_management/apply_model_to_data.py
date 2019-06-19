@@ -8,7 +8,7 @@ import matplotlib.gridspec as gridspec
 from tqdm import tqdm
 
 from rsCNN.data_management import common_io
-from rsCNN.data_management.training_data import Data_Container
+from rsCNN.data_management.data_core import Data_Container
 from rsCNN.utils.general import *
 
 
