@@ -44,6 +44,8 @@ class Data_Container:
     train_folds = None
 
     def __init__(self, config: configs.Config):
+        errors = config.get_human_readable_config_errors()
+        assert not errors, errors
         self.config = config
 
         #TODO: add in check to see if Data_Container exists, load if it does

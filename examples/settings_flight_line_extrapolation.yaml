@@ -28,8 +28,8 @@ data_build:
 data_samples:
   apply_random_transformations: false
   batch_size: 100
-  feature_scaler_names: MinMax
-  response_scaler_names: MinMax
+  feature_scaler_names: ['MinMaxScaler']
+  response_scaler_names: ['MinMaxScaler']
   feature_nodata_encoding: -10.0
 model_training:
   dir_out: ./flight_extrapolation_test

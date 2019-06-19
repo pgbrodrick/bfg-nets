@@ -5,6 +5,7 @@ import re
 from typing import Dict, List
 
 from rsCNN.configuration import DEFAULT_OPTIONAL_VALUE, DEFAULT_REQUIRED_VALUE
+from rsCNN.data_management import scalers
 
 
 # TODO:  add documentation for how to handle this file
@@ -143,7 +144,7 @@ class RawFiles(BaseConfigSection):
             if self.boundary_bad_value is None:
                 errors.append('boundary_bad_value must be provided if boundary_files is provided')
 
-        errors.extend(data_core.check_input_file_formats(self.feature_files, self.response_files, self.boundary_files))
+        errors.extend(check_input_file_formats(self.feature_files, self.response_files, self.boundary_files))
 
         return errors
 
@@ -246,14 +247,16 @@ class DataSamples(BaseConfigSection):
     def _check_config_validity(self) -> List[str]:
         # TODO
         errors = list()
-        for scaler_name in self.feature_scaler_names:
-            if not scalers.check_scaler_exists(scaler_name):
-                errors.append('feature_scaler_names contains a scaler name that does not exist:  {}'.format(
-                    scaler_name))
-        for scaler_name in self.response_scaler_names:
-            if not scalers.check_scaler_exists(scaler_name):
-                errors.append('response_scaler_names contains a scaler name that does not exist:  {}'.format(
-                    scaler_name))
+        if (self.feature_scaler_names is list):
+            for scaler_name in self.feature_scaler_names:
+                if not scalers.check_scaler_exists(scaler_name):
+                    errors.append('feature_scaler_names contains a scaler name that does not exist:  {}'.format(
+                        scaler_name))
+        if (self.response_scaler_names is list):
+            for scaler_name in self.response_scaler_names:
+                if not scalers.check_scaler_exists(scaler_name):
+                    errors.append('response_scaler_names contains a scaler name that does not exist:  {}'.format(
+                        scaler_name))
         return errors
 
 
