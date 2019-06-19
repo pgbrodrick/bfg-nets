@@ -2,6 +2,7 @@
 from typing import List, Tuple
 import logging
 import gdal
+import numpy as np
 import os
 
 from rsCNN.configuration import configs, sections
@@ -16,6 +17,7 @@ _FILENAME_RESPONSES_SUFFIX = 'responses_{}.npy'
 _FILENAME_RESPONSES_TEMPORARY_SUFFIX = '_responses_memmap_temporary.npy'
 _FILENAME_WEIGHTS_SUFFIX = 'weights_{}.npy'
 _FILENAME_WEIGHTS_TEMPORARY_SUFFIX = '_weights_memmap_temporary.npy'
+_FILENAME_DATA_CONTAINER = 'data_container.npz'
 _VECTORIZED_FILENAMES = ('kml', 'shp')
 
 
@@ -37,9 +39,8 @@ class DataContainer:
     feature_raw_band_types = None
     response_raw_band_types = None
 
-    # TODO:  not used!
-    feature_scalers = list()
-    response_scalers = list()
+    feature_scaler = list()
+    response_scaler = list()
 
     train_folds = None
 
@@ -48,19 +49,18 @@ class DataContainer:
         assert not errors, errors
         self.config = config
 
-        #TODO: add in check to see if Data_Container exists, load if it does
+        if (os.path.isfile(get_built_data_container_filepath(self.config))):
+            _logger.info('Previously saved DataContainer found')
+            try:
+                self._load_data_core()
+            except:
+                _logger.info('Failed to load previously saved DataContainer')
 
     def build_or_load_rawfile_data(self, rebuild: bool = False):
 
         # Load data if it already exists
         if training_data.check_built_data_files_exist(self.config) and not rebuild:
             features, responses, weights = training_data.load_built_data_files(self.config)
-
-            #TODO: eliminate this once Data_Container reload is built
-            self.feature_raw_band_types = self.get_band_types(
-                self.config.raw_files.feature_files, self.config.raw_files.feature_data_type)
-            self.response_raw_band_types = self.get_band_types(
-                self.config.raw_files.response_files, self.config.raw_files.response_data_type)
 
         else:
             errors = sections.check_input_file_validity(self.config.raw_files.feature_files,
@@ -107,6 +107,9 @@ class DataContainer:
 
             self.feature_band_types = feature_band_types
             self.response_band_types = response_band_types
+
+            _logger.info('Saving DataContainer')
+            self._save_data_core()
 
         self.features = features
         self.responses = responses
@@ -258,6 +261,31 @@ class DataContainer:
         return output_raw_band_types
 
 
+    def _save_data_core(self):
+        np.savez(get_built_data_container_filepath(self.config),
+                 training_sequence = self.training_sequence,
+                 validation_sequence = self.validation_sequence,
+                 feature_band_types = self.feature_band_types,
+                 response_band_types = self.response_band_types,
+                 feature_raw_band_types = self.feature_raw_band_types,
+                 response_raw_band_types = self.response_raw_band_types,
+                 train_folds = self.train_folds
+                 )
+
+
+    def _load_data_core(self):
+        npzf = np.load(get_built_data_container_filepath(self.config))
+        self.training_sequence = npzf['training_sequence']
+        self.validation_sequence = npzf['validation_sequence']
+        self.feature_band_types = npzf['feature_band_types']
+        self.response_band_types = npzf['response_band_types']
+        self.feature_raw_band_types = npzf['feature_raw_band_types']
+        self.response_raw_band_types = npzf['response_raw_band_types']
+        self.train_folds = npzf['train_folds']
+
+
+
+
 
 ################### Filepath Nomenclature Functions ##############################
 
@@ -311,4 +339,5 @@ def get_memmap_basename(config: configs.Config) -> str:
     return os.path.join(config.data_build.dir_out, filepath_separator)
 
 
-
+def get_built_data_container_filepath(config: configs.Config) -> str:
+    return os.path.join(config.data_build.dir_out, _FILENAME_DATA_CONTAINER)
