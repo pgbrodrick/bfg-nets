@@ -22,34 +22,6 @@ _VECTORIZED_FILENAMES = ('kml', 'shp')
 _logger = logging.getLogger(__name__)
 
 
-"""
-TODO:  Phil:  we shouldn't be assigning attributes to data_container, data_container should assign attributes to 
-itself, and this will also simplify the API. Currently:
-
-# Create dataset
-data_container = training_data.build_or_load_rawfile_data(config, rebuild=False)
-data_container.build_or_load_scalers()
-# Create sequences
-train_folds = [idx for idx in range(config.data_build.number_folds)
-               if idx not in (config.data_build.validation_fold, config.data_build.test_fold)]
-training_sequence = sequences.build_memmapped_sequence(
-    data_container, train_folds, batch_size=config.data_samples.batch_size)
-validation_sequence = sequences.build_memmapped_sequence(
-    data_container, [config.data_build.validation_fold], batch_size=config.data_samples.batch_size)
-    
-Instead:
-
-data_container = DataContainer(config)
-data_container.build_formatted_data_files() <-- takes a while, so should be explicit, should pass if already built
-data_container.load_data_sequences() <-- should handle scalers and all sequences being created
-
-Are memmapped loads free? If so, then don't save features/responses/weights from build_formatted step. If not,
-then save to the data_container, but don't do anything with them.
-
-Also, can we be consistent about the name of dataset or data_container? Use one for the class and instance names?
-"""
-
-
 class Data_Container:
     """ A container class that holds all sorts of data objects
     """
