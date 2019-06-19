@@ -42,7 +42,6 @@ model_training:
   weighted: false
 architecture:
   filters: REQUIRED
-  inshape: REQUIRED
   kernel_size: [3, 3]
   n_classes: REQUIRED
   num_layers: 8

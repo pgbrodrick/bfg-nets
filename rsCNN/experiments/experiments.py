@@ -44,12 +44,11 @@ class Experiment(object):
         else:
             configs.save_config_to_file(self.config, get_config_filepath(self.config.model_training.dir_out))
 
-    def build_or_load_model(self):
+    def build_or_load_model(self, sample_inshape: tuple):
         _logger.info('Building or loading model')
-        print(self.config.architecture.inshape)
         loss_function = losses.cropped_loss(
             self.config.model_training.loss_metric,
-            self.config.architecture.inshape[0],
+            self.config.architecture.loss_window,
             2 * self.config.data_build.loss_window_radius,
             self.config.model_training.weighted
         )

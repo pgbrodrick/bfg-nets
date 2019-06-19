@@ -43,7 +43,6 @@ model_training:
 architecture:
   block_structure: [2, 2, 2, 2]
   filters: REQUIRED
-  inshape: REQUIRED
   kernel_size: [3, 3]
   min_conv_width: 8
   n_classes: REQUIRED
