@@ -152,14 +152,19 @@ def build_training_data_ordered(
     del all_site_xy_locations
     del reference_subset_geotransforms
 
+    features, responses = _open_temporary_features_responses_data_files(config, 
+                                                                        n_features, 
+                                                                        n_responses, 
+                                                                        read_type='r+')
     features = _resize_munged_features(features, _sample_index, config)
     responses = _resize_munged_responses(responses, _sample_index, config)
+    assert features.shape[0] > 0, 'Failed to collect a single sample'
     _log_munged_data_information(features, responses)
 
     _logger.debug('Shuffle data to avoid fold assignment biases')
     perm = np.random.permutation(features.shape[0])
     features = ooc_functions.permute_array(features, data_core.get_temporary_features_filepath(config), perm)
-    responses = ooc_functions.permute_array(features, data_core.get_temporary_responses_filepath(config), perm)
+    responses = ooc_functions.permute_array(responses, data_core.get_temporary_responses_filepath(config), perm)
     del perm
 
     _logger.debug('Create uniform weights')
@@ -709,6 +714,7 @@ def read_segmentation_chunk(f_sets: List[tuple],
     features, responses = _open_temporary_features_responses_data_files(config, local_feature.shape[-1], local_response.shape[-1], read_type='r+')
     features[sample_index,...] = local_feature
     responses[sample_index,...] = local_response
+    del features, responses
 
     return True
 

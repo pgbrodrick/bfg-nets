@@ -46,18 +46,20 @@ class Data_Container:
     def __init__(self, config: configs.Config):
         self.config = config
 
-        #TODO: add in check to see if config exists, load if it does
-
-        self.feature_raw_band_types = self.get_band_types(
-            self.config.raw_files.feature_files, self.config.raw_files.feature_data_type)
-        self.response_raw_band_types = self.get_band_types(
-            self.config.raw_files.response_files, self.config.raw_files.response_data_type)
+        #TODO: add in check to see if Data_Container exists, load if it does
 
     def build_or_load_rawfile_data(self, rebuild: bool = False):
 
         # Load data if it already exists
         if training_data.check_built_data_files_exist(self.config) and not rebuild:
             features, responses, weights = training_data.load_built_data_files(self.config)
+
+            #TODO: eliminate this once Data_Container reload is built
+            self.feature_raw_band_types = self.get_band_types(
+                self.config.raw_files.feature_files, self.config.raw_files.feature_data_type)
+            self.response_raw_band_types = self.get_band_types(
+                self.config.raw_files.response_files, self.config.raw_files.response_data_type)
+
         else:
             errors = sections.check_input_file_validity(self.config.raw_files.feature_files,
                                                self.config.raw_files.response_files,
@@ -78,9 +80,18 @@ class Data_Container:
 
             errors.extend(training_data.check_resolutions(self.config.raw_files.feature_files, self.config.raw_files.response_files, boundary_files))
 
+            errors.extend(self.check_band_types(self.config.raw_files.feature_files, self.config.raw_files.feature_data_type))
+            errors.extend(self.check_band_types(self.config.raw_files.response_files, self.config.raw_files.response_data_type))
+
             if (len(errors) > 0):
-                return 'List of raw data file format errors is as follows:\n' + '\n'.join(error for error in errors)
+                print('List of raw data file format errors is as follows:\n' + '\n'.join(error for error in errors))
             assert not errors, 'Raw data file errors found, terminating'
+
+
+            self.feature_raw_band_types = self.get_band_types(
+                self.config.raw_files.feature_files, self.config.raw_files.feature_data_type)
+            self.response_raw_band_types = self.get_band_types(
+                self.config.raw_files.response_files, self.config.raw_files.response_data_type)
 
             if (self.config.data_build.response_data_format == 'FCN'):
                 features, responses, weights, feature_band_types, response_band_types = training_data.build_training_data_ordered(
@@ -154,7 +165,7 @@ class Data_Container:
             errors.append('config.data_samples.batch_size must be defined')
 
         if (len(errors) > 0):
-            return 'List of memmap sequence errors is as follows:\n' + '\n'.join(error for error in errors)
+            print('List of memmap sequence errors is as follows:\n' + '\n'.join(error for error in errors))
         assert not errors, 'Memmap sequence build errors found, terminating'
 
         data_sequence = MemmappedSequence(
@@ -169,6 +180,47 @@ class Data_Container:
             nan_replacement_value=self.config.data_samples.feature_nodata_encoding
         )
         return data_sequence
+
+
+    def check_band_types(self, file_list, band_types):
+        errors = []
+        valid_band_types = ['R', 'C']
+        # 3 options are available for specifying band_types:
+        # 1) band_types is None - assume all bands are real
+        # 2) band_types is a list of strings within valid_band_types - assume each band from the associated file is the
+        #    specified type, requires len(band_types) == len(file_list[0])
+        # 3) band_types is list of lists (of strings, contained in valid_band_types), with the outer list referring to
+        #    files and the inner list referring to bands
+
+        num_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in file_list[0]]
+
+        if (band_types is not None):
+            
+            if (type(band_types) is not list):
+                errors.append('band_types must be None or a list')
+                if (len(errors) > 0):
+                    errors.append('All band type checks could not be completed')
+                    return errors
+
+            # List of lists, option 3 from above - just check components
+            if (type(band_types[0]) is list):
+                for _file in range(len(band_types)):
+                    if (type(band_types[_file]) is not list):
+                        errors.append('If one element of band_types is a list, all elements must be lists')
+                    if (len(band_types[_file]) != num_bands_per_file[_file]):
+                        errors.append('File {} has wrong number of band types'.format(_file))
+                    for _band in range(len(band_types[_file])):
+                        if (band_types[_file][_band] not in valid_band_types):
+                            errors.append('Invalid band types at file {}, band {}'.format(_file, _band))
+
+            else:
+                if (len(band_types) != len(file_list)):
+                    errors.append('Length of band_types is not equal to length of file list.  Incorrect input format')
+                for _file in range(len(band_types)):
+                    if (band_types[_file] not in valid_band_types):
+                        errors.append('Invalid band type at File {}'.format(_file))
+
+        return errors
 
 
     def get_band_types(self, file_list, band_types):
@@ -189,26 +241,13 @@ class Data_Container:
                 output_raw_band_types.append(['R' for _band in range(num_bands_per_file[_file])])
 
         else:
-            assert type(band_types) is list, 'band_types must be None or a list'
 
-            # List of lists, option 3 from above - just check components
             if (type(band_types[0]) is list):
-                for _file in range(len(band_types)):
-                    assert type(band_types[_file]) is list, \
-                        'If one element of band_types is a list, all elements must be lists'
-                    assert len(band_types[_file]) == num_bands_per_file[_file], \
-                        'File {} has wrong number of band types'.format(_file)
-                    for _band in range(len(band_types[_file])):
-                        assert band_types[_file][_band] in valid_band_types, \
-                            'Invalid band types at file {}, band {}'.format(_file, _band)
-
                 output_raw_band_types = band_types
-
             else:
                 # List of values valid_band_types, option 2 from above - convert to list of lists
                 output_raw_band_types = []
                 for _file in range(len(band_types)):
-                    assert band_types[_file] in valid_band_types, 'Invalid band type at File {}'.format(_file)
                     output_raw_band_types.append([band_types[_file] for _band in range(num_bands_per_file[_file])])
 
         # since it's more convenient, flatten this list of lists into a list before returning
