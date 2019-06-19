@@ -6,9 +6,6 @@ from keras.layers import BatchNormalization, Concatenate, Conv2D, ReLU
 from rsCNN.architectures import config_sections
 
 
-# TODO:  implement optional bottleneck layers
-
-
 class ArchitectureConfigSection(
     config_sections.BlockMixin,
     config_sections.GrowthMixin,

@@ -7,9 +7,6 @@ from rsCNN.configuration import DEFAULT_OPTIONAL_VALUE, DEFAULT_REQUIRED_VALUE
 from rsCNN.data_management import scalers
 
 
-# TODO:  add documentation for how to handle this file
-# TODO:  check downstream that len raw filename lists match len scalers if len scalers > 1
-
 _logger = logging.getLogger(__name__)
 
 
@@ -175,7 +172,7 @@ class DataBuild(BaseConfigSection):
     filename_prefix_out = ''
     """str: Optional prefix for built data filenames, useful for organizing or tracking built data files
     from different build strategies."""
-    # TODO:  rename the following?
+    # TODO:  Phil:  rename the following? it doesn't feel totally clear
     _response_data_format_type = str
     response_data_format = 'FCN'
     """str: Either CNN for convolutional neural network or FCN for fully convolutional network."""
@@ -212,12 +209,12 @@ class DataBuild(BaseConfigSection):
     _feature_nodata_maximum_fraction_type = float
     feature_nodata_maximum_fraction = 0.0
     """float: Only include built data samples with a lower proportion of missing feature data values."""
-    # TODO: expand to multiple response values
+    # TODO: Phil:  expand to multiple response values per file?
     _response_min_value_type = float
     response_min_value = DEFAULT_OPTIONAL_VALUE
     """float: Response values below this minimum are converted to missing data. Currently applied to all response values 
     uniformly."""
-    # TODO: expand to multiple response values
+    # TODO: Phil:  expand to multiple response values per file?
     _response_max_value_type = float
     response_max_value = DEFAULT_OPTIONAL_VALUE
     """float: Response values above this maximum are converted to missing data. Currently applied to all response values 
@@ -228,7 +225,6 @@ class DataBuild(BaseConfigSection):
     files."""
 
     def _check_config_validity(self) -> List[str]:
-        # TODO
         errors = list()
         response_data_format_options = ('FCN', 'CNN')
         if self.response_data_format not in response_data_format_options:
@@ -260,7 +256,6 @@ class DataSamples(BaseConfigSection):
     nans."""
 
     def _check_config_validity(self) -> List[str]:
-        # TODO
         errors = list()
         for scaler_name in self.feature_scaler_names:
             if not scalers.check_scaler_exists(scaler_name):
@@ -288,7 +283,7 @@ class ModelTraining(BaseConfigSection):
     """bool: Assert, i.e., fail if GPUs are required and not available."""
     _architecture_name_type = str
     architecture_name = DEFAULT_REQUIRED_VALUE
-    """str: Architecture name from existing options:  TODO."""
+    """str: Architecture name from existing options."""
     _loss_metric_type = str
     loss_metric = DEFAULT_REQUIRED_VALUE
     """str: Loss metric to use for model training."""
@@ -303,7 +298,6 @@ class ModelTraining(BaseConfigSection):
     """bool: Should underrepresented classes be overweighted during model training"""
 
     def _check_config_validity(self) -> List[str]:
-        # TODO
         errors = list()
         return errors
 
