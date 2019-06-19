@@ -36,14 +36,14 @@ model_training:
   verbosity: 1
   assert_gpu: false
   architecture_name: unet
-  loss_metric: MSE
+  loss_metric: mse
   max_epochs: 100
   optimizer: adam
   weighted: false
 architecture:
-  block_structure: [2, 2, 2, 2]
+  block_structure: [4, 4]
   filters: 6
-  inshape: [64,64,3]
+  inshape: [32,32,3]
   kernel_size: [3, 3]
   min_conv_width: 8
   n_classes: 1

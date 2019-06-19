@@ -2,7 +2,7 @@ import argparse
 import os
 
 from rsCNN.configuration import configs
-from rsCNN.data_management import data_core
+from rsCNN.data_management import data_core, apply_model_to_data
 import rsCNN.evaluation
 from rsCNN.experiments import experiments
 from rsCNN.utils import logging
