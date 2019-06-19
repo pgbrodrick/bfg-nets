@@ -4,7 +4,7 @@ import logging
 import gdal
 import os
 
-from rsCNN.configuration import configs
+from rsCNN.configuration import configs, sections
 from rsCNN.data_management import scalers, training_data
 from rsCNN.data_management.sequences import MemmappedSequence
 
@@ -59,7 +59,7 @@ class Data_Container:
         if training_data.check_built_data_files_exist(self.config) and not rebuild:
             features, responses, weights = training_data.load_built_data_files(self.config)
         else:
-            errors = check_input_file_validity(self.config.raw_files.feature_files,
+            errors = sections.check_input_file_validity(self.config.raw_files.feature_files,
                                                self.config.raw_files.response_files,
                                                self.config.raw_files.boundary_files)
 
@@ -268,91 +268,6 @@ def get_built_data_filepaths(config: configs.Config, filename_suffix: str) -> Li
 def get_memmap_basename(config: configs.Config) -> str:
     filepath_separator = config.data_build.filename_prefix_out + '_' if config.data_build.filename_prefix_out else ''
     return os.path.join(config.data_build.dir_out, filepath_separator)
-
-
-################### Config / input checking functions ##############################
-
-def check_input_file_formats(f_file_list, r_file_list, b_file_list) -> List[str]:
-    errors = []
-    # f = feature, r = response, b = boundary
-
-    # file lists r and f are expected a list of lists.  The outer list is a series of sites (location a, b, etc.).
-    # The inner list is a series of files associated with that site (band x, y, z).  Each site must have the
-    # same number of files, and each file from each site must have the same number of bands, in the same order.
-    # file list b is a list for each site, with one boundary file expected to be the interior boundary for all
-    # bands.
-
-    # Check that feature and response files are lists
-    if (type(f_file_list) is not list):
-        errors.append('Feature files must be a list of lists')
-    if (type(r_file_list) is not list):
-        errors.append('Response files must be a list of lists')
-
-    if (len(errors) > 0):
-        errors.append('Feature or response files not in correct format...all checks cannot be completed')
-        return errors
-
-    # Checks on the matching numbers of sites
-    if (len(f_file_list) != len(r_file_list)):
-        errors.append('Feature and response site lists must be the same length')
-    if (len(f_file_list) <= 0):
-        errors.append('At least one feature and response site is required')
-    if b_file_list is not None:
-        if (len(b_file_list) != len(f_file_list)):
-            errors.append(\
-                'Boundary and feature file lists must be the same length. Boundary list: {}. Feature list: {}.'.format(
-                b_file_list, f_file_list))
-
-    # Checks that we have lists of lists for f and r
-    for _site in range(len(f_file_list)):
-        if(type(f_file_list[_site]) is not list):
-            errors.append('Features at site {} are not as a list'.format(_site))
-
-    for _site in range(len(r_file_list)):
-        if(type(r_file_list[_site]) is not list):
-            errors.append('Responses at site {} are not as a list'.format(_site))
-
-
-    # Checks on the number of files per site
-    num_f_files_per_site = len(f_file_list[0])
-    num_r_files_per_site = len(r_file_list[0])
-    for _site in range(len(f_file_list)):
-        if(len(f_file_list[_site]) != num_f_files_per_site):
-            errors.append('Inconsistent number of feature files at site {}'.format(_site))
-
-    for _site in range(len(r_file_list)):
-        if(len(r_file_list[_site]) != num_r_files_per_site):
-            errors.append('Inconsistent number of response files at site {}'.format(_site))
-
-
-def check_input_file_validity(f_file_list, r_file_list, b_file_list) -> List[str]:
-    errors = check_input_file_formats(f_file_list, r_file_list, b_file_list)
-    # Checks that all files can be opened by gdal
-    for _site in range(len(f_file_list)):
-        for _band in range(len(f_file_list[_site])):
-            if (gdal.Open(f_file_list[_site][_band], gdal.GA_ReadOnly) is None):
-                errors.append('Could not open feature site {}, file {}'.format(_site, _band))
-
-    for _site in range(len(r_file_list)):
-        for _band in range(len(r_file_list[_site])):
-            if(gdal.Open(r_file_list[_site][_band], gdal.GA_ReadOnly) is None):
-                errors.append('Could not open response site {}, file {}'.format(_site, _band))
-
-
-    # Checks on the number of bands per file
-    num_f_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in f_file_list[0]]
-    num_r_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in r_file_list[0]]
-    for _site in range(len(f_file_list)):
-        for _file in range(len(f_file_list[_site])):
-            if(gdal.Open(f_file_list[_site][_file], gdal.GA_ReadOnly).RasterCount != num_f_bands_per_file[_file]):
-                errors.append('Inconsistent number of feature bands in site {}, file {}'.format(_site, _file))
-
-    for _site in range(len(r_file_list)):
-        for _file in range(len(r_file_list[_site])):
-            if(gdal.Open(r_file_list[_site][_file], gdal.GA_ReadOnly).RasterCount != num_r_bands_per_file[_file]):
-                errors.append('Inconsistent number of response bands in site {}, file {}'.format(_site, _file))
-
-    return errors
 
 
 
