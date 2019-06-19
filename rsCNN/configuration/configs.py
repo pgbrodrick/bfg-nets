@@ -16,107 +16,6 @@ _logger = logging.getLogger(__name__)
 DEFAULT_FILENAME_CONFIG = 'config.yaml'
 
 
-def create_config_from_file(filepath: str) -> 'Config':
-    """Creates a Config object from a YAML file.
-
-    Args:
-        filepath: Filepath to existing YAML file.
-
-    Returns:
-        Config object with parsed YAML file attributes.
-    """
-    assert os.path.exists(filepath), 'No config file found at {}'.format(filepath)
-    _logger.debug('Loading config file from {}'.format(filepath))
-    with open(filepath) as file_:
-        raw_config = yaml.safe_load(file_)
-    return _create_config(raw_config, is_template=False)
-
-
-def create_config_template(architecture_name: str, filepath: str = None) -> 'Config':
-    """Creates a template version of a Config for a given architecture, with required and optional parameters
-    highlighted, and default values for other parameters. Config is returned but can optionally be written to YAML file.
-
-    Args:
-        architecture_name: Name of available architecture.
-        filepath: Filepath to which template YAML file is saved, if desired.
-
-    Returns:
-        Template version of a Config.
-    """
-    _logger.debug('Creating config template for architecture {} at {}'.format(architecture_name, filepath))
-    config_options = {'model_training': {'architecture_name': architecture_name}}
-    config = _create_config(config_options, is_template=True)
-    if filepath is not None:
-        save_config_to_file(config, filepath)
-    return config
-
-
-def _create_config(config_options: dict, is_template: bool) -> 'Config':
-    config_copy = copy.deepcopy(config_options)  # Use a copy because config options are popped from the dict
-    # Populate config sections with the provided configuration options, tracking errors
-    populated_sections = dict()
-    for config_section in sections.get_config_sections():
-        section_name = config_section.get_config_name_as_snake_case()
-        populated_section = config_section()
-        populated_section.set_config_options(config_copy.get(section_name, dict()), is_template)
-        populated_sections[section_name] = populated_section
-    # Populate architecture options given architecture name
-    architecture_name = populated_sections['model_training'].architecture_name
-    architecture = config_sections.get_architecture_config_section(architecture_name)
-    architecture.set_config_options(config_copy.get('architecture', dict()), is_template)
-    populated_sections['architecture'] = architecture
-    return Config(**populated_sections)
-
-
-def save_config_to_file(config: 'Config', filepath: str, include_sections: list = None) -> None:
-    """Saves/serializes a Config object to a YAML file.
-
-    Args:
-        config: Config object.
-        filepath: Filepath to which YAML file is saved.
-        include_sections: Config sections that should be included. All config sections are included if None.
-
-    Returns:
-        None
-    """
-
-    def _represent_dictionary_order(self, dict_data):
-        # via https://stackoverflow.com/questions/31605131/dumping-a-dictionary-to-a-yaml-file-while-preserving-order
-        return self.represent_mapping('tag:yaml.org,2002:map', dict_data.items())
-
-    def _represent_list_inline(self, list_data):
-        return self.represent_sequence('tag:yaml.org,2002:seq', list_data, flow_style=True)
-
-    yaml.add_representer(OrderedDict, _represent_dictionary_order)
-    yaml.add_representer(list, _represent_list_inline)
-    config_out = config.get_config_as_dict()
-    _logger.debug('Saving config file to {}'.format(filepath))
-    if include_sections:
-        _logger.debug('Only saving config sections: {}'.format(', '.join(include_sections)))
-        config_out = {section: config_out[section] for section in include_sections}
-    with open(filepath, 'w') as file_:
-        yaml.dump(config_out, file_, default_flow_style=False)
-
-
-def get_config_differences(config_a: 'Config', config_b: 'Config') -> Dict:
-    differing_items = dict()
-    dict_a = config_a.get_config_as_dict()
-    dict_b = config_b.get_config_as_dict()
-    all_sections = set(list(dict_a.keys()) + list(dict_b.keys()))
-    for section in all_sections:
-        section_a = dict_a.get(section, dict())
-        section_b = dict_b.get(section, dict())
-        all_options = set(list(section_a.keys()) + list(section_b.keys()))
-        for option in all_options:
-            value_a = section_a.get(option, None)
-            value_b = section_b.get(option, None)
-            if value_a != value_b:
-                _logger.debug('Configs have different values for option {} in section {}:  {} and {}'.format(
-                    option, section, value_a, value_b))
-                differing_items.setdefault(section, dict())[option] = (value_a, value_b)
-    return differing_items
-
-
 class Config(object):
     """
     Handles the reading and formatting of raw data files, the building and training of models and architectures, and
@@ -211,3 +110,104 @@ class Config(object):
         if not errors:
             return ''
         return 'List of configuration section and option errors is as follows:\n' + '\n'.join(error for error in errors)
+
+
+def create_config_from_file(filepath: str) -> Config:
+    """Creates a Config object from a YAML file.
+
+    Args:
+        filepath: Filepath to existing YAML file.
+
+    Returns:
+        Config object with parsed YAML file attributes.
+    """
+    assert os.path.exists(filepath), 'No config file found at {}'.format(filepath)
+    _logger.debug('Loading config file from {}'.format(filepath))
+    with open(filepath) as file_:
+        raw_config = yaml.safe_load(file_)
+    return _create_config(raw_config, is_template=False)
+
+
+def create_config_template(architecture_name: str, filepath: str = None) -> Config:
+    """Creates a template version of a Config for a given architecture, with required and optional parameters
+    highlighted, and default values for other parameters. Config is returned but can optionally be written to YAML file.
+
+    Args:
+        architecture_name: Name of available architecture.
+        filepath: Filepath to which template YAML file is saved, if desired.
+
+    Returns:
+        Template version of a Config.
+    """
+    _logger.debug('Creating config template for architecture {} at {}'.format(architecture_name, filepath))
+    config_options = {'model_training': {'architecture_name': architecture_name}}
+    config = _create_config(config_options, is_template=True)
+    if filepath is not None:
+        save_config_to_file(config, filepath)
+    return config
+
+
+def _create_config(config_options: dict, is_template: bool) -> Config:
+    config_copy = copy.deepcopy(config_options)  # Use a copy because config options are popped from the dict
+    # Populate config sections with the provided configuration options, tracking errors
+    populated_sections = dict()
+    for config_section in sections.get_config_sections():
+        section_name = config_section.get_config_name_as_snake_case()
+        populated_section = config_section()
+        populated_section.set_config_options(config_copy.get(section_name, dict()), is_template)
+        populated_sections[section_name] = populated_section
+    # Populate architecture options given architecture name
+    architecture_name = populated_sections['model_training'].architecture_name
+    architecture = config_sections.get_architecture_config_section(architecture_name)
+    architecture.set_config_options(config_copy.get('architecture', dict()), is_template)
+    populated_sections['architecture'] = architecture
+    return Config(**populated_sections)
+
+
+def save_config_to_file(config: Config, filepath: str, include_sections: list = None) -> None:
+    """Saves/serializes a Config object to a YAML file.
+
+    Args:
+        config: Config object.
+        filepath: Filepath to which YAML file is saved.
+        include_sections: Config sections that should be included. All config sections are included if None.
+
+    Returns:
+        None
+    """
+
+    def _represent_dictionary_order(self, dict_data):
+        # via https://stackoverflow.com/questions/31605131/dumping-a-dictionary-to-a-yaml-file-while-preserving-order
+        return self.represent_mapping('tag:yaml.org,2002:map', dict_data.items())
+
+    def _represent_list_inline(self, list_data):
+        return self.represent_sequence('tag:yaml.org,2002:seq', list_data, flow_style=True)
+
+    yaml.add_representer(OrderedDict, _represent_dictionary_order)
+    yaml.add_representer(list, _represent_list_inline)
+    config_out = config.get_config_as_dict()
+    _logger.debug('Saving config file to {}'.format(filepath))
+    if include_sections:
+        _logger.debug('Only saving config sections: {}'.format(', '.join(include_sections)))
+        config_out = {section: config_out[section] for section in include_sections}
+    with open(filepath, 'w') as file_:
+        yaml.dump(config_out, file_, default_flow_style=False)
+
+
+def get_config_differences(config_a: Config, config_b: Config) -> Dict:
+    differing_items = dict()
+    dict_a = config_a.get_config_as_dict()
+    dict_b = config_b.get_config_as_dict()
+    all_sections = set(list(dict_a.keys()) + list(dict_b.keys()))
+    for section in all_sections:
+        section_a = dict_a.get(section, dict())
+        section_b = dict_b.get(section, dict())
+        all_options = set(list(section_a.keys()) + list(section_b.keys()))
+        for option in all_options:
+            value_a = section_a.get(option, None)
+            value_b = section_b.get(option, None)
+            if value_a != value_b:
+                _logger.debug('Configs have different values for option {} in section {}:  {} and {}'.format(
+                    option, section, value_a, value_b))
+                differing_items.setdefault(section, dict())[option] = (value_a, value_b)
+    return differing_items
