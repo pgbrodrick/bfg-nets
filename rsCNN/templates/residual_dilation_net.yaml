@@ -44,7 +44,6 @@ architecture:
   block_structure: [2, 2, 2, 2]
   dilation_rate: 2
   filters: REQUIRED
-  inshape: REQUIRED
   kernel_size: [3, 3]
   n_classes: REQUIRED
   output_activation: REQUIRED

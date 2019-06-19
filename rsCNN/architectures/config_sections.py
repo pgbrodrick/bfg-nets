@@ -29,10 +29,6 @@ class BaseArchitectureConfigSection(sections.BaseConfigSection):
     filters = DEFAULT_REQUIRED_VALUE
     """int: Number of filters to use for initial convolutions, may increase in architectures that support the use_growth
     option."""
-    _inshape_type = tuple
-    inshape = DEFAULT_REQUIRED_VALUE
-    """tuple: The inshape of sample arrays passed to the model; e.g., 128x128x4 for a 128x128 image with four bands or
-    channels."""
     _kernel_size_type = tuple
     kernel_size = DEFAULT_KERNEL_SIZE
     """tuple: The kernel size used for convolutions. Most often (3, 3) for a 3x3 kernel."""
