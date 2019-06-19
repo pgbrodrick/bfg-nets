@@ -15,10 +15,12 @@ _logger = logging.getLogger(__name__)
 
 class BaseConfigSection(object):
     _config_options = NotImplemented
-    _optional_options = None
+    _options_required = None
+    _options_optional = None
 
     def __init__(self) -> None:
-        self._optional_options = [key for key in self.get_option_keys() if getattr(self, key) == DEFAULT_OPTIONAL_VALUE]
+        self._options_required = [key for key in self.get_option_keys() if getattr(self, key) == DEFAULT_REQUIRED_VALUE]
+        self._options_optional = [key for key in self.get_option_keys() if getattr(self, key) == DEFAULT_OPTIONAL_VALUE]
 
     @classmethod
     def get_config_name_as_snake_case(cls) -> str:
@@ -74,16 +76,25 @@ class BaseConfigSection(object):
 
     def check_config_validity(self) -> List[str]:
         errors = list()
-        message_template = 'Invalid type for config option {} in config section {}. The provided value {} is a {}, ' + \
-                           'but the required value should be a {}.'
+        message_required = '{} in config section {} is required, but either 1) None was provided or 2) no value ' + \
+                           'was provided. The expected type is {}.'
+        message_type = 'Invalid type for config option {} in config section {}. The provided value {} is a {}, ' + \
+                       'but the required value should be a {}.'
         for key in self.get_option_keys():
             value = getattr(self, key)
-            # Optional options can be None, regardless of their expected type
-            if value is None and key in self._optional_options:
-                continue
+            # No further checking is necessary if the provided type matches to expected type
             type_expected = self._get_expected_type_for_option_key(key)
-            if type(value) is not type_expected:
-                errors.append(message_template.format(key, self.__class__.__name__, value, type(value), type_expected))
+            if type(value) is type_expected:
+                continue
+            # Optional values which were not provided (i.e., are None), are acceptable
+            if value is None and key in self._options_optional:
+                continue
+            # At this point, we know there's an issue with this key
+            # Either we have a required option that can never be None, or we have a type mismatch
+            if value is None and key in self._options_required:
+                errors.append(message_required.format(key, self.__class__.__name__, type_expected))
+            else:
+                errors.append(message_type.format(key, self.__class__.__name__, value, type(value), type_expected))
         errors.extend(self._check_config_validity())
         return errors
 
