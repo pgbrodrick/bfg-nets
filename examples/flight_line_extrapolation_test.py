@@ -27,7 +27,7 @@ data_container.build_or_load_scalers()
 data_container.load_sequences()
 
 experiment = experiments.Experiment(config)
-experiment.build_or_load_model()
+experiment.build_or_load_model(data_container = data_container)
 
 if (args.key == 'prelim_report'):
     rsCNN.evaluation.create_preliminary_model_report_from_experiment(experiment, data_container)

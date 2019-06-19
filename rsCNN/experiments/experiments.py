@@ -44,11 +44,21 @@ class Experiment(object):
         else:
             configs.save_config_to_file(self.config, get_config_filepath(self.config.model_training.dir_out))
 
-    def build_or_load_model(self, sample_inshape: tuple):
+    def build_or_load_model(self, inshape : tuple = None, data_container: DataContainer = None):
         _logger.info('Building or loading model')
+
+        assert inshape is not None or data_container is not None, 'build_or_load_model requires either inshape or data_container'
+        if (inshape is None):
+            inshape = (self.config.data_build.window_radius * 2, 
+                       self.config.data_build.window_radius * 2, 
+                       len(data_container.feature_band_types))
+            _logger.info('Inshape of {} constructed from data_container'.format(inshape))
+        else:
+            _logger.info('Inshape of {} used from input'.format(inshape))
+            
         loss_function = losses.cropped_loss(
             self.config.model_training.loss_metric,
-            self.config.architecture.loss_window,
+            2 * self.config.data_build.window_radius,
             2 * self.config.data_build.loss_window_radius,
             self.config.model_training.weighted
         )
@@ -65,7 +75,7 @@ class Experiment(object):
                 get_model_filepath(self.config.model_training.dir_out)))
             self.loaded_existing_model = False
             self.model = config_sections.create_model_from_architecture_config_section(
-                self.config.model_training.architecture_name, self.config.architecture)
+                self.config.model_training.architecture_name, self.config.architecture, inshape)
             self.model.compile(loss=loss_function, optimizer=self.config.model_training.optimizer)
         if os.path.exists(get_history_filepath(self.config.model_training.dir_out)):
             assert self.loaded_existing_model, \

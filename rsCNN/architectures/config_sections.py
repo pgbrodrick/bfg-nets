@@ -111,7 +111,8 @@ class GrowthMixin(object):
 
 def create_model_from_architecture_config_section(
         architecture_name: str,
-        architecture_config_section: BaseArchitectureConfigSection
+        architecture_config_section: BaseArchitectureConfigSection,
+        inshape: tuple
 ) -> keras.models.Model:
     """Creates a Keras model for a specific architecture using the provided options.
 
@@ -125,6 +126,7 @@ def create_model_from_architecture_config_section(
     """
     architecture_module = _import_architecture_module(architecture_name)
     kwargs = {key: getattr(architecture_config_section, key) for key in architecture_config_section.get_option_keys()}
+    kwargs['inshape'] = inshape
     return architecture_module.create_model(**kwargs)
 
 
