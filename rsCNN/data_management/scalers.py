@@ -2,8 +2,8 @@ import logging
 import os
 import sys
 
+import joblib
 import numpy as np
-from sklearn.externals import joblib
 import sklearn.preprocessing
 
 
