@@ -15,8 +15,6 @@ from rsCNN.utils import gpus
 _logger = logging.getLogger(__name__)
 
 
-# TODO:  document this file
-
 class Experiment(object):
     config = None
     """configs.Config: rsCNN configuration object."""
@@ -86,17 +84,6 @@ class Experiment(object):
                 .format(self.config.model_training.dir_out)
             self.loaded_existing_history = False
             self.history = {'model_name': self.config.model_training.dir_out}
-        """    
-        # TODO:  reimplement multiple GPUs
-        #n_gpu_avail = gpus.get_count_available_gpus()
-        #_logger.debug('Using multiple GPUs with {} available'.format(n_gpu_avail))
-        n_gpu_avail = 1
-        if (n_gpu_avail > 1):
-            self._original_model = self.model
-            self.model = keras.utils.multi_gpu_model(self._original_model, gpus=n_gpu_avail, cpu_relocation=True)
-            self.model.callback_model = self._original_model
-            self.model.compile(loss=loss_function, optimizer=self.config.model_training.optimizer)
-        """
 
     def fit_model_with_dataset(self, dataset: Data_Container, resume_training: bool = False) -> None:
         return self.fit_model_with_sequences(dataset.training_sequence, dataset.validation_sequence, resume_training)
@@ -114,8 +101,6 @@ class Experiment(object):
 
         model_callbacks = callbacks.get_model_callbacks(self.config, self.history)
 
-        # TODO:  Check whether psutil.cpu_count gives the right answer on SLURM, i.e., the number of CPUs available to
-        #  the job and not the total number on the instance.
         new_history = self.model.fit_generator(
             training_sequence,
             epochs=self.config.model_training.max_epochs,
@@ -123,8 +108,6 @@ class Experiment(object):
             callbacks=model_callbacks,
             validation_data=validation_sequence,
             max_queue_size=2,
-            # workers=psutil.cpu_count(logical=True),
-            # use_multiprocessing=True,
             shuffle=False,
             initial_epoch=len(self.history.get('lr', list())),
         )
