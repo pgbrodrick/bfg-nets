@@ -20,8 +20,8 @@ logger.setLevel(args.debug_level)
 assert os.path.isfile(args.settings_file), 'Settings file: ' + args.settings_file + ' does not exist'
 config = configs.create_config_from_file(args.settings_file)
 
-config['raw_feature_file_list'] = [['../global_cwc/dat/features/feat_subset.tif']]
-config['raw_response_file_list'] = [['../global_cwc/dat/responses/resp_subset.tif']]
+config.raw_files.feature_files = [['../global_cwc/dat/features/feat_subset.tif']]
+config.raw_files.response_files = [['../global_cwc/dat/responses/resp_subset.tif']]
 
 data_container = data_core.Data_Container(config)
 
