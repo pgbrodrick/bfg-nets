@@ -6,7 +6,6 @@ import keras
 import numpy as np
 
 from rsCNN.data_management.scalers import BaseGlobalScaler
-from rsCNN.data_management.data_core import Data_Container
 
 
 _logger = logging.getLogger(__name__)
