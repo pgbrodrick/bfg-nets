@@ -30,7 +30,7 @@ data_build:
   random_seed: REQUIRED
   dir_out: REQUIRED
   filename_prefix_out: REQUIRED
-  response_data_format: FCN
+  network_category: FCN
   data_build_category: or
   max_samples: REQUIRED
   max_memmap_size_gb: 10

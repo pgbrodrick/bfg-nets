@@ -11,7 +11,7 @@ raw_files:
 data_build:
   dir_out: .
   filename_prefix_out: ''
-  response_data_format: FCN
+  network_cateogry: FCN
   random_seed: 1
   max_samples: REQUIRED
   max_memmap_size_gb: 10
