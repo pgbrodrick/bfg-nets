@@ -46,7 +46,7 @@ class Experiment(object):
     def build_or_load_model(self, data_container: DataContainer = None, num_features: int = None) -> None:
         _logger.info('Building or loading model')
 
-        loss_function = losses.cropped_loss(
+        loss_function = losses.get_cropped_loss_function(
             self.config.model_training.loss_metric,
             2 * self.config.data_build.window_radius,
             2 * self.config.data_build.loss_window_radius,
