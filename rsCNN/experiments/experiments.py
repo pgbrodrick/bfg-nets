@@ -95,8 +95,10 @@ class Experiment(object):
             self.loaded_existing_history = False
             self.history = {'model_name': self.config.model_training.dir_out}
 
-    def fit_model_with_dataset(self, dataset: DataContainer, resume_training: bool = False) -> None:
-        return self.fit_model_with_sequences(dataset.training_sequence, dataset.validation_sequence, resume_training)
+    def fit_model_with_data_container(self, data_container: DataContainer, resume_training: bool = False) -> None:
+        return self.fit_model_with_sequences(
+            data_container.training_sequence, data_container.validation_sequence, resume_training
+        )
 
     def fit_model_with_sequences(
             self,
