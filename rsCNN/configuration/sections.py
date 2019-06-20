@@ -156,7 +156,7 @@ class RawFiles(BaseConfigSection):
             if self.boundary_bad_value is None:
                 errors.append('boundary_bad_value must be provided if boundary_files is provided')
 
-        errors.extend(check_input_file_formats(self.feature_files, self.response_files, self.boundary_files))
+        errors.extend(_check_input_file_formats(self.feature_files, self.response_files, self.boundary_files))
 
         return errors
 
@@ -402,9 +402,36 @@ def get_config_sections() -> List[Type[BaseConfigSection]]:
     ]
 
 
-################### Config / input checking functions ##############################
+def _check_input_file_validity(f_file_list, r_file_list, b_file_list) -> List[str]:
+    errors = _check_input_file_formats(f_file_list, r_file_list, b_file_list)
+    # Checks that all files can be opened by gdal
+    for _site in range(len(f_file_list)):
+        for _band in range(len(f_file_list[_site])):
+            if (gdal.Open(f_file_list[_site][_band], gdal.GA_ReadOnly) is None):
+                errors.append('Could not open feature site {}, file {}'.format(_site, _band))
 
-def check_input_file_formats(f_file_list, r_file_list, b_file_list) -> List[str]:
+    for _site in range(len(r_file_list)):
+        for _band in range(len(r_file_list[_site])):
+            if(gdal.Open(r_file_list[_site][_band], gdal.GA_ReadOnly) is None):
+                errors.append('Could not open response site {}, file {}'.format(_site, _band))
+
+    # Checks on the number of bands per file
+    num_f_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in f_file_list[0]]
+    num_r_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in r_file_list[0]]
+    for _site in range(len(f_file_list)):
+        for _file in range(len(f_file_list[_site])):
+            if(gdal.Open(f_file_list[_site][_file], gdal.GA_ReadOnly).RasterCount != num_f_bands_per_file[_file]):
+                errors.append('Inconsistent number of feature bands in site {}, file {}'.format(_site, _file))
+
+    for _site in range(len(r_file_list)):
+        for _file in range(len(r_file_list[_site])):
+            if(gdal.Open(r_file_list[_site][_file], gdal.GA_ReadOnly).RasterCount != num_r_bands_per_file[_file]):
+                errors.append('Inconsistent number of response bands in site {}, file {}'.format(_site, _file))
+
+    return errors
+
+
+def _check_input_file_formats(f_file_list, r_file_list, b_file_list) -> List[str]:
     errors = []
     # f = feature, r = response, b = boundary
 
@@ -454,34 +481,5 @@ def check_input_file_formats(f_file_list, r_file_list, b_file_list) -> List[str]
     for _site in range(len(r_file_list)):
         if(len(r_file_list[_site]) != num_r_files_per_site):
             errors.append('Inconsistent number of response files at site {}'.format(_site))
-
-    return errors
-
-
-def check_input_file_validity(f_file_list, r_file_list, b_file_list) -> List[str]:
-    errors = check_input_file_formats(f_file_list, r_file_list, b_file_list)
-    # Checks that all files can be opened by gdal
-    for _site in range(len(f_file_list)):
-        for _band in range(len(f_file_list[_site])):
-            if (gdal.Open(f_file_list[_site][_band], gdal.GA_ReadOnly) is None):
-                errors.append('Could not open feature site {}, file {}'.format(_site, _band))
-
-    for _site in range(len(r_file_list)):
-        for _band in range(len(r_file_list[_site])):
-            if(gdal.Open(r_file_list[_site][_band], gdal.GA_ReadOnly) is None):
-                errors.append('Could not open response site {}, file {}'.format(_site, _band))
-
-    # Checks on the number of bands per file
-    num_f_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in f_file_list[0]]
-    num_r_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in r_file_list[0]]
-    for _site in range(len(f_file_list)):
-        for _file in range(len(f_file_list[_site])):
-            if(gdal.Open(f_file_list[_site][_file], gdal.GA_ReadOnly).RasterCount != num_f_bands_per_file[_file]):
-                errors.append('Inconsistent number of feature bands in site {}, file {}'.format(_site, _file))
-
-    for _site in range(len(r_file_list)):
-        for _file in range(len(r_file_list[_site])):
-            if(gdal.Open(r_file_list[_site][_file], gdal.GA_ReadOnly).RasterCount != num_r_bands_per_file[_file]):
-                errors.append('Inconsistent number of response bands in site {}, file {}'.format(_site, _file))
 
     return errors
