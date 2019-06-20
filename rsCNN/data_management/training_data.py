@@ -16,8 +16,6 @@ from tqdm import tqdm
 from rsCNN.configuration import configs
 from rsCNN.data_management import common_io, ooc_functions, data_core
 # TODO:  remove * imports
-from rsCNN.utils.general import *
-
 
 _logger = logging.getLogger(__name__)
 

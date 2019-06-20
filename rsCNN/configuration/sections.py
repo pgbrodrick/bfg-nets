@@ -169,8 +169,8 @@ class DataBuild(BaseConfigSection):
     """str: Optional prefix for built data filenames, useful for organizing or tracking built data files
     from different build strategies."""
     # TODO:  Phil:  rename the following? it doesn't feel totally clear
-    _response_data_format_type = str
-    response_data_format = 'FCN'
+    _network_category_type = str
+    network_category = 'FCN'
     """str: Either CNN for convolutional neural network or FCN for fully convolutional network."""
     _random_seed_type = int
     random_seed = 1
@@ -223,9 +223,9 @@ class DataBuild(BaseConfigSection):
     def _check_config_validity(self) -> List[str]:
         errors = list()
         response_data_format_options = ('FCN', 'CNN')
-        if self.response_data_format not in response_data_format_options:
+        if self.network_category not in response_data_format_options:
             errors.append('response_data_format is invalid option ({}), must be one of the following:  {}'.format(
-                self.response_data_format, ','.join(response_data_format_options)
+                self.network_category, ','.join(response_data_format_options)
             ))
         return errors
 

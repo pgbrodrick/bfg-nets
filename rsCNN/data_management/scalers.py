@@ -194,3 +194,8 @@ class QuantileUniformScaler(BaseSklearnScaler):
     def __init__(self, savename_base, output_distribution='uniform'):
         self.scaler = sklearn.preprocessing.QuantileTransformer(output_distribution=output_distribution, copy=True)
         super().__init__(savename_base)
+
+
+
+
+

@@ -9,8 +9,6 @@ from tqdm import tqdm
 
 from rsCNN.data_management import common_io, ooc_functions
 from rsCNN.data_management.data_core import DataContainer
-from rsCNN.utils.general import *
-
 
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
