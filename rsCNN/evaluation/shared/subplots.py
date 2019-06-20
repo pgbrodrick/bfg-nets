@@ -219,11 +219,11 @@ def plot_transformed_error_regression(
 
 
 def add_internal_window_to_subplot(sampled: samples.Samples, ax: plt.Axes) -> None:
-    inshape = sampled.config.architecture.inshape
     loss_window_radius = sampled.config.data_build.loss_window_radius
-    if (loss_window_radius * 2 == inshape[0]):
+    window_radius = sampled.config.data_build.window_radius
+    if (loss_window_radius == window_radius):
         return
-    buffer = int((inshape[0] - loss_window_radius * 2) / 2)
+    buffer = int(window_radius - loss_window_radius)
     rect = patches.Rectangle(
         (buffer, buffer), loss_window_radius * 2, loss_window_radius * 2, linewidth=1, edgecolor='red',
         facecolor='none'
