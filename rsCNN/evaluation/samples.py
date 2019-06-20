@@ -48,10 +48,6 @@ class Samples(object):
         self._set_raw_and_transformed_ranges()
 
     def _get_sampled_features_responses_and_set_metadata_and_weights(self) -> None:
-        # TODO:  handle getting representative samples, e.g., get images that show specific classes so all are covered,
-        #  probably want to do something like, given x classes, for each class find y images with class in the loss
-        #  window, for x * y images total
-        # TODO:  handle multiple inputs when necessary
         (raw_features, raw_responses), (trans_features, trans_responses) = \
             self.data_sequence.get_raw_and_transformed_sample(0)
         # We expect weights to be the last element in the responses array

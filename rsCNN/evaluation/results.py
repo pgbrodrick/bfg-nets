@@ -2,15 +2,11 @@ from typing import List
 
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
-import matplotlib
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 import sklearn.metrics
 
 from rsCNN.evaluation import samples, shared
-
-
-# TODO:  I want to see one-hot encoded categories, e.g., both geomorphic and benthic, as single categorical plots
 
 
 def print_classification_report(sampled: samples.Samples) -> List[plt.Figure]:
@@ -35,7 +31,7 @@ def plot_confusion_matrix(sampled: samples.Samples) -> [plt.Figure]:
             matrix = confusion_matrix
             value_format = 'd'
             max_ = np.nanmax(matrix)
-        else:
+        elif idx_ax == 1:
             title = 'Normalized confusion matrix'
             matrix = normed_matrix
             value_format = '.2f'
@@ -76,7 +72,6 @@ def plot_raw_and_transformed_prediction_samples(
         max_features_per_page: int = 5,
         max_responses_per_page: int = 5
 ) -> List[plt.Figure]:
-    # TODO:  allow user to configure which features, if any, show on results plot (currently none)
     figures = shared.plot_figures_iterating_through_samples_features_responses(
         sampled, _plot_predictions_page, max_pages, max_samples_per_page, max_features_per_page, max_responses_per_page
     )
@@ -91,10 +86,6 @@ def _plot_predictions_page(
         range_features: range,
         range_responses: range
 ) -> plt.Figure:
-    # TODO:  the has_softmax check needs to be updated in the future. I think it's probably still useful to show the
-    #  most likely class predicted by the softmax, but it's not a sufficient check for categorical data. That means
-    #  that the regression or categorical plot check below is going to be wrong in some cases. We can wait to see how
-    #  Phil handles data types in the data config.
     nrows = len(range_samples)
     has_softmax = sampled.config.architecture.output_activation == 'softmax'
     num_responses_plots = 2 * len(range_responses)
@@ -196,8 +187,8 @@ def plot_spatial_categorical_error(
         max_responses_per_row: int = 10,
         max_rows_per_page: int = 10
 ) -> List[plt.Figure]:
-    # TODO: Consider handling weights, already handle 0 weights but could weight errors differently
-    # TODO: This assumes that categorical variables are one-hot encoded
+    # TODO:  change max_responses_per_row to max_responses_per_page and max_rows_per_page is removed after updating API
+    #  with config
     actual = np.expand_dims(np.argmax(sampled.raw_responses, axis=-1), -1)
     predicted = np.expand_dims(np.argmax(sampled.raw_predictions, axis=-1), -1)
     error = (actual != predicted).astype(float)
@@ -216,7 +207,8 @@ def plot_spatial_regression_error(
         max_responses_per_row: int = 10,
         max_rows_per_page: int = 10
 ) -> List[plt.Figure]:
-    # TODO: Consider handling weights, already handle 0 weights but could weight errors differently
+    # TODO:  change max_responses_per_row to max_responses_per_page and max_rows_per_page is removed after updating API
+    #  with config
     abs_error = np.nanmean(np.abs(sampled.raw_predictions - sampled.raw_responses), axis=0)
     return _plot_spatial_error(abs_error, sampled, max_pages, max_responses_per_row, max_rows_per_page)
 
