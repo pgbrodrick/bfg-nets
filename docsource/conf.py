@@ -115,12 +115,22 @@ todo_include_todos = True
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'alabaster'
+html_theme = 'sphinx_rtd_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#html_theme_options = {}
+html_theme_options = {
+    'collapse_navigation': False,
+}
+html_context = {
+    'display_github': True,
+    'github_url': 'https://github.com/pgbrodrick/rsCNN',
+    'github_user': 'pgbrodrick',
+    'github_repo': 'rsCNN',
+    'github_version': 'master/docsource/',
+    'suffix': 'html',
+}
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
