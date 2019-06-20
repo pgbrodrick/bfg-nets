@@ -6,7 +6,7 @@ import matplotlib.cm
 import numpy as np
 
 from rsCNN.evaluation import samples
-from rsCNN.evaluation.shared import colormaps
+from rsCNN.evaluation.visualizations import colormaps
 
 
 plt.switch_backend('Agg')  # Needed for remote server plotting
