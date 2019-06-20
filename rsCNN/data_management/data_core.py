@@ -263,8 +263,6 @@ class DataContainer:
 
     def _save_data_core(self):
         np.savez(get_built_data_container_filepath(self.config),
-                 training_sequence = self.training_sequence,
-                 validation_sequence = self.validation_sequence,
                  feature_band_types = self.feature_band_types,
                  response_band_types = self.response_band_types,
                  feature_raw_band_types = self.feature_raw_band_types,
@@ -275,8 +273,6 @@ class DataContainer:
 
     def _load_data_core(self):
         npzf = np.load(get_built_data_container_filepath(self.config))
-        self.training_sequence = npzf['training_sequence']
-        self.validation_sequence = npzf['validation_sequence']
         self.feature_band_types = npzf['feature_band_types']
         self.response_band_types = npzf['response_band_types']
         self.feature_raw_band_types = npzf['feature_raw_band_types']
