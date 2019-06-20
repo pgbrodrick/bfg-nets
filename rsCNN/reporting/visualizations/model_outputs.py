@@ -4,8 +4,8 @@ import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
 
-from rsCNN.evaluation import samples
-from rsCNN.evaluation.visualizations import figures as viz_figures, subplots
+from rsCNN.reporting import samples
+from rsCNN.reporting.visualizations import figures as viz_figures, subplots
 
 
 def plot_model_output_samples(

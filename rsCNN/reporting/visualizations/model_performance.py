@@ -5,8 +5,8 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 import sklearn.metrics
 
-from rsCNN.evaluation import samples
-from rsCNN.evaluation.visualizations import colormaps, figures as viz_figures, subplots
+from rsCNN.reporting import samples
+from rsCNN.reporting.visualizations import colormaps, figures as viz_figures, subplots
 
 
 def plot_classification_report(sampled: samples.Samples) -> List[plt.Figure]:
