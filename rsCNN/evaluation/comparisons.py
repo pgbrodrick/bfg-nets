@@ -59,7 +59,7 @@ def plot_model_loss_comparison(model_histories: List[dict]) -> List[plt.Figure]:
         ax.set_xlabel('Epochs')
         ax.set_ylabel('Loss')
         ax.set_yscale('log')
-    fig.legend(loc='lower center', ncol=4, bbox_to_anchor=(0, -0.1, 1, 1), bbox_transform=plt.gcf().transFigure)
+    fig.legend(loc='lower center', ncol=4, bbox_to_anchor=(0.0, -0.1, 1.0, 1.0), bbox_transform=plt.gcf().transFigure)
     axes[0].set_title('Training loss')
     axes[1].set_title('Validation loss')
     return [fig]
