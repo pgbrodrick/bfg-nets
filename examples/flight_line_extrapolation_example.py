@@ -3,7 +3,7 @@ import os
 
 from rsCNN.configuration import configs
 from rsCNN.data_management import data_core, apply_model_to_data
-import rsCNN.evaluation
+import rsCNN.reporting.reports
 from rsCNN.experiments import experiments
 from rsCNN.utils import logging
 
@@ -30,13 +30,13 @@ experiment = experiments.Experiment(config)
 experiment.build_or_load_model(data_container=data_container)
 
 if (args.key == 'prelim_report'):
-    rsCNN.evaluation.create_preliminary_model_report_from_experiment(experiment, data_container)
+    prelim_report = rsCNN.reporting.reports.Reporter(data_container, experiment, config)
 
 if (args.key == 'train' or args.key == 'all'):
-    experiment.fit_model_with_dataset(data_container, resume_training=True)
+    experiment.fit_model_with_data_container(data_container, resume_training=True)
 
 if (args.key == 'report' or args.key == 'all'):
-    rsCNN.evaluation.create_model_report_from_experiment(experiment, data_container)
+    final_report = rsCNN.reporting.reports.Reporter(data_container, experiment, config)
 
 if (args.key == 'apply' or args.key == 'all'):
     application_feature_files = config.raw_files.feature_files[0]
