@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import matplotlib.cm
 import numpy as np
 
-from rsCNN.evaluation import samples
-from rsCNN.evaluation.visualizations import colormaps
+from rsCNN.reporting import samples
+from rsCNN.reporting.visualizations import colormaps
 
 
 plt.switch_backend('Agg')  # Needed for remote server plotting

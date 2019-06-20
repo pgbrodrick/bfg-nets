@@ -2,8 +2,8 @@ from typing import List
 
 import matplotlib.pyplot as plt
 
-from rsCNN.evaluation import samples
-from rsCNN.evaluation.visualizations import figures as viz_figures, subplots
+from rsCNN.reporting import samples
+from rsCNN.reporting.visualizations import figures as viz_figures, subplots
 
 
 def plot_data_input_samples(

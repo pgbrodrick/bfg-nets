@@ -4,7 +4,7 @@ import keras
 import matplotlib.pyplot as plt
 import numpy as np
 
-from rsCNN.evaluation import samples
+from rsCNN.reporting import samples
 
 
 plt.switch_backend('Agg')  # Needed for remote server plotting

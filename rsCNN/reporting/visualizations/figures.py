@@ -3,7 +3,7 @@ from typing import List
 from matplotlib import gridspec
 import matplotlib.pyplot as plt
 
-from rsCNN.evaluation import samples
+from rsCNN.reporting import samples
 
 
 _FIGSIZE_CONSTANT = 30

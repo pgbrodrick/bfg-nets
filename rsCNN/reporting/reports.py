@@ -7,8 +7,8 @@ from matplotlib.backends.backend_pdf import PdfPages
 
 from rsCNN.configuration import configs
 from rsCNN.data_management import data_core
-from rsCNN.evaluation import samples
-from rsCNN.evaluation.visualizations import data_inputs, histories, model_outputs, model_performance, networks
+from rsCNN.reporting import samples
+from rsCNN.reporting.visualizations import data_inputs, histories, model_outputs, model_performance, networks
 from rsCNN.experiments import experiments
 
 
