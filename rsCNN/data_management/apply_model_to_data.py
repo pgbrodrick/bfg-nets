@@ -165,7 +165,6 @@ def maximum_likelihood_classification(
     dataset = gdal.Open(likelihood_file, gdal.GA_ReadOnly)
     n_classes = dataset.RasterCount
 
-
     output = np.zeros((dataset.RasterYSize, dataset.RasterXSize))
     output[dataset.GetRasterBand(1).ReadAsArray() == dataset.GetRasterBand(1).GetNoDataValue()] = output_nodata_value
 
@@ -178,11 +177,11 @@ def maximum_likelihood_classification(
         driver = gdal.GetDriverByName('GTiff')
         driver.Register()
 
-        outDataset = driver.Create(output_tif_file, 
-                                   output.shape[1], 
-                                   output.shape[0], 
-                                   1, 
-                                   gdal.GDT_Float32, 
+        outDataset = driver.Create(output_tif_file,
+                                   output.shape[1],
+                                   output.shape[0],
+                                   1,
+                                   gdal.GDT_Float32,
                                    options=['COMPRESS=LZW'])
 
         outDataset.SetProjection(dataset.GetProjection())

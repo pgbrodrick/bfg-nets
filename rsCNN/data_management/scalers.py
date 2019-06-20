@@ -37,7 +37,7 @@ class BaseGlobalScaler(object):
             self.savename = savename_base + self.scaler_name
         self.is_fitted = False
 
-    #TODO: In all of the below, handle (IE ignore) transformations on categorical data
+    # TODO: In all of the below, handle (IE ignore) transformations on categorical data
     def fit(self, image_array):
         assert self.is_fitted is False, 'Scaler has already been fit to data'
         self._fit(image_array)
@@ -194,8 +194,3 @@ class QuantileUniformScaler(BaseSklearnScaler):
     def __init__(self, savename_base, output_distribution='uniform'):
         self.scaler = sklearn.preprocessing.QuantileTransformer(output_distribution=output_distribution, copy=True)
         super().__init__(savename_base)
-
-
-
-
-

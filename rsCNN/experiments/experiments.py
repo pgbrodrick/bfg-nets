@@ -42,18 +42,18 @@ class Experiment(object):
         else:
             configs.save_config_to_file(self.config, get_config_filepath(self.config.model_training.dir_out))
 
-    def build_or_load_model(self, inshape : tuple = None, data_container: DataContainer = None):
+    def build_or_load_model(self, inshape: tuple = None, data_container: DataContainer = None):
         _logger.info('Building or loading model')
 
         assert inshape is not None or data_container is not None, 'build_or_load_model requires either inshape or data_container'
         if (inshape is None):
-            inshape = (self.config.data_build.window_radius * 2, 
-                       self.config.data_build.window_radius * 2, 
+            inshape = (self.config.data_build.window_radius * 2,
+                       self.config.data_build.window_radius * 2,
                        len(data_container.feature_band_types))
             _logger.info('Inshape of {} constructed from data_container'.format(inshape))
         else:
             _logger.info('Inshape of {} used from input'.format(inshape))
-            
+
         loss_function = losses.cropped_loss(
             self.config.model_training.loss_metric,
             2 * self.config.data_build.window_radius,

@@ -39,10 +39,12 @@ def build_training_data_ordered(
     n_responses = int(np.sum([len(resp_type) for resp_type in response_raw_band_types]))
 
     # TODO:  move to checks
-    feature_memmap_size_gb = n_features*4*config.data_build.max_samples* (config.data_build.window_radius*2)**2 / 1024.**3
+    feature_memmap_size_gb = n_features*4*config.data_build.max_samples * \
+        (config.data_build.window_radius*2)**2 / 1024.**3
     assert feature_memmap_size_gb < config.data_build.max_built_data_gb
 
-    response_memmap_size_gb = n_responses*4*config.data_build.max_samples* (config.data_build.window_radius*2)**2 / 1024.**3
+    response_memmap_size_gb = n_responses*4*config.data_build.max_samples * \
+        (config.data_build.window_radius*2)**2 / 1024.**3
     assert response_memmap_size_gb < config.data_build.max_built_data_gb
 
     features, responses = _open_temporary_features_responses_data_files(config, n_features, n_responses)
@@ -58,15 +60,14 @@ def build_training_data_ordered(
         response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
         boundary_set = common_io.get_site_boundary_set(config, _site)
 
-        all_set_upper_lefts, xy_sample_locations = common_io.get_all_interior_extent_subset_pixel_locations(\
-                                                  gdal_datasets = [feature_sets, response_sets, [bs for bs in [boundary_set] if bs is not None]],\
-                                                  window_radius = config.data_build.window_radius,\
-                                                  inner_window_radius = config.data_build.loss_window_radius,\
-                                                  shuffle = True)
+        all_set_upper_lefts, xy_sample_locations = common_io.get_all_interior_extent_subset_pixel_locations(
+            gdal_datasets=[feature_sets, response_sets, [bs for bs in [boundary_set] if bs is not None]],
+            window_radius=config.data_build.window_radius,
+            inner_window_radius=config.data_build.loss_window_radius,
+            shuffle=True)
 
         all_site_upper_lefts.append(all_set_upper_lefts)
         all_site_xy_locations.append(xy_sample_locations)
-
 
         ref_trans = feature_sets[0].GetGeoTransform()
         subset_geotransform = None
@@ -75,7 +76,6 @@ def build_training_data_ordered(
                     _is_boundary_file_vectorized(config.raw_files.boundary_files[_site]):
                 subset_geotransform = [ref_trans[0], ref_trans[1], 0, ref_trans[3], 0, ref_trans[5]]
         reference_subset_geotransforms.append(subset_geotransform)
-
 
     num_reads_per_site = int(np.floor(config.data_build.max_samples / len(config.raw_files.feature_files)))
 
@@ -109,8 +109,10 @@ def build_training_data_ordered(
             subset_geotransform = None
             if (reference_subset_geotransforms[_site] is not None):
                 ref_trans = reference_subset_geotransforms[_site]
-                subset_geotransform[0] = ref_trans[0] + (f_ul[0][0] + all_site_xy_locations[_site_xy_index[_site], 0]) * ref_trans[1]
-                subset_geotransform[3] = ref_trans[_site][3] + (f_ul[0][1] + all_site_xy_locations[_site_xy_index[_site], 1]) * ref_trans[5]
+                subset_geotransform[0] = ref_trans[0] + \
+                    (f_ul[0][0] + all_site_xy_locations[_site_xy_index[_site], 0]) * ref_trans[1]
+                subset_geotransform[3] = ref_trans[_site][3] + \
+                    (f_ul[0][1] + all_site_xy_locations[_site_xy_index[_site], 1]) * ref_trans[5]
                 local_boundary_vector_file = config.raw_files.boundary_files[_site]
 
             success = read_segmentation_chunk(feature_sets,
@@ -127,7 +129,8 @@ def build_training_data_ordered(
             _site_xy_index[_site] += 1
             popped = None
             if (_site_xy_index[_site] >= len(all_site_xy_locations[_site])):
-                _logger.debug('All locations in site {} have been checked.'.format(config.raw_files.feature_files[_site][0]))
+                _logger.debug('All locations in site {} have been checked.'.format(
+                    config.raw_files.feature_files[_site][0]))
                 popped = remaining_sites.pop(_rs_index)
 
             if success is True:
@@ -148,9 +151,9 @@ def build_training_data_ordered(
     del all_site_xy_locations
     del reference_subset_geotransforms
 
-    features, responses = _open_temporary_features_responses_data_files(config, 
-                                                                        n_features, 
-                                                                        n_responses, 
+    features, responses = _open_temporary_features_responses_data_files(config,
+                                                                        n_features,
+                                                                        n_responses,
                                                                         read_type='r+')
     features = _resize_munged_features(features, _sample_index, config)
     responses = _resize_munged_responses(responses, _sample_index, config)
@@ -409,7 +412,6 @@ def build_training_data_from_response_points(
     return features, responses, weights, feature_band_types, response_band_types
 
 
-
 def rasterize_vector(vector_file: str, geotransform: List[int], output_shape: Tuple) -> np.array:
     """ Rasterizes an input vector directly into a numpy array.
     Arguments:
@@ -490,10 +492,10 @@ def check_projections(a_files: List[List[str]], b_files: List[List[str]], c_file
         if (len(c_proj) > 0):
             if (a_proj[_p] != b_proj[_p] or a_proj != c_proj[_p]):
                 errors.append('Projection_mismatch between\n{}: {},\n{}: {},\n{}: {}'.format(a_proj[_p],
-                              loc_a_files[_p], b_proj[_p], loc_b_files[_p], c_proj[_p], loc_c_files[_p]))
+                                                                                             loc_a_files[_p], b_proj[_p], loc_b_files[_p], c_proj[_p], loc_c_files[_p]))
         else:
             if (a_proj[_p] != b_proj[_p]):
-                errors.append('Projection_mismatch between\n{}: {}\n{}: {}'.\
+                errors.append('Projection_mismatch between\n{}: {}\n{}: {}'.
                               format(a_proj[_p], loc_a_files[_p], b_proj[_p], loc_b_files[_p]))
     return errors
 
@@ -524,10 +526,10 @@ def check_resolutions(a_files: List[List[str]], b_files: List[List[str]], c_file
         if (len(c_res) > 0):
             if(np.all(a_res[_p] != b_res[_p]) or np.all(a_res != c_res[_p])):
                 errors.append('Resolution mismatch between\n{}: {},\n{}: {},\n{}: {}'.format(a_res[_p],
-                              loc_a_files[_p], b_res[_p], loc_b_files[_p], c_res[_p], loc_c_files[_p]))
+                                                                                             loc_a_files[_p], b_res[_p], loc_b_files[_p], c_res[_p], loc_c_files[_p]))
         else:
             if (np.all(a_res[_p] != b_res[_p])):
-                errors.append('Resolution mimatch between\n{}: {}\n{}: {}'.\
+                errors.append('Resolution mimatch between\n{}: {}\n{}: {}'.
                               format(a_res[_p], loc_a_files[_p], b_res[_p], loc_b_files[_p]))
     return errors
 
@@ -704,26 +706,19 @@ def read_segmentation_chunk(f_sets: List[tuple],
     local_feature[mask, :] = np.nan
     local_response[mask, :] = np.nan
 
-
-    features, responses = _open_temporary_features_responses_data_files(config, local_feature.shape[-1], local_response.shape[-1], read_type='r+')
-    features[sample_index,...] = local_feature
-    responses[sample_index,...] = local_response
+    features, responses = _open_temporary_features_responses_data_files(
+        config, local_feature.shape[-1], local_response.shape[-1], read_type='r+')
+    features[sample_index, ...] = local_feature
+    responses[sample_index, ...] = local_response
     del features, responses
 
     return True
 
 
-
-
-
-
-
-
 ################### File/Dataset Opening Functions ##############################
 
 
-
-def _open_temporary_features_responses_data_files(config: configs.Config, num_features: int, num_responses: int, \
+def _open_temporary_features_responses_data_files(config: configs.Config, num_features: int, num_responses: int,
                                                   read_type: str = 'w+') -> Tuple[np.array, np.array]:
     basename = data_core.get_memmap_basename(config)
     shape = [config.data_build.max_samples, config.data_build.window_radius * 2, config.data_build.window_radius * 2]
@@ -744,14 +739,13 @@ def _open_temporary_features_responses_data_files(config: configs.Config, num_fe
     #features_dataset = h5py.File(features_filepath, read_type)
     #responses_dataset = h5py.File(responses_filepath, read_type)
 
-    #if (read_type == 'w'):
+    # if (read_type == 'w'):
     #    features = features_dataset.create_dataset('features', shape_features, dtype=np.float32, chunks=True)
     #    responses = responses_dataset.create_dataset('responses', shape_responses, dtype=np.float32, chunks=True)
-    #else:
+    # else:
     #    features = features_dataset['features']
     #    responses = responses_dataset['responses']
     return features, responses
-
 
 
 def _create_temporary_weights_data_files(config: configs.Config, num_samples: int) -> np.array:
@@ -887,7 +881,6 @@ def check_built_data_files_exist(config: configs.Config) -> bool:
     else:
         _logger.warning('Built data files were not found at paths: {}'.format(', '.join(missing_files)))
     return not missing_files
-
 
 
 ################### Logging Functions ##############################

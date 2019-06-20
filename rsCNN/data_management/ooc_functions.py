@@ -11,6 +11,7 @@ _MAX_UNIQUE_RESPONSES = 100
 
 _logger = logging.getLogger(__name__)
 
+
 def one_hot_encode_array(raw_band_types: List[str], array: np.array, memmap_file: str = None):
 
     cat_band_locations = [idx for idx, val in enumerate(raw_band_types) if val == 'C']
@@ -70,11 +71,11 @@ def permute_array(source: np.array, source_filename: str, permutation: np.array)
     shape = source.shape
     dtype = source.dtype
 
-    print((perm_memmap_file,dtype,shape))
+    print((perm_memmap_file, dtype, shape))
     dest = np.memmap(perm_memmap_file, dtype=dtype, mode='w+', shape=shape)
 
     for i in range(len(permutation)):
-        dest[i,...] = source[permutation[i],...]
+        dest[i, ...] = source[permutation[i], ...]
 
         if (i % 100 == 0):
             del dest, source
@@ -88,11 +89,3 @@ def permute_array(source: np.array, source_filename: str, permutation: np.array)
 
     source = np.memmap(source_filename, dtype=dtype, shape=shape, mode='r+')
     return source
-
-
-
-
-
-
-
-
