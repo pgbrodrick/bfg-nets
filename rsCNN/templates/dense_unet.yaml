@@ -4,8 +4,8 @@ raw_files:
   boundary_files: OPTIONAL
   feature_data_type: REQUIRED
   response_data_type: REQUIRED
-  feature_nodata_value: -9999
-  response_nodata_value: -9999
+  feature_nodata_value: -9999.0
+  response_nodata_value: -9999.0
   boundary_bad_value: OPTIONAL
   ignore_projections: false
 data_build:
@@ -14,7 +14,7 @@ data_build:
   network_category: FCN
   random_seed: 1
   max_samples: REQUIRED
-  max_memmap_size_gb: 10
+  max_built_data_gb: 10.0
   number_folds: 10
   validation_fold: 0
   test_fold: OPTIONAL
@@ -35,6 +35,7 @@ model_training:
   dir_out: .
   verbosity: 1
   assert_gpu: false
+  use_multiprocessing: false
   architecture_name: dense_unet
   loss_metric: REQUIRED
   max_epochs: 100

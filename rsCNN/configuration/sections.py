@@ -278,6 +278,9 @@ class ModelTraining(BaseConfigSection):
     _assert_gpu_type = bool
     assert_gpu = False
     """bool: Assert, i.e., fail if GPUs are required and not available."""
+    _use_multiprocessing_type = bool
+    use_multiprocessing = False
+    """bool: Use multiprocessing in model training via keras. Currently uses max number of available CPUs as workers."""
     _architecture_name_type = str
     architecture_name = DEFAULT_REQUIRED_VALUE
     """str: Architecture name from existing options."""
