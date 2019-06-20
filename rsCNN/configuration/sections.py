@@ -168,7 +168,6 @@ class DataBuild(BaseConfigSection):
     filename_prefix_out = ''
     """str: Optional prefix for built data filenames, useful for organizing or tracking built data files
     from different build strategies."""
-    # TODO:  Phil:  rename the following? it doesn't feel totally clear
     _network_category_type = str
     network_category = 'FCN'
     """str: Either CNN for convolutional neural network or FCN for fully convolutional network."""

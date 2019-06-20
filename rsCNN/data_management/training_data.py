@@ -15,17 +15,15 @@ from tqdm import tqdm
 
 from rsCNN.configuration import configs
 from rsCNN.data_management import common_io, ooc_functions, data_core
-# TODO:  remove * imports
 
 _logger = logging.getLogger(__name__)
 
 
-# TODO:  typing
 def build_training_data_ordered(
         config: configs.Config,
         feature_raw_band_types: List[List[str]],
         response_raw_band_types: List[List[str]]
-):
+) -> Tuple[List[np.array], List[np.array], List[np.array], List[str], List[str]]:
 
     # TODO:  check default, and set it to a standard value
     if config.data_build.random_seed:
@@ -208,12 +206,12 @@ def build_training_data_ordered(
     return features, responses, weights, feature_band_types, response_band_types
 
 
-# TODO:  typing
 def build_training_data_from_response_points(
         config: configs.Config,
         feature_raw_band_types: List[List[str]],
         response_raw_band_types: List[List[str]]
-):
+) -> Tuple[List[np.array], List[np.array], List[np.array], List[str], List[str]]:
+
     _logger.info('Build training data from response points')
     if (config.data_build.random_seed is not None):
         np.random.seed(config.data_build.random_seed)
@@ -412,14 +410,14 @@ def build_training_data_from_response_points(
 
 
 
-def rasterize_vector(vector_file, geotransform, output_shape):
+def rasterize_vector(vector_file: str, geotransform: List[int], output_shape: Tuple) -> np.array:
     """ Rasterizes an input vector directly into a numpy array.
     Arguments:
-    vector_file - str
+    vector_file
       Input vector file to be rasterized.
-    geotransform - list
+    geotransform
       A gdal style geotransform.
-    output_shape - tuple
+    output_shape
       The shape of the output file to be generated.
 
     Return:
@@ -434,13 +432,11 @@ def rasterize_vector(vector_file, geotransform, output_shape):
     return mask
 
 
-def get_proj(fname):
+def get_proj(fname: str) -> str:
     """ Get the projection of a raster/vector dataset.
     Arguments:
     fname - str
       Name of input file.
-    is_vector - boolean
-      Boolean indication of whether the file is a vector or a raster.
 
     Returns:
     The projection of the input fname
@@ -470,7 +466,7 @@ def get_proj(fname):
     return b_proj
 
 
-def check_projections(a_files, b_files, c_files=None):
+def check_projections(a_files: List[List[str]], b_files: List[List[str]], c_files: List[List[str]] = None) -> List[str]:
 
     errors = []
     loc_a_files = [item for sublist in a_files for item in sublist]
@@ -502,7 +498,7 @@ def check_projections(a_files, b_files, c_files=None):
     return errors
 
 
-def check_resolutions(a_files, b_files, c_files=None):
+def check_resolutions(a_files: List[List[str]], b_files: List[List[str]], c_files: List[List[str]] = None) -> List[str]:
     errors = []
     if c_files is None:
         c_files = list()
@@ -621,7 +617,7 @@ def read_labeling_chunk(f_sets: List[gdal.Dataset],
                         boundary_vector_file: str = None,
                         boundary_subset_geotransform: tuple = None,
                         b_set=None,
-                        boundary_upper_left: List[int] = None):
+                        boundary_upper_left: List[int] = None) -> np.array:
 
     for _f in range(len(feature_upper_lefts)):
         if (np.any(feature_upper_lefts[_f] < config.data_build.window_radius)):
@@ -669,7 +665,7 @@ def read_segmentation_chunk(f_sets: List[tuple],
                             boundary_vector_file: str = None,
                             boundary_subset_geotransform: tuple = None,
                             b_set=None,
-                            boundary_upper_left: List[int] = None):
+                            boundary_upper_left: List[int] = None) -> bool:
     window_diameter = config.data_build.window_radius * 2
 
     mask = read_mask_chunk(boundary_vector_file,
