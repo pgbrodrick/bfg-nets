@@ -3,6 +3,7 @@ import os
 
 import keras.backend as K
 import numpy as np
+import psutil
 
 from rsCNN.architectures import config_sections
 from rsCNN.configuration import configs
