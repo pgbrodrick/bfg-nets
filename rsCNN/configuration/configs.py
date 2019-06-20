@@ -31,6 +31,8 @@ class Config(object):
     """sections.ModelTraining: ModelTraining config section."""
     architecture = None
     """sections.Architecture: Architecture config section."""
+    model_evaluation = None
+    """sections.ModelEvaluation: ModelEvaluation config section."""
     callback_general = None
     """sections.CallbacksGeneral: CallbacksGeneral config section."""
     callback_tensorboard = None
@@ -47,6 +49,7 @@ class Config(object):
             data_samples: sections.DataSamples = None,
             model_training: sections.ModelTraining = None,
             architecture: config_sections.BaseArchitectureConfigSection = None,
+            model_evaluation: sections.ModelEvaluation = None,
             callback_general: sections.CallbackGeneral = None,
             callback_tensorboard: sections.CallbackTensorboard = None,
             callback_early_stopping: sections.CallbackEarlyStopping = None,
@@ -64,6 +67,7 @@ class Config(object):
         self.data_samples = data_samples
         self.model_training = model_training
         self.architecture = architecture
+        self.model_evaluation = model_evaluation
         self.callback_general = callback_general
         self.callback_tensorboard = callback_tensorboard
         self.callback_early_stopping = callback_early_stopping
