@@ -11,7 +11,7 @@ raw_files:
 data_build:
   dir_out: ./flight_extrapolation_test
   filename_prefix_out: 'munged_data'
-  response_data_format: FCN
+  network_category: FCN
   random_seed: 1
   max_samples: 100
   max_memmap_size_gb: 10
