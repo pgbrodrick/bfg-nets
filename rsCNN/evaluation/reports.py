@@ -1,4 +1,3 @@
-from rsCNN.experiments import experiments
 import logging
 import os
 from typing import List
@@ -8,11 +7,9 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 from rsCNN.configuration import configs
-from rsCNN.data_management import data_core
-from rsCNN.data_management.sequences import BaseSequence
-from rsCNN.evaluation import comparisons, inputs, networks, results, samples
-from rsCNN.evaluation.histories import plot_history
-from rsCNN.experiments import experiments, histories
+from rsCNN.data_management import data_core, sequences
+from rsCNN.evaluation import comparisons, histories as reports_histories, inputs, networks, results, samples
+from rsCNN.experiments import experiments, histories as experiments_histories
 
 
 plt.switch_backend('Agg')  # Needed for remote server plotting
@@ -20,7 +17,6 @@ plt.switch_backend('Agg')  # Needed for remote server plotting
 _logger = logging.getLogger(__name__)
 
 _FILENAME_MODEL_REPORT = 'model_performance.pdf'
-_FILENAME_PRELIMINARY_MODEL_REPORT = 'model_overview.pdf'
 
 
 class Reporter(object):
@@ -50,46 +46,45 @@ class Reporter(object):
 def create_model_report(
         model: keras.Model,
         config: configs.Config,
-        training_sequence: BaseSequence,
-        validation_sequence: BaseSequence = None,
+        training_sequence: sequences.BaseSequence,
+        validation_sequence: sequences.BaseSequence = None,
         history: dict = None
 ) -> None:
+    is_model_trained = 'lr' in history
     filepath_report = os.path.join(config.model_training.dir_out, _FILENAME_MODEL_REPORT)
     with PdfPages(filepath_report) as pdf:
         _logger.info('Plot Summary')
         _add_figures(networks.print_model_summary(model), pdf)
         _logger.info('Plot Training Sequence Figures')
         sampled = samples.Samples(training_sequence, model, config, data_sequence_label='Training')
-        if config.architecture.output_activation == 'softmax':
-            _add_figures(results.print_classification_report(sampled), pdf)
-            _add_figures(results.plot_confusion_matrix(sampled), pdf, tight=False)
-        _add_figures(inputs.plot_raw_and_transformed_input_samples(sampled), pdf)
-        _add_figures(results.single_sequence_prediction_histogram(sampled), pdf)
+        _create_model_report_for_sequence(sampled, pdf, is_model_trained, config.architecture.output_activation)
+        _logger.info('Plot Validation Sequence Figures')
+        sampled = samples.Samples(validation_sequence, model, config, data_sequence_label='Validation')
+        _create_model_report_for_sequence(sampled, pdf, is_model_trained, config.architecture.output_activation)
+        _logger.info('Plot Model History')
+        if history:
+            _add_figures(reports_histories.plot_history(history), pdf)
+
+
+def _create_model_report_for_sequence(
+        sampled: samples.Samples,
+        pdf: PdfPages,
+        is_model_trained: bool,
+        output_activation: str
+) -> None:
+    if is_model_trained and output_activation == 'softmax':
+        _add_figures(results.print_classification_report(sampled), pdf)
+        _add_figures(results.plot_confusion_matrix(sampled), pdf, tight=False)
+    _add_figures(inputs.plot_raw_and_transformed_input_samples(sampled), pdf)
+    _add_figures(results.single_sequence_prediction_histogram(sampled), pdf)
+    if is_model_trained:
         _add_figures(results.plot_raw_and_transformed_prediction_samples(sampled), pdf)
         _add_figures(networks.plot_network_feature_progression(sampled, compact=True), pdf)
         _add_figures(networks.plot_network_feature_progression(sampled, compact=False), pdf)
-        if config.architecture.output_activation == 'softmax':
+        if output_activation == 'softmax':
             _add_figures(results.plot_spatial_categorical_error(sampled), pdf)
         else:
             _add_figures(results.plot_spatial_regression_error(sampled), pdf)
-        _logger.info('Plot Validation Sequence Figures')
-        if validation_sequence is not None:
-            sampled = samples.Samples(validation_sequence, model, config, data_sequence_label='Validation')
-            if config.architecture.output_activation == 'softmax':
-                _add_figures(results.print_classification_report(sampled), pdf)
-                _add_figures(results.plot_confusion_matrix(sampled), pdf, tight=False)
-            _add_figures(inputs.plot_raw_and_transformed_input_samples(sampled), pdf)
-            _add_figures(results.single_sequence_prediction_histogram(sampled), pdf)
-            _add_figures(results.plot_raw_and_transformed_prediction_samples(sampled), pdf)
-            _add_figures(networks.plot_network_feature_progression(sampled, compact=True), pdf)
-            _add_figures(networks.plot_network_feature_progression(sampled, compact=False), pdf)
-            if config.architecture.output_activation == 'softmax':
-                _add_figures(results.plot_spatial_categorical_error(sampled), pdf)
-            else:
-                _add_figures(results.plot_spatial_regression_error(sampled), pdf)
-        _logger.info('Plot Model History')
-        if history:
-            _add_figures(plot_history(history), pdf)
 
 
 def create_model_comparison_report(
@@ -106,7 +101,7 @@ def create_model_comparison_report(
         assert len(paths_histories) > 0, 'No model histories found to compare'
     if not os.path.exists(os.path.dirname(filepath_out)):
         os.makedirs(os.path.dirname(filepath_out))
-    model_histories = [histories.load_history(path_history) for path_history in paths_histories]
+    model_histories = [experiments_histories.load_history(path_history) for path_history in paths_histories]
     with PdfPages(filepath_out) as pdf:
         _add_figures(comparisons.plot_model_loss_comparison(model_histories), pdf)
         _add_figures(comparisons.plot_model_timing_comparison(model_histories), pdf)
