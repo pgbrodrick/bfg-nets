@@ -3,7 +3,7 @@ from typing import List
 from matplotlib import gridspec
 import matplotlib.pyplot as plt
 
-from rsCNN.evaluation import samples
+from rsCNN.reporting import samples
 
 
 _FIGSIZE_CONSTANT = 30
@@ -30,8 +30,6 @@ def plot_figures_iterating_through_samples_features_responses(
         max_features_per_page: int = 5,
         max_responses_per_page: int = 5
 ) -> List[plt.Figure]:
-    # TODO:  Phil and Nick discuss how we want features and responses to be looped through on these pages. The code
-    #  needs to change to accommodate having more plotted responses than features, but that should be relatively simple.
     figures = []
     idx_current_sample = 0
     idx_current_feature = 0

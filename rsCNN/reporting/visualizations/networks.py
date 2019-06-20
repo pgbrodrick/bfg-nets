@@ -4,13 +4,13 @@ import keras
 import matplotlib.pyplot as plt
 import numpy as np
 
-from rsCNN.evaluation import samples
+from rsCNN.reporting import samples
 
 
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
 
-def print_model_summary(model: keras.Model) -> List[plt.Figure]:
+def plot_model_summary(model: keras.Model) -> List[plt.Figure]:
     stringlist = ['CNN Architecture Summary']
     model.summary(print_fn=lambda x: stringlist.append(x))
     model_summary_string = "\n".join(stringlist)
@@ -29,7 +29,7 @@ def plot_network_feature_progression(
         max_filters: int = 10
 ) -> List[plt.Figure]:
     return [_plot_sample_feature_progression(sampled, idx_sample, compact, max_filters)
-            for idx_sample in range(3)]  # range(min(max_pages, sampled.num_samples))]
+            for idx_sample in range(min(max_pages, sampled.num_samples))]
 
 
 def _plot_sample_feature_progression(

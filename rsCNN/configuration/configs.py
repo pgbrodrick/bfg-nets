@@ -2,7 +2,7 @@ from collections import OrderedDict
 import copy
 import logging
 import os
-from typing import Dict
+from typing import Dict, List
 
 import yaml
 
@@ -19,7 +19,7 @@ DEFAULT_FILENAME_CONFIG = 'config.yaml'
 class Config(object):
     """
     Handles the reading and formatting of raw data files, the building and training of models and architectures, and
-    the evaluation and reporting of training and validation results.
+    the reporting of training and validation results.
     """
     raw_files = None
     """sections.RawFiles: RawFiles config section."""
@@ -31,6 +31,8 @@ class Config(object):
     """sections.ModelTraining: ModelTraining config section."""
     architecture = None
     """sections.Architecture: Architecture config section."""
+    model_reporting = None
+    """sections.ModelReporting: ModelReporting config section."""
     callback_general = None
     """sections.CallbacksGeneral: CallbacksGeneral config section."""
     callback_tensorboard = None
@@ -47,6 +49,7 @@ class Config(object):
             data_samples: sections.DataSamples = None,
             model_training: sections.ModelTraining = None,
             architecture: config_sections.BaseArchitectureConfigSection = None,
+            model_reporting: sections.ModelReporting = None,
             callback_general: sections.CallbackGeneral = None,
             callback_tensorboard: sections.CallbackTensorboard = None,
             callback_early_stopping: sections.CallbackEarlyStopping = None,
@@ -64,6 +67,7 @@ class Config(object):
         self.data_samples = data_samples
         self.model_training = model_training
         self.architecture = architecture
+        self.model_reporting = model_reporting
         self.callback_general = callback_general
         self.callback_tensorboard = callback_tensorboard
         self.callback_early_stopping = callback_early_stopping
@@ -85,28 +89,57 @@ class Config(object):
                 config['architecture'] = self.architecture.get_config_options_as_dict()
         return config
 
-    def get_config_errors(self) -> list:
+    def get_config_errors(self, include_sections: List[str] = None, exclude_sections: List[str] = None) -> list:
         """Get configuration option errors by checking the validity of each config section.
+
+        Args:
+            include_sections: Config sections that should be included. All config sections are included if None and
+              exclude_sections is not specified. Cannot specify both include_sections and exclude_sections.
+            exclude_sections: Config sections that should be excluded. All config sections are included if None and
+              exclude_sections is not specified. Cannot specify both include_sections and exclude_sections.
 
         Returns:
             List of errors associated with the current configuration.
         """
+        assert not include_sections and exclude_sections, \
+            'Both include_sections and exclude_sections cannot be specified.'
+        _logger.debug('Checking config sections for errors')
         errors = list()
-        for config_section in sections.get_config_sections():
+        config_sections = sections.get_config_sections()
+        if include_sections:
+            _logger.debug('Only checking config sections: {}'.format(', '.join(include_sections)))
+            config_sections = [section for section in config_sections
+                               if section.get_config_name_as_snake_case() in include_sections]
+        if exclude_sections:
+            _logger.debug('Not checking config sections: {}'.format(', '.join(exclude_sections)))
+            config_sections = [section for section in config_sections
+                               if section.get_config_name_as_snake_case() not in exclude_sections]
+        for config_section in config_sections:
             section_name = config_section.get_config_name_as_snake_case()
             populated_section = getattr(self, section_name)
             errors.extend(populated_section.check_config_validity())
             if config_section is sections.ModelTraining:
                 errors.extend(self.architecture.check_config_validity())
+        _logger.debug('{} errors found'.format(len(errors)))
         return errors
 
-    def get_human_readable_config_errors(self) -> str:
+    def get_human_readable_config_errors(
+            self,
+            include_sections: List[str] = None,
+            exclude_sections: List[str] = None
+    ) -> str:
         """Generates a human-readable string of configuration option errors.
+
+        Args:
+            include_sections: Config sections that should be included. All config sections are included if None and
+              exclude_sections is not specified. Cannot specify both include_sections and exclude_sections.
+            exclude_sections: Config sections that should be excluded. All config sections are included if None and
+              exclude_sections is not specified. Cannot specify both include_sections and exclude_sections.
 
         Returns:
             Human-readable string of configuration option errors.
         """
-        errors = self.get_config_errors()
+        errors = self.get_config_errors(include_sections=include_sections, exclude_sections=exclude_sections)
         if not errors:
             return ''
         return 'List of configuration section and option errors is as follows:\n' + '\n'.join(error for error in errors)
@@ -164,7 +197,7 @@ def _create_config(config_options: dict, is_template: bool) -> Config:
     return Config(**populated_sections)
 
 
-def save_config_to_file(config: Config, filepath: str, include_sections: list = None) -> None:
+def save_config_to_file(config: Config, filepath: str, include_sections: List[str] = None) -> None:
     """Saves/serializes a Config object to a YAML file.
 
     Args:

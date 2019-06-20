@@ -2,7 +2,7 @@ from collections import OrderedDict
 import gdal
 import logging
 import re
-from typing import Dict, List
+from typing import Dict, List, Type
 
 from rsCNN.configuration import DEFAULT_OPTIONAL_VALUE, DEFAULT_REQUIRED_VALUE
 from rsCNN.data_management import scalers
@@ -12,6 +12,10 @@ _logger = logging.getLogger(__name__)
 
 
 class BaseConfigSection(object):
+    """
+    Base Configuration Section from which all Configuration Sections inherit. Handles shared functionality like getting,
+    setting, and cleaning configuration options.
+    """
     _config_options = NotImplemented
     _options_required = None
     _options_optional = None
@@ -152,14 +156,14 @@ class RawFiles(BaseConfigSection):
             if self.boundary_bad_value is None:
                 errors.append('boundary_bad_value must be provided if boundary_files is provided')
 
-        errors.extend(check_input_file_formats(self.feature_files, self.response_files, self.boundary_files))
+        errors.extend(_check_input_file_formats(self.feature_files, self.response_files, self.boundary_files))
 
         return errors
 
 
 class DataBuild(BaseConfigSection):
     """
-    Data build configuration, information necessary to structure and format the built data files
+    Data build configuration, information necessary to structure and format the built data files.
     """
     _dir_out_type = str
     dir_out = '.'
@@ -231,7 +235,7 @@ class DataBuild(BaseConfigSection):
 
 class DataSamples(BaseConfigSection):
     """
-    Data sample configuration, information necessary to parse built data files and pass data to models during training
+    Data sample configuration, information necessary to parse built data files and pass data to models during training.
     """
     _apply_random_transformations_type = bool
     apply_random_transformations = False
@@ -267,7 +271,7 @@ class DataSamples(BaseConfigSection):
 
 class ModelTraining(BaseConfigSection):
     """
-    Model training configuration, information necessary to train models from start to finish
+    Model training configuration, information necessary to train models from start to finish.
     """
     _dir_out_type = str
     dir_out = '.'
@@ -278,6 +282,9 @@ class ModelTraining(BaseConfigSection):
     _assert_gpu_type = bool
     assert_gpu = False
     """bool: Assert, i.e., fail if GPUs are required and not available."""
+    _use_multiprocessing_type = bool
+    use_multiprocessing = False
+    """bool: Use multiprocessing in model training via keras. Currently uses max number of available CPUs as workers."""
     _architecture_name_type = str
     architecture_name = DEFAULT_REQUIRED_VALUE
     """str: Architecture name from existing options."""
@@ -297,6 +304,38 @@ class ModelTraining(BaseConfigSection):
     def _check_config_validity(self) -> List[str]:
         errors = list()
         return errors
+
+
+class ModelReporting(BaseConfigSection):
+    """
+    Model reporting configuration, information necessary to generate reports for evaluating model performance.
+    """
+    _max_pages_per_figure_type = int
+    max_pages_per_figure = 1
+    """int: The max number of pages per figure in the model report."""
+    _max_samples_per_page_type = int
+    max_samples_per_page = 20
+    """int: The max number of samples per page in supported figures in the model report"""
+    _max_features_per_page_type = int
+    max_features_per_page = 10
+    """int: The max number of features per page in supported figures in the model report"""
+    _max_responses_per_page_type = int
+    max_responses_per_page = 10
+    """int: The max number of responses per page in supported figures in the model report"""
+    _network_progression_max_pages_type = int
+    network_progression_max_pages = 1
+    """int: The max number of pages for the network progression figure in the model report. Note that the network
+    progression figure is particularly expensive, both for computation and memory."""
+    _network_progression_max_filters_type = int
+    network_progression_max_filters = 10
+    """int: The max number of filters for the network progression figure in the model report. Note that the network
+    progression figure is particularly expensive, both for computation and memory."""
+    _network_progression_show_full_type = bool
+    network_progression_show_full = True
+    """bool: Whether to plot the full network progression plot, with fully-visible filters."""
+    _network_progression_show_compact_type = bool
+    network_progression_show_compact = True
+    """bool: Whether to plot the compact network progression plot, with partially-visible filters."""
 
 
 class CallbackGeneral(BaseConfigSection):
@@ -356,16 +395,43 @@ class CallbackReducedLearningRate(BaseConfigSection):
     """int: See Keras documentation."""
 
 
-def get_config_sections() -> List:
+def get_config_sections() -> List[Type[BaseConfigSection]]:
     return [
-        RawFiles, DataBuild, DataSamples, ModelTraining, CallbackGeneral, CallbackTensorboard, CallbackEarlyStopping,
-        CallbackReducedLearningRate
+        RawFiles, DataBuild, DataSamples, ModelTraining, ModelReporting, CallbackGeneral, CallbackTensorboard,
+        CallbackEarlyStopping, CallbackReducedLearningRate
     ]
 
 
-################### Config / input checking functions ##############################
+def _check_input_file_validity(f_file_list, r_file_list, b_file_list) -> List[str]:
+    errors = _check_input_file_formats(f_file_list, r_file_list, b_file_list)
+    # Checks that all files can be opened by gdal
+    for _site in range(len(f_file_list)):
+        for _band in range(len(f_file_list[_site])):
+            if (gdal.Open(f_file_list[_site][_band], gdal.GA_ReadOnly) is None):
+                errors.append('Could not open feature site {}, file {}'.format(_site, _band))
 
-def check_input_file_formats(f_file_list, r_file_list, b_file_list) -> List[str]:
+    for _site in range(len(r_file_list)):
+        for _band in range(len(r_file_list[_site])):
+            if(gdal.Open(r_file_list[_site][_band], gdal.GA_ReadOnly) is None):
+                errors.append('Could not open response site {}, file {}'.format(_site, _band))
+
+    # Checks on the number of bands per file
+    num_f_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in f_file_list[0]]
+    num_r_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in r_file_list[0]]
+    for _site in range(len(f_file_list)):
+        for _file in range(len(f_file_list[_site])):
+            if(gdal.Open(f_file_list[_site][_file], gdal.GA_ReadOnly).RasterCount != num_f_bands_per_file[_file]):
+                errors.append('Inconsistent number of feature bands in site {}, file {}'.format(_site, _file))
+
+    for _site in range(len(r_file_list)):
+        for _file in range(len(r_file_list[_site])):
+            if(gdal.Open(r_file_list[_site][_file], gdal.GA_ReadOnly).RasterCount != num_r_bands_per_file[_file]):
+                errors.append('Inconsistent number of response bands in site {}, file {}'.format(_site, _file))
+
+    return errors
+
+
+def _check_input_file_formats(f_file_list, r_file_list, b_file_list) -> List[str]:
     errors = []
     # f = feature, r = response, b = boundary
 
@@ -415,34 +481,5 @@ def check_input_file_formats(f_file_list, r_file_list, b_file_list) -> List[str]
     for _site in range(len(r_file_list)):
         if(len(r_file_list[_site]) != num_r_files_per_site):
             errors.append('Inconsistent number of response files at site {}'.format(_site))
-
-    return errors
-
-
-def check_input_file_validity(f_file_list, r_file_list, b_file_list) -> List[str]:
-    errors = check_input_file_formats(f_file_list, r_file_list, b_file_list)
-    # Checks that all files can be opened by gdal
-    for _site in range(len(f_file_list)):
-        for _band in range(len(f_file_list[_site])):
-            if (gdal.Open(f_file_list[_site][_band], gdal.GA_ReadOnly) is None):
-                errors.append('Could not open feature site {}, file {}'.format(_site, _band))
-
-    for _site in range(len(r_file_list)):
-        for _band in range(len(r_file_list[_site])):
-            if(gdal.Open(r_file_list[_site][_band], gdal.GA_ReadOnly) is None):
-                errors.append('Could not open response site {}, file {}'.format(_site, _band))
-
-    # Checks on the number of bands per file
-    num_f_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in f_file_list[0]]
-    num_r_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in r_file_list[0]]
-    for _site in range(len(f_file_list)):
-        for _file in range(len(f_file_list[_site])):
-            if(gdal.Open(f_file_list[_site][_file], gdal.GA_ReadOnly).RasterCount != num_f_bands_per_file[_file]):
-                errors.append('Inconsistent number of feature bands in site {}, file {}'.format(_site, _file))
-
-    for _site in range(len(r_file_list)):
-        for _file in range(len(r_file_list[_site])):
-            if(gdal.Open(r_file_list[_site][_file], gdal.GA_ReadOnly).RasterCount != num_r_bands_per_file[_file]):
-                errors.append('Inconsistent number of response bands in site {}, file {}'.format(_site, _file))
 
     return errors
