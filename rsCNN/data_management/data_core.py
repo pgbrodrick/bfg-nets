@@ -64,15 +64,15 @@ class DataContainer:
 
         else:
             errors = sections.check_input_file_validity(self.config.raw_files.feature_files,
-                                               self.config.raw_files.response_files,
-                                               self.config.raw_files.boundary_files)
+                                                        self.config.raw_files.response_files,
+                                                        self.config.raw_files.boundary_files)
 
             create_built_data_output_directory(self.config)
 
             if (self.config.raw_files.ignore_projections is False):
                 errors.extend(training_data.check_projections(self.config.raw_files.feature_files,
-                              self.config.raw_files.response_files,
-                              self.config.raw_files.boundary_files))
+                                                              self.config.raw_files.response_files,
+                                                              self.config.raw_files.boundary_files))
 
             if (self.config.raw_files.boundary_files is not None):
                 boundary_files = [[loc_file for loc_file in self.config.raw_files.boundary_files
@@ -80,15 +80,17 @@ class DataContainer:
             else:
                 boundary_files = None
 
-            errors.extend(training_data.check_resolutions(self.config.raw_files.feature_files, self.config.raw_files.response_files, boundary_files))
+            errors.extend(training_data.check_resolutions(self.config.raw_files.feature_files,
+                                                          self.config.raw_files.response_files, boundary_files))
 
-            errors.extend(self.check_band_types(self.config.raw_files.feature_files, self.config.raw_files.feature_data_type))
-            errors.extend(self.check_band_types(self.config.raw_files.response_files, self.config.raw_files.response_data_type))
+            errors.extend(self.check_band_types(self.config.raw_files.feature_files,
+                                                self.config.raw_files.feature_data_type))
+            errors.extend(self.check_band_types(self.config.raw_files.response_files,
+                                                self.config.raw_files.response_data_type))
 
             if (len(errors) > 0):
                 print('List of raw data file format errors is as follows:\n' + '\n'.join(error for error in errors))
             assert not errors, 'Raw data file errors found, terminating'
-
 
             self.feature_raw_band_types = self.get_band_types(
                 self.config.raw_files.feature_files, self.config.raw_files.feature_data_type)
@@ -143,14 +145,12 @@ class DataContainer:
         self.feature_scaler = feature_scaler
         self.response_scaler = response_scaler
 
-
     def load_sequences(self):
         train_folds = [idx for idx in range(self.config.data_build.number_folds)
-               if idx not in (self.config.data_build.validation_fold, self.config.data_build.test_fold)]
+                       if idx not in (self.config.data_build.validation_fold, self.config.data_build.test_fold)]
 
         self.training_sequence = self._build_memmapped_sequence(train_folds)
         self.validation_sequence = self._build_memmapped_sequence([self.config.data_build.validation_fold])
-
 
     def _build_memmapped_sequence(self, fold_indices: List[int]) -> MemmappedSequence:
         errors = []
@@ -186,7 +186,6 @@ class DataContainer:
         )
         return data_sequence
 
-
     def check_band_types(self, file_list, band_types):
         errors = []
         valid_band_types = ['R', 'C']
@@ -200,7 +199,7 @@ class DataContainer:
         num_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in file_list[0]]
 
         if (band_types is not None):
-            
+
             if (type(band_types) is not list):
                 errors.append('band_types must be None or a list')
                 if (len(errors) > 0):
@@ -226,7 +225,6 @@ class DataContainer:
                         errors.append('Invalid band type at File {}'.format(_file))
 
         return errors
-
 
     def get_band_types(self, file_list, band_types):
         valid_band_types = ['R', 'C']
@@ -260,16 +258,14 @@ class DataContainer:
 
         return output_raw_band_types
 
-
     def _save_data_core(self):
         np.savez(get_built_data_container_filepath(self.config),
-                 feature_band_types = self.feature_band_types,
-                 response_band_types = self.response_band_types,
-                 feature_raw_band_types = self.feature_raw_band_types,
-                 response_raw_band_types = self.response_raw_band_types,
-                 train_folds = self.train_folds
+                 feature_band_types=self.feature_band_types,
+                 response_band_types=self.response_band_types,
+                 feature_raw_band_types=self.feature_raw_band_types,
+                 response_raw_band_types=self.response_raw_band_types,
+                 train_folds=self.train_folds
                  )
-
 
     def _load_data_core(self):
         npzf = np.load(get_built_data_container_filepath(self.config))
@@ -278,9 +274,6 @@ class DataContainer:
         self.feature_raw_band_types = npzf['feature_raw_band_types']
         self.response_raw_band_types = npzf['response_raw_band_types']
         self.train_folds = npzf['train_folds']
-
-
-
 
 
 ################### Filepath Nomenclature Functions ##############################

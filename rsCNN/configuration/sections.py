@@ -392,9 +392,9 @@ def check_input_file_formats(f_file_list, r_file_list, b_file_list) -> List[str]
         errors.append('At least one feature and response site is required')
     if b_file_list is not None:
         if (len(b_file_list) != len(f_file_list)):
-            errors.append(\
+            errors.append(
                 'Boundary and feature file lists must be the same length. Boundary list: {}. Feature list: {}.'.format(
-                b_file_list, f_file_list))
+                    b_file_list, f_file_list))
 
     # Checks that we have lists of lists for f and r
     for _site in range(len(f_file_list)):
@@ -404,7 +404,6 @@ def check_input_file_formats(f_file_list, r_file_list, b_file_list) -> List[str]
     for _site in range(len(r_file_list)):
         if(type(r_file_list[_site]) is not list):
             errors.append('Responses at site {} are not as a list'.format(_site))
-
 
     # Checks on the number of files per site
     num_f_files_per_site = len(f_file_list[0])
@@ -433,7 +432,6 @@ def check_input_file_validity(f_file_list, r_file_list, b_file_list) -> List[str
             if(gdal.Open(r_file_list[_site][_band], gdal.GA_ReadOnly) is None):
                 errors.append('Could not open response site {}, file {}'.format(_site, _band))
 
-
     # Checks on the number of bands per file
     num_f_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in f_file_list[0]]
     num_r_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in r_file_list[0]]
@@ -448,6 +446,3 @@ def check_input_file_validity(f_file_list, r_file_list, b_file_list) -> List[str
                 errors.append('Inconsistent number of response bands in site {}, file {}'.format(_site, _file))
 
     return errors
-
-
-

@@ -11,7 +11,6 @@ from rsCNN.configuration import configs
 _logger = logging.getLogger(__name__)
 
 
-
 def upper_left_pixel(trans, interior_x, interior_y):
     x_ul = max((trans[0] - interior_x)/trans[1], 0)
     y_ul = max((interior_y - trans[3])/trans[5], 0)
@@ -61,34 +60,32 @@ def get_overlapping_extent(dataset_list_of_lists: List[List[gdal.Dataset]]):
     return return_ul_list, x_len, y_len
 
 
-def get_all_interior_extent_subset_pixel_locations(gdal_datasets: List[List[gdal.Dataset]], window_radius: int, inner_window_radius: int = None, shuffle: bool =True):
+def get_all_interior_extent_subset_pixel_locations(gdal_datasets: List[List[gdal.Dataset]], window_radius: int, inner_window_radius: int = None, shuffle: bool = True):
 
-        if (inner_window_radius is None):
-            inner_window_radius = window_radius
+    if (inner_window_radius is None):
+        inner_window_radius = window_radius
 
-        all_upper_lefts, x_px_size, y_px_size = get_overlapping_extent(gdal_datasets)
+    all_upper_lefts, x_px_size, y_px_size = get_overlapping_extent(gdal_datasets)
 
-        _logger.debug('Calculate pixel-based interior offsets for data acquisition')
-        x_sample_locations = [x for x in range(0,
-                                          int(x_px_size - 2*window_radius)-1,
-                                          int(inner_window_radius*2))]
-        y_sample_locations = [y for y in range(0,
-                                          int(y_px_size - 2*window_radius)-1,
-                                          int(inner_window_radius*2))]
+    _logger.debug('Calculate pixel-based interior offsets for data acquisition')
+    x_sample_locations = [x for x in range(0,
+                                           int(x_px_size - 2*window_radius)-1,
+                                           int(inner_window_radius*2))]
+    y_sample_locations = [y for y in range(0,
+                                           int(y_px_size - 2*window_radius)-1,
+                                           int(inner_window_radius*2))]
 
-        xy_sample_locations = np.zeros((len(x_sample_locations)*len(y_sample_locations), 2)).astype(int)
-        xy_sample_locations[:, 0] = np.matlib.repmat(
-            np.array(x_sample_locations).reshape((-1, 1)), 1, len(y_sample_locations)).flatten()
-        xy_sample_locations[:, 1] = np.matlib.repmat(
-            np.array(y_sample_locations).reshape((1, -1)), len(x_sample_locations), 1).flatten()
-        del x_sample_locations, y_sample_locations
+    xy_sample_locations = np.zeros((len(x_sample_locations)*len(y_sample_locations), 2)).astype(int)
+    xy_sample_locations[:, 0] = np.matlib.repmat(
+        np.array(x_sample_locations).reshape((-1, 1)), 1, len(y_sample_locations)).flatten()
+    xy_sample_locations[:, 1] = np.matlib.repmat(
+        np.array(y_sample_locations).reshape((1, -1)), len(x_sample_locations), 1).flatten()
+    del x_sample_locations, y_sample_locations
 
-        if (shuffle):
-            xy_sample_locations = xy_sample_locations[np.random.permutation(xy_sample_locations.shape[0]), :]
+    if (shuffle):
+        xy_sample_locations = xy_sample_locations[np.random.permutation(xy_sample_locations.shape[0]), :]
 
-        return all_upper_lefts, xy_sample_locations
-
-
+    return all_upper_lefts, xy_sample_locations
 
 
 def read_map_subset(datasets: List, upper_lefts: List[List[int]], window_diameter: int, mask=None, nodata_value=None):
@@ -129,19 +126,10 @@ def get_boundary_sets_from_boundary_files(config: configs.Config) -> List[gdal.D
 
 
 def get_site_boundary_set(config: configs.Config, _site) -> gdal.Dataset:
-    
+
     if not config.raw_files.boundary_files:
         boundary_set = None
     else:
-        boundary_set = gdal.Open(config.raw_files.boundary_files[_site], gdal.GA_ReadOnly)     
-    
+        boundary_set = gdal.Open(config.raw_files.boundary_files[_site], gdal.GA_ReadOnly)
+
     return boundary_set
-
-
-
-
-
-
-
-
-
