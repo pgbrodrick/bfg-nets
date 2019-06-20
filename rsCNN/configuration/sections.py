@@ -1,4 +1,5 @@
 from collections import OrderedDict
+import gdal
 import logging
 import re
 from typing import Dict, List
@@ -139,17 +140,12 @@ class RawFiles(BaseConfigSection):
             if len(self.feature_files) != len(self.response_files):
                 errors.append('feature_files and response_files must have corresponding files and ' +
                               'be the same length')
-        if self.feature_data_type is None:
-            errors.append('feature_data_type must be provided')
-        if self.response_data_type is None:
-            errors.append('response_data_type must be provided')
-        if self.feature_files is None:
-            errors.append('feature_files must be provided')
-        if self.response_files is None:
-            errors.append('response_files must be provided')
         if type(self.boundary_files) is list:
             if self.boundary_bad_value is None:
                 errors.append('boundary_bad_value must be provided if boundary_files is provided')
+
+        errors.extend(check_input_file_formats(self.feature_files, self.response_files, self.boundary_files))
+
         return errors
 
 
@@ -194,7 +190,7 @@ class DataBuild(BaseConfigSection):
     loss_window_radius = DEFAULT_REQUIRED_VALUE
     """int: Loss window radius determines the internal image window to use for loss calculations during model 
     training."""
-    # TODO:  Phil:  should mean_centering be a list so that we have one item per file?
+    # TODO:  convert to a list, one instance per file
     _feature_mean_centering_type = bool
     feature_mean_centering = False
     """bool: Should features be mean centered?"""
@@ -251,14 +247,16 @@ class DataSamples(BaseConfigSection):
     def _check_config_validity(self) -> List[str]:
         # TODO
         errors = list()
-        for scaler_name in self.feature_scaler_names:
-            if not scalers.check_scaler_exists(scaler_name):
-                errors.append('feature_scaler_names contains a scaler name that does not exist:  {}'.format(
-                    scaler_name))
-        for scaler_name in self.response_scaler_names:
-            if not scalers.check_scaler_exists(scaler_name):
-                errors.append('response_scaler_names contains a scaler name that does not exist:  {}'.format(
-                    scaler_name))
+        if (self.feature_scaler_names is list):
+            for scaler_name in self.feature_scaler_names:
+                if not scalers.check_scaler_exists(scaler_name):
+                    errors.append('feature_scaler_names contains a scaler name that does not exist:  {}'.format(
+                        scaler_name))
+        if (self.response_scaler_names is list):
+            for scaler_name in self.response_scaler_names:
+                if not scalers.check_scaler_exists(scaler_name):
+                    errors.append('response_scaler_names contains a scaler name that does not exist:  {}'.format(
+                        scaler_name))
         return errors
 
 
@@ -359,3 +357,93 @@ def get_config_sections() -> List:
         RawFiles, DataBuild, DataSamples, ModelTraining, CallbackGeneral, CallbackTensorboard, CallbackEarlyStopping,
         CallbackReducedLearningRate
     ]
+
+
+################### Config / input checking functions ##############################
+
+def check_input_file_formats(f_file_list, r_file_list, b_file_list) -> List[str]:
+    errors = []
+    # f = feature, r = response, b = boundary
+
+    # file lists r and f are expected a list of lists.  The outer list is a series of sites (location a, b, etc.).
+    # The inner list is a series of files associated with that site (band x, y, z).  Each site must have the
+    # same number of files, and each file from each site must have the same number of bands, in the same order.
+    # file list b is a list for each site, with one boundary file expected to be the interior boundary for all
+    # bands.
+
+    # Check that feature and response files are lists
+    if (type(f_file_list) is not list):
+        errors.append('Feature files must be a list of lists')
+    if (type(r_file_list) is not list):
+        errors.append('Response files must be a list of lists')
+
+    if (len(errors) > 0):
+        errors.append('Feature or response files not in correct format...all checks cannot be completed')
+        return errors
+
+    # Checks on the matching numbers of sites
+    if (len(f_file_list) != len(r_file_list)):
+        errors.append('Feature and response site lists must be the same length')
+    if (len(f_file_list) <= 0):
+        errors.append('At least one feature and response site is required')
+    if b_file_list is not None:
+        if (len(b_file_list) != len(f_file_list)):
+            errors.append(\
+                'Boundary and feature file lists must be the same length. Boundary list: {}. Feature list: {}.'.format(
+                b_file_list, f_file_list))
+
+    # Checks that we have lists of lists for f and r
+    for _site in range(len(f_file_list)):
+        if(type(f_file_list[_site]) is not list):
+            errors.append('Features at site {} are not as a list'.format(_site))
+
+    for _site in range(len(r_file_list)):
+        if(type(r_file_list[_site]) is not list):
+            errors.append('Responses at site {} are not as a list'.format(_site))
+
+
+    # Checks on the number of files per site
+    num_f_files_per_site = len(f_file_list[0])
+    num_r_files_per_site = len(r_file_list[0])
+    for _site in range(len(f_file_list)):
+        if(len(f_file_list[_site]) != num_f_files_per_site):
+            errors.append('Inconsistent number of feature files at site {}'.format(_site))
+
+    for _site in range(len(r_file_list)):
+        if(len(r_file_list[_site]) != num_r_files_per_site):
+            errors.append('Inconsistent number of response files at site {}'.format(_site))
+
+    return errors
+
+
+def check_input_file_validity(f_file_list, r_file_list, b_file_list) -> List[str]:
+    errors = check_input_file_formats(f_file_list, r_file_list, b_file_list)
+    # Checks that all files can be opened by gdal
+    for _site in range(len(f_file_list)):
+        for _band in range(len(f_file_list[_site])):
+            if (gdal.Open(f_file_list[_site][_band], gdal.GA_ReadOnly) is None):
+                errors.append('Could not open feature site {}, file {}'.format(_site, _band))
+
+    for _site in range(len(r_file_list)):
+        for _band in range(len(r_file_list[_site])):
+            if(gdal.Open(r_file_list[_site][_band], gdal.GA_ReadOnly) is None):
+                errors.append('Could not open response site {}, file {}'.format(_site, _band))
+
+
+    # Checks on the number of bands per file
+    num_f_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in f_file_list[0]]
+    num_r_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in r_file_list[0]]
+    for _site in range(len(f_file_list)):
+        for _file in range(len(f_file_list[_site])):
+            if(gdal.Open(f_file_list[_site][_file], gdal.GA_ReadOnly).RasterCount != num_f_bands_per_file[_file]):
+                errors.append('Inconsistent number of feature bands in site {}, file {}'.format(_site, _file))
+
+    for _site in range(len(r_file_list)):
+        for _file in range(len(r_file_list[_site])):
+            if(gdal.Open(r_file_list[_site][_file], gdal.GA_ReadOnly).RasterCount != num_r_bands_per_file[_file]):
+                errors.append('Inconsistent number of response bands in site {}, file {}'.format(_site, _file))
+
+    return errors
+
+
+

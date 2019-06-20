@@ -7,8 +7,8 @@ import matplotlib as mpl
 import matplotlib.gridspec as gridspec
 from tqdm import tqdm
 
-from rsCNN.data_management import common_io
-from rsCNN.data_management.training_data import Data_Container
+from rsCNN.data_management import common_io, ooc_functions
+from rsCNN.data_management.data_core import DataContainer
 from rsCNN.utils.general import *
 
 
@@ -17,7 +17,7 @@ plt.switch_backend('Agg')  # Needed for remote server plotting
 
 def apply_model_to_raster(
         cnn: keras.Model,
-        data_container: Data_Container,
+        data_container: DataContainer,
         feature_file: str,
         destination_basename: str,
         make_png: bool = False,
@@ -103,7 +103,7 @@ def apply_model_to_raster(
         images = np.stack(images)
         images = images.reshape((images.shape[0], images.shape[1], images.shape[2], feature_set.RasterCount))
 
-        images, image_band_types = common_io.one_hot_encode_array(data_container.feature_raw_band_types, images)
+        images, image_band_types = ooc_functions.one_hot_encode_array(data_container.feature_raw_band_types, images)
 
         if (config.data_build.feature_mean_centering is True):
             images -= np.nanmean(images, axis=(1, 2))[:, np.newaxis, np.newaxis, :]
@@ -180,7 +180,13 @@ def maximum_likelihood_classification(
         driver = gdal.GetDriverByName('GTiff')
         driver.Register()
 
-        outDataset = driver.Create(output_tif_file, output.shape[1], output.shape[0], 1, gdal.GDT_Float32)
+        outDataset = driver.Create(output_tif_file, 
+                                   output.shape[1], 
+                                   output.shape[0], 
+                                   1, 
+                                   gdal.GDT_Float32, 
+                                   options=['COMPRESS=LZW'])
+
         outDataset.SetProjection(dataset.GetProjection())
         outDataset.SetGeoTransform(dataset.GetGeoTransform())
         outDataset.GetRasterBand(1).WriteArray(output, 0, 0)

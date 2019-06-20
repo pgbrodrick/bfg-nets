@@ -233,9 +233,9 @@ def _plot_spatial_error(
     max_responses_per_page = max_responses_per_row * max_rows_per_page
     num_pages = min(max_pages, np.ceil(sampled.num_responses / max_responses_per_page))
 
-    inshape = sampled.config.architecture.inshape
     loss_window_radius = sampled.config.data_build.loss_window_radius
-    buffer = int((inshape[0] - loss_window_radius * 2) / 2)
+    window_radius = sampled.config.data_build.window_radius
+    buffer = int(window_radius - loss_window_radius)
 
     def _get_axis_generator_for_page(grid, num_rows, num_cols):
         for idx_col in range(num_cols):
