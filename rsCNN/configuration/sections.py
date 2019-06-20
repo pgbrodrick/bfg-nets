@@ -2,7 +2,7 @@ from collections import OrderedDict
 import gdal
 import logging
 import re
-from typing import Dict, List
+from typing import Dict, List, Type
 
 from rsCNN.configuration import DEFAULT_OPTIONAL_VALUE, DEFAULT_REQUIRED_VALUE
 from rsCNN.data_management import scalers
@@ -395,7 +395,7 @@ class CallbackReducedLearningRate(BaseConfigSection):
     """int: See Keras documentation."""
 
 
-def get_config_sections() -> List:
+def get_config_sections() -> List[Type[BaseConfigSection]]:
     return [
         RawFiles, DataBuild, DataSamples, ModelTraining, ModelEvaluation, CallbackGeneral, CallbackTensorboard,
         CallbackEarlyStopping, CallbackReducedLearningRate
