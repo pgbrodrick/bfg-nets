@@ -44,7 +44,7 @@ def scale_vector(dat, flag, nodata_value=VALUE_NO_DATA):
 def scale_image(image, flag, nodata_value=VALUE_NO_DATA):
     """ Scale an image based on preset flag.
     Arguments:
-    image - 3d array with assumed dimensions y,x,band 
+    image - 3d array with assumed dimensions y,x,band
     flag - scaling flag to use (None if no scaling)
 
     Return:
@@ -65,7 +65,7 @@ def scale_image(image, flag, nodata_value=VALUE_NO_DATA):
 def scale_image_mean_std(image, nodata_value=VALUE_NO_DATA):
     """ Mean center and standard-deviation normalize an image.
     Arguments:
-    image - 3d array with assumed dimensions y,x,band 
+    image - 3d array with assumed dimensions y,x,band
 
     Keyword Aguments:
     ndoata_value - value to be ignored, None of no nodata speified
@@ -85,7 +85,7 @@ def scale_image_mean_std(image, nodata_value=VALUE_NO_DATA):
 def scale_image_mean(image, nodata_value=VALUE_NO_DATA):
     """ Mean center an image.
     Arguments:
-    image - 3d array with assumed dimensions y,x,band 
+    image - 3d array with assumed dimensions y,x,band
 
     Keyword Aguments:
     ndoata_value - value to be ignored, None of no nodata speified
@@ -102,7 +102,7 @@ def scale_image_mean(image, nodata_value=VALUE_NO_DATA):
 def scale_image_minmax(image, nodata_value=VALUE_NO_DATA):
     """ Scale image based on local mins and maxes.
     Arguments:
-    image - 3d array with assumed dimensions y,x,band 
+    image - 3d array with assumed dimensions y,x,band
 
     Keyword Aguments:
     ndoata_value - value to be ignored, None of no nodata speified
@@ -121,7 +121,7 @@ def scale_image_minmax(image, nodata_value=VALUE_NO_DATA):
 def fill_nearest_neighbor(image, nodata=VALUE_NO_DATA):
     """ Fill in missing values in an image using a nearest neighbor approach.
     Arguments:
-    image - 3d array with assumed dimensions y,x,band 
+    image - 3d array with assumed dimensions y,x,band
 
     Keyword Aguments:
     ndoata_value - value to be ignored, None of no nodata speified
