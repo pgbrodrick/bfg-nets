@@ -117,6 +117,8 @@ class Experiment(object):
             callbacks=model_callbacks,
             validation_data=validation_sequence,
             max_queue_size=2,
+            workers=len(psutil.Process().cpu_affinity()),
+            use_multiprocessing=self.config.model_training.use_multiprocessing,
             shuffle=False,
             initial_epoch=len(self.history.get('lr', list())),
         )
