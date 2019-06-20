@@ -5,8 +5,6 @@ import matplotlib.pyplot as plt
 from rsCNN.evaluation import samples, shared
 
 
-# TODO:  I want to see one-hot encoded geomorphic categories together in input plots
-
 def plot_raw_and_transformed_input_samples(
         sampled: samples.Samples,
         max_pages: int = 8,
