@@ -184,11 +184,8 @@ def _get_lhist(data, bins=10):
 def plot_spatial_categorical_error(
         sampled: samples.Samples,
         max_pages: int = 8,
-        max_responses_per_row: int = 10,
-        max_rows_per_page: int = 10
+        max_responses_per_page: int = 10
 ) -> List[plt.Figure]:
-    # TODO:  change max_responses_per_row to max_responses_per_page and max_rows_per_page is removed after updating API
-    #  with config
     actual = np.expand_dims(np.argmax(sampled.raw_responses, axis=-1), -1)
     predicted = np.expand_dims(np.argmax(sampled.raw_predictions, axis=-1), -1)
     error = (actual != predicted).astype(float)
@@ -198,31 +195,26 @@ def plot_spatial_categorical_error(
     )
     error[~is_finite] = np.nan
     error = np.nanmean(error, axis=0)
-    return _plot_spatial_error(error, sampled, max_pages, max_responses_per_row, max_rows_per_page)
+    return _plot_spatial_error(error, sampled, max_pages, max_responses_per_page)
 
 
 def plot_spatial_regression_error(
         sampled: samples.Samples,
         max_pages: int = 8,
-        max_responses_per_row: int = 10,
-        max_rows_per_page: int = 10
+        max_responses_per_page: int = 10,
 ) -> List[plt.Figure]:
-    # TODO:  change max_responses_per_row to max_responses_per_page and max_rows_per_page is removed after updating API
-    #  with config
     abs_error = np.nanmean(np.abs(sampled.raw_predictions - sampled.raw_responses), axis=0)
-    return _plot_spatial_error(abs_error, sampled, max_pages, max_responses_per_row, max_rows_per_page)
+    return _plot_spatial_error(abs_error, sampled, max_pages, max_responses_per_page)
 
 
 def _plot_spatial_error(
     error: np.array,
     sampled: samples.Samples,
     max_pages: int,
-    max_responses_per_row: int,
-    max_rows_per_page: int
+    max_responses_per_page: int,
 ) -> List[plt.Figure]:
     figures = []
 
-    max_responses_per_page = max_responses_per_row * max_rows_per_page
     num_pages = min(max_pages, np.ceil(sampled.num_responses / max_responses_per_page))
 
     loss_window_radius = sampled.config.data_build.loss_window_radius
@@ -238,8 +230,8 @@ def _plot_spatial_error(
     idx_response = 0
     while idx_page < num_pages:
         num_figs_on_page = min(max_responses_per_page, error.shape[-1] - idx_response)
-        nrows = int(np.ceil(num_figs_on_page / max_responses_per_row))
-        ncols = int(min(max_responses_per_row, num_figs_on_page))
+        nrows = 1
+        ncols = num_figs_on_page
         fig, grid = shared.get_figure_and_grid(nrows, ncols)
         for ax in _get_axis_generator_for_page(grid, nrows, ncols):
             min_ = 0

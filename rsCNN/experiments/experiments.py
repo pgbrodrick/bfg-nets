@@ -29,7 +29,7 @@ class Experiment(object):
     """bool: Whether an existing model object was loaded from the model training directory."""
 
     def __init__(self, config: configs.Config) -> None:
-        errors = config.get_human_readable_config_errors(exclude_sections=['raw_files', 'model_evaluation'])
+        errors = config.get_human_readable_config_errors(exclude_sections=['raw_files', 'model_reporting'])
         assert not errors, errors
         self.config = config
         if not os.path.exists(self.config.model_training.dir_out):

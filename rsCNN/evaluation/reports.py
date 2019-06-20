@@ -30,7 +30,7 @@ class Reporter(object):
             experiment: experiments.Experiment,
             config: configs.Config
     ) -> None:
-        errors = config.get_human_readable_config_errors(include_sections=['model_evaluation'])
+        errors = config.get_human_readable_config_errors(include_sections=['model_reporting'])
         assert not errors, errors
         self.data_container = data_container
         self.experiment = experiment
@@ -57,10 +57,10 @@ def create_model_report(
         _add_figures(networks.print_model_summary(model), pdf)
         _logger.info('Plot Training Sequence Figures')
         sampled = samples.Samples(training_sequence, model, config, data_sequence_label='Training')
-        _create_model_report_for_sequence(sampled, pdf, is_model_trained, config.architecture.output_activation)
+        _create_model_report_for_sequence(sampled, config, is_model_trained, pdf)
         _logger.info('Plot Validation Sequence Figures')
         sampled = samples.Samples(validation_sequence, model, config, data_sequence_label='Validation')
-        _create_model_report_for_sequence(sampled, pdf, is_model_trained, config.architecture.output_activation)
+        _create_model_report_for_sequence(sampled, config, is_model_trained, pdf)
         _logger.info('Plot Model History')
         if history:
             _add_figures(reports_histories.plot_history(history), pdf)
@@ -68,23 +68,38 @@ def create_model_report(
 
 def _create_model_report_for_sequence(
         sampled: samples.Samples,
-        pdf: PdfPages,
+        config: configs.Config,
         is_model_trained: bool,
-        output_activation: str
+        pdf: PdfPages,
 ) -> None:
-    if is_model_trained and output_activation == 'softmax':
+    conf = config.model_reporting
+    if is_model_trained and config.architecture.output_activation == 'softmax':
         _add_figures(results.print_classification_report(sampled), pdf)
         _add_figures(results.plot_confusion_matrix(sampled), pdf, tight=False)
-    _add_figures(inputs.plot_raw_and_transformed_input_samples(sampled), pdf)
-    _add_figures(results.single_sequence_prediction_histogram(sampled), pdf)
+    _add_figures(inputs.plot_raw_and_transformed_input_samples(
+        sampled, max_pages=conf.max_pages_per_figure, max_samples_per_page=conf.max_samples_per_page,
+        max_features_per_page=conf.max_features_per_page, max_responses_per_page=conf.max_responses_per_page), pdf)
+    _add_figures(results.single_sequence_prediction_histogram(
+        sampled, max_responses_per_page=conf.max_responses_per_page), pdf)
     if is_model_trained:
-        _add_figures(results.plot_raw_and_transformed_prediction_samples(sampled), pdf)
-        _add_figures(networks.plot_network_feature_progression(sampled, compact=True), pdf)
-        _add_figures(networks.plot_network_feature_progression(sampled, compact=False), pdf)
-        if output_activation == 'softmax':
-            _add_figures(results.plot_spatial_categorical_error(sampled), pdf)
+        _add_figures(results.plot_raw_and_transformed_prediction_samples(
+            sampled, max_pages=conf.max_pages_per_figure, max_samples_per_page=conf.max_samples_per_page,
+            max_features_per_page=conf.max_features_per_page, max_responses_per_page=conf.max_responses_per_page
+        ), pdf)
+        if conf.network_progression_show_full:
+            _add_figures(networks.plot_network_feature_progression(
+                sampled, compact=False, max_pages=conf.network_progression_max_pages,
+                max_filters=conf.network_progression_max_filters), pdf)
+        if conf.network_progression_show_compact:
+            _add_figures(networks.plot_network_feature_progression(
+                sampled, compact=True, max_pages=conf.network_progression_max_pages,
+                max_filters=conf.network_progression_max_filters), pdf)
+        if config.architecture.output_activation == 'softmax':
+            plotter = results.plot_spatial_categorical_error
         else:
-            _add_figures(results.plot_spatial_regression_error(sampled), pdf)
+            plotter = results.plot_spatial_regression_error
+        _add_figures(plotter(
+            sampled, max_pages=conf.max_pages_per_figure, max_responses_per_page=conf.max_responses_per_page), pdf)
 
 
 def create_model_comparison_report(
