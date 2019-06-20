@@ -12,6 +12,10 @@ _logger = logging.getLogger(__name__)
 
 
 class BaseConfigSection(object):
+    """
+    Base Configuration Section from which all Configuration Sections inherit. Handles shared functionality like getting,
+    setting, and cleaning configuration options.
+    """
     _config_options = NotImplemented
     _options_required = None
     _options_optional = None
@@ -159,7 +163,7 @@ class RawFiles(BaseConfigSection):
 
 class DataBuild(BaseConfigSection):
     """
-    Data build configuration, information necessary to structure and format the built data files
+    Data build configuration, information necessary to structure and format the built data files.
     """
     _dir_out_type = str
     dir_out = '.'
@@ -231,7 +235,7 @@ class DataBuild(BaseConfigSection):
 
 class DataSamples(BaseConfigSection):
     """
-    Data sample configuration, information necessary to parse built data files and pass data to models during training
+    Data sample configuration, information necessary to parse built data files and pass data to models during training.
     """
     _apply_random_transformations_type = bool
     apply_random_transformations = False
@@ -267,7 +271,7 @@ class DataSamples(BaseConfigSection):
 
 class ModelTraining(BaseConfigSection):
     """
-    Model training configuration, information necessary to train models from start to finish
+    Model training configuration, information necessary to train models from start to finish.
     """
     _dir_out_type = str
     dir_out = '.'
@@ -300,6 +304,38 @@ class ModelTraining(BaseConfigSection):
     def _check_config_validity(self) -> List[str]:
         errors = list()
         return errors
+
+
+class ModelEvaluation(BaseConfigSection):
+    """
+    Model evaluation configuration, information necessary to generate reports for evaluating model performance.
+    """
+    _max_pages_per_figure_type = int
+    max_pages_per_figure = 1
+    """int: The max number of pages per figure in the evaluation report."""
+    _max_samples_per_page_type = int
+    max_samples_per_page = 20
+    """int: The max number of samples per page in supported figures in the evaluation report"""
+    _max_features_per_page_type = int
+    max_features_per_page = 10
+    """int: The max number of features per page in supported figures in the evaluation report"""
+    _max_responses_per_page_type = int
+    max_responses_per_page = 10
+    """int: The max number of responses per page in supported figures in the evaluation report"""
+    _network_progression_max_pages_type = int
+    network_progression_max_pages = 1
+    """int: The max number of pages for the network progression figure in the evaluation report. Note that the network
+    progression figure is particularly expensive, both for computation and memory."""
+    _network_progression_max_filters_type = int
+    network_progression_max_filters = 10
+    """int: The max number of filters for the network progression figure in the evaluation report. Note that the network
+    progression figure is particularly expensive, both for computation and memory."""
+    _network_progression_show_full_type = bool
+    network_progression_show_full = True
+    """bool: Whether to plot the full network progression plot, with fully-visible filters."""
+    _network_progression_show_compact_type = bool
+    network_progression_show_compact = True
+    """bool: Whether to plot the compact network progression plot, with partially-visible filters."""
 
 
 class CallbackGeneral(BaseConfigSection):
@@ -361,8 +397,8 @@ class CallbackReducedLearningRate(BaseConfigSection):
 
 def get_config_sections() -> List:
     return [
-        RawFiles, DataBuild, DataSamples, ModelTraining, CallbackGeneral, CallbackTensorboard, CallbackEarlyStopping,
-        CallbackReducedLearningRate
+        RawFiles, DataBuild, DataSamples, ModelTraining, ModelEvaluation, CallbackGeneral, CallbackTensorboard,
+        CallbackEarlyStopping, CallbackReducedLearningRate
     ]
 
 

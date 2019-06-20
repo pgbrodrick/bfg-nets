@@ -51,6 +51,15 @@ architecture:
   padding: same
   use_batch_norm: false
   use_initial_colorspace_transformation_layer: false
+model_evaluation:
+  max_pages_per_figure: 1
+  max_samples_per_page: 20
+  max_features_per_page: 10
+  max_responses_per_page: 10
+  network_progression_max_pages: 1
+  network_progression_max_filters: 10
+  network_progression_show_full: true
+  network_progression_show_compact: true
 callback_general:
   checkpoint_periods: 5
   use_terminate_on_nan: true
