@@ -306,29 +306,29 @@ class ModelTraining(BaseConfigSection):
         return errors
 
 
-class ModelEvaluation(BaseConfigSection):
+class ModelReporting(BaseConfigSection):
     """
-    Model evaluation configuration, information necessary to generate reports for evaluating model performance.
+    Model reporting configuration, information necessary to generate reports for evaluating model performance.
     """
     _max_pages_per_figure_type = int
     max_pages_per_figure = 1
-    """int: The max number of pages per figure in the evaluation report."""
+    """int: The max number of pages per figure in the model report."""
     _max_samples_per_page_type = int
     max_samples_per_page = 20
-    """int: The max number of samples per page in supported figures in the evaluation report"""
+    """int: The max number of samples per page in supported figures in the model report"""
     _max_features_per_page_type = int
     max_features_per_page = 10
-    """int: The max number of features per page in supported figures in the evaluation report"""
+    """int: The max number of features per page in supported figures in the model report"""
     _max_responses_per_page_type = int
     max_responses_per_page = 10
-    """int: The max number of responses per page in supported figures in the evaluation report"""
+    """int: The max number of responses per page in supported figures in the model report"""
     _network_progression_max_pages_type = int
     network_progression_max_pages = 1
-    """int: The max number of pages for the network progression figure in the evaluation report. Note that the network
+    """int: The max number of pages for the network progression figure in the model report. Note that the network
     progression figure is particularly expensive, both for computation and memory."""
     _network_progression_max_filters_type = int
     network_progression_max_filters = 10
-    """int: The max number of filters for the network progression figure in the evaluation report. Note that the network
+    """int: The max number of filters for the network progression figure in the model report. Note that the network
     progression figure is particularly expensive, both for computation and memory."""
     _network_progression_show_full_type = bool
     network_progression_show_full = True
@@ -397,7 +397,7 @@ class CallbackReducedLearningRate(BaseConfigSection):
 
 def get_config_sections() -> List[Type[BaseConfigSection]]:
     return [
-        RawFiles, DataBuild, DataSamples, ModelTraining, ModelEvaluation, CallbackGeneral, CallbackTensorboard,
+        RawFiles, DataBuild, DataSamples, ModelTraining, ModelReporting, CallbackGeneral, CallbackTensorboard,
         CallbackEarlyStopping, CallbackReducedLearningRate
     ]
 

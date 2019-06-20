@@ -19,7 +19,7 @@ DEFAULT_FILENAME_CONFIG = 'config.yaml'
 class Config(object):
     """
     Handles the reading and formatting of raw data files, the building and training of models and architectures, and
-    the evaluation and reporting of training and validation results.
+    the reporting of training and validation results.
     """
     raw_files = None
     """sections.RawFiles: RawFiles config section."""
@@ -31,8 +31,8 @@ class Config(object):
     """sections.ModelTraining: ModelTraining config section."""
     architecture = None
     """sections.Architecture: Architecture config section."""
-    model_evaluation = None
-    """sections.ModelEvaluation: ModelEvaluation config section."""
+    model_reporting = None
+    """sections.ModelReporting: ModelReporting config section."""
     callback_general = None
     """sections.CallbacksGeneral: CallbacksGeneral config section."""
     callback_tensorboard = None
@@ -49,7 +49,7 @@ class Config(object):
             data_samples: sections.DataSamples = None,
             model_training: sections.ModelTraining = None,
             architecture: config_sections.BaseArchitectureConfigSection = None,
-            model_evaluation: sections.ModelEvaluation = None,
+            model_reporting: sections.ModelReporting = None,
             callback_general: sections.CallbackGeneral = None,
             callback_tensorboard: sections.CallbackTensorboard = None,
             callback_early_stopping: sections.CallbackEarlyStopping = None,
@@ -67,7 +67,7 @@ class Config(object):
         self.data_samples = data_samples
         self.model_training = model_training
         self.architecture = architecture
-        self.model_evaluation = model_evaluation
+        self.model_reporting = model_reporting
         self.callback_general = callback_general
         self.callback_tensorboard = callback_tensorboard
         self.callback_early_stopping = callback_early_stopping
