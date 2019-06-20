@@ -29,10 +29,6 @@ class BaseArchitectureConfigSection(sections.BaseConfigSection):
     filters = DEFAULT_REQUIRED_VALUE
     """int: Number of filters to use for initial convolutions, may increase in architectures that support the use_growth
     option."""
-    _inshape_type = tuple
-    inshape = DEFAULT_REQUIRED_VALUE
-    """tuple: The inshape of sample arrays passed to the model; e.g., 128x128x4 for a 128x128 image with four bands or
-    channels."""
     _kernel_size_type = tuple
     kernel_size = DEFAULT_KERNEL_SIZE
     """tuple: The kernel size used for convolutions. Most often (3, 3) for a 3x3 kernel."""
@@ -115,7 +111,8 @@ class GrowthMixin(object):
 
 def create_model_from_architecture_config_section(
         architecture_name: str,
-        architecture_config_section: BaseArchitectureConfigSection
+        architecture_config_section: BaseArchitectureConfigSection,
+        inshape: tuple
 ) -> keras.models.Model:
     """Creates a Keras model for a specific architecture using the provided options.
 
@@ -129,6 +126,7 @@ def create_model_from_architecture_config_section(
     """
     architecture_module = _import_architecture_module(architecture_name)
     kwargs = {key: getattr(architecture_config_section, key) for key in architecture_config_section.get_option_keys()}
+    kwargs['inshape'] = inshape
     return architecture_module.create_model(**kwargs)
 
 

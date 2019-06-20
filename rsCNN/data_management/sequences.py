@@ -6,39 +6,9 @@ import keras
 import numpy as np
 
 from rsCNN.data_management.scalers import BaseGlobalScaler
-from rsCNN.data_management.data_core import Data_Container
 
 
 _logger = logging.getLogger(__name__)
-
-
-# TODO: this is almost certainly the wrong place for this
-def build_memmapped_sequence(data_container: Data_Container, fold_indices, batch_size=100, rebuild=False):
-    """
-        This function does the following, considering the rebuild parameter at each step:
-            2) load/initialize/fit scalers
-            3) initiate train/validation/test sequences as components of Experiment
-    """
-
-    assert data_container.features is not None, 'data_container must have loaded feature numpy files'
-    assert data_container.responses is not None, 'data_container must have loaded responses numpy files'
-    assert data_container.weights is not None, 'data_container must have loaded weight numpy files'
-
-    assert data_container.feature_scaler is not None, 'Feature scaler must be defined'
-    assert data_container.response_scaler is not None, 'Response scaler must be defined'
-
-    data_sequence = MemmappedSequence(
-        [data_container.features[_f] for _f in fold_indices],
-        [data_container.responses[_r] for _r in fold_indices],
-        [data_container.weights[_w] for _w in fold_indices],
-        data_container.feature_scaler,
-        data_container.response_scaler,
-        batch_size,
-        apply_random_transforms=data_container.config.data_samples.apply_random_transformations,
-        feature_mean_centering=data_container.config.data_build.feature_mean_centering,
-        nan_replacement_value=data_container.config.data_samples.feature_nodata_encoding
-    )
-    return data_sequence
 
 
 class BaseSequence(keras.utils.Sequence):
