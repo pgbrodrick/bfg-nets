@@ -22,12 +22,6 @@ class HistoryCheckpoint(keras.callbacks.Callback):
 
     def __init__(self, dir_out, existing_history=None, period=1, verbose=0):
         super().__init__()
-        # TODO:  remove this log line
-        # NOTE:  model has no attributes at this point, we need this info to know how to implement parallel models
-        if hasattr(self, 'model'):
-            _logger.debug('init model attributes and methods:  {}'.format(dir(self.model)))
-            if hasattr(self.model, 'model'):
-                _logger.debug('init model.model attributes and methods:  {}'.format(dir(self.model.model)))
         self.dir_out = dir_out
         if existing_history is None:
             existing_history = dict()

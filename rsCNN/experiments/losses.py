@@ -44,7 +44,7 @@ def cropped_loss(loss_type: str, outer_width: int, inner_width: int, weighted: b
         else:
             raise NotImplementedError('Unknown loss function')
 
-        # TODO: check that this after the fact weight multiplication works properly
+        # TODO: Phil: check that this after the fact weight multiplication works properly
         if weighted:
             loss = loss * weights
 
