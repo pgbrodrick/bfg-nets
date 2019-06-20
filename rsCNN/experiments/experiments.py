@@ -43,18 +43,8 @@ class Experiment(object):
         else:
             configs.save_config_to_file(self.config, get_config_filepath(self.config.model_training.dir_out))
 
-    def build_or_load_model(self, inshape: tuple = None, data_container: DataContainer = None):
+    def build_or_load_model(self, data_container: DataContainer = None, num_features: int = None) -> None:
         _logger.info('Building or loading model')
-
-        assert inshape is not None or data_container is not None, \
-            'build_or_load_model requires either inshape or data_container'
-        if (inshape is None):
-            inshape = (self.config.data_build.window_radius * 2,
-                       self.config.data_build.window_radius * 2,
-                       len(data_container.feature_band_types))
-            _logger.info('Inshape of {} constructed from data_container'.format(inshape))
-        else:
-            _logger.info('Inshape of {} used from input'.format(inshape))
 
         loss_function = losses.cropped_loss(
             self.config.model_training.loss_metric,
@@ -62,6 +52,7 @@ class Experiment(object):
             2 * self.config.data_build.loss_window_radius,
             self.config.model_training.weighted
         )
+
         if os.path.exists(get_model_filepath(self.config.model_training.dir_out)):
             _logger.debug('Loading existing model from model training directory at {}'.format(
                 get_model_filepath(self.config.model_training.dir_out)))
@@ -73,10 +64,23 @@ class Experiment(object):
         else:
             _logger.debug('Building new model, no model exists at {}'.format(
                 get_model_filepath(self.config.model_training.dir_out)))
+
+            assert data_container or num_features, 'Model building requires either DataContainer or num_features.'
+            if not num_features:
+                inshape = (
+                    self.config.data_build.window_radius * 2,
+                    self.config.data_build.window_radius * 2,
+                    len(data_container.feature_band_types)
+                )
+            _logger.debug('Inshape is set to {}, was determined from {}'.format(
+                inshape, 'DataContainer' if data_container else 'num_features'
+            ))
+
             self.loaded_existing_model = False
             self.model = config_sections.create_model_from_architecture_config_section(
                 self.config.model_training.architecture_name, self.config.architecture, inshape)
             self.model.compile(loss=loss_function, optimizer=self.config.model_training.optimizer)
+
         if os.path.exists(get_history_filepath(self.config.model_training.dir_out)):
             assert self.loaded_existing_model, \
                 'Model training history exists in model training directory, but existing model found; directory: {}' \
@@ -106,7 +110,7 @@ class Experiment(object):
             training_sequence: BaseSequence,
             validation_sequence: BaseSequence = None,
             resume_training: bool = False
-    ):
+    ) -> None:
         if self.loaded_existing_model:
             assert resume_training, 'Resume must be true to continue training an existing model'
         if self.config.model_training.assert_gpu:
