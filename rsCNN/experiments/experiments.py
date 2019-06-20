@@ -46,7 +46,8 @@ class Experiment(object):
     def build_or_load_model(self, inshape: tuple = None, data_container: DataContainer = None):
         _logger.info('Building or loading model')
 
-        assert inshape is not None or data_container is not None, 'build_or_load_model requires either inshape or data_container'
+        assert inshape is not None or data_container is not None, \
+            'build_or_load_model requires either inshape or data_container'
         if (inshape is None):
             inshape = (self.config.data_build.window_radius * 2,
                        self.config.data_build.window_radius * 2,
