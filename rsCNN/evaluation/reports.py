@@ -15,7 +15,7 @@ plt.switch_backend('Agg')  # Needed for remote server plotting
 
 _logger = logging.getLogger(__name__)
 
-_FILENAME_MODEL_REPORT = 'model_performance.pdf'
+_FILENAME_MODEL_REPORT = 'model_report.pdf'
 
 
 class Reporter(object):
@@ -61,33 +61,103 @@ class Reporter(object):
     def _create_model_report_for_sequence(self, sampled: samples.Samples, pdf: PdfPages) -> None:
         conf = self.config.model_reporting
         if self.is_model_trained and self.config.architecture.output_activation == 'softmax':
-            self._add_figures(results.print_classification_report(sampled), pdf)
-            self._add_figures(results.plot_confusion_matrix(sampled), pdf, tight=False)
-        self._add_figures(inputs.plot_raw_and_transformed_input_samples(
-            sampled, max_pages=conf.max_pages_per_figure, max_samples_per_page=conf.max_samples_per_page,
-            max_features_per_page=conf.max_features_per_page, max_responses_per_page=conf.max_responses_per_page), pdf)
-        self._add_figures(results.single_sequence_prediction_histogram(
-            sampled, max_responses_per_page=conf.max_responses_per_page), pdf)
+            self._add_figures(self.print_classification_report(sampled), pdf)
+            self._add_figures(self.plot_confusion_matrix(sampled), pdf, tight=False)
+        self._add_figures(self.plot_raw_and_transformed_input_samples(sampled), pdf)
+        self._add_figures(self.plot_single_sequence_prediction_histogram(sampled), pdf)
         if self.is_model_trained:
-            self._add_figures(results.plot_raw_and_transformed_prediction_samples(
-                sampled, max_pages=conf.max_pages_per_figure, max_samples_per_page=conf.max_samples_per_page,
-                max_features_per_page=conf.max_features_per_page, max_responses_per_page=conf.max_responses_per_page
-            ), pdf)
+            self._add_figures(self.plot_raw_and_transformed_prediction_samples(sampled), pdf)
             if conf.network_progression_show_full:
-                self._add_figures(networks.plot_network_feature_progression(
-                    sampled, compact=False, max_pages=conf.network_progression_max_pages,
-                    max_filters=conf.network_progression_max_filters), pdf)
+                self._add_figures(self.plot_network_feature_progression(sampled, compact=False), pdf)
             if conf.network_progression_show_compact:
-                self._add_figures(networks.plot_network_feature_progression(
-                    sampled, compact=True, max_pages=conf.network_progression_max_pages,
-                    max_filters=conf.network_progression_max_filters), pdf)
-            if self.config.architecture.output_activation == 'softmax':
-                plotter = results.plot_spatial_categorical_error
-            else:
-                plotter = results.plot_spatial_regression_error
-            self._add_figures(plotter(
-                sampled, max_pages=conf.max_pages_per_figure, max_responses_per_page=conf.max_responses_per_page), pdf)
+                self._add_figures(self.plot_network_feature_progression(sampled, compact=True), pdf)
+            self._add_figures(self.plot_spatial_error(sampled), pdf)
 
     def _add_figures(self, figures: List[plt.Figure], pdf: PdfPages, tight: bool = True) -> None:
         for fig in figures:
             pdf.savefig(fig, bbox_inches='tight' if tight else None)
+
+    def plot_confusion_matrix(self, sampled: samples.Samples) -> List[plt.Figure]:
+        assert self.is_model_trained, 'Cannot plot confusion matrix because model is not trained.'
+        return results.plot_confusion_matrix(sampled)
+
+    def plot_model_history(self):
+        assert self.is_model_trained, 'Cannot plot model history because model is not trained.'
+        return histories.plot_history(self.experiment.history)
+
+    def plot_network_feature_progression(
+            self,
+            sampled: samples.Samples,
+            compact: bool,
+            max_pages: int = None,
+            max_filters: int = None
+    ) -> List[plt.Figure]:
+        assert self.is_model_trained, 'Cannot plot network feature progression because model is not trained.'
+        return networks.plot_network_feature_progression(
+            sampled,
+            compact=compact,
+            max_pages=max_pages or self.config.model_reporting.network_progression_max_pages,
+            max_filters=max_filters or self.config.model_reporting.network_progression_max_filters
+        )
+
+    def plot_raw_and_transformed_input_samples(
+            self,
+            sampled: samples.Samples,
+            max_pages: int = None,
+            max_samples_per_page: int = None,
+            max_features_per_page: int = None,
+            max_responses_per_page: int = None
+    ) -> List[plt.Figure]:
+        return inputs.plot_raw_and_transformed_input_samples(
+            sampled,
+            max_pages=max_pages or self.config.model_reporting.max_pages_per_figure,
+            max_samples_per_page=max_samples_per_page or self.config.model_reporting.max_samples_per_page,
+            max_features_per_page=max_features_per_page or self.config.model_reporting.max_features_per_page,
+            max_responses_per_page=max_responses_per_page or self.config.model_reporting.max_responses_per_page
+        )
+
+    def plot_raw_and_transformed_prediction_samples(
+            self,
+            sampled: samples.Samples,
+            max_pages: int = None,
+            max_samples_per_page: int = None,
+            max_features_per_page: int = None,
+            max_responses_per_page: int = None
+    ) -> List[plt.Figure]:
+        assert self.is_model_trained, 'Cannot plot raw and transformed prediction samples because model is not trained.'
+        return results.plot_raw_and_transformed_prediction_samples(
+            sampled,
+            max_pages=max_pages or self.config.model_reporting.max_pages_per_figure,
+            max_samples_per_page=max_samples_per_page or self.config.model_reporting.max_samples_per_page,
+            max_features_per_page=max_features_per_page or self.config.model_reporting.max_features_per_page,
+            max_responses_per_page=max_responses_per_page or self.config.model_reporting.max_responses_per_page
+        )
+
+    def plot_single_sequence_prediction_histogram(
+            self, sampled: samples.Samples, max_responses_per_page: int = None
+    ) -> List[plt.Figure]:
+        return results.single_sequence_prediction_histogram(
+            sampled,
+            max_responses_per_page=max_responses_per_page or self.config.model_reporting.max_responses_per_page
+        )
+
+    def plot_spatial_error(
+            self,
+            sampled: samples.Samples,
+            max_pages: int = None,
+            max_responses_per_page: int = None
+    ) -> List[plt.Figure]:
+        assert self.is_model_trained, 'Cannot plot spatial error because model is not trained.'
+        if self.config.architecture.output_activation == 'softmax':
+            plotter = results.plot_spatial_categorical_error
+        else:
+            plotter = results.plot_spatial_regression_error
+        return plotter(
+            sampled,
+            max_pages=max_pages or self.config.model_reporting.max_pages_per_figure,
+            max_responses_per_page=max_responses_per_page or self.config.model_reporting.max_responses_per_page
+        )
+
+    def print_classification_report(self, sampled: samples.Samples) -> List[plt.Figure]:
+        assert self.is_model_trained, 'Cannot print classification report because model is not trained.'
+        return results.print_classification_report(sampled)
