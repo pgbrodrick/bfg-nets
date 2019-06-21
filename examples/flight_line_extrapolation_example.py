@@ -31,12 +31,14 @@ experiment.build_or_load_model(data_container=data_container)
 
 if (args.key == 'prelim_report'):
     prelim_report = rsCNN.reporting.reports.Reporter(data_container, experiment, config)
+    prelim_report.create_model_report()
 
 if (args.key == 'train' or args.key == 'all'):
     experiment.fit_model_with_data_container(data_container, resume_training=True)
 
 if (args.key == 'report' or args.key == 'all'):
     final_report = rsCNN.reporting.reports.Reporter(data_container, experiment, config)
+    final_report.create_model_report()
 
 if (args.key == 'apply' or args.key == 'all'):
     application_feature_files = config.raw_files.feature_files[0]

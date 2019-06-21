@@ -43,6 +43,7 @@ experiment.build_or_load_model(data_container=data_container)
 experiment.fit_model_with_data_container(data_container, resume_training=True)
 
 final_report = rsCNN.reporting.reports.Reporter(data_container, experiment, config)
+final_report.create_model_report()
 
 application_feature_files = config.raw_files.feature_files[0]
 application_output_basenames = ['examples/output/feat_subset_applied_cnn.tif']
