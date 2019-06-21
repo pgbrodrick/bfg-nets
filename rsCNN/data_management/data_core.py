@@ -45,7 +45,7 @@ class DataContainer:
     train_folds = None
 
     def __init__(self, config: configs.Config):
-        errors = config.get_human_readable_config_errors(include_section=['raw_files', 'data_build', 'data_samples'])
+        errors = config.get_human_readable_config_errors(include_sections=['raw_files', 'data_build', 'data_samples'])
         assert not errors, errors
         self.config = config
 
