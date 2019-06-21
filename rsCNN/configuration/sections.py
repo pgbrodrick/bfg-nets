@@ -156,7 +156,7 @@ class RawFiles(BaseConfigSection):
             if self.boundary_bad_value is None:
                 errors.append('boundary_bad_value must be provided if boundary_files is provided')
 
-        errors.extend(_check_input_file_formats(self.feature_files, self.response_files, self.boundary_files))
+        errors.extend(check_input_file_formats(self.feature_files, self.response_files, self.boundary_files))
 
         return errors
 
@@ -398,8 +398,8 @@ def get_config_sections() -> List[Type[BaseConfigSection]]:
     ]
 
 
-def _check_input_file_validity(f_file_list, r_file_list, b_file_list) -> List[str]:
-    errors = _check_input_file_formats(f_file_list, r_file_list, b_file_list)
+def check_input_file_validity(f_file_list, r_file_list, b_file_list) -> List[str]:
+    errors = check_input_file_formats(f_file_list, r_file_list, b_file_list)
     # Checks that all files can be opened by gdal
     for _site in range(len(f_file_list)):
         for _band in range(len(f_file_list[_site])):
@@ -427,7 +427,7 @@ def _check_input_file_validity(f_file_list, r_file_list, b_file_list) -> List[st
     return errors
 
 
-def _check_input_file_formats(f_file_list, r_file_list, b_file_list) -> List[str]:
+def check_input_file_formats(f_file_list, r_file_list, b_file_list) -> List[str]:
     errors = []
     # f = feature, r = response, b = boundary
 
