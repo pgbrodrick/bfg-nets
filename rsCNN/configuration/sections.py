@@ -301,10 +301,6 @@ class ModelTraining(BaseConfigSection):
     weighted = False
     """bool: Should underrepresented classes be overweighted during model training"""
 
-    def _check_config_validity(self) -> List[str]:
-        errors = list()
-        return errors
-
 
 class ModelReporting(BaseConfigSection):
     """

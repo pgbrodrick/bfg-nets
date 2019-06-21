@@ -60,7 +60,6 @@ class Reporter(object):
                 self._add_figures(histories.plot_history(self.experiment.history), pdf)
 
     def _create_model_report_for_sequence(self, sampled: samples.Samples, pdf: PdfPages) -> None:
-        conf = self.config.model_reporting
         if self.is_model_trained and self.config.architecture.output_activation == 'softmax':
             self._add_figures(self.plot_classification_report(sampled), pdf)
             self._add_figures(self.plot_confusion_matrix(sampled), pdf, tight=False)
@@ -68,9 +67,9 @@ class Reporter(object):
         self._add_figures(self.plot_single_sequence_prediction_histogram(sampled), pdf)
         if self.is_model_trained:
             self._add_figures(self.plot_model_output_samples(sampled), pdf)
-            if conf.network_progression_show_full:
+            if self.config.model_reporting.network_progression_show_full:
                 self._add_figures(self.plot_network_feature_progression(sampled, compact=False), pdf)
-            if conf.network_progression_show_compact:
+            if self.config.model_reporting.network_progression_show_compact:
                 self._add_figures(self.plot_network_feature_progression(sampled, compact=True), pdf)
             self._add_figures(self.plot_spatial_error(sampled), pdf)
 
