@@ -5,6 +5,7 @@ import keras
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import matplotlib.gridspec as gridspec
+import numpy as np
 from tqdm import tqdm
 
 from rsCNN.data_management import common_io, ooc_functions
