@@ -97,10 +97,10 @@ class DataContainer:
             self.response_raw_band_types = self.get_band_types(
                 self.config.raw_files.response_files, self.config.raw_files.response_data_type)
 
-            if (self.config.data_build.response_data_format == 'FCN'):
+            if (self.config.data_build.network_category == 'FCN'):
                 features, responses, weights, feature_band_types, response_band_types = training_data.build_training_data_ordered(
                     self.config, self.feature_raw_band_types, self.response_raw_band_types)
-            elif (self.data_build.response_data_format == 'CNN'):
+            elif (self.config.data_build.network_category == 'CNN'):
                 features, responses, weights, feature_band_types, response_band_types = \
                     training_data.build_training_data_from_response_points(
                         self.config, self.feature_raw_band_types, self.response_raw_band_types)
