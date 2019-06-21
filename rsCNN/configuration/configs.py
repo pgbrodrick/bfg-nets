@@ -101,7 +101,7 @@ class Config(object):
         Returns:
             List of errors associated with the current configuration.
         """
-        assert not include_sections and exclude_sections, \
+        assert not (include_sections and exclude_sections), \
             'Both include_sections and exclude_sections cannot be specified.'
         _logger.debug('Checking config sections for errors')
         errors = list()
