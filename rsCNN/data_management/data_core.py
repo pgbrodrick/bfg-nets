@@ -68,19 +68,15 @@ class DataContainer:
 
             create_built_data_output_directory(self.config)
 
+            print(self.config.raw_files.boundary_files)
             if (self.config.raw_files.ignore_projections is False and len(errors) == 0):
                 errors.extend(training_data.check_projections(self.config.raw_files.feature_files,
                                                               self.config.raw_files.response_files,
                                                               self.config.raw_files.boundary_files))
 
-            if (self.config.raw_files.boundary_files is not None):
-                boundary_files = [[loc_file for loc_file in self.config.raw_files.boundary_files
-                                   if gdal.Open(loc_file, gdal.GA_ReadOnly) is not None]]
-            else:
-                boundary_files = None
-
             errors.extend(training_data.check_resolutions(self.config.raw_files.feature_files,
-                                                          self.config.raw_files.response_files, boundary_files))
+                                                          self.config.raw_files.response_files,
+                                                          self.config.raw_files.boundary_files))
 
             errors.extend(self.check_band_types(self.config.raw_files.feature_files,
                                                 self.config.raw_files.feature_data_type))
@@ -195,6 +191,10 @@ class DataContainer:
         # 3) band_types is list of lists (of strings, contained in valid_band_types), with the outer list referring to
         #    files and the inner list referring to bands
 
+        #TODO - add in some check for vector types
+        is_vector = any([x.split('.')[-1] in sections.VECTORIZED_FILENAMES for x in file_list[0]])
+        if (is_vector):
+            return errors
         num_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in file_list[0]]
 
         if (band_types is not None):
