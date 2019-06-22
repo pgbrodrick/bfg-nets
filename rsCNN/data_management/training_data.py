@@ -473,7 +473,7 @@ def get_proj(fname: str) -> str:
     return b_proj
 
 
-def check_projections(f_files: List[List[str]], r_files: List[List[str]], b_files: List[List[str]] = None) -> List[str]:
+def check_projections(f_files: List[List[str]], r_files: List[List[str]], b_files: List[str] = None) -> List[str]:
 
     # f = feature, r = response, b = boundary
     errors = []
@@ -519,15 +519,85 @@ def check_projections(f_files: List[List[str]], r_files: List[List[str]], b_file
             site_b_proj.append(b_proj)
 
     if (np.unique(site_f_proj) > 0):
-        _logger.info('Warning, different projections at different features sites: {}'.format(site_f_proj))
+        errors.append('Warning, different projections at different features sites: {}'.format(site_f_proj))
     if (np.unique(site_r_proj) > 0):
-        _logger.info('Warning, different projections at different features sites: {}'.format(site_r_proj))
+        errors.append('Warning, different projections at different features sites: {}'.format(site_r_proj))
     if (np.unique(site_b_proj) > 0):
-        _logger.info('Warning, different projections at different features sites: {}'.format(site_b_proj))
+        errors.append('Warning, different projections at different features sites: {}'.format(site_b_proj))
     return errors
 
 
-def check_resolutions(a_files: List[List[str]], b_files: List[List[str]], c_files: List[List[str]] = None) -> List[str]:
+def check_resolutions(f_files: List[List[str]], r_files: List[List[str]], b_files: List[str] = None) -> List[str]:
+    # f = feature, r = response, b = boundary
+    errors = []
+
+    site_f_res = []
+    site_r_res = []
+    site_b_res = []
+    for _site in range(len(f_files)):
+
+        f_res = []
+        r_res = []
+        for _file in range(len(f_files[_site])):
+            f_res.append(np.array(gdal.Open(f_files[_site][_file], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]])
+
+        for _file in range(len(r_files[_site])):
+            if (r_files[_site][_file].split('.')[0] not in sections.VECTORIZED_FILENAMES):
+                r_res.append(np.array(gdal.Open(r_files[_site][_file], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]])
+
+        if (len(b_files) > 0):
+            if (b_files[_site].split('.')[0] not in sections.VECTORIZED_FILENAMES):
+                b_res = np.array(gdal.Open(f_files[_site][_file], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]]
+
+        un_f_res = np.unique(f_res)
+        if (len(un_f_res) > 1):
+            errors.append('Feature resolution mismatch at site {}, resolutions: {}'.format(_site, un_f_res))
+
+        un_r_res = np.unique(r_res)
+        if (len(un_r_res) > 1):
+            errors.append('Response resolution mismatch at site {}, resolutions: {}'.format(_site, un_r_res))
+
+        if (len(un_r_res) > 0):
+            if (un_f_res[0] != un_r_res[0]):
+                errors.append('Feature/Response resolution mismatch at site {}'.format(_site))
+
+        if (b_res is not None):
+            if (un_f_res[0] != b_res):
+                errors.append('Feature/Boundary resolution mismatch at site {}'.format(_site))
+            if (un_r_res[0] != b_res):
+                errors.append('Response/Boundary resolution mismatch at site {}'.format(_site))
+
+        site_f_res.append(un_f_res[0])
+        site_r_res.append(un_r_res[0])
+        if (b_res is not None):
+            site_b_res.append(b_res)
+
+    if (np.unique(site_f_res) > 0):
+        _logger.info('Warning, different resolutions at different features sites: {}'.format(site_f_res))
+    if (np.unique(site_r_res) > 0):
+        _logger.info('Warning, different resolutions at different features sites: {}'.format(site_r_res))
+    if (np.unique(site_b_res) > 0):
+        _logger.info('Warning, different resolutions at different features sites: {}'.format(site_b_res))
+    return errors
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     errors = []
     if c_files is None:
         c_files = list()
