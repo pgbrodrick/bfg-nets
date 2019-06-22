@@ -491,10 +491,9 @@ def check_projections(f_files: List[List[str]], r_files: List[List[str]], b_file
         for _file in range(len(r_files[_site])):
             r_proj.append(get_proj(r_files[_site][_file]))
 
+        b_proj = None
         if (len(b_files) > 0):
             b_proj = get_proj(b_files[_site])
-        else:
-            b_proj = None
 
         un_f_proj = np.unique(f_proj)
         if (len(un_f_proj) > 1):
@@ -542,24 +541,27 @@ def check_resolutions(f_files: List[List[str]], r_files: List[List[str]], b_file
             f_res.append(np.array(gdal.Open(f_files[_site][_file], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]])
 
         for _file in range(len(r_files[_site])):
-            if (r_files[_site][_file].split('.')[0] not in sections.VECTORIZED_FILENAMES):
+            if (r_files[_site][_file].split('.')[-1] not in sections.VECTORIZED_FILENAMES):
                 r_res.append(np.array(gdal.Open(r_files[_site][_file], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]])
 
+        b_res = None
         if (len(b_files) > 0):
-            if (b_files[_site].split('.')[0] not in sections.VECTORIZED_FILENAMES):
-                b_res = np.array(gdal.Open(f_files[_site][_file], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]]
+            if (b_files[_site].split('.')[-1] not in sections.VECTORIZED_FILENAMES):
+                b_res = np.array(gdal.Open(b_files[_site], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]]
 
-        un_f_res = np.unique(f_res)
-        if (len(un_f_res) > 1):
-            errors.append('Feature resolution mismatch at site {}, resolutions: {}'.format(_site, un_f_res))
+        un_f_res = []
+        if (len(f_res) > 0):
+            f_res = np.vstack(f_res)
+            un_f_res = [np.unique(f_res[:,0]), np.unique(f_res[:,0])]
+            if (len(un_f_res[0]) > 1 or len(un_f_res[1]) > 1):
+                errors.append('Feature resolution mismatch at site {}, resolutions: {}'.format(_site, un_f_res))
 
-        un_r_res = np.unique(r_res)
-        if (len(un_r_res) > 1):
-            errors.append('Response resolution mismatch at site {}, resolutions: {}'.format(_site, un_r_res))
-
-        if (len(un_r_res) > 0):
-            if (un_f_res[0] != un_r_res[0]):
-                errors.append('Feature/Response resolution mismatch at site {}'.format(_site))
+        un_r_res = []
+        if (len(r_res) > 0):
+            r_res = np.vstack(r_res)
+            un_r_res = [np.unique(r_res[:,0]), np.unique(r_res[:,0])]
+            if (len(un_r_res[0]) > 1 or len(un_r_res[1]) > 1):
+                errors.append('Response resolution mismatch at site {}, resolutions: {}'.format(_site, un_r_res))
 
         if (b_res is not None):
             if (un_f_res[0] != b_res):
@@ -568,15 +570,16 @@ def check_resolutions(f_files: List[List[str]], r_files: List[List[str]], b_file
                 errors.append('Response/Boundary resolution mismatch at site {}'.format(_site))
 
         site_f_res.append(un_f_res[0])
-        site_r_res.append(un_r_res[0])
+        if (len(un_r_res) > 0):
+            site_r_res.append(un_r_res[0])
         if (b_res is not None):
             site_b_res.append(b_res)
 
-    if (np.unique(site_f_res) > 0):
+    if (np.unique(site_f_res) > 1):
         _logger.info('Warning, different resolutions at different features sites: {}'.format(site_f_res))
-    if (np.unique(site_r_res) > 0):
+    if (np.unique(site_r_res) > 1):
         _logger.info('Warning, different resolutions at different features sites: {}'.format(site_r_res))
-    if (np.unique(site_b_res) > 0):
+    if (np.unique(site_b_res) > 1):
         _logger.info('Warning, different resolutions at different features sites: {}'.format(site_b_res))
     return errors
 

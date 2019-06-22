@@ -410,7 +410,8 @@ def check_input_file_validity(f_file_list, r_file_list, b_file_list) -> List[str
 
     for _site in range(len(r_file_list)):
         for _band in range(len(r_file_list[_site])):
-            if(gdal.Open(r_file_list[_site][_band], gdal.GA_ReadOnly) is None):
+            if(gdal.Open(r_file_list[_site][_band], gdal.GA_ReadOnly) is None and
+                    r_file_list[_site][_band].split('.')[-1] not in VECTORIZED_FILENAMES):
                 errors.append('Could not open response site {}, file {}'.format(_site, _band))
 
     # Checks on the number of bands per file
@@ -442,11 +443,14 @@ def check_input_file_validity(f_file_list, r_file_list, b_file_list) -> List[str
         errors.append('Response file types mixed, found per-site order:\n{}\nR=Raster\nV=Vector\nM=Mixed')
 
     if (np.all(un_file_types == 'R')):
-        num_r_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in r_file_list[0]]
-        for _site in range(len(r_file_list)):
-            for _file in range(len(r_file_list[_site])):
-                if(gdal.Open(r_file_list[_site][_file], gdal.GA_ReadOnly).RasterCount != num_r_bands_per_file[_file]):
-                    errors.append('Inconsistent number of response bands in site {}, file {}'.format(_site, _file))
+
+        is_vector = any([x.split('.')[-1] in VECTORIZED_FILENAMES for x in r_file_list[0]])
+        if not is_vector:
+            num_r_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in r_file_list[0]]
+            for _site in range(len(r_file_list)):
+                for _file in range(len(r_file_list[_site])):
+                    if(gdal.Open(r_file_list[_site][_file], gdal.GA_ReadOnly).RasterCount != num_r_bands_per_file[_file]):
+                        errors.append('Inconsistent number of response bands in site {}, file {}'.format(_site, _file))
 
     return errors
 
