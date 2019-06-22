@@ -553,21 +553,21 @@ def check_resolutions(f_files: List[List[str]], r_files: List[List[str]], b_file
         un_f_res = []
         if (len(f_res) > 0):
             f_res = np.vstack(f_res)
-            un_f_res = [np.unique(f_res[:,0]), np.unique(f_res[:,0])]
+            un_f_res = [np.unique(f_res[:,0]), np.unique(f_res[:,1])]
             if (len(un_f_res[0]) > 1 or len(un_f_res[1]) > 1):
                 errors.append('Feature resolution mismatch at site {}, resolutions: {}'.format(_site, un_f_res))
 
         un_r_res = []
         if (len(r_res) > 0):
             r_res = np.vstack(r_res)
-            un_r_res = [np.unique(r_res[:,0]), np.unique(r_res[:,0])]
+            un_r_res = [np.unique(r_res[:,0]), np.unique(r_res[:,1])]
             if (len(un_r_res[0]) > 1 or len(un_r_res[1]) > 1):
                 errors.append('Response resolution mismatch at site {}, resolutions: {}'.format(_site, un_r_res))
 
         if (b_res is not None):
-            if (un_f_res[0] != b_res):
+            if (un_f_res[0][0] != b_res[0] or un_f_res[1][0] != b_res[1]):
                 errors.append('Feature/Boundary resolution mismatch at site {}'.format(_site))
-            if (un_r_res[0] != b_res):
+            if (un_r_res[0][0] != b_res[0] or un_r_res[1][0] != b_res[1]):
                 errors.append('Response/Boundary resolution mismatch at site {}'.format(_site))
 
         site_f_res.append(un_f_res[0])

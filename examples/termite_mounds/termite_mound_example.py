@@ -28,11 +28,12 @@ if (os.path.isdir(DATA_DIR) is False):
 
 dem_data = ['https://github.com/pgbrodrick/ecoCNN/blob/master/data/landscape7_dem_subset.tif', os.path.join(DATA_DIR, 'dem.tif')]
 boundary_data = ['https://github.com/pgbrodrick/ecoCNN/raw/master/data/training_boundary_utm.shp', os.path.join(DATA_DIR, 'training_boundary.shp')]
-mound_data = ['https://github.com/pgbrodrick/ecoCNN/raw/master/data/mound_points_utm.shp', os.path.join(DATA_DIR, 'mound_points_utm.shp')]
+mound_data = ['https://github.com/pgbrodrick/ecoCNN/raw/master/data/mounds_utm.shp', os.path.join(DATA_DIR, 'mounds_utm.shp')]
 
 shp_associates = ['.shp','.shx','.dbf','.prj']
 
 def get_data_from_url(url, destination):
+    print('fetching {}'.format(destination))
     if (os.path.isfile(destination) is False):
         r = requests.get(url + '?raw=true')
         with open(destination, 'wb') as outfile:
@@ -52,6 +53,13 @@ cmd_str = 'gdal_rasterize ' + mound_data[1] + ' ' + os.path.splitext(mound_data[
           str(trans[1]) + ' ' + str(trans[5])
 subprocess.call(cmd_str, shell=True)
 
+cmd_str = 'gdal_rasterize ' + boundary_data[1] + ' ' + os.path.splitext(boundary_data[1])[0] +\
+          '.tif -init 0 -burn 1 -te ' + str(trans[0]) + ' ' + str(trans[3] + trans[5]*feature_set.RasterYSize) +\
+          ' ' + str(trans[0] + trans[1]*feature_set.RasterXSize) + ' ' + str(trans[3]) + ' -tr ' +\
+          str(trans[1]) + ' ' + str(trans[5])
+subprocess.call(cmd_str, shell=True)
+
+
 
 
 
@@ -68,11 +76,11 @@ experiment.build_or_load_model(data_container=data_container)
 
 experiment.fit_model_with_data_container(data_container, resume_training=True)
 
-final_report = rsCNN.reporting.reports.Reporter(data_container, experiment, config)
-final_report.create_model_report()
+#final_report = rsCNN.reporting.reports.Reporter(data_container, experiment, config)
+#final_report.create_model_report()
 
 application_feature_files = config.raw_files.feature_files[0]
-application_output_basenames = ['examples/output/feat_subset_applied_cnn.tif']
+application_output_basenames = ['scratch/applied_output_model.tif']
 for _f in range(len(application_feature_files)):
     rsCNN.data_management.apply_model_to_data.apply_model_to_raster(experiment.model,
                                                                     data_container,
