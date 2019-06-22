@@ -18,7 +18,6 @@ _FILENAME_RESPONSES_TEMPORARY_SUFFIX = '_responses_memmap_temporary.npy'
 _FILENAME_WEIGHTS_SUFFIX = 'weights_{}.npy'
 _FILENAME_WEIGHTS_TEMPORARY_SUFFIX = '_weights_memmap_temporary.npy'
 _FILENAME_DATA_CONTAINER = 'data_container.npz'
-_VECTORIZED_FILENAMES = ('kml', 'shp')
 
 
 _logger = logging.getLogger(__name__)
@@ -69,7 +68,7 @@ class DataContainer:
 
             create_built_data_output_directory(self.config)
 
-            if (self.config.raw_files.ignore_projections is False):
+            if (self.config.raw_files.ignore_projections is False and len(errors) == 0):
                 errors.extend(training_data.check_projections(self.config.raw_files.feature_files,
                                                               self.config.raw_files.response_files,
                                                               self.config.raw_files.boundary_files))

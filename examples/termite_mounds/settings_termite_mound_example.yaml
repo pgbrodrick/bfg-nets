@@ -1,15 +1,15 @@
 raw_files:
-  feature_files: [['../global_cwc/dat/features/feat_subset.tif']]
-  response_files: [['../global_cwc/dat/responses/resp_subset.tif']]
-  boundary_files: None
+  feature_files: [['scratch/dem.tif']]
+  response_files: [['scratch/mound_points_utm.geojson']]
+  boundary_files: ['scratch/training_boundary.geojson']
   feature_data_type: ['R']
-  response_data_type: ['R']
+  response_data_type: ['C']
   feature_nodata_value: -9999
   response_nodata_value: -9999
-  boundary_bad_value: None
+  boundary_bad_value: 0
   ignore_projections: false
 data_build:
-  dir_out: ./flight_extrapolation_test
+  dir_out: ./temite_test
   filename_prefix_out: 'munged_data'
   network_category: FCN
   random_seed: 1
@@ -20,23 +20,23 @@ data_build:
   test_fold: None
   window_radius: 16
   loss_window_radius: 8
-  feature_mean_centering: false
+  feature_mean_centering: True
   feature_nodata_maximum_fraction: 0.0
   response_min_value: 0
   response_max_value: 10000
   response_background_value: None
 data_samples:
-  apply_random_transformations: false
+  apply_random_transformations: true
   batch_size: 100
-  feature_scaler_names: ['MinMaxScaler']
-  response_scaler_names: ['MinMaxScaler']
+  feature_scaler_names: ['NullScaler']
+  response_scaler_names: ['NullScaler']
   feature_nodata_encoding: -10.0
 model_training:
-  dir_out: ./flight_extrapolation_test
+  dir_out: ./termite_test
   verbosity: 1
   assert_gpu: false
   architecture_name: unet
-  loss_metric: mse
+  loss_metric: cc
   max_epochs: 100
   optimizer: adam
   weighted: false
