@@ -11,7 +11,7 @@ from rsCNN.data_management import scalers
 
 _logger = logging.getLogger(__name__)
 
-VECTORIZED_FILENAMES = ('kml', 'shp', 'geojson')
+VECTORIZED_FILENAMES = ('kml', 'shp')
 
 class BaseConfigSection(object):
     """

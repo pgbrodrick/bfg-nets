@@ -1,15 +1,11 @@
 import logging
 import os
-from pathlib import Path
-import re
 from typing import List, Tuple
 
 import fiona
 import gdal
-import h5py
 import numpy as np
-import numpy.matlib
-import ogr
+import ogr, osr
 import rasterio.features
 from tqdm import tqdm
 
@@ -445,16 +441,18 @@ def get_proj(fname: str) -> str:
     """
     ds = gdal.Open(fname, gdal.GA_ReadOnly)
     if (ds is not None):
-        b_proj = ds.GetProjection()
-        if (b_proj is not None):
-            return b_proj
+        proj = ds.GetProjection()
+        if (proj is not None):
+            srs = osr.SpatialReference(wkt=str(proj))
+            if srs.IsProjected is False:
+                exception_str = 'File {} is not projected.  Correct or set ignore_projections flag.'.format(fname)
+                raise Exception(exception_str)
+            return srs.GetAttrValue('projcs')
 
     if (os.path.basename(fname).split('.')[-1] == 'shp'):
         vset = ogr.GetDriverByName('ESRI Shapefile').Open(fname, gdal.GA_ReadOnly)
     elif (os.path.basename(fname).split('.')[-1] == 'kml'):
         vset = ogr.GetDriverByName('KML').Open(fname, gdal.GA_ReadOnly)
-    elif (os.path.basename(fname).split('.')[-1] == 'geojson'):
-        vset = ogr.GetDriverByName('GeoJSON').Open(fname, gdal.GA_ReadOnly)
     else:
         exception_str = 'Cannot find projection from file {}'.format(fname)
         raise Exception(exception_str)
@@ -463,14 +461,17 @@ def get_proj(fname: str) -> str:
         exception_str = 'Cannot find projection from file {}'.format(fname)
         raise Exception(exception_str)
     else:
-        b_proj = vset.GetLayer().GetSpatialRef()
-        if (b_proj is None):
+        proj = vset.GetLayer().GetSpatialRef()
+        if (proj is None):
             exception_str = 'Cannot find projection from file {}'.format(fname)
             raise Exception(exception_str)
         else:
-            b_proj = re.sub('\W', '', str(b_proj))
+            srs = osr.SpatialReference(wkt=str(proj))
+            if srs.IsProjected is False:
+                exception_str = 'File {} is not projected.  Correct or set ignore_projections flag.'.format(fname)
+                raise Exception(exception_str)
+            return srs.GetAttrValue('projcs')
 
-    return b_proj
 
 
 def check_projections(f_files: List[List[str]], r_files: List[List[str]], b_files: List[str] = None) -> List[str]:
@@ -517,11 +518,11 @@ def check_projections(f_files: List[List[str]], r_files: List[List[str]], b_file
         if (b_proj is not None):
             site_b_proj.append(b_proj)
 
-    if (np.unique(site_f_proj) > 0):
+    if (len(np.unique(site_f_proj)) > 1):
         errors.append('Warning, different projections at different features sites: {}'.format(site_f_proj))
-    if (np.unique(site_r_proj) > 0):
+    if (len(np.unique(site_r_proj)) > 1):
         errors.append('Warning, different projections at different features sites: {}'.format(site_r_proj))
-    if (np.unique(site_b_proj) > 0):
+    if (len(np.unique(site_b_proj)) > 1):
         errors.append('Warning, different projections at different features sites: {}'.format(site_b_proj))
     return errors
 
@@ -575,67 +576,17 @@ def check_resolutions(f_files: List[List[str]], r_files: List[List[str]], b_file
         if (b_res is not None):
             site_b_res.append(b_res)
 
-    if (np.unique(site_f_res) > 1):
+    if (len(np.unique(site_f_res)) > 1):
         _logger.info('Warning, different resolutions at different features sites: {}'.format(site_f_res))
-    if (np.unique(site_r_res) > 1):
+    if (len(np.unique(site_r_res)) > 1):
         _logger.info('Warning, different resolutions at different features sites: {}'.format(site_r_res))
-    if (np.unique(site_b_res) > 1):
+    if (len(np.unique(site_b_res)) > 1):
         _logger.info('Warning, different resolutions at different features sites: {}'.format(site_b_res))
     return errors
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    errors = []
-    if c_files is None:
-        c_files = list()
-
-    loc_a_files = [item for sublist in a_files for item in sublist]
-    loc_b_files = [item for sublist in b_files for item in sublist]
-    if (len(c_files) > 0):
-        loc_c_files = [item for sublist in c_files for item in sublist]
-    else:
-        loc_c_files = []
-
-    a_res = []
-    b_res = []
-    c_res = []
-
-    for _f in range(len(loc_a_files)):
-        a_res.append(np.array(gdal.Open(loc_a_files[_f], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]])
-        b_res.append(np.array(gdal.Open(loc_b_files[_f], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]])
-        if (len(loc_c_files) > 0):
-            c_res.append(np.array(gdal.Open(loc_c_files[_f], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]])
-
-    for _p in range(len(a_res)):
-        if (len(c_res) > 0):
-            if(np.all(a_res[_p] != b_res[_p]) or np.all(a_res != c_res[_p])):
-                errors.append('Resolution mismatch between\n{}: {},\n{}: {},\n{}: {}'.format(a_res[_p],
-                                                                                             loc_a_files[_p], b_res[_p], loc_b_files[_p], c_res[_p], loc_c_files[_p]))
-        else:
-            if (np.all(a_res[_p] != b_res[_p])):
-                errors.append('Resolution mimatch between\n{}: {}\n{}: {}'.
-                              format(a_res[_p], loc_a_files[_p], b_res[_p], loc_b_files[_p]))
-    return errors
-
 # Calculates categorical weights for a single response
-
-
 def calculate_categorical_weights(
         responses: List[np.array],
         weights: List[np.array],
