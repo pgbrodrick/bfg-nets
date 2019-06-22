@@ -234,13 +234,16 @@ class DataContainer:
         # 3) band_types is list of lists (of strings, contained in valid_band_types), with the outer list referring to
         #    files and the inner list referring to bands
 
-        num_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in file_list[0]]
+        num_bands_per_file = [None if gdal.Open(x, gdal.GA_ReadOnly) is None else gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in file_list[0]]
 
         # Nonetype, option 1 from above, auto-generate
         if (band_types is None):
             for _file in range(len(file_list[0])):
                 output_raw_band_types = list()
-                output_raw_band_types.append(['R' for _band in range(num_bands_per_file[_file])])
+                if num_bands_per_file[_file] is None:
+                    output_raw_band_types.append(['C'])
+                else:
+                    output_raw_band_types.append(['R' for _band in range(num_bands_per_file[_file])])
 
         else:
 
@@ -250,7 +253,10 @@ class DataContainer:
                 # List of values valid_band_types, option 2 from above - convert to list of lists
                 output_raw_band_types = []
                 for _file in range(len(band_types)):
-                    output_raw_band_types.append([band_types[_file] for _band in range(num_bands_per_file[_file])])
+                    if num_bands_per_file[_file] is None:
+                        output_raw_band_types.append(['C'])
+                    else:
+                        output_raw_band_types.append([band_types[_file] for _band in range(num_bands_per_file[_file])])
 
         # since it's more convenient, flatten this list of lists into a list before returning
         output_raw_band_types = [item for sublist in output_raw_band_types for item in sublist]
