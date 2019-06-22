@@ -1,7 +1,7 @@
 raw_files:
   feature_files: [['scratch/dem.tif']]
-  response_files: [['scratch/mound_points_utm.tif']]
-  boundary_files: ['scratch/training_boundary.shp']
+  response_files: [['scratch/mounds_utm.tif']]
+  boundary_files: ['scratch/training_boundary.tif']
   feature_data_type: ['R']
   response_data_type: ['C']
   feature_nodata_value: -9999
@@ -13,13 +13,13 @@ data_build:
   filename_prefix_out: 'munged_data'
   network_category: FCN
   random_seed: 1
-  max_samples: 100
+  max_samples: 1000
   max_memmap_size_gb: 10
   number_folds: 10
   validation_fold: 0
   test_fold: None
-  window_radius: 16
-  loss_window_radius: 8
+  window_radius: 32
+  loss_window_radius: 16
   feature_mean_centering: True
   feature_nodata_maximum_fraction: 0.0
   response_min_value: 0
@@ -39,13 +39,13 @@ model_training:
   loss_metric: cc
   max_epochs: 100
   optimizer: adam
-  weighted: false
+  weighted: true
 architecture:
   block_structure: [4, 4]
   filters: 6
   kernel_size: [3, 3]
   min_conv_width: 8
-  n_classes: 1
+  n_classes: 2
   output_activation: linear
   padding: same
   pool_size: [2, 2]

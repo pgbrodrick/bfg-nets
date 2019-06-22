@@ -10,7 +10,7 @@ from rsCNN.configuration import configs
 from rsCNN.data_management.data_core import DataContainer
 from rsCNN.data_management.sequences import BaseSequence
 from rsCNN.experiments import callbacks, histories, losses, models
-from rsCNN.utils import gpus
+from rsCNN.utils import compute_access
 
 
 _logger = logging.getLogger(__name__)
@@ -114,7 +114,7 @@ class Experiment(object):
         if self.loaded_existing_model:
             assert resume_training, 'Resume must be true to continue training an existing model'
         if self.config.model_training.assert_gpu:
-            gpus.assert_gpu_available()
+            compute_access.assert_gpu_available()
 
         model_callbacks = callbacks.get_model_callbacks(self.config, self.history)
 
@@ -125,7 +125,7 @@ class Experiment(object):
             callbacks=model_callbacks,
             validation_data=validation_sequence,
             max_queue_size=2,
-            workers=len(psutil.Process().cpu_affinity()),
+            workers=compute_access.get_count_available_cpus(),
             use_multiprocessing=self.config.model_training.use_multiprocessing,
             shuffle=False,
             initial_epoch=len(self.history.get('lr', list())),
