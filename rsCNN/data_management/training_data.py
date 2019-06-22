@@ -13,7 +13,7 @@ import ogr
 import rasterio.features
 from tqdm import tqdm
 
-from rsCNN.configuration import configs
+from rsCNN.configuration import configs, sections
 from rsCNN.data_management import common_io, ooc_functions, data_core
 
 _logger = logging.getLogger(__name__)
@@ -453,50 +453,77 @@ def get_proj(fname: str) -> str:
         vset = ogr.GetDriverByName('ESRI Shapefile').Open(fname, gdal.GA_ReadOnly)
     elif (os.path.basename(fname).split('.')[-1] == 'kml'):
         vset = ogr.GetDriverByName('KML').Open(fname, gdal.GA_ReadOnly)
+    elif (os.path.basename(fname).split('.')[-1] == 'geojson'):
+        vset = ogr.GetDriverByName('GeoJSON').Open(fname, gdal.GA_ReadOnly)
     else:
-        raise Exception('Cannot find projection from file {}'.format(fname))
+        exception_str = 'Cannot find projection from file {}'.format(fname)
+        raise Exception(exception_str)
 
     if (vset is None):
-        raise Exception('Cannot find projection from file {}'.format(fname))
+        exception_str = 'Cannot find projection from file {}'.format(fname)
+        raise Exception(exception_str)
     else:
         b_proj = vset.GetLayer().GetSpatialRef()
         if (b_proj is None):
-            raise Exception('Cannot find projection from file {}'.format(fname))
+            exception_str = 'Cannot find projection from file {}'.format(fname)
+            raise Exception(exception_str)
         else:
             b_proj = re.sub('\W', '', str(b_proj))
 
     return b_proj
 
 
-def check_projections(a_files: List[List[str]], b_files: List[List[str]], c_files: List[List[str]] = None) -> List[str]:
+def check_projections(f_files: List[List[str]], r_files: List[List[str]], b_files: List[List[str]] = None) -> List[str]:
 
+    # f = feature, r = response, b = boundary
     errors = []
-    loc_a_files = [item for sublist in a_files for item in sublist]
-    loc_b_files = [item for sublist in b_files for item in sublist]
-    if c_files is None:
-        loc_c_files = list()
-    else:
-        loc_c_files = [item for sublist in c_files for item in sublist]
 
-    a_proj = []
-    b_proj = []
-    c_proj = []
+    site_f_proj = []
+    site_r_proj = []
+    site_b_proj = []
+    for _site in range(len(f_files)):
 
-    for _f in range(len(loc_a_files)):
-        a_proj.append(get_proj(loc_a_files[_f]))
-        b_proj.append(get_proj(loc_b_files[_f]))
-        if (len(loc_c_files) > 0):
-            c_proj.append(get_proj(loc_c_files[_f]))
+        f_proj = []
+        r_proj = []
+        for _file in range(len(f_files[_site])):
+            f_proj.append(get_proj(f_files[_site][_file]))
 
-    for _p in range(len(a_proj)):
-        if (len(c_proj) > 0):
-            if (a_proj[_p] != b_proj[_p] or a_proj != c_proj[_p]):
-                errors.append('Projection_mismatch between\n{}: {},\n{}: {},\n{}: {}'.format(a_proj[_p],
-                                                                                             loc_a_files[_p], b_proj[_p], loc_b_files[_p], c_proj[_p], loc_c_files[_p]))
+        for _file in range(len(r_files[_site])):
+            r_proj.append(get_proj(r_files[_site][_file]))
+
+        if (len(b_files) > 0):
+            b_proj = get_proj(b_files[_site])
         else:
-            if (a_proj[_p] != b_proj[_p]):
-                errors.append('Projection_mismatch between\n{}: {}\n{}: {}'.
-                              format(a_proj[_p], loc_a_files[_p], b_proj[_p], loc_b_files[_p]))
+            b_proj = None
+
+        un_f_proj = np.unique(f_proj)
+        if (len(un_f_proj) > 1):
+            errors.append('Feature projection mismatch at site {}, projections: {}'.format(_site, un_f_proj))
+
+        un_r_proj = np.unique(r_proj)
+        if (len(un_r_proj) > 1):
+            errors.append('Response projection mismatch at site {}, projections: {}'.format(_site, un_r_proj))
+
+        if (un_f_proj[0] != un_r_proj[0]):
+            errors.append('Feature/Response projection mismatch at site {}'.format(_site))
+
+        if (b_proj is not None):
+            if (un_f_proj[0] != b_proj):
+                errors.append('Feature/Boundary projection mismatch at site {}'.format(_site))
+            if (un_r_proj[0] != b_proj):
+                errors.append('Response/Boundary projection mismatch at site {}'.format(_site))
+
+        site_f_proj.append(un_f_proj[0])
+        site_r_proj.append(un_r_proj[0])
+        if (b_proj is not None):
+            site_b_proj.append(b_proj)
+
+    if (np.unique(site_f_proj) > 0):
+        _logger.info('Warning, different projections at different features sites: {}'.format(site_f_proj))
+    if (np.unique(site_r_proj) > 0):
+        _logger.info('Warning, different projections at different features sites: {}'.format(site_r_proj))
+    if (np.unique(site_b_proj) > 0):
+        _logger.info('Warning, different projections at different features sites: {}'.format(site_b_proj))
     return errors
 
 
@@ -867,7 +894,7 @@ def _check_mask_data_sufficient(mask: np.array, max_nodata_fraction: float) -> b
 
 
 def _is_boundary_file_vectorized(boundary_filepath: str) -> bool:
-    return str(os.path.splitext(boundary_filepath)).lower() in data_core._VECTORIZED_FILENAMES
+    return str(os.path.splitext(boundary_filepath)).lower() in sections.VECTORIZED_FILENAMES
 
 
 def check_built_data_files_exist(config: configs.Config) -> bool:

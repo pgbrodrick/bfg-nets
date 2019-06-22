@@ -1,6 +1,7 @@
 from collections import OrderedDict
 import gdal
 import logging
+import numpy as np
 import re
 from typing import Dict, List, Type
 
@@ -10,6 +11,7 @@ from rsCNN.data_management import scalers
 
 _logger = logging.getLogger(__name__)
 
+VECTORIZED_FILENAMES = ('kml', 'shp', 'geojson')
 
 class BaseConfigSection(object):
     """
@@ -413,16 +415,38 @@ def check_input_file_validity(f_file_list, r_file_list, b_file_list) -> List[str
 
     # Checks on the number of bands per file
     num_f_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in f_file_list[0]]
-    num_r_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in r_file_list[0]]
     for _site in range(len(f_file_list)):
         for _file in range(len(f_file_list[_site])):
             if(gdal.Open(f_file_list[_site][_file], gdal.GA_ReadOnly).RasterCount != num_f_bands_per_file[_file]):
                 errors.append('Inconsistent number of feature bands in site {}, file {}'.format(_site, _file))
 
+    file_type = []
     for _site in range(len(r_file_list)):
-        for _file in range(len(r_file_list[_site])):
-            if(gdal.Open(r_file_list[_site][_file], gdal.GA_ReadOnly).RasterCount != num_r_bands_per_file[_file]):
-                errors.append('Inconsistent number of response bands in site {}, file {}'.format(_site, _file))
+        if (r_file_list[_site][0].split('.')[-1] in VECTORIZED_FILENAMES):
+            file_type.append('V')
+        else:
+            file_type.append('R')
+
+        for _file in range(1,len(r_file_list[0])):
+            if (r_file_list[_site][_file].split('.')[-1] in VECTORIZED_FILENAMES):
+                if (file_type[-1] == 'R'):
+                    file_type[-1] = 'M'
+                    break
+            else:
+                if (file_type[-1] == 'V'):
+                    file_type[-1] = 'M'
+                    break
+
+    un_file_types = np.unique(file_type)
+    if (len(un_file_types) > 1):
+        errors.append('Response file types mixed, found per-site order:\n{}\nR=Raster\nV=Vector\nM=Mixed')
+
+    if (np.all(un_file_types == 'R')):
+        num_r_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in r_file_list[0]]
+        for _site in range(len(r_file_list)):
+            for _file in range(len(r_file_list[_site])):
+                if(gdal.Open(r_file_list[_site][_file], gdal.GA_ReadOnly).RasterCount != num_r_bands_per_file[_file]):
+                    errors.append('Inconsistent number of response bands in site {}, file {}'.format(_site, _file))
 
     return errors
 

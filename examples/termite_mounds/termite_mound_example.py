@@ -1,7 +1,8 @@
 
 
 
-import os
+import argparse
+import os,sys
 import requests
 
 from rsCNN.configuration import configs
@@ -10,8 +11,17 @@ import rsCNN.reporting.reports
 from rsCNN.experiments import experiments
 from rsCNN.utils import logging
 
+parser = argparse.ArgumentParser(description='Example termite mound classification')
+parser.add_argument('-debug_level', type=str, default='INFO', choices=['DEBUG', 'INFO', 'WARN', 'ERROR'])
+parser.add_argument('-debug_file', type=str, default='debug.out')
+args = parser.parse_args()
+
+logger = logging.get_root_logger(args.debug_file)
+logger.setLevel(args.debug_level)
 
 DATA_DIR = 'scratch'
+if (os.path.isdir(DATA_DIR) is False):
+    os.mkdir(DATA_DIR)
 
 dem_data = ['https://github.com/pgbrodrick/ecoCNN/blob/master/data/landscape7_dem_subset.tif?raw=true', os.path.join(DATA_DIR, 'dem.tif')]
 boundary_data = ['https://github.com/pgbrodrick/ecoCNN/raw/master/data/training_boundary_utm.shp?raw=true', os.path.join(DATA_DIR, 'training_boundary.geojson')]
@@ -29,7 +39,7 @@ get_data_from_url(dem_data[0], dem_data[1])
 get_data_from_url(boundary_data[0], boundary_data[1])
 get_data_from_url(mound_data[0], mound_data[1])
 
-config = configs.create_config_from_file('settings_termite_mound_example.yaml')
+config = configs.create_config_from_file(os.path.join(os.path.dirname(sys.argv[0]), 'settings_termite_mound_example.yaml'))
 
 data_container = data_core.DataContainer(config)
 
