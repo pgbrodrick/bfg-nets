@@ -18,7 +18,6 @@ _FILENAME_RESPONSES_TEMPORARY_SUFFIX = '_responses_memmap_temporary.npy'
 _FILENAME_WEIGHTS_SUFFIX = 'weights_{}.npy'
 _FILENAME_WEIGHTS_TEMPORARY_SUFFIX = '_weights_memmap_temporary.npy'
 _FILENAME_DATA_CONTAINER = 'data_container.npz'
-_VECTORIZED_FILENAMES = ('kml', 'shp')
 
 
 _logger = logging.getLogger(__name__)
@@ -69,19 +68,15 @@ class DataContainer:
 
             create_built_data_output_directory(self.config)
 
-            if (self.config.raw_files.ignore_projections is False):
+            print(self.config.raw_files.boundary_files)
+            if (self.config.raw_files.ignore_projections is False and len(errors) == 0):
                 errors.extend(training_data.check_projections(self.config.raw_files.feature_files,
                                                               self.config.raw_files.response_files,
                                                               self.config.raw_files.boundary_files))
 
-            if (self.config.raw_files.boundary_files is not None):
-                boundary_files = [[loc_file for loc_file in self.config.raw_files.boundary_files
-                                   if gdal.Open(loc_file, gdal.GA_ReadOnly) is not None]]
-            else:
-                boundary_files = None
-
             errors.extend(training_data.check_resolutions(self.config.raw_files.feature_files,
-                                                          self.config.raw_files.response_files, boundary_files))
+                                                          self.config.raw_files.response_files,
+                                                          self.config.raw_files.boundary_files))
 
             errors.extend(self.check_band_types(self.config.raw_files.feature_files,
                                                 self.config.raw_files.feature_data_type))
@@ -196,6 +191,10 @@ class DataContainer:
         # 3) band_types is list of lists (of strings, contained in valid_band_types), with the outer list referring to
         #    files and the inner list referring to bands
 
+        #TODO - add in some check for vector types
+        is_vector = any([x.split('.')[-1] in sections.VECTORIZED_FILENAMES for x in file_list[0]])
+        if (is_vector):
+            return errors
         num_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in file_list[0]]
 
         if (band_types is not None):
@@ -235,13 +234,16 @@ class DataContainer:
         # 3) band_types is list of lists (of strings, contained in valid_band_types), with the outer list referring to
         #    files and the inner list referring to bands
 
-        num_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in file_list[0]]
+        num_bands_per_file = [None if gdal.Open(x, gdal.GA_ReadOnly) is None else gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in file_list[0]]
 
         # Nonetype, option 1 from above, auto-generate
         if (band_types is None):
             for _file in range(len(file_list[0])):
                 output_raw_band_types = list()
-                output_raw_band_types.append(['R' for _band in range(num_bands_per_file[_file])])
+                if num_bands_per_file[_file] is None:
+                    output_raw_band_types.append(['C'])
+                else:
+                    output_raw_band_types.append(['R' for _band in range(num_bands_per_file[_file])])
 
         else:
 
@@ -251,7 +253,10 @@ class DataContainer:
                 # List of values valid_band_types, option 2 from above - convert to list of lists
                 output_raw_band_types = []
                 for _file in range(len(band_types)):
-                    output_raw_band_types.append([band_types[_file] for _band in range(num_bands_per_file[_file])])
+                    if num_bands_per_file[_file] is None:
+                        output_raw_band_types.append(['C'])
+                    else:
+                        output_raw_band_types.append([band_types[_file] for _band in range(num_bands_per_file[_file])])
 
         # since it's more convenient, flatten this list of lists into a list before returning
         output_raw_band_types = [item for sublist in output_raw_band_types for item in sublist]
