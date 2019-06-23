@@ -1,19 +1,15 @@
 import logging
 import os
-from pathlib import Path
-import re
 from typing import List, Tuple
 
 import fiona
 import gdal
-import h5py
 import numpy as np
-import numpy.matlib
-import ogr
+import ogr, osr
 import rasterio.features
 from tqdm import tqdm
 
-from rsCNN.configuration import configs
+from rsCNN.configuration import configs, sections
 from rsCNN.data_management import common_io, ooc_functions, data_core
 
 _logger = logging.getLogger(__name__)
@@ -445,97 +441,152 @@ def get_proj(fname: str) -> str:
     """
     ds = gdal.Open(fname, gdal.GA_ReadOnly)
     if (ds is not None):
-        b_proj = ds.GetProjection()
-        if (b_proj is not None):
-            return b_proj
+        proj = ds.GetProjection()
+        if (proj is not None):
+            srs = osr.SpatialReference(wkt=str(proj))
+            if srs.IsProjected is False:
+                exception_str = 'File {} is not projected.  Correct or set ignore_projections flag.'.format(fname)
+                raise Exception(exception_str)
+            return srs.GetAttrValue('projcs')
 
     if (os.path.basename(fname).split('.')[-1] == 'shp'):
         vset = ogr.GetDriverByName('ESRI Shapefile').Open(fname, gdal.GA_ReadOnly)
     elif (os.path.basename(fname).split('.')[-1] == 'kml'):
         vset = ogr.GetDriverByName('KML').Open(fname, gdal.GA_ReadOnly)
     else:
-        raise Exception('Cannot find projection from file {}'.format(fname))
+        exception_str = 'Cannot find projection from file {}'.format(fname)
+        raise Exception(exception_str)
 
     if (vset is None):
-        raise Exception('Cannot find projection from file {}'.format(fname))
+        exception_str = 'Cannot find projection from file {}'.format(fname)
+        raise Exception(exception_str)
     else:
-        b_proj = vset.GetLayer().GetSpatialRef()
-        if (b_proj is None):
-            raise Exception('Cannot find projection from file {}'.format(fname))
+        proj = vset.GetLayer().GetSpatialRef()
+        if (proj is None):
+            exception_str = 'Cannot find projection from file {}'.format(fname)
+            raise Exception(exception_str)
         else:
-            b_proj = re.sub('\W', '', str(b_proj))
+            srs = osr.SpatialReference(wkt=str(proj))
+            if srs.IsProjected is False:
+                exception_str = 'File {} is not projected.  Correct or set ignore_projections flag.'.format(fname)
+                raise Exception(exception_str)
+            return srs.GetAttrValue('projcs')
 
-    return b_proj
 
 
-def check_projections(a_files: List[List[str]], b_files: List[List[str]], c_files: List[List[str]] = None) -> List[str]:
+def check_projections(f_files: List[List[str]], r_files: List[List[str]], b_files: List[str] = None) -> List[str]:
 
+    # f = feature, r = response, b = boundary
     errors = []
-    loc_a_files = [item for sublist in a_files for item in sublist]
-    loc_b_files = [item for sublist in b_files for item in sublist]
-    if c_files is None:
-        loc_c_files = list()
-    else:
-        loc_c_files = [item for sublist in c_files for item in sublist]
 
-    a_proj = []
-    b_proj = []
-    c_proj = []
+    site_f_proj = []
+    site_r_proj = []
+    site_b_proj = []
+    for _site in range(len(f_files)):
 
-    for _f in range(len(loc_a_files)):
-        a_proj.append(get_proj(loc_a_files[_f]))
-        b_proj.append(get_proj(loc_b_files[_f]))
-        if (len(loc_c_files) > 0):
-            c_proj.append(get_proj(loc_c_files[_f]))
+        f_proj = []
+        r_proj = []
+        for _file in range(len(f_files[_site])):
+            f_proj.append(get_proj(f_files[_site][_file]))
 
-    for _p in range(len(a_proj)):
-        if (len(c_proj) > 0):
-            if (a_proj[_p] != b_proj[_p] or a_proj != c_proj[_p]):
-                errors.append('Projection_mismatch between\n{}: {},\n{}: {},\n{}: {}'.format(a_proj[_p],
-                                                                                             loc_a_files[_p], b_proj[_p], loc_b_files[_p], c_proj[_p], loc_c_files[_p]))
-        else:
-            if (a_proj[_p] != b_proj[_p]):
-                errors.append('Projection_mismatch between\n{}: {}\n{}: {}'.
-                              format(a_proj[_p], loc_a_files[_p], b_proj[_p], loc_b_files[_p]))
+        for _file in range(len(r_files[_site])):
+            r_proj.append(get_proj(r_files[_site][_file]))
+
+        b_proj = None
+        if (len(b_files) > 0):
+            b_proj = get_proj(b_files[_site])
+
+        un_f_proj = np.unique(f_proj)
+        if (len(un_f_proj) > 1):
+            errors.append('Feature projection mismatch at site {}, projections: {}'.format(_site, un_f_proj))
+
+        un_r_proj = np.unique(r_proj)
+        if (len(un_r_proj) > 1):
+            errors.append('Response projection mismatch at site {}, projections: {}'.format(_site, un_r_proj))
+
+        if (un_f_proj[0] != un_r_proj[0]):
+            errors.append('Feature/Response projection mismatch at site {}'.format(_site))
+
+        if (b_proj is not None):
+            if (un_f_proj[0] != b_proj):
+                errors.append('Feature/Boundary projection mismatch at site {}'.format(_site))
+            if (un_r_proj[0] != b_proj):
+                errors.append('Response/Boundary projection mismatch at site {}'.format(_site))
+
+        site_f_proj.append(un_f_proj[0])
+        site_r_proj.append(un_r_proj[0])
+        if (b_proj is not None):
+            site_b_proj.append(b_proj)
+
+    if (len(np.unique(site_f_proj)) > 1):
+        errors.append('Warning, different projections at different features sites: {}'.format(site_f_proj))
+    if (len(np.unique(site_r_proj)) > 1):
+        errors.append('Warning, different projections at different features sites: {}'.format(site_r_proj))
+    if (len(np.unique(site_b_proj)) > 1):
+        errors.append('Warning, different projections at different features sites: {}'.format(site_b_proj))
     return errors
 
 
-def check_resolutions(a_files: List[List[str]], b_files: List[List[str]], c_files: List[List[str]] = None) -> List[str]:
+def check_resolutions(f_files: List[List[str]], r_files: List[List[str]], b_files: List[str] = None) -> List[str]:
+    # f = feature, r = response, b = boundary
     errors = []
-    if c_files is None:
-        c_files = list()
 
-    loc_a_files = [item for sublist in a_files for item in sublist]
-    loc_b_files = [item for sublist in b_files for item in sublist]
-    if (len(c_files) > 0):
-        loc_c_files = [item for sublist in c_files for item in sublist]
-    else:
-        loc_c_files = []
+    site_f_res = []
+    site_r_res = []
+    site_b_res = []
+    for _site in range(len(f_files)):
 
-    a_res = []
-    b_res = []
-    c_res = []
+        f_res = []
+        r_res = []
+        for _file in range(len(f_files[_site])):
+            f_res.append(np.array(gdal.Open(f_files[_site][_file], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]])
 
-    for _f in range(len(loc_a_files)):
-        a_res.append(np.array(gdal.Open(loc_a_files[_f], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]])
-        b_res.append(np.array(gdal.Open(loc_b_files[_f], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]])
-        if (len(loc_c_files) > 0):
-            c_res.append(np.array(gdal.Open(loc_c_files[_f], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]])
+        for _file in range(len(r_files[_site])):
+            if (r_files[_site][_file].split('.')[-1] not in sections.VECTORIZED_FILENAMES):
+                r_res.append(np.array(gdal.Open(r_files[_site][_file], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]])
 
-    for _p in range(len(a_res)):
-        if (len(c_res) > 0):
-            if(np.all(a_res[_p] != b_res[_p]) or np.all(a_res != c_res[_p])):
-                errors.append('Resolution mismatch between\n{}: {},\n{}: {},\n{}: {}'.format(a_res[_p],
-                                                                                             loc_a_files[_p], b_res[_p], loc_b_files[_p], c_res[_p], loc_c_files[_p]))
-        else:
-            if (np.all(a_res[_p] != b_res[_p])):
-                errors.append('Resolution mimatch between\n{}: {}\n{}: {}'.
-                              format(a_res[_p], loc_a_files[_p], b_res[_p], loc_b_files[_p]))
+        b_res = None
+        if (len(b_files) > 0):
+            if (b_files[_site].split('.')[-1] not in sections.VECTORIZED_FILENAMES):
+                b_res = np.array(gdal.Open(b_files[_site], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]]
+
+        un_f_res = []
+        if (len(f_res) > 0):
+            f_res = np.vstack(f_res)
+            un_f_res = [np.unique(f_res[:,0]), np.unique(f_res[:,1])]
+            if (len(un_f_res[0]) > 1 or len(un_f_res[1]) > 1):
+                errors.append('Feature resolution mismatch at site {}, resolutions: {}'.format(_site, un_f_res))
+
+        un_r_res = []
+        if (len(r_res) > 0):
+            r_res = np.vstack(r_res)
+            un_r_res = [np.unique(r_res[:,0]), np.unique(r_res[:,1])]
+            if (len(un_r_res[0]) > 1 or len(un_r_res[1]) > 1):
+                errors.append('Response resolution mismatch at site {}, resolutions: {}'.format(_site, un_r_res))
+
+        if (b_res is not None):
+            if (un_f_res[0][0] != b_res[0] or un_f_res[1][0] != b_res[1]):
+                errors.append('Feature/Boundary resolution mismatch at site {}'.format(_site))
+            if (un_r_res[0][0] != b_res[0] or un_r_res[1][0] != b_res[1]):
+                errors.append('Response/Boundary resolution mismatch at site {}'.format(_site))
+
+        site_f_res.append(un_f_res[0])
+        if (len(un_r_res) > 0):
+            site_r_res.append(un_r_res[0])
+        if (b_res is not None):
+            site_b_res.append(b_res)
+
+    if (len(np.unique(site_f_res)) > 1):
+        _logger.info('Warning, different resolutions at different features sites: {}'.format(site_f_res))
+    if (len(np.unique(site_r_res)) > 1):
+        _logger.info('Warning, different resolutions at different features sites: {}'.format(site_r_res))
+    if (len(np.unique(site_b_res)) > 1):
+        _logger.info('Warning, different resolutions at different features sites: {}'.format(site_b_res))
     return errors
+
+
 
 # Calculates categorical weights for a single response
-
-
 def calculate_categorical_weights(
         responses: List[np.array],
         weights: List[np.array],
@@ -867,7 +918,7 @@ def _check_mask_data_sufficient(mask: np.array, max_nodata_fraction: float) -> b
 
 
 def _is_boundary_file_vectorized(boundary_filepath: str) -> bool:
-    return str(os.path.splitext(boundary_filepath)).lower() in data_core._VECTORIZED_FILENAMES
+    return str(os.path.splitext(boundary_filepath)).lower() in sections.VECTORIZED_FILENAMES
 
 
 def check_built_data_files_exist(config: configs.Config) -> bool:
