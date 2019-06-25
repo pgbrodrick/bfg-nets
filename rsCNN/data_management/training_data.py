@@ -37,11 +37,13 @@ def build_training_data_ordered(
     # TODO:  move to checks
     feature_memmap_size_gb = n_features*4*config.data_build.max_samples * \
         (config.data_build.window_radius*2)**2 / 1024.**3
-    assert feature_memmap_size_gb < config.data_build.max_built_data_gb
+    assert feature_memmap_size_gb < config.data_build.max_built_data_gb,\
+           'Expected feature memmap size: {} Gb, limit: {}'.format(feature_memmap_size_gb , config.data_build.max_built_data_gb)
 
     response_memmap_size_gb = n_responses*4*config.data_build.max_samples * \
         (config.data_build.window_radius*2)**2 / 1024.**3
-    assert response_memmap_size_gb < config.data_build.max_built_data_gb
+    assert response_memmap_size_gb < config.data_build.max_built_data_gb,\
+           'Expected feature memmap size: {} Gb, limit: {}'.format(response_memmap_size_gb , config.data_build.max_built_data_gb)
 
     features, responses = _open_temporary_features_responses_data_files(config, n_features, n_responses)
     _log_munged_data_information(features, responses)
@@ -479,6 +481,9 @@ def check_projections(f_files: List[List[str]], r_files: List[List[str]], b_file
     # f = feature, r = response, b = boundary
     errors = []
 
+    if (b_files is None):
+        b_files = []
+
     site_f_proj = []
     site_r_proj = []
     site_b_proj = []
@@ -530,6 +535,9 @@ def check_projections(f_files: List[List[str]], r_files: List[List[str]], b_file
 def check_resolutions(f_files: List[List[str]], r_files: List[List[str]], b_files: List[str] = None) -> List[str]:
     # f = feature, r = response, b = boundary
     errors = []
+
+    if (b_files is None):
+        b_files = []
 
     site_f_res = []
     site_r_res = []
