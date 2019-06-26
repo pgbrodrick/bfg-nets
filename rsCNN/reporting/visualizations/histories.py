@@ -1,5 +1,6 @@
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def plot_history(history: dict) -> [plt.Figure]:
@@ -19,9 +20,12 @@ def plot_history(history: dict) -> [plt.Figure]:
 
     # Epoch times different view
     ax = plt.subplot(gs1[0, 1])
-    ax.hist([(dt - history['train_start']).seconds / 60 for dt in history['epoch_finish']])
-    ax.set_xlabel('Minutes since start')
-    ax.set_ylabel('Epochs completed')
+    minutes_elapsed_per_epoch = np.array([(dt - history['train_start']).seconds / 60 for dt in history['epoch_finish']])
+    minutes_elapsed = range(0, int(1+max(minutes_elapsed_per_epoch)))
+    cumulative_epochs = [sum(minutes_elapsed_per_epoch < minutes) for minutes in minutes_elapsed]
+    ax.plot(cumulative_epochs, c='black')
+    ax.set_xlabel('Minutes elapsed since training started')
+    ax.set_ylabel('Cumulative epochs completed')
 
     # Loss
     ax = plt.subplot(gs1[1, 0])
