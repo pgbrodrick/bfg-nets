@@ -44,13 +44,13 @@ class Reporter(object):
             _logger.info('Plot Training Sequence Figures')
             sampled = samples.Samples(
                 self.data_container.training_sequence, self.experiment.model, self.config,
-                data_sequence_label='Training'
+                self.experiment.is_model_trained, data_sequence_label='Training'
             )
             self._create_model_report_for_sequence(sampled, pdf)
             _logger.info('Plot Validation Sequence Figures')
             sampled = samples.Samples(
                 self.data_container.validation_sequence, self.experiment.model, self.config,
-                data_sequence_label='Validation'
+                self.experiment.is_model_trained, data_sequence_label='Validation'
             )
             self._create_model_report_for_sequence(sampled, pdf)
             _logger.info('Plot Model History')

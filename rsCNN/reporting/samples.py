@@ -35,6 +35,7 @@ class Samples(object):
             data_sequence: sequences.BaseSequence,
             model: keras.Model,
             config: configs.Config,
+            is_model_trained: bool,
             data_sequence_label: str = None
     ) -> None:
         self.data_sequence = data_sequence
@@ -42,8 +43,9 @@ class Samples(object):
         self.config = config
         self.data_sequence_label = data_sequence_label
         self._get_sampled_features_responses_and_set_metadata_and_weights()
-        self.trans_predictions = model.predict(self.trans_features)
-        self.raw_predictions = self.data_sequence.response_scaler.inverse_transform(self.trans_predictions)
+        if is_model_trained:
+            self.trans_predictions = model.predict(self.trans_features)
+            self.raw_predictions = self.data_sequence.response_scaler.inverse_transform(self.trans_predictions)
         self._set_has_transforms()
         self._set_raw_and_transformed_ranges()
 
@@ -85,10 +87,11 @@ class Samples(object):
         tmp_responses[tmp_responses == self.data_sequence.nan_replacement_value] = np.nan
         self.trans_responses_range = self._get_range(tmp_responses)
 
-        self.raw_predictions_range = self._get_range(self.raw_predictions)
-        tmp_predictions = self.trans_predictions.copy()
-        tmp_predictions[tmp_predictions == self.data_sequence.nan_replacement_value] = np.nan
-        self.trans_predictions_range = self._get_range(tmp_predictions)
+        if self.raw_predictions and self.trans_predictions:
+            self.raw_predictions_range = self._get_range(self.raw_predictions)
+            tmp_predictions = self.trans_predictions.copy()
+            tmp_predictions[tmp_predictions == self.data_sequence.nan_replacement_value] = np.nan
+            self.trans_predictions_range = self._get_range(tmp_predictions)
 
         tmp_weights = self.weights.copy()
         tmp_weights[tmp_weights == 0] = np.nan
