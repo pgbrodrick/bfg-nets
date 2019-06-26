@@ -3,7 +3,6 @@ import os
 
 import keras.backend as K
 import numpy as np
-import psutil
 
 from rsCNN.architectures import config_sections
 from rsCNN.configuration import configs
@@ -125,8 +124,6 @@ class Experiment(object):
             callbacks=model_callbacks,
             validation_data=validation_sequence,
             max_queue_size=2,
-            workers=compute_access.get_count_available_cpus(),
-            use_multiprocessing=self.config.model_training.use_multiprocessing,
             shuffle=False,
             initial_epoch=len(self.history.get('lr', list())),
         )

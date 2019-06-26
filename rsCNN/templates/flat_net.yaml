@@ -35,7 +35,6 @@ model_training:
   dir_out: .
   verbosity: 1
   assert_gpu: false
-  use_multiprocessing: false
   architecture_name: flat_net
   loss_metric: REQUIRED
   max_epochs: 100
