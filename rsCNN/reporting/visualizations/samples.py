@@ -51,11 +51,12 @@ def _plot_samples(
     num_pages = min(max_pages, np.ceil(sampled.num_samples / max_samples_per_page))
     num_features = min(max_features_per_page, sampled.num_features)
     num_responses = min(max_responses_per_page, sampled.num_responses)
+    are_predictions_available = sampled.raw_predictions is not None
     if sample_type is LABEL_CLASSIFICATION:
-        num_subplots = _calculate_number_classification_subplots(num_features)
+        num_subplots = _calculate_number_classification_subplots(num_features, are_predictions_available)
         sample_plotter = _plot_classification_sample
     elif sample_type is LABEL_REGRESSION:
-        num_subplots = _calculate_number_regression_subplots(num_features, num_responses)
+        num_subplots = _calculate_number_regression_subplots(num_features, num_responses, are_predictions_available)
         sample_plotter = _plot_regression_sample
 
     # Iterate through pages and samples
@@ -71,20 +72,20 @@ def _plot_samples(
     return figures
 
 
-def _calculate_number_classification_subplots(num_features: int) -> int:
+def _calculate_number_classification_subplots(num_features: int, are_predictions_available: bool) -> int:
     num_feature_plots = 2 * num_features  # x2 for the raw and transformed features
     num_response_plots = 1  # All responses shown simultaneously
-    num_prediction_plots = 2  # 2 for the raw and max likelihood predictions
-    num_error_plots = 1
+    num_prediction_plots = 2 * are_predictions_available  # 2 for the raw and max likelihood predictions, if available
+    num_error_plots = 1 * are_predictions_available  # If available
     num_weights_plots = 1
     return num_feature_plots + num_response_plots + num_prediction_plots + num_error_plots + num_weights_plots
 
 
-def _calculate_number_regression_subplots(num_features: int, num_responses: int) -> int:
+def _calculate_number_regression_subplots(num_features: int, num_responses: int, are_predictions_available: bool) -> int:
     num_feature_plots = 2 * num_features  # x2 for the raw and transformed features
     num_response_plots = 2 * num_responses  # x2 for the raw and transformed responses
-    num_prediction_plots = 2 * num_responses  # x2 for the raw and transformed responses
-    num_error_plots = 1
+    num_prediction_plots = 2 * num_responses * are_predictions_available  # x2 for the raw and transformed responses
+    num_error_plots = 1 * are_predictions_available
     num_weights_plots = 1
     return num_feature_plots + num_response_plots + num_prediction_plots + num_error_plots + num_weights_plots
 
@@ -94,7 +95,7 @@ def _plot_classification_sample(
         idx_sample: int,
         num_features: int,
         num_responses: int,
-        sample_axes: Iterator
+        sample_axes: Iterator,
 ) -> None:
     for idx_feature in range(num_features):
         subplots.plot_raw_features(
@@ -106,14 +107,15 @@ def _plot_classification_sample(
 
     subplots.plot_categorical_responses()
 
-    subplots.plot_max_likelihood_classification(
-        sampled, idx_sample, sample_axes.__next__(), idx_sample == 0, False)
+    if sampled.raw_predictions is not None:
+        subplots.plot_max_likelihood_classification(
+            sampled, idx_sample, sample_axes.__next__(), idx_sample == 0, False)
 
-    subplots.plot_binary_error_classification(sampled, idx_sample, sample_axes.__next__(), idx_sample == 0, False)
+        subplots.plot_binary_error_classification(sampled, idx_sample, sample_axes.__next__(), idx_sample == 0, False)
 
-    for idx_response in range(num_responses):
-        subplots.plot_raw_predictions(
-            sampled, idx_sample, idx_response, sample_axes.__next__(), idx_sample == 0, False)
+        for idx_response in range(num_responses):
+            subplots.plot_raw_predictions(
+                sampled, idx_sample, idx_response, sample_axes.__next__(), idx_sample == 0, False)
 
     subplots.plot_weights(sampled, idx_sample, sample_axes.__next__(), idx_sample == 0, False)
 
@@ -141,19 +143,20 @@ def _plot_regression_sample(
         subplots.plot_transformed_responses(
             sampled, idx_sample, idx_response, sample_axes.__next__(), idx_sample == 0, False)
 
-    for idx_response in range(num_responses):
-        subplots.plot_raw_predictions(
+    if sampled.raw_predictions is not None:
+        for idx_response in range(num_responses):
+            subplots.plot_raw_predictions(
+                sampled, idx_sample, idx_response, sample_axes.__next__(), idx_sample == 0, False)
+
+        for idx_response in range(num_responses):
+            subplots.plot_transformed_responses(
+                sampled, idx_sample, idx_response, sample_axes.__next__(), idx_sample == 0, False)
+
+        subplots.plot_raw_error_regression(
             sampled, idx_sample, idx_response, sample_axes.__next__(), idx_sample == 0, False)
 
-    for idx_response in range(num_responses):
-        subplots.plot_transformed_responses(
+        subplots.plot_transformed_error_regression(
             sampled, idx_sample, idx_response, sample_axes.__next__(), idx_sample == 0, False)
-
-    subplots.plot_raw_error_regression(
-        sampled, idx_sample, idx_response, sample_axes.__next__(), idx_sample == 0, False)
-
-    subplots.plot_transformed_error_regression(
-        sampled, idx_sample, idx_response, sample_axes.__next__(), idx_sample == 0, False)
 
     subplots.plot_weights(sampled, idx_sample, sample_axes.__next__(), idx_sample == 0, False)
 
