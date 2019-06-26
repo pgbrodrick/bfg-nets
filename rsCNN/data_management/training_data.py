@@ -510,13 +510,13 @@ def check_projections(f_files: List[List[str]], r_files: List[List[str]], b_file
             errors.append('Response projection mismatch at site {}, projections: {}'.format(_site, un_r_proj))
 
         if (un_f_proj[0] != un_r_proj[0]):
-            errors.append('Feature/Response projection mismatch at site {}'.format(_site))
+            errors.append('Feature/Response projection mismatch at site {}\nFeature proj: {}\Response proj: {}'.format(_site,un_f_proj[0],un_r_proj[0]))
 
         if (b_proj is not None):
             if (un_f_proj[0] != b_proj):
-                errors.append('Feature/Boundary projection mismatch at site {}'.format(_site))
+                errors.append('Feature/Boundary projection mismatch at site {}\nFeature proj: {}\nBoundary proj: {}'.format(_site,un_f_proj[0],b_proj))
             if (un_r_proj[0] != b_proj):
-                errors.append('Response/Boundary projection mismatch at site {}'.format(_site))
+                errors.append('Response/Boundary projection mismatch at site {}\nFeature proj: {}\nBoundary proj: {}'.format(_site,un_r_proj[0],b_proj))
 
         site_f_proj.append(un_f_proj[0])
         site_r_proj.append(un_r_proj[0])
