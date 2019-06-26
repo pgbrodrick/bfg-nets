@@ -65,7 +65,7 @@ def _calculate_classification_classes_actual_and_predicted(sampled):
     return classes, actual, predicted
 
 
-def plot_spatial_categorical_error(
+def plot_spatial_classification_error(
         sampled: samples.Samples,
         max_pages: int = 8,
         max_responses_per_page: int = 10

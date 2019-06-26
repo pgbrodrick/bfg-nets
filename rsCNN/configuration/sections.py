@@ -13,6 +13,7 @@ _logger = logging.getLogger(__name__)
 
 VECTORIZED_FILENAMES = ('kml', 'shp')
 
+
 class BaseConfigSection(object):
     """
     Base Configuration Section from which all Configuration Sections inherit. Handles shared functionality like getting,
@@ -425,7 +426,7 @@ def check_input_file_validity(f_file_list, r_file_list, b_file_list) -> List[str
         else:
             file_type.append('R')
 
-        for _file in range(1,len(r_file_list[0])):
+        for _file in range(1, len(r_file_list[0])):
             if (r_file_list[_site][_file].split('.')[-1] in VECTORIZED_FILENAMES):
                 if (file_type[-1] == 'R'):
                     file_type[-1] = 'M'

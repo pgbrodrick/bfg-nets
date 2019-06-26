@@ -1,4 +1,4 @@
-from typing import List
+from typing import Iterator, List
 
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
@@ -8,59 +8,154 @@ from rsCNN.reporting import samples
 from rsCNN.reporting.visualizations import figures as viz_figures, subplots
 
 
-def plot_model_output_samples(
+LABEL_CLASSIFICATION = 'CLASSIFICATION'
+LABEL_REGRESSION = 'REGRESSION'
+
+
+def plot_classification_samples(
         sampled: samples.Samples,
         max_pages: int = 8,
         max_samples_per_page: int = 10,
         max_features_per_page: int = 5,
         max_responses_per_page: int = 5
 ) -> List[plt.Figure]:
-    figures = viz_figures.plot_figures_iterating_through_samples_features_responses(
-        sampled, _plot_output_page, max_pages, max_samples_per_page, max_features_per_page, max_responses_per_page
+    return _plot_samples(
+        sampled, max_pages, max_samples_per_page, max_features_per_page, max_responses_per_page,
+        sample_type=LABEL_CLASSIFICATION
     )
-    for idx, figure in enumerate(figures):
-        figure.suptitle('{} Sequence Prediction Samples (page {})'.format(sampled.data_sequence_label or '', idx + 1))
+
+
+def plot_regression_samples(
+        sampled: samples.Samples,
+        max_pages: int = 8,
+        max_samples_per_page: int = 10,
+        max_features_per_page: int = 5,
+        max_responses_per_page: int = 5
+) -> List[plt.Figure]:
+    return _plot_samples(
+        sampled, max_pages, max_samples_per_page, max_features_per_page, max_responses_per_page,
+        sample_type=LABEL_REGRESSION
+    )
+
+
+def _plot_samples(
+    sampled: samples.Samples,
+    max_pages: int,
+    max_samples_per_page: int,
+    max_features_per_page: int,
+    max_responses_per_page: int,
+    sample_type: str
+) -> List[plt.Figure]:
+    # Calculate figure parameters
+    figures = list()
+    num_pages = min(max_pages, np.ceil(sampled.num_samples / max_samples_per_page))
+    num_features = min(max_features_per_page, sampled.num_features)
+    num_responses = min(max_responses_per_page, sampled.num_responses)
+    if sample_type is LABEL_CLASSIFICATION:
+        num_subplots = _calculate_number_classification_subplots(num_features)
+        sample_plotter = _plot_classification_sample
+    elif sample_type is LABEL_REGRESSION:
+        num_subplots = _calculate_number_regression_subplots(num_features, num_responses)
+        sample_plotter = _plot_regression_sample
+
+    # Iterate through pages and samples
+    for idx_page in range(num_pages):
+        fig, grid = viz_figures.get_figure_and_grid(max_samples_per_page, num_subplots)
+        idxs_samples = range(idx_page * max_samples_per_page, (1 + idx_page) * max_samples_per_page)
+        for idx_sample in idxs_samples:
+            sample_axes = iter([plt.subplot(grid[idx_sample, idx_subplot]) for idx_subplot in range(num_subplots)])
+            sample_plotter(sampled, idx_sample, num_features, num_responses, sample_axes)
+        fig.suptitle('{}Sequence Samples (page {})'.format(sampled.data_sequence_label + ' ' or '', idx_page + 1))
+        figures.append(fig)
+
     return figures
 
 
-def _plot_output_page(
-        sampled: samples.Samples,
-        range_samples: range,
-        range_features: range,
-        range_responses: range
-) -> plt.Figure:
-    nrows = len(range_samples)
-    has_softmax = sampled.config.architecture.output_activation == 'softmax'
-    num_responses_plots = 2 * len(range_responses)
-    num_predictions_plots = num_responses_plots
-    num_regression_plots = 2 * len(range_responses) * int(not has_softmax)
-    num_categorical_plots = 2 * int(has_softmax)
+def _calculate_number_classification_subplots(num_features: int) -> int:
+    num_feature_plots = 2 * num_features  # x2 for the raw and transformed features
+    num_response_plots = 1  # All responses shown simultaneously
+    num_prediction_plots = 2  # 2 for the raw and max likelihood predictions
+    num_error_plots = 1
     num_weights_plots = 1
-    ncols = (num_responses_plots + num_predictions_plots + num_regression_plots + num_categorical_plots +
-             num_weights_plots)
-    fig, grid = viz_figures.get_figure_and_grid(nrows, ncols)
-    for idx_sample in range_samples:
-        axes = viz_figures.get_axis_iterator_for_sample_row(grid, idx_sample)
-        for idx_response in range_responses:
-            subplots.plot_raw_responses(
-                sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, idx_response == 0)
-            subplots.plot_transformed_responses(
-                sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
-            subplots.plot_raw_predictions(
-                sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
-            subplots.plot_transformed_predictions(
-                sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
-            if not has_softmax:
-                subplots.plot_raw_error_regression(
-                    sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
-                subplots.plot_transformed_error_regression(
-                    sampled, idx_sample, idx_response, axes.__next__(), idx_sample == 0, False)
-        # Note: if softmax aka categorical, then we only need one plot per sample, not per response
-        if has_softmax:
-            subplots.plot_max_likelihood(sampled, idx_sample, axes.__next__(), idx_sample == 0, False)
-            subplots.plot_binary_error(sampled, idx_sample, axes.__next__(), idx_sample == 0, False)
-        subplots.plot_weights(sampled, idx_sample, axes.__next__(), idx_sample == 0, False)
-    return fig
+    return num_feature_plots + num_response_plots + num_prediction_plots + num_error_plots + num_weights_plots
+
+
+def _calculate_number_regression_subplots(num_features: int, num_responses: int) -> int:
+    num_feature_plots = 2 * num_features  # x2 for the raw and transformed features
+    num_response_plots = 2 * num_responses  # x2 for the raw and transformed responses
+    num_prediction_plots = 2 * num_responses  # x2 for the raw and transformed responses
+    num_error_plots = 1
+    num_weights_plots = 1
+    return num_feature_plots + num_response_plots + num_prediction_plots + num_error_plots + num_weights_plots
+
+
+def _plot_classification_sample(
+        sampled: samples.Samples,
+        idx_sample: int,
+        num_features: int,
+        num_responses: int,
+        sample_axes: Iterator
+) -> None:
+    for idx_feature in range(num_features):
+        subplots.plot_raw_features(
+            sampled, idx_sample, idx_feature, sample_axes.__next__(), idx_sample == 0, idx_feature == 0)
+
+    for idx_feature in range(num_features):
+        subplots.plot_transformed_features(
+            sampled, idx_sample, idx_feature, sample_axes.__next__(), idx_sample == 0, False)
+
+    subplots.plot_categorical_responses()
+
+    subplots.plot_max_likelihood_classification(
+        sampled, idx_sample, sample_axes.__next__(), idx_sample == 0, False)
+
+    subplots.plot_binary_error_classification(sampled, idx_sample, sample_axes.__next__(), idx_sample == 0, False)
+
+    for idx_response in range(num_responses):
+        subplots.plot_raw_predictions(
+            sampled, idx_sample, idx_response, sample_axes.__next__(), idx_sample == 0, False)
+
+    subplots.plot_weights(sampled, idx_sample, sample_axes.__next__(), idx_sample == 0, False)
+
+
+def _plot_regression_sample(
+        sampled: samples.Samples,
+        idx_sample: int,
+        num_features: int,
+        num_responses: int,
+        sample_axes: Iterator
+) -> None:
+    for idx_feature in range(num_features):
+        subplots.plot_raw_features(
+            sampled, idx_sample, idx_feature, sample_axes.__next__(), idx_sample == 0, idx_feature == 0)
+
+    for idx_feature in range(num_features):
+        subplots.plot_transformed_features(
+            sampled, idx_sample, idx_feature, sample_axes.__next__(), idx_sample == 0, False)
+
+    for idx_response in range(num_responses):
+        subplots.plot_raw_responses(
+            sampled, idx_sample, idx_response, sample_axes.__next__(), idx_sample == 0, False)
+
+    for idx_response in range(num_responses):
+        subplots.plot_transformed_responses(
+            sampled, idx_sample, idx_response, sample_axes.__next__(), idx_sample == 0, False)
+
+    for idx_response in range(num_responses):
+        subplots.plot_raw_predictions(
+            sampled, idx_sample, idx_response, sample_axes.__next__(), idx_sample == 0, False)
+
+    for idx_response in range(num_responses):
+        subplots.plot_transformed_responses(
+            sampled, idx_sample, idx_response, sample_axes.__next__(), idx_sample == 0, False)
+
+    subplots.plot_raw_error_regression(
+        sampled, idx_sample, idx_response, sample_axes.__next__(), idx_sample == 0, False)
+
+    subplots.plot_transformed_error_regression(
+        sampled, idx_sample, idx_response, sample_axes.__next__(), idx_sample == 0, False)
+
+    subplots.plot_weights(sampled, idx_sample, sample_axes.__next__(), idx_sample == 0, False)
 
 
 def plot_single_sequence_prediction_histogram(

@@ -111,7 +111,13 @@ def _plot_sample_attribute(
         ax.set_ylabel('Sample\n{}'.format(idx_sample))
 
 
-def plot_max_likelihood(sampled: samples.Samples, idx_sample: int, ax: plt.Axes, add_xlabel: bool, add_ylabel: bool) -> None:
+def plot_max_likelihood_classification(
+        sampled: samples.Samples,
+        idx_sample: int,
+        ax: plt.Axes,
+        add_xlabel: bool,
+        add_ylabel: bool
+) -> None:
     # Note:  this assumes that the softmax applied to all prediction axes and that there was no transformation applied
     #  to the categorical data.
     min_ = 0
@@ -147,7 +153,7 @@ def plot_weights(sampled: samples.Samples, idx_sample: int, ax: plt.Axes, add_xl
         ax.set_ylabel('Sample\n{}'.format(idx_sample))
 
 
-def plot_binary_error(
+def plot_binary_error_classification(
         sampled: samples.Samples,
         idx_sample: int,
         ax: plt.Axes,

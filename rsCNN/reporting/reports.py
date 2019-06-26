@@ -8,7 +8,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from rsCNN.configuration import configs
 from rsCNN.data_management import data_core
 from rsCNN.reporting import samples
-from rsCNN.reporting.visualizations import data_inputs, histories, model_outputs, model_performance, networks
+from rsCNN.reporting.visualizations import histories, model_performance, networks, samples as samples_viz
 from rsCNN.experiments import experiments
 
 
@@ -61,10 +61,9 @@ class Reporter(object):
         if self.experiment.is_model_trained and self.config.architecture.output_activation == 'softmax':
             self._add_figures(self.plot_classification_report(sampled), pdf)
             self._add_figures(self.plot_confusion_matrix(sampled), pdf, tight=False)
-        self._add_figures(self.plot_data_input_samples(sampled), pdf)
         self._add_figures(self.plot_single_sequence_prediction_histogram(sampled), pdf)
         if self.experiment.is_model_trained:
-            self._add_figures(self.plot_model_output_samples(sampled), pdf)
+            self._add_figures(self.plot_samples(sampled), pdf)
             if self.config.model_reporting.network_progression_show_full:
                 self._add_figures(self.plot_network_feature_progression(sampled, compact=False), pdf)
             if self.config.model_reporting.network_progression_show_compact:
@@ -101,23 +100,7 @@ class Reporter(object):
             max_filters=max_filters or self.config.model_reporting.network_progression_max_filters
         )
 
-    def plot_data_input_samples(
-            self,
-            sampled: samples.Samples,
-            max_pages: int = None,
-            max_samples_per_page: int = None,
-            max_features_per_page: int = None,
-            max_responses_per_page: int = None
-    ) -> List[plt.Figure]:
-        return data_inputs.plot_data_input_samples(
-            sampled,
-            max_pages=max_pages or self.config.model_reporting.max_pages_per_figure,
-            max_samples_per_page=max_samples_per_page or self.config.model_reporting.max_samples_per_page,
-            max_features_per_page=max_features_per_page or self.config.model_reporting.max_features_per_page,
-            max_responses_per_page=max_responses_per_page or self.config.model_reporting.max_responses_per_page
-        )
-
-    def plot_model_output_samples(
+    def plot_samples(
             self,
             sampled: samples.Samples,
             max_pages: int = None,
@@ -127,7 +110,11 @@ class Reporter(object):
     ) -> List[plt.Figure]:
         assert self.experiment.is_model_trained, \
             'Cannot plot raw and transformed prediction samples because model is not trained.'
-        return model_outputs.plot_model_output_samples(
+        if self.config.architecture.output_activation == 'softmax':
+            plotter = samples_viz.plot_classification_samples
+        else:
+            plotter = samples_viz.plot_regression_samples
+        return plotter(
             sampled,
             max_pages=max_pages or self.config.model_reporting.max_pages_per_figure,
             max_samples_per_page=max_samples_per_page or self.config.model_reporting.max_samples_per_page,
@@ -138,7 +125,7 @@ class Reporter(object):
     def plot_single_sequence_prediction_histogram(
             self, sampled: samples.Samples, max_responses_per_page: int = None
     ) -> List[plt.Figure]:
-        return model_outputs.plot_single_sequence_prediction_histogram(
+        return samples_viz.plot_single_sequence_prediction_histogram(
             sampled,
             max_responses_per_page=max_responses_per_page or self.config.model_reporting.max_responses_per_page
         )
@@ -151,7 +138,7 @@ class Reporter(object):
     ) -> List[plt.Figure]:
         assert self.experiment.is_model_trained, 'Cannot plot spatial error because model is not trained.'
         if self.config.architecture.output_activation == 'softmax':
-            plotter = model_performance.plot_spatial_categorical_error
+            plotter = model_performance.plot_spatial_classification_error
         else:
             plotter = model_performance.plot_spatial_regression_error
         return plotter(
