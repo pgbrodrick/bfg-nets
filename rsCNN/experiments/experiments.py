@@ -14,6 +14,8 @@ from rsCNN.utils import compute_access
 
 _logger = logging.getLogger(__name__)
 
+_KEY_HISTORY_IS_MODEL_TRAINED = 'is_model_trained'
+
 
 class Experiment(object):
     config = None
@@ -26,6 +28,9 @@ class Experiment(object):
     """bool: Whether an existing history object was loaded from the model training directory."""
     loaded_existing_model = None
     """bool: Whether an existing model object was loaded from the model training directory."""
+    is_model_trained = None
+    """bool: Whether model is trained to stopping criteria. If False, either not trained at all or training was stopped 
+    before stopping criteria."""
 
     def __init__(self, config: configs.Config) -> None:
         errors = config.get_human_readable_config_errors(exclude_sections=['raw_files', 'model_reporting'])
@@ -82,7 +87,7 @@ class Experiment(object):
 
         if os.path.exists(get_history_filepath(self.config.model_training.dir_out)):
             assert self.loaded_existing_model, \
-                'Model training history exists in model training directory, but existing model found; directory: {}' \
+                'Model training history exists in model training directory, but no model found; directory: {}' \
                 .format(self.config.model_training.dir_out)
             _logger.debug('Loading existing history from model training directory at {}'.format(
                 get_history_filepath(self.config.model_training.dir_out)))
@@ -97,7 +102,11 @@ class Experiment(object):
                 'Trained model exists in model training directory, but no training history found; directory: {}' \
                 .format(self.config.model_training.dir_out)
             self.loaded_existing_history = False
-            self.history = {'model_name': self.config.model_training.dir_out}
+            self.history = {
+                'model_name': self.config.model_training.dir_out,
+                _KEY_HISTORY_IS_MODEL_TRAINED: False
+            }
+        self.is_model_trained = self.history[_KEY_HISTORY_IS_MODEL_TRAINED]
 
     def fit_model_with_data_container(self, data_container: DataContainer, resume_training: bool = False) -> None:
         return self.fit_model_with_sequences(
@@ -128,6 +137,8 @@ class Experiment(object):
             initial_epoch=len(self.history.get('lr', list())),
         )
         self.history = histories.combine_histories(self.history, new_history.history)
+        self.history[_KEY_HISTORY_IS_MODEL_TRAINED] = True
+        self.is_model_trained = True
         histories.save_history(self.history, get_history_filepath(self.config.model_training.dir_out))
         models.save_model(self.model, get_model_filepath(self.config.model_training.dir_out))
 
