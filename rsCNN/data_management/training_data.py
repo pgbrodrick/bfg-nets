@@ -4,6 +4,7 @@ from typing import List, Tuple
 
 import fiona
 import gdal
+import multiprocessing
 import numpy as np
 import ogr, osr
 import rasterio.features
@@ -11,6 +12,7 @@ from tqdm import tqdm
 
 from rsCNN.configuration import configs, sections
 from rsCNN.data_management import common_io, ooc_functions, data_core
+from rsCNN.utils import compute_access
 
 _logger = logging.getLogger(__name__)
 
@@ -80,6 +82,12 @@ def build_training_data_ordered(
     _logger.debug('Step through sites in order and grab {} sample from each until max samples'.format(num_reads_per_site))
     progress_bar = tqdm(total=config.data_build.max_samples, ncols=80)
 
+
+    write_lock = multiprocessing.Lock()
+    n_cpus = compute_access.get_count_available_cpus()
+    pool = multiprocessing.Pool(processes=n_cpus)
+    read_results = []
+
     _sample_index = 0
     _rs_index = 0
     remaining_sites = list(range(len(config.raw_files.feature_files)))
@@ -88,11 +96,6 @@ def build_training_data_ordered(
     while (_sample_index < config.data_build.max_samples and len(remaining_sites) > 0):
         _site = remaining_sites[_rs_index]
         _logger.debug('Reading loop: Site {}'.format(_site))
-
-        feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
-                        for loc_file in config.raw_files.feature_files[_site]]
-        response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
-        boundary_set = common_io.get_site_boundary_set(config, _site)
 
         while _site_xy_index[_site] < len(all_site_xy_locations[_site]):
             site_read_count = 0
@@ -113,16 +116,16 @@ def build_training_data_ordered(
                     (f_ul[0][1] + all_site_xy_locations[_site_xy_index[_site], 1]) * ref_trans[5]
                 local_boundary_vector_file = config.raw_files.boundary_files[_site]
 
-            success = read_segmentation_chunk(feature_sets,
-                                              response_sets,
-                                              f_ul + all_site_xy_locations[_site][_site_xy_index[_site], :],
-                                              r_ul + all_site_xy_locations[_site][_site_xy_index[_site], :],
-                                              config,
-                                              _sample_index,
-                                              boundary_vector_file=local_boundary_vector_file,
-                                              boundary_upper_left=local_boundary_upper_left,
-                                              b_set=boundary_set,
-                                              boundary_subset_geotransform=subset_geotransform)
+            read_results.append(pool.apply_async(read_segmentation_chunk, 
+                                args=(\
+                                _site,
+                                f_ul + all_site_xy_locations[_site][_site_xy_index[_site], :],
+                                r_ul + all_site_xy_locations[_site][_site_xy_index[_site], :],
+                                config,
+                                _sample_index,),
+                                kwds=dict(boundary_vector_file=local_boundary_vector_file,
+                                boundary_upper_left=local_boundary_upper_left,
+                                boundary_subset_geotransform=subset_geotransform)))
 
             _site_xy_index[_site] += 1
             popped = None
@@ -131,18 +134,29 @@ def build_training_data_ordered(
                     config.raw_files.feature_files[_site][0]))
                 popped = remaining_sites.pop(_rs_index)
 
-            if success is True:
-                _sample_index += 1
-                progress_bar.update(1)
+
+            if (len(read_results) > num_reads_per_site-site_read_count or popped is not None):
+                pool.close()
+                pool.join()
+                read_output = [p.get() for p in read_results]
+
+                for success in read_output:
+                    if success is True:
+                        _sample_index += 1
+                        progress_bar.update(1)
+                        site_read_count += 1
+
+                read_output = []
 
                 if (popped is not None):
                     _rs_index += 1
                     if (_rs_index >= len(remaining_sites)):
                         _rs_index = 0
 
-                site_read_count += 1
                 if (site_read_count > num_reads_per_site or _sample_index >= config.data_build.max_samples):
                     break
+                else:
+                    pool = multiprocessing.Pool(processes=n_cpus)
 
     progress_bar.close()
     del all_site_upper_lefts
@@ -717,16 +731,20 @@ def read_labeling_chunk(f_sets: List[gdal.Dataset],
     return local_feature
 
 
-def read_segmentation_chunk(f_sets: List[tuple],
-                            r_sets: List[tuple],
+def read_segmentation_chunk(_site: int,
                             feature_upper_lefts: List[List[int]],
                             response_upper_lefts: List[List[int]],
                             config: configs.Config,
                             sample_index: int,
                             boundary_vector_file: str = None,
                             boundary_subset_geotransform: tuple = None,
-                            b_set=None,
                             boundary_upper_left: List[int] = None) -> bool:
+
+    f_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
+                    for loc_file in config.raw_files.feature_files[_site]]
+    r_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
+    b_set = common_io.get_site_boundary_set(config, _site)
+
     window_diameter = config.data_build.window_radius * 2
 
     mask = read_mask_chunk(boundary_vector_file,
@@ -745,9 +763,11 @@ def read_segmentation_chunk(f_sets: List[tuple],
         return False
 
     if (config.data_build.response_min_value is not None):
-        local_response[local_response < config.data_build.response_min_value] = np.nan
+        with np.errstate(invalid='ignore'):
+            local_response[local_response < config.data_build.response_min_value] = np.nan
     if (config.data_build.response_max_value is not None):
-        local_response[local_response > config.data_build.response_max_value] = np.nan
+        with np.errstate(invalid='ignore'):
+            local_response[local_response > config.data_build.response_max_value] = np.nan
     mask[np.any(np.isnan(local_response), axis=-1)] = True
 
     if (mask is None):
