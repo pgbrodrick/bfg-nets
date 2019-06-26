@@ -109,7 +109,7 @@ def _plot_sample_attribute(
             '{} {}\n{}\n{}'.format(x_label, idx_axis, _format_number(min_), _format_number(max_)), rotation=45)
         ax.xaxis.set_label_position('top')
     if add_ylabel:
-        ax.set_ylabel('Sample\n{}'.format(idx_sample))
+        ax.set_ylabel('Sample\n{}'.format(idx_sample), rotation=90)
 
 
 def plot_max_likelihood_classification(
