@@ -163,8 +163,10 @@ def plot_binary_error_classification(
 ) -> None:
     # Note:  this assumes that the softmax applied to all prediction axes and that there was no transformation applied
     #  to the categorical data.
-    min_ = 0
-    max_ = 1
+    # Note:  the actual range of this data will be from 0 to 1, i.e., is the class incorrect or correct, but the plots
+    #  will be too dark if we set the vmin and vmax to 0 and 1, respectively
+    min_ = -1
+    max_ = 2
     actual = np.argmax(sampled.raw_responses[idx_sample, :], axis=-1)
     predicted = np.argmax(sampled.raw_predictions[idx_sample, :], axis=-1)
     ax.imshow(predicted == actual, vmin=min_, vmax=max_, cmap=colormaps.COLORMAP_ERROR)
