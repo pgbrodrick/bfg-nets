@@ -142,7 +142,7 @@ def plot_weights(sampled: samples.Samples, idx_sample: int, ax: plt.Axes, add_xl
     weights[weights == 0] = np.nan
 
     weight_cmap = matplotlib.cm.get_cmap(colormaps.COLORMAP_WEIGHTS)
-    weight_cmap.set_bad('red')
+    weight_cmap.set_bad('white')
 
     ax.imshow(weights, vmin=min_, vmax=max_, cmap=weight_cmap)
     ax.set_xticks([])
