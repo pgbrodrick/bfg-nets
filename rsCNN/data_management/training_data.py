@@ -524,7 +524,7 @@ def check_projections(f_files: List[List[str]], r_files: List[List[str]], b_file
             errors.append('Response projection mismatch at site {}, projections: {}'.format(_site, un_r_proj))
 
         if (un_f_proj[0] != un_r_proj[0]):
-            errors.append('Feature/Response projection mismatch at site {}\nFeature proj: {}\Response proj: {}'.format(_site,un_f_proj[0],un_r_proj[0]))
+            errors.append('Feature/Response projection mismatch at site {}\nFeature proj: {}\nResponse proj: {}'.format(_site,un_f_proj[0],un_r_proj[0]))
 
         if (b_proj is not None):
             if (un_f_proj[0] != b_proj):
