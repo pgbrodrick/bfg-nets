@@ -175,6 +175,14 @@ class Experiment(object):
         return gbytes
 
 
+def load_experiment_from_directory(dir_experiment: str) -> Experiment:
+    filepath_config = get_config_filepath(dir_experiment)
+    assert os.path.exists(filepath_config), 'Experiment directory must contain a config file.'
+    config = configs.create_config_from_file(filepath_config)
+    config.model_training.dir_out = dir_experiment
+    return Experiment(config)
+
+
 def get_config_filepath(dir_out: str) -> str:
     """Get the default config path for experiments.
 
