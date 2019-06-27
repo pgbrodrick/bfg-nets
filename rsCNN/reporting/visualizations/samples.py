@@ -108,7 +108,7 @@ def _plot_classification_sample(
     subplots.plot_categorical_responses()
 
     if sampled.raw_predictions is not None:
-        subplots.plot_max_likelihood_classification(
+        subplots.plot_classification_predictions_max_likelihood(
             sampled, idx_sample, sample_axes.__next__(), idx_sample == 0, False)
 
         subplots.plot_binary_error_classification(sampled, idx_sample, sample_axes.__next__(), idx_sample == 0, False)

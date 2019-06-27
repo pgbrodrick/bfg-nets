@@ -59,6 +59,17 @@ def plot_transformed_responses(
     _plot_sample_attribute(sampled, idx_sample, idx_response, 'trans_responses', ax, add_xlabel, add_ylabel)
 
 
+def plot_categorical_responses(
+        sampled: samples.Samples,
+        idx_sample: int,
+        idx_response: int,
+        ax: plt.Axes,
+        add_xlabel: bool,
+        add_ylabel: bool
+) -> None:
+    _plot_sample_attribute(sampled, idx_sample, idx_response, 'categorical_responses', ax, add_xlabel, add_ylabel)
+
+
 def plot_raw_predictions(
         sampled: samples.Samples,
         idx_sample: int,
@@ -92,15 +103,19 @@ def _plot_sample_attribute(
         add_xlabel: bool,
         add_ylabel: bool
 ) -> None:
-    attribute_values = getattr(sampled, attribute_name)[idx_sample, :, :, idx_axis]
-    range_ = getattr(sampled, attribute_name + '_range')
-    # TODO:  this is a hack to account for transformed values that are nans, should be fixed when we have proper nan
-    #  handling elsewhere in the code
+    # Categorical responses need special handling, in that we use a particular color scheme
+    if attribute_name != 'categorical_responses':
+        attribute_values = getattr(sampled, attribute_name)[idx_sample, :, :, idx_axis]
+        min_, max_ = getattr(sampled, attribute_name + '_range')[idx_axis, :]
+    else:
+        attribute_values = sampled.raw_responses[idx_sample, :, :, idx_axis]
+        min_ = 0
+        max_ = sampled.num_classes - 1
+    # Handle nan conversions for transformed data
     if attribute_name in ('trans_features', 'trans_responses', 'trans_predictions'):
         attribute_values = attribute_values.copy()
         attribute_values[attribute_values == sampled.data_sequence.nan_replacement_value] = np.nan
     x_label = '\n'.join(word.capitalize() for word in attribute_name.split('_') if word != 'raw').rstrip('s')
-    min_, max_ = range_[idx_axis, :]
     ax.imshow(attribute_values, vmin=min_, vmax=max_)
     ax.set_xticks([])
     ax.set_yticks([])
@@ -112,7 +127,7 @@ def _plot_sample_attribute(
         ax.set_ylabel('Sample\n{}'.format(idx_sample), rotation=90)
 
 
-def plot_max_likelihood_classification(
+def plot_classification_predictions_max_likelihood(
         sampled: samples.Samples,
         idx_sample: int,
         ax: plt.Axes,
@@ -122,7 +137,7 @@ def plot_max_likelihood_classification(
     # Note:  this assumes that the softmax applied to all prediction axes and that there was no transformation applied
     #  to the categorical data.
     min_ = 0
-    max_ = sampled.num_responses - 1
+    max_ = sampled.num_classes - 1
     assert not colormaps.check_is_categorical_colormap_repeated(sampled.num_responses), \
         'Number of categorical responses is greater than length of colormap, figure out how to handle gracefully'
     ax.imshow(np.argmax(sampled.raw_predictions[idx_sample, :], axis=-1), vmin=min_, vmax=max_,
@@ -130,7 +145,7 @@ def plot_max_likelihood_classification(
     ax.set_xticks([])
     ax.set_yticks([])
     if add_xlabel:
-        ax.set_xlabel('Max Likelihood\nCategories\n{}\n{}'.format(_format_number(min_), _format_number(max_)))
+        ax.set_xlabel('Categorical\nPredictions MLE\n{}\n{}'.format(_format_number(min_), _format_number(max_)))
         ax.xaxis.set_label_position('top')
     if add_ylabel:
         ax.set_ylabel('Sample\n{}'.format(idx_sample))
