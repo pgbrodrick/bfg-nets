@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from rsCNN.reporting import samples
-from rsCNN.reporting.visualizations import figures as viz_figures, subplots
+from rsCNN.reporting.visualizations import subplots
 
 
 LABEL_CLASSIFICATION = 'CLASSIFICATION'
@@ -52,7 +52,6 @@ def _plot_samples(
     num_pages = min(max_pages, np.ceil(sampled.num_samples / max_samples_per_page))
     num_features = min(max_features_per_page, sampled.num_features)
     num_responses = min(max_responses_per_page, sampled.num_responses)
-    are_predictions_available = sampled.raw_predictions is not None
     if sample_type is LABEL_CLASSIFICATION:
         sample_plotter = _plot_classification_sample
     elif sample_type is LABEL_REGRESSION:
@@ -62,7 +61,10 @@ def _plot_samples(
 
     # Iterate through pages and samples
     for idx_page in range(num_pages):
-        fig, grid = viz_figures.get_figure_and_grid(max_samples_per_page, num_subplots)
+        width = 1.5 * num_subplots
+        height = 1.5 * max_samples_per_page
+        fig = plt.figure(figsize=(width, height))
+        grid = gridspec.GridSpec(max_samples_per_page, num_subplots)
         idxs_samples = range(idx_page * max_samples_per_page, (1 + idx_page) * max_samples_per_page)
         for idx_sample in idxs_samples:
             sample_axes = iter([plt.subplot(grid[idx_sample, idx_subplot]) for idx_subplot in range(num_subplots)])
