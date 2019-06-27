@@ -120,10 +120,12 @@ def _plot_sample_attribute(
         min_, max_ = getattr(sampled, attribute_name + '_range')[idx_axis, :]
         colormap = colormaps.COLORMAP_DEFAULT
     else:
-        attribute_values = sampled.raw_responses[idx_sample, :, :, idx_axis]
+        attribute_values = np.argmax(sampled.raw_responses[idx_sample, ...], axis=-1)
         min_ = 0
-        max_ = sampled.num_classes - 1
+        max_ = sampled.num_responses - 1
         colormap = colormaps.COLORMAP_CATEGORICAL
+        assert not colormaps.check_is_categorical_colormap_repeated(sampled.num_responses), \
+            'Number of categorical responses is greater than length of colormap, figure out how to handle gracefully'
     # Handle nan conversions for transformed data
     if attribute_name in ('trans_features', 'trans_responses', 'trans_predictions'):
         attribute_values = attribute_values.copy()
@@ -152,10 +154,10 @@ def plot_classification_predictions_max_likelihood(
     # Note:  this assumes that the softmax applied to all prediction axes and that there was no transformation applied
     #  to the categorical data.
     min_ = 0
-    max_ = sampled.num_classes - 1
+    max_ = sampled.num_responses - 1
     assert not colormaps.check_is_categorical_colormap_repeated(sampled.num_responses), \
         'Number of categorical responses is greater than length of colormap, figure out how to handle gracefully'
-    ax.imshow(np.argmax(sampled.raw_predictions[idx_sample, :], axis=-1), vmin=min_, vmax=max_,
+    ax.imshow(np.argmax(sampled.raw_predictions[idx_sample, ...], axis=-1), vmin=min_, vmax=max_,
               cmap=colormaps.COLORMAP_CATEGORICAL)
     ax.set_xticks([])
     ax.set_yticks([])

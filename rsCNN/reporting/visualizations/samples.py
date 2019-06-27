@@ -94,7 +94,8 @@ def _plot_classification_sample(
             sampled, idx_sample, idx_feature, sample_axes.__next__(), idx_sample == 0, False)
 
     num_subplots += 1
-    subplots.plot_categorical_responses(sampled, idx_sample, idx_feature, sample_axes.__next__(), idx_sample == 0, False)
+    subplots.plot_categorical_responses(sampled, idx_sample, idx_feature,
+                                        sample_axes.__next__(), idx_sample == 0, False)
 
     if sampled.raw_predictions is not None:
         num_subplots += 1

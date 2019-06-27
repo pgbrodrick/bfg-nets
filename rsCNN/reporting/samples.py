@@ -11,7 +11,6 @@ class Samples(object):
     model = None
     config = None
     num_samples = None
-    num_classes = None
     num_features = None
     num_responses = None
     has_features_transform = None
@@ -64,7 +63,6 @@ class Samples(object):
         self.num_samples = self.trans_features.shape[0]
         self.num_features = self.trans_features.shape[-1]
         self.num_responses = self.trans_responses.shape[-1]
-        self.num_classes = self.config.architecture.n_classes
 
     def _set_has_transforms(self) -> None:
         if type(self.data_sequence.feature_scaler) is scalers.NullScaler:
