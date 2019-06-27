@@ -1,3 +1,5 @@
+COLORMAP_DEFAULT = 'viridis'
+
 COLORMAP_CATEGORICAL = 'tab20'
 _CATEGORICAL_CLASSES_MAX = 20  # From tab20, it'd be 10 if we were using tab10, i.e., the number of colors available
 

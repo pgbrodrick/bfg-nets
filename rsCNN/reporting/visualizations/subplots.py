@@ -107,16 +107,18 @@ def _plot_sample_attribute(
     if attribute_name != 'categorical_responses':
         attribute_values = getattr(sampled, attribute_name)[idx_sample, :, :, idx_axis]
         min_, max_ = getattr(sampled, attribute_name + '_range')[idx_axis, :]
+        colormap = colormaps.COLORMAP_DEFAULT
     else:
         attribute_values = sampled.raw_responses[idx_sample, :, :, idx_axis]
         min_ = 0
         max_ = sampled.num_classes - 1
+        colormap = colormaps.COLORMAP_CATEGORICAL
     # Handle nan conversions for transformed data
     if attribute_name in ('trans_features', 'trans_responses', 'trans_predictions'):
         attribute_values = attribute_values.copy()
         attribute_values[attribute_values == sampled.data_sequence.nan_replacement_value] = np.nan
     x_label = '\n'.join(word.capitalize() for word in attribute_name.split('_') if word != 'raw').rstrip('s')
-    ax.imshow(attribute_values, vmin=min_, vmax=max_)
+    ax.imshow(attribute_values, vmin=min_, vmax=max_, cmap=colormap)
     ax.set_xticks([])
     ax.set_yticks([])
     if add_xlabel:
