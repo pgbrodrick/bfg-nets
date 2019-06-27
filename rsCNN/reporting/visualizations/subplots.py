@@ -134,10 +134,10 @@ def _plot_sample_attribute(
     ax.set_yticks([])
     if add_xlabel:
         ax.set_xlabel(
-            '{} {}\n{}\n{}'.format(x_label, idx_axis, _format_number(min_), _format_number(max_)), rotation=45)
+            '{} {}\n{}\n{}'.format(x_label, idx_axis, _format_number(min_), _format_number(max_)))
         ax.xaxis.set_label_position('top')
     if add_ylabel:
-        ax.set_ylabel('Sample\n{}'.format(idx_sample), rotation=90)
+        ax.set_ylabel('Sample\n{}'.format(idx_sample))
 
 
 def plot_classification_predictions_max_likelihood(
@@ -199,8 +199,8 @@ def plot_binary_error_classification(
     #  to the categorical data.
     # Note:  the actual range of this data will be from 0 to 1, i.e., is the class incorrect or correct, but the plots
     #  will be too dark if we set the vmin and vmax to 0 and 1, respectively
-    min_ = -1
-    max_ = 2
+    min_ = -0.5
+    max_ = 1.5
     actual = np.argmax(sampled.raw_responses[idx_sample, :], axis=-1)
     predicted = np.argmax(sampled.raw_predictions[idx_sample, :], axis=-1)
     ax.imshow(predicted == actual, vmin=min_, vmax=max_, cmap=colormaps.COLORMAP_ERROR)
