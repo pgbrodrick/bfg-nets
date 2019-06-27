@@ -5,8 +5,10 @@ import numpy as np
 import re
 from typing import Dict, List, Type
 
+from rsCNN import architectures
 from rsCNN.configuration import DEFAULT_OPTIONAL_VALUE, DEFAULT_REQUIRED_VALUE
 from rsCNN.data_management import scalers
+from rsCNN.experiments import losses
 
 
 _logger = logging.getLogger(__name__)
@@ -259,14 +261,15 @@ class DataSamples(BaseConfigSection):
 
     def _check_config_validity(self) -> List[str]:
         errors = list()
+        available_scalers = scalers.get_available_scalers()
         if (self.feature_scaler_names is list):
             for scaler_name in self.feature_scaler_names:
-                if not scalers.check_scaler_exists(scaler_name):
+                if scaler_name not in available_scalers:
                     errors.append('feature_scaler_names contains a scaler name that does not exist:  {}'.format(
                         scaler_name))
         if (self.response_scaler_names is list):
             for scaler_name in self.response_scaler_names:
-                if not scalers.check_scaler_exists(scaler_name):
+                if scaler_name not in available_scalers:
                     errors.append('response_scaler_names contains a scaler name that does not exist:  {}'.format(
                         scaler_name))
         return errors
@@ -296,10 +299,21 @@ class ModelTraining(BaseConfigSection):
     """int: Maximum number of epochs to run model training."""
     _optimizer_type = str
     optimizer = 'adam'
-    """str: Optimizer to use during model training."""
+    """str: Optimizer to use during model training. See Keras documentation for more information."""
     _weighted_type = bool
     weighted = False
     """bool: Should underrepresented classes be overweighted during model training"""
+
+    def _check_config_validity(self) -> List[str]:
+        errors = list()
+        available_architectures = architectures.get_available_architectures()
+        if self.architecture_name not in available_architectures:
+            errors.append('architecture_name {} not in available architectures: {}'.format(
+                self.architecture_name, available_architectures))
+        available_losses = losses.get_available_loss_methods()
+        if self.loss_metric not in available_losses:
+            errors.append('loss_metric {} not in available loss metrics: {}'.format(self.loss_metric, available_losses))
+        return errors
 
 
 class ModelReporting(BaseConfigSection):
@@ -372,7 +386,7 @@ class CallbackEarlyStopping(BaseConfigSection):
     min_delta = 0.0001
     """float: See Keras documentation."""
     _patience_type = int
-    patience = 50
+    patience = 10
     """int: See Keras documentation."""
 
 
@@ -387,7 +401,7 @@ class CallbackReducedLearningRate(BaseConfigSection):
     min_delta = 0.0001
     """float: See Keras documentation."""
     _patience_type = int
-    patience = 10
+    patience = 5
     """int: See Keras documentation."""
 
 
