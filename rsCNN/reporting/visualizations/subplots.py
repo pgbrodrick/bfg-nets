@@ -14,6 +14,15 @@ plt.switch_backend('Agg')  # Needed for remote server plotting
 
 _FLOAT_DECIMALS = 2
 
+"""    
+Note:  we need to know how many plots to generate for some reports, so that we can specify the number of columns in a 
+figure. We want to keep the actual plotting code synced to the code that calculates the number of columns to avoid 
+bugs. However, we also do not want to be writing a ton of boilerplate code to check whether plots should be created. 
+The repeated check for `if ax is not None` is a quick and easy way to avoid plotting when simply trying to get the 
+number of columns in a single place, even though it feels like it's in the wrong place. This also makes the code a
+bit more readable, but I realize this is subjective. Better solutions are welcomed.
+"""
+
 
 def plot_raw_features(
         sampled: samples.Samples,
@@ -103,6 +112,8 @@ def _plot_sample_attribute(
         add_xlabel: bool,
         add_ylabel: bool
 ) -> None:
+    if ax is None:
+        return
     # Categorical responses need special handling, in that we use a particular color scheme
     if attribute_name != 'categorical_responses':
         attribute_values = getattr(sampled, attribute_name)[idx_sample, :, :, idx_axis]
@@ -136,6 +147,8 @@ def plot_classification_predictions_max_likelihood(
         add_xlabel: bool,
         add_ylabel: bool
 ) -> None:
+    if ax is None:
+        return
     # Note:  this assumes that the softmax applied to all prediction axes and that there was no transformation applied
     #  to the categorical data.
     min_ = 0
@@ -154,6 +167,8 @@ def plot_classification_predictions_max_likelihood(
 
 
 def plot_weights(sampled: samples.Samples, idx_sample: int, ax: plt.Axes, add_xlabel: bool, add_ylabel: bool) -> None:
+    if ax is None:
+        return
     min_, max_ = sampled.weights_range[0, :]
     weights = sampled.weights[idx_sample, :].copy()
     weights[weights == 0] = np.nan
@@ -178,6 +193,8 @@ def plot_binary_error_classification(
         add_xlabel: bool,
         add_ylabel: bool
 ) -> None:
+    if ax is None:
+        return
     # Note:  this assumes that the softmax applied to all prediction axes and that there was no transformation applied
     #  to the categorical data.
     # Note:  the actual range of this data will be from 0 to 1, i.e., is the class incorrect or correct, but the plots
@@ -205,6 +222,8 @@ def plot_raw_error_regression(
         add_xlabel: bool,
         add_ylabel: bool
 ) -> None:
+    if ax is None:
+        return
     error = sampled.raw_predictions[idx_sample, :, :, idx_response] - \
         sampled.raw_responses[idx_sample, :, :, idx_response]
     min_ = float(np.nanmin(error))
@@ -228,6 +247,8 @@ def plot_transformed_error_regression(
         add_xlabel: bool,
         add_ylabel: bool
 ) -> None:
+    if ax is None:
+        return
     error = sampled.trans_predictions[idx_sample, :, :, idx_response] - \
         sampled.trans_responses[idx_sample, :, :, idx_response]
     max_ = float(np.max([np.abs(np.nanmin(error)), np.nanmax(error)]))
@@ -245,6 +266,8 @@ def plot_transformed_error_regression(
 
 
 def add_internal_window_to_subplot(sampled: samples.Samples, ax: plt.Axes) -> None:
+    if ax is None:
+        return
     loss_window_radius = sampled.config.data_build.loss_window_radius
     window_radius = sampled.config.data_build.window_radius
     if (loss_window_radius == window_radius):

@@ -89,7 +89,7 @@ class Samples(object):
         tmp_responses[tmp_responses == self.data_sequence.nan_replacement_value] = np.nan
         self.trans_responses_range = self._get_range(tmp_responses)
 
-        if self.raw_predictions and self.trans_predictions:
+        if self.raw_predictions is not None and self.trans_predictions is not None:
             self.raw_predictions_range = self._get_range(self.raw_predictions)
             tmp_predictions = self.trans_predictions.copy()
             tmp_predictions[tmp_predictions == self.data_sequence.nan_replacement_value] = np.nan
