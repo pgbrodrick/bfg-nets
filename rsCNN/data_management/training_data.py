@@ -59,7 +59,7 @@ def build_training_data_ordered(
         boundary_set = common_io.get_site_boundary_set(config, _site)
 
         all_set_upper_lefts, xy_sample_locations = common_io.get_all_interior_extent_subset_pixel_locations(
-            gdal_datasets=[feature_sets, response_sets, [bs for bs in [boundary_set] if bs is not None]],
+            gdal_datasets=[feature_sets, [rs for rs in response_sets if rs is not None], [bs for bs in [boundary_set] if bs is not None]],
             window_radius=config.data_build.window_radius,
             inner_window_radius=config.data_build.loss_window_radius,
             shuffle=True)
@@ -112,6 +112,18 @@ def build_training_data_ordered(
                 subset_geotransform[3] = ref_trans[_site][3] + \
                     (f_ul[0][1] + all_site_xy_locations[_site_xy_index[_site], 1]) * ref_trans[5]
                 local_boundary_vector_file = config.raw_files.boundary_files[_site]
+
+
+            success = read_segmentation_chunk(_site,
+                                              all_site_upper_lefts[_site],
+                                              all_site_xy_locations[_site][_site_xy_index[_site], :],
+                                              config,
+                                              _sample_index)
+
+
+
+
+
 
             success = read_segmentation_chunk(feature_sets,
                                               response_sets,
@@ -648,26 +660,46 @@ def calculate_categorical_weights(
 
 
 def read_mask_chunk(
-        boundary_vector_file: str,
-        boundary_subset_geotransform: tuple,
-        b_set: gdal.Dataset,
-        boundary_upper_left: List[int],
+        _site: int,
+        upper_left: List[int],
         window_diameter: int,
-        boundary_bad_value: float
+        config: configs.Config
 ) -> np.array:
-    # Start by checking if we're inside boundary, if there is one
+
+    local_boundary_vector_file = None
+    local_boundary_upper_left = None
+    if (b_ul is not None):
+        local_boundary_upper_left = b_ul + all_site_xy_locations[_site][_site_xy_index[_site], :]
+    subset_geotransform = None
+    if (reference_subset_geotransforms[_site] is not None):
+        ref_trans = reference_subset_geotransforms[_site]
+        subset_geotransform[0] = ref_trans[0] + \
+            (f_ul[0][0] + all_site_xy_locations[_site_xy_index[_site], 0]) * ref_trans[1]
+        subset_geotransform[3] = ref_trans[_site][3] + \
+            (f_ul[0][1] + all_site_xy_locations[_site_xy_index[_site], 1]) * ref_trans[5]
+        local_boundary_vector_file = config.raw_files.boundary_files[_site]
+
+
+
     mask = None
-    if (boundary_vector_file is not None):
-        mask = rasterize_vector(boundary_vector_file, boundary_subset_geotransform,
-                                (window_diameter, window_diameter))
-    if (b_set is not None):
-        mask = b_set.ReadAsArray(int(boundary_upper_left[0]), int(
-            boundary_upper_left[1]), window_diameter, window_diameter)
+    boundary_set = common_io.get_site_boundary_set(config, _site)
+    b_set = gdal.Open(config.raw_files.boundary_files[_site],gdal.GA_ReadOnly)
+    if (boundary_set is not None):
+        mask = boundary_set.ReadAsArray(int(upper_left[0]), int(
+            upper_left[1]), window_diameter, window_diameter)
+    else:
+        boundary_vector_file = common_io.get_site_boundary_vector_file(config,_site)
+
+        if (boundary_vector_file is not None):
+            boundary_subset_geotransform
+            mask = rasterize_vector(boundary_vector_file, boundary_subset_geotransform,
+                                    (window_diameter, window_diameter))
+
 
     if mask is None:
         mask = np.zeros((window_diameter, window_diameter)).astype(bool)
     else:
-        mask = mask == boundary_bad_value
+        mask = mask == config.raw_files.boundary_bad_value
 
     return mask
 
@@ -717,19 +749,25 @@ def read_labeling_chunk(f_sets: List[gdal.Dataset],
     return local_feature
 
 
-def read_segmentation_chunk(f_sets: List[tuple],
-                            r_sets: List[tuple],
-                            feature_upper_lefts: List[List[int]],
-                            response_upper_lefts: List[List[int]],
+def read_segmentation_chunk(_site: int,
+                            all_file_upper_lefts: List[List[int]],
+                            offset_from_ul: List[int],
                             config: configs.Config,
-                            sample_index: int,
-                            boundary_vector_file: str = None,
-                            boundary_subset_geotransform: tuple = None,
-                            b_set=None,
-                            boundary_upper_left: List[int] = None) -> bool:
+                            sample_index: int) -> bool:
+
     window_diameter = config.data_build.window_radius * 2
 
-    mask = read_mask_chunk(boundary_vector_file,
+    [f_ul, r_ul, [b_ul]] = all_file_upper_lefts[_site]
+
+    mask = read_mask_chunk(_site,
+                           offset_from_ul,
+                           window_diameter,
+                           config)
+
+
+
+    mask = read_mask_chunk(_site,
+                           offset_from_ul,
                            boundary_subset_geotransform,
                            b_set,
                            boundary_upper_left,

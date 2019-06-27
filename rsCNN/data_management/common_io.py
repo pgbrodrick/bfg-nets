@@ -133,3 +133,16 @@ def get_site_boundary_set(config: configs.Config, _site) -> gdal.Dataset:
         boundary_set = gdal.Open(config.raw_files.boundary_files[_site], gdal.GA_ReadOnly)
 
     return boundary_set
+
+def get_site_boundary_vector_file(config: configs.Config, _site) -> gdal.Dataset:
+
+    if not config.raw_files.boundary_files:
+        boundary_file = None
+    else:
+        boundary_file = config.raw_files.boundary_files[_site]
+        if (not boundary_file.split('.')[-1] in configs.sections.VECTORIZED_FILENAMES):
+            boundary_file = None
+
+    return boundary_file
+
+

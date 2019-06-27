@@ -51,12 +51,14 @@ cmd_str = 'gdal_rasterize ' + mound_data[1] + ' ' + os.path.splitext(mound_data[
           '.tif -init 0 -burn 1 -te ' + str(trans[0]) + ' ' + str(trans[3] + trans[5]*feature_set.RasterYSize) +\
           ' ' + str(trans[0] + trans[1]*feature_set.RasterXSize) + ' ' + str(trans[3]) + ' -tr ' +\
           str(trans[1]) + ' ' + str(trans[5])
+print(cmd_str)
 subprocess.call(cmd_str, shell=True)
 
 cmd_str = 'gdal_rasterize ' + boundary_data[1] + ' ' + os.path.splitext(boundary_data[1])[0] +\
           '.tif -init 0 -burn 1 -te ' + str(trans[0]) + ' ' + str(trans[3] + trans[5]*feature_set.RasterYSize) +\
           ' ' + str(trans[0] + trans[1]*feature_set.RasterXSize) + ' ' + str(trans[3]) + ' -tr ' +\
           str(trans[1]) + ' ' + str(trans[5])
+print(cmd_str)
 subprocess.call(cmd_str, shell=True)
 
 
