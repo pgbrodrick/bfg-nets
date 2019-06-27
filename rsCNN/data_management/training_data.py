@@ -16,6 +16,7 @@ from rsCNN.utils import compute_access
 
 _logger = logging.getLogger(__name__)
 
+parallel_write_lock = multiprocessing.Lock()
 
 def build_training_data_ordered(
         config: configs.Config,
@@ -93,6 +94,7 @@ def build_training_data_ordered(
     remaining_sites = list(range(len(config.raw_files.feature_files)))
     _site_xy_index = np.zeros(len(remaining_sites)).astype(int).tolist()
     all_strings = []
+    index_success = np.zeros(config.data_build.max_samples)
     while (_sample_index < config.data_build.max_samples and len(remaining_sites) > 0):
         _site = remaining_sites[_rs_index]
         _logger.debug('Reading loop: Site {}'.format(_site))
@@ -116,6 +118,7 @@ def build_training_data_ordered(
                     (f_ul[0][1] + all_site_xy_locations[_site_xy_index[_site], 1]) * ref_trans[5]
                 local_boundary_vector_file = config.raw_files.boundary_files[_site]
 
+            index_success[_sample_index] = -1
             read_results.append(pool.apply_async(read_segmentation_chunk, 
                                 args=(\
                                 _site,
@@ -126,6 +129,7 @@ def build_training_data_ordered(
                                 kwds=dict(boundary_vector_file=local_boundary_vector_file,
                                 boundary_upper_left=local_boundary_upper_left,
                                 boundary_subset_geotransform=subset_geotransform)))
+            _sample_index = np.argmax(index_success == 0)
 
             _site_xy_index[_site] += 1
             popped = None
@@ -135,16 +139,20 @@ def build_training_data_ordered(
                 popped = remaining_sites.pop(_rs_index)
 
 
-            if (len(read_results) > num_reads_per_site-site_read_count or popped is not None):
+            if (len(read_results) > num_reads_per_site - site_read_count or \
+                len(read_results) + np.sum(index_success == 1) > config.data_build.max_samples or popped is not None):
+                read_output = [p.get() for p in read_results]
                 pool.close()
                 pool.join()
-                read_output = [p.get() for p in read_results]
 
-                for success in read_output:
-                    if success is True:
-                        _sample_index += 1
-                        progress_bar.update(1)
+                for r in read_output:
+                    print((r,np.sum(index_success == 1)))
+                    if r[0] is True:
                         site_read_count += 1
+                        progress_bar.update(1)
+                        index_success[r[1]] = 1
+                    else:
+                        index_success[r[1]] = 0
 
                 read_output = []
 
@@ -153,7 +161,8 @@ def build_training_data_ordered(
                     if (_rs_index >= len(remaining_sites)):
                         _rs_index = 0
 
-                if (site_read_count > num_reads_per_site or _sample_index >= config.data_build.max_samples):
+                if (site_read_count > num_reads_per_site or 
+                    np.sum(index_success == 1) >= config.data_build.max_samples):
                     break
                 else:
                     pool = multiprocessing.Pool(processes=n_cpus)
@@ -755,12 +764,12 @@ def read_segmentation_chunk(_site: int,
                            config.raw_files.boundary_bad_value)
 
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
-        return False
+        return False, sample_index
 
     local_response, mask = common_io.read_map_subset(r_sets, response_upper_lefts,
                                                      window_diameter, mask, config.raw_files.response_nodata_value)
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
-        return False
+        return False, sample_index
 
     if (config.data_build.response_min_value is not None):
         with np.errstate(invalid='ignore'):
@@ -771,17 +780,18 @@ def read_segmentation_chunk(_site: int,
     mask[np.any(np.isnan(local_response), axis=-1)] = True
 
     if (mask is None):
-        return False
+        return False, sample_index
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
-        return False
+        return False, sample_index
 
     local_feature, mask = common_io.read_map_subset(f_sets, feature_upper_lefts,
                                                     window_diameter, mask, config.raw_files.feature_nodata_value)
 
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
-        return False
+        return False, sample_index
 
     # Final check (propogate mask forward), and return
+    parallel_write_lock.acquire()
     local_feature[mask, :] = np.nan
     local_response[mask, :] = np.nan
 
@@ -790,8 +800,9 @@ def read_segmentation_chunk(_site: int,
     features[sample_index, ...] = local_feature
     responses[sample_index, ...] = local_response
     del features, responses
+    parallel_write_lock.release()
 
-    return True
+    return True, sample_index
 
 
 ################### File/Dataset Opening Functions ##############################
