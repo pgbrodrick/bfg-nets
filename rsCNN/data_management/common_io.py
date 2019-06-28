@@ -88,7 +88,8 @@ def get_all_interior_extent_subset_pixel_locations(gdal_datasets: List[List[gdal
     return all_upper_lefts, xy_sample_locations
 
 
-def read_map_subset(datasets: List, upper_lefts: List[List[int]], window_diameter: int, mask=None, nodata_value=None):
+def read_map_subset(datasets: List, upper_lefts: List[List[int]], window_diameter: int, mask=None, nodata_value=None,
+                    lower_bound = None, upper_bound = None):
     local_array = np.zeros((window_diameter, window_diameter, np.sum([lset.RasterCount for lset in datasets])))
     if mask is None:
         mask = np.zeros((window_diameter, window_diameter)).astype(bool)
@@ -106,6 +107,12 @@ def read_map_subset(datasets: List, upper_lefts: List[List[int]], window_diamete
 
         file_array[np.isfinite(file_array) is False] = np.nan
         file_array[mask, :] = np.nan
+
+        with np.errstate(invalid='ignore'):
+            if (lower_bound is not None):
+                file_array[file_array < lower_bound] = np.nan
+            if (upper_bound is not None):
+                file_array[file_array > upper_bound] = np.nan
 
         mask[np.any(np.isnan(file_array), axis=-1)] = True
         if np.all(mask):

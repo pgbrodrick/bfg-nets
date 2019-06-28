@@ -73,8 +73,12 @@ data_container.build_or_load_rawfile_data()
 data_container.build_or_load_scalers()
 data_container.load_sequences()
 
+
 experiment = experiments.Experiment(config)
 experiment.build_or_load_model(data_container=data_container)
+
+#initial_report = rsCNN.reporting.reports.Reporter(data_container, experiment, config)
+#initial_report.create_model_report()
 
 experiment.fit_model_with_data_container(data_container, resume_training=True)
 
@@ -88,5 +92,5 @@ for _f in range(len(application_feature_files)):
                                                                     data_container,
                                                                     application_feature_files[_f],
                                                                     application_output_basenames[_f],
-                                                                    make_png=False,
+                                                                    make_png=True,
                                                                     make_tif=True)

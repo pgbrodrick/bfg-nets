@@ -1,13 +1,13 @@
-import logging
-import os
-from typing import List, Tuple
-
+import copy
 import fiona
 import gdal
+import logging
 import numpy as np
 import ogr, osr
+import os
 import rasterio.features
 from tqdm import tqdm
+from typing import List, Tuple
 
 from rsCNN.configuration import configs, sections
 from rsCNN.data_management import common_io, ooc_functions, data_core
@@ -68,12 +68,10 @@ def build_training_data_ordered(
         all_site_xy_locations.append(xy_sample_locations)
 
         ref_trans = feature_sets[0].GetGeoTransform()
-        subset_geotransform = None
-        if config.raw_files.boundary_files is not None:
-            if config.raw_files.boundary_files[_site] is not None and \
-                    _is_boundary_file_vectorized(config.raw_files.boundary_files[_site]):
-                subset_geotransform = [ref_trans[0], ref_trans[1], 0, ref_trans[3], 0, ref_trans[5]]
-        reference_subset_geotransforms.append(subset_geotransform)
+        ref_subset_geotransform = [ref_trans[0]+all_set_upper_lefts[0][0][0]*ref_trans[1],
+                                   ref_trans[1], 0, ref_trans[3]+all_set_upper_lefts[0][0][1]*ref_trans[5],
+                                   0, ref_trans[5]]
+        reference_subset_geotransforms.append(ref_subset_geotransform)
 
     num_reads_per_site = int(np.floor(config.data_build.max_samples / len(config.raw_files.feature_files)))
 
@@ -84,57 +82,21 @@ def build_training_data_ordered(
     _rs_index = 0
     remaining_sites = list(range(len(config.raw_files.feature_files)))
     _site_xy_index = np.zeros(len(remaining_sites)).astype(int).tolist()
-    all_strings = []
     while (_sample_index < config.data_build.max_samples and len(remaining_sites) > 0):
         _site = remaining_sites[_rs_index]
         _logger.debug('Reading loop: Site {}'.format(_site))
-
-        feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
-                        for loc_file in config.raw_files.feature_files[_site]]
-        response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
-        boundary_set = common_io.get_site_boundary_set(config, _site)
 
         while _site_xy_index[_site] < len(all_site_xy_locations[_site]):
             site_read_count = 0
             _logger.debug('Site index: {}'.format(_site_xy_index[_site]))
 
-            [f_ul, r_ul, [b_ul]] = all_site_upper_lefts[_site]
-
-            local_boundary_vector_file = None
-            local_boundary_upper_left = None
-            if (b_ul is not None):
-                local_boundary_upper_left = b_ul + all_site_xy_locations[_site][_site_xy_index[_site], :]
-            subset_geotransform = None
-            if (reference_subset_geotransforms[_site] is not None):
-                ref_trans = reference_subset_geotransforms[_site]
-                subset_geotransform[0] = ref_trans[0] + \
-                    (f_ul[0][0] + all_site_xy_locations[_site_xy_index[_site], 0]) * ref_trans[1]
-                subset_geotransform[3] = ref_trans[_site][3] + \
-                    (f_ul[0][1] + all_site_xy_locations[_site_xy_index[_site], 1]) * ref_trans[5]
-                local_boundary_vector_file = config.raw_files.boundary_files[_site]
-
-
             success = read_segmentation_chunk(_site,
                                               all_site_upper_lefts[_site],
-                                              all_site_xy_locations[_site][_site_xy_index[_site], :],
+                                              all_site_xy_locations[_site][_site_xy_index[_site], :].copy(),
                                               config,
+                                              reference_subset_geotransforms[_site],
                                               _sample_index)
-
-
-
-
-
-
-            success = read_segmentation_chunk(feature_sets,
-                                              response_sets,
-                                              f_ul + all_site_xy_locations[_site][_site_xy_index[_site], :],
-                                              r_ul + all_site_xy_locations[_site][_site_xy_index[_site], :],
-                                              config,
-                                              _sample_index,
-                                              boundary_vector_file=local_boundary_vector_file,
-                                              boundary_upper_left=local_boundary_upper_left,
-                                              b_set=boundary_set,
-                                              boundary_subset_geotransform=subset_geotransform)
+            print((success, all_site_xy_locations[_site][_site_xy_index[_site], :]))
 
             _site_xy_index[_site] += 1
             popped = None
@@ -155,7 +117,7 @@ def build_training_data_ordered(
                 site_read_count += 1
                 if (site_read_count > num_reads_per_site or _sample_index >= config.data_build.max_samples):
                     break
-
+    quit()
     progress_bar.close()
     del all_site_upper_lefts
     del all_site_xy_locations
@@ -663,27 +625,12 @@ def read_mask_chunk(
         _site: int,
         upper_left: List[int],
         window_diameter: int,
+        reference_geotransform: List[float],
         config: configs.Config
 ) -> np.array:
 
-    local_boundary_vector_file = None
-    local_boundary_upper_left = None
-    if (b_ul is not None):
-        local_boundary_upper_left = b_ul + all_site_xy_locations[_site][_site_xy_index[_site], :]
-    subset_geotransform = None
-    if (reference_subset_geotransforms[_site] is not None):
-        ref_trans = reference_subset_geotransforms[_site]
-        subset_geotransform[0] = ref_trans[0] + \
-            (f_ul[0][0] + all_site_xy_locations[_site_xy_index[_site], 0]) * ref_trans[1]
-        subset_geotransform[3] = ref_trans[_site][3] + \
-            (f_ul[0][1] + all_site_xy_locations[_site_xy_index[_site], 1]) * ref_trans[5]
-        local_boundary_vector_file = config.raw_files.boundary_files[_site]
-
-
-
     mask = None
     boundary_set = common_io.get_site_boundary_set(config, _site)
-    b_set = gdal.Open(config.raw_files.boundary_files[_site],gdal.GA_ReadOnly)
     if (boundary_set is not None):
         mask = boundary_set.ReadAsArray(int(upper_left[0]), int(
             upper_left[1]), window_diameter, window_diameter)
@@ -691,12 +638,11 @@ def read_mask_chunk(
         boundary_vector_file = common_io.get_site_boundary_vector_file(config,_site)
 
         if (boundary_vector_file is not None):
-            boundary_subset_geotransform
-            mask = rasterize_vector(boundary_vector_file, boundary_subset_geotransform,
+            mask = rasterize_vector(boundary_vector_file, reference_geotransform,
                                     (window_diameter, window_diameter))
 
 
-    if mask is None:
+    if (mask is None):
         mask = np.zeros((window_diameter, window_diameter)).astype(bool)
     else:
         mask = mask == config.raw_files.boundary_bad_value
@@ -753,48 +699,43 @@ def read_segmentation_chunk(_site: int,
                             all_file_upper_lefts: List[List[int]],
                             offset_from_ul: List[int],
                             config: configs.Config,
+                            reference_geotransform: List[float],
                             sample_index: int) -> bool:
 
     window_diameter = config.data_build.window_radius * 2
 
-    [f_ul, r_ul, [b_ul]] = all_file_upper_lefts[_site]
+    [f_ul, r_ul, [b_ul]] = copy.deepcopy(all_file_upper_lefts)
 
-    mask = read_mask_chunk(_site,
-                           offset_from_ul,
-                           window_diameter,
-                           config)
+    geotransform = copy.deepcopy(reference_geotransform)
+    geotransform[0] += offset_from_ul[0] * geotransform[1]
+    geotransform[3] += offset_from_ul[1] * geotransform[5]
 
+    f_ul += offset_from_ul
+    for _r in range(len(r_ul)):
+        if r_ul[_r] is not None:
+            r_ul[_r] += offset_from_ul
 
+    #import ipdb; ipdb.set_trace();
+    if (b_ul is not None):
+        b_ul += offset_from_ul
 
-    mask = read_mask_chunk(_site,
-                           offset_from_ul,
-                           boundary_subset_geotransform,
-                           b_set,
-                           boundary_upper_left,
-                           window_diameter,
-                           config.raw_files.boundary_bad_value)
+    mask = read_mask_chunk(_site, b_ul, window_diameter, reference_geotransform, config)
 
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         return False
 
-    local_response, mask = common_io.read_map_subset(r_sets, response_upper_lefts,
-                                                     window_diameter, mask, config.raw_files.response_nodata_value)
+    response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
+    local_response, mask = common_io.read_map_subset(response_sets, r_ul, window_diameter, mask,
+                                                     config.raw_files.response_nodata_value,
+                                                     lower_bound=config.data_build.response_min_value,
+                                                     upper_bound=config.data_build.response_min_value)
+
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         return False
 
-    if (config.data_build.response_min_value is not None):
-        local_response[local_response < config.data_build.response_min_value] = np.nan
-    if (config.data_build.response_max_value is not None):
-        local_response[local_response > config.data_build.response_max_value] = np.nan
-    mask[np.any(np.isnan(local_response), axis=-1)] = True
-
-    if (mask is None):
-        return False
-    if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
-        return False
-
-    local_feature, mask = common_io.read_map_subset(f_sets, feature_upper_lefts,
-                                                    window_diameter, mask, config.raw_files.feature_nodata_value)
+    feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.feature_files[_site]]
+    local_feature, mask = common_io.read_map_subset(feature_sets, f_ul, window_diameter, mask,
+                                                    config.raw_files.feature_nodata_value)
 
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         return False
