@@ -675,7 +675,7 @@ def read_segmentation_chunk(_site: int,
                                                      r_ul, window_diameter, mask,
                                                      config.raw_files.response_nodata_value,
                                                      lower_bound=config.data_build.response_min_value,
-                                                     upper_bound=config.data_build.response_min_value,
+                                                     upper_bound=config.data_build.response_max_value,
                                                      reference_geotransform=geotransform)
 
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
