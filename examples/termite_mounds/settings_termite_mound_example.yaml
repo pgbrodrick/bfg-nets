@@ -1,7 +1,7 @@
 raw_files:
   feature_files: [['scratch/dem.tif']]
   response_files: [['scratch/mounds_utm.tif']]
-  boundary_files: ['scratch/training_boundary.tif']
+  boundary_files: ['scratch/training_boundary.shp']
   feature_data_type: ['R']
   response_data_type: ['C']
   feature_nodata_value: -9999

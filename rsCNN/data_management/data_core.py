@@ -192,7 +192,7 @@ class DataContainer:
         #    files and the inner list referring to bands
 
         #TODO - add in some check for vector types
-        is_vector = any([os.path.splitext(x)[-1] in sections.VECTORIZED_FILENAMES for x in file_list[0]])
+        is_vector = any([x.split('.')[-1] in sections.VECTORIZED_FILENAMES for x in file_list[0]])
         if (is_vector):
             return errors
         num_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in file_list[0]]

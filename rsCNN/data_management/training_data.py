@@ -1,11 +1,9 @@
 import copy
-import fiona
 import gdal
 import logging
 import numpy as np
 import ogr, osr
 import os
-import rasterio.features
 from tqdm import tqdm
 from typing import List, Tuple
 
@@ -303,7 +301,7 @@ def build_training_data_from_response_points(
         subset_geotransform = None
         if config.raw_files.boundary_files is not None:
             if config.raw_files.boundary_files[_site] is not None and \
-                    _is_boundary_file_vectorized(config.raw_files.boundary_files[_site]):
+                    _is_vector_file(config.raw_files.boundary_files[_site]):
                 subset_geotransform = [ref_trans[0], ref_trans[1], 0, ref_trans[3], 0, ref_trans[5]]
 
         good_response_data = np.zeros(responses_per_site[_site].shape[0]).astype(bool)
@@ -382,28 +380,6 @@ def build_training_data_from_response_points(
     return features, responses, weights, feature_band_types, response_band_types
 
 
-def rasterize_vector(vector_file: str, geotransform: List[int], output_shape: Tuple) -> np.array:
-    """ Rasterizes an input vector directly into a numpy array.
-    Arguments:
-    vector_file
-      Input vector file to be rasterized.
-    geotransform
-      A gdal style geotransform.
-    output_shape
-      The shape of the output file to be generated.
-
-    Return:
-    A rasterized 2-d numpy array.
-    """
-    ds = fiona.open(vector_file, 'r')
-    geotransform = [geotransform[1], geotransform[2], geotransform[0],
-                    geotransform[4], geotransform[5], geotransform[3]]
-    mask = np.zeros(output_shape)
-    for n in range(0, len(ds)):
-        rasterio.features.rasterize([ds[n]['geometry']], transform=geotransform, default_value=1, out=mask)
-    return mask
-
-
 def get_proj(fname: str) -> str:
     """ Get the projection of a raster/vector dataset.
     Arguments:
@@ -423,9 +399,9 @@ def get_proj(fname: str) -> str:
                 raise Exception(exception_str)
             return srs.GetAttrValue('projcs')
 
-    if (os.path.splitext(os.path.basename(fname))[-1] == 'shp'):
+    if (os.path.basename(fname).split('.')[-1] == 'shp'):
         vset = ogr.GetDriverByName('ESRI Shapefile').Open(fname, gdal.GA_ReadOnly)
-    elif (os.path.splitext(os.path.basename(fname))[-1] == 'kml'):
+    elif (os.path.basename(fname).split('.')[-1] == 'kml'):
         vset = ogr.GetDriverByName('KML').Open(fname, gdal.GA_ReadOnly)
     else:
         exception_str = 'Cannot find projection from file {}'.format(fname)
@@ -522,12 +498,12 @@ def check_resolutions(f_files: List[List[str]], r_files: List[List[str]], b_file
             f_res.append(np.array(gdal.Open(f_files[_site][_file], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]])
 
         for _file in range(len(r_files[_site])):
-            if (os.path.splitext(r_files[_site][_file])[-1] not in sections.VECTORIZED_FILENAMES):
+            if (not _is_vector_file(r_files[_site][_file])):
                 r_res.append(np.array(gdal.Open(r_files[_site][_file], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]])
 
         b_res = None
         if (len(b_files) > 0):
-            if (os.path.splitext(b_files[_site])[-1] not in sections.VECTORIZED_FILENAMES):
+            if (not _is_vector_file(b_files[_site])):
                 b_res = np.array(gdal.Open(b_files[_site], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]]
 
         un_f_res = []
@@ -547,8 +523,9 @@ def check_resolutions(f_files: List[List[str]], r_files: List[List[str]], b_file
         if (b_res is not None):
             if (un_f_res[0][0] != b_res[0] or un_f_res[1][0] != b_res[1]):
                 errors.append('Feature/Boundary resolution mismatch at site {}'.format(_site))
-            if (un_r_res[0][0] != b_res[0] or un_r_res[1][0] != b_res[1]):
-                errors.append('Response/Boundary resolution mismatch at site {}'.format(_site))
+            if (len(un_r_res) > 0):
+                if (un_r_res[0][0] != b_res[0] or un_r_res[1][0] != b_res[1]):
+                    errors.append('Response/Boundary resolution mismatch at site {}'.format(_site))
 
         site_f_res.append(un_f_res[0])
         if (len(un_r_res) > 0):
@@ -619,33 +596,6 @@ def calculate_categorical_weights(
     return weights
 
 
-def read_mask_chunk(
-        _site: int,
-        upper_left: List[int],
-        window_diameter: int,
-        reference_geotransform: List[float],
-        config: configs.Config
-) -> np.array:
-
-    mask = None
-    boundary_set = common_io.get_site_boundary_set(config, _site)
-    if (boundary_set is not None):
-        mask = boundary_set.ReadAsArray(int(upper_left[0]), int(
-            upper_left[1]), window_diameter, window_diameter)
-    else:
-        boundary_vector_file = common_io.get_site_boundary_vector_file(config,_site)
-
-        if (boundary_vector_file is not None):
-            mask = rasterize_vector(boundary_vector_file, reference_geotransform,
-                                    (window_diameter, window_diameter))
-
-
-    if (mask is None):
-        mask = np.zeros((window_diameter, window_diameter)).astype(bool)
-    else:
-        mask = mask == config.raw_files.boundary_bad_value
-
-    return mask
 
 
 def read_labeling_chunk(f_sets: List[gdal.Dataset],
@@ -669,12 +619,12 @@ def read_labeling_chunk(f_sets: List[gdal.Dataset],
 
     window_diameter = config.data_build.window_radius * 2
 
-    mask = read_mask_chunk(boundary_vector_file,
-                           boundary_subset_geotransform,
-                           b_set,
-                           boundary_upper_left,
-                           window_diameter,
-                           config.raw_files.boundary_bad_value)
+    mask = common_io.read_mask_chunk(boundary_vector_file,
+                                     boundary_subset_geotransform,
+                                     b_set,
+                                     boundary_upper_left,
+                                     window_diameter,
+                                     config.raw_files.boundary_bad_value)
 
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         _logger.debug('Insufficient mask data')
@@ -716,7 +666,7 @@ def read_segmentation_chunk(_site: int,
     if (b_ul is not None):
         b_ul += offset_from_ul
 
-    mask = read_mask_chunk(_site, b_ul, window_diameter, reference_geotransform, config)
+    mask = common_io.read_mask_chunk(_site, b_ul, window_diameter, geotransform, config)
 
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         return False
@@ -725,7 +675,8 @@ def read_segmentation_chunk(_site: int,
                                                      r_ul, window_diameter, mask,
                                                      config.raw_files.response_nodata_value,
                                                      lower_bound=config.data_build.response_min_value,
-                                                     upper_bound=config.data_build.response_min_value)
+                                                     upper_bound=config.data_build.response_min_value,
+                                                     reference_geotransform=geotransform)
 
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         return False
@@ -900,8 +851,8 @@ def _check_mask_data_sufficient(mask: np.array, max_nodata_fraction: float) -> b
         return False
 
 
-def _is_boundary_file_vectorized(boundary_filepath: str) -> bool:
-    return str(os.path.splitext(boundary_filepath)).lower() in sections.VECTORIZED_FILENAMES
+def _is_vector_file(boundary_filepath: str) -> bool:
+    return str(boundary_filepath.split('.')[-1]).lower() in sections.VECTORIZED_FILENAMES
 
 
 def check_built_data_files_exist(config: configs.Config) -> bool:
