@@ -282,6 +282,9 @@ class ModelTraining(BaseConfigSection):
     _dir_out_type = str
     dir_out = '.'
     """str: Directory to which new model files are saved and from which existing model files are loaded."""
+    _log_level_type = str
+    log_level = 'INFO'
+    """str: Experiment log level. One of ERROR, WARNING, INFO, or DEBUG."""
     _verbosity_type = int
     verbosity = 1
     """int: Verbosity value for keras library. Either 0 for silent or 1 for verbose."""

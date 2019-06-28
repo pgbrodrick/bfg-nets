@@ -9,11 +9,12 @@ from rsCNN.configuration import configs
 from rsCNN.data_management.data_core import DataContainer
 from rsCNN.data_management.sequences import BaseSequence
 from rsCNN.experiments import callbacks, histories, losses, models
-from rsCNN.utils import compute_access
+from rsCNN.utils import compute_access, logging as root_logging
 
 
 _logger = logging.getLogger(__name__)
 
+_DEFAULT_FILENAME_LOG = 'log.out'
 _KEY_HISTORY_IS_MODEL_TRAINED = 'is_model_trained'
 
 
@@ -31,21 +32,31 @@ class Experiment(object):
     is_model_trained = None
     """bool: Whether model is trained to stopping criteria. If False, either not trained at all or training was stopped 
     before stopping criteria."""
+    logger = None
+    """logging.Logger: Root logger for Experiment. Available if user wants to directly modify the log formatting,
+    handling, or other behavior."""
 
     def __init__(self, config: configs.Config) -> None:
         errors = config.get_human_readable_config_errors(exclude_sections=['raw_files', 'model_reporting'])
         assert not errors, errors
+
         self.config = config
         if not os.path.exists(self.config.model_training.dir_out):
             os.makedirs(self.config.model_training.dir_out)
-        if os.path.exists(get_config_filepath(self.config.model_training.dir_out)):
-            config_existing = configs.create_config_from_file(get_config_filepath(self.config.model_training.dir_out))
+
+        self.logger = root_logging.get_root_logger(get_log_filepath(self.config.model_training.dir_out))
+        self.logger.setLevel(self.config.model_training.log_level)
+
+        # Either save config to new model directory or check that existing config matches provided config
+        filepath_config = get_config_filepath(self.config.model_training.dir_out)
+        if not os.path.exists(filepath_config):
+            configs.save_config_to_file(self.config, filepath_config)
+        else:
+            config_existing = configs.create_config_from_file(filepath_config)
             config_differences = configs.get_config_differences(self.config, config_existing)
             assert not config_differences, \
                 'Provided configuration differs from existing configuration at {}; differing values: {}'.format(
-                    get_config_filepath(self.config.model_training.dir_out), config_differences)
-        else:
-            configs.save_config_to_file(self.config, get_config_filepath(self.config.model_training.dir_out))
+                    filepath_config, config_differences)
 
     def build_or_load_model(self, data_container: DataContainer = None, num_features: int = None) -> None:
         _logger.info('Building or loading model')
@@ -205,6 +216,18 @@ def get_history_filepath(dir_out: str) -> str:
         Filepath to model training history.
     """
     return os.path.join(dir_out, histories.DEFAULT_FILENAME_HISTORY)
+
+
+def get_log_filepath(dir_out: str) -> str:
+    """Get the default log path for experiments.
+
+    Args:
+        dir_out: Experiment directory.
+
+    Returns:
+        Filepath to experiment log.
+    """
+    return os.path.join(dir_out, _DEFAULT_FILENAME_LOG)
 
 
 def get_model_filepath(dir_out: str) -> str:

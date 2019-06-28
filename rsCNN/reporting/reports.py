@@ -7,9 +7,9 @@ from matplotlib.backends.backend_pdf import PdfPages
 
 from rsCNN.configuration import configs
 from rsCNN.data_management import data_core
-from rsCNN.reporting import samples
-from rsCNN.reporting.visualizations import histories, model_performance, networks, samples as samples_viz
 from rsCNN.experiments import experiments
+from rsCNN.reporting import samples
+from rsCNN.reporting.visualizations import histories, logs, model_performance, networks, samples as samples_viz
 
 
 plt.switch_backend('Agg')  # Needed for remote server plotting
@@ -59,6 +59,9 @@ class Reporter(object):
             _logger.info('Plot Model History')
             if self.experiment.is_model_trained:
                 self._add_figures(histories.plot_history(self.experiment.history), pdf)
+            if self.experiment.is_model_trained:
+                self._add_figures(logs.plot_log_warnings_and_errors(
+                    experiments.get_log_filepath(self.config.model_training.dir_out)), pdf)
 
     def _create_model_report_for_sequence(self, sampled: samples.Samples, pdf: PdfPages) -> None:
         if self.experiment.is_model_trained and self._get_response_data_types() is _LABEL_CATEGORICAL:
