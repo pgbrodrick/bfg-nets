@@ -6,7 +6,7 @@ import numpy as np
 import os
 
 from rsCNN.configuration import configs, sections
-from rsCNN.data_management import scalers, training_data
+from rsCNN.data_management import scalers, training_data, common_io
 from rsCNN.data_management.sequences import MemmappedSequence
 
 
@@ -234,7 +234,7 @@ class DataContainer:
         # 3) band_types is list of lists (of strings, contained in valid_band_types), with the outer list referring to
         #    files and the inner list referring to bands
 
-        num_bands_per_file = [None if gdal.Open(x, gdal.GA_ReadOnly) is None else gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in file_list[0]]
+        num_bands_per_file = [None if common_io.noerror_open(x) is None else gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in file_list[0]]
 
         # Nonetype, option 1 from above, auto-generate
         if (band_types is None):

@@ -152,7 +152,7 @@ def get_boundary_sets_from_boundary_files(config: configs.Config) -> List[gdal.D
     if not config.raw_files.boundary_files:
         boundary_sets = [None] * len(config.raw_files.feature_files)
     else:
-        boundary_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) if loc_file is not None else None
+        boundary_sets = [noerror_open(loc_file) if loc_file is not None else None
                          for loc_file in config.raw_files.boundary_files]
     return boundary_sets
 
@@ -161,9 +161,7 @@ def get_site_boundary_set(config: configs.Config, _site) -> gdal.Dataset:
     if not config.raw_files.boundary_files:
         boundary_set = None
     else:
-        gdal.PushErrorHandler('CPLQuietErrorHandler')
-        boundary_set = gdal.Open(config.raw_files.boundary_files[_site], gdal.GA_ReadOnly)
-        gdal.PopErrorHandler()
+        boundary_set = noerror_open(config.raw_files.boundary_files[_site])
 
     return boundary_set
 
@@ -199,6 +197,7 @@ def rasterize_vector(vector_file: str, geotransform: List[float], output_shape: 
     mask = np.zeros(output_shape)
     for n in range(0, len(ds)):
         rasterio.features.rasterize([ds[n]['geometry']], transform=trans, default_value=1, out=mask)
+    ds.close()
     return mask
 
 
@@ -229,3 +228,8 @@ def read_mask_chunk(
     return mask
 
 
+def noerror_open(filename: str, file_handle=gdal.GA_ReadOnly) -> gdal.Dataset:
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    dataset = gdal.Open(filename, file_handle)
+    gdal.PopErrorHandler()
+    return dataset

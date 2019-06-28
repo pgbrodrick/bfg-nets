@@ -408,7 +408,7 @@ def check_input_file_validity(f_file_list, r_file_list, b_file_list) -> List[str
 
     for _site in range(len(r_file_list)):
         for _band in range(len(r_file_list[_site])):
-            if(gdal.Open(r_file_list[_site][_band], gdal.GA_ReadOnly) is None and
+            if(_noerror_open(r_file_list[_site][_band]) is None and
                     r_file_list[_site][_band].split('.')[-1] not in VECTORIZED_FILENAMES):
                 errors.append('Could not open response site {}, file {}'.format(_site, _band))
 
@@ -505,3 +505,10 @@ def check_input_file_formats(f_file_list, r_file_list, b_file_list) -> List[str]
             errors.append('Inconsistent number of response files at site {}'.format(_site))
 
     return errors
+
+
+def _noerror_open(filename: str, file_handle=gdal.GA_ReadOnly) -> gdal.Dataset:
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    dataset = gdal.Open(filename, file_handle)
+    gdal.PopErrorHandler()
+    return dataset

@@ -53,7 +53,7 @@ def build_training_data_ordered(
     for _site in range(0, len(config.raw_files.feature_files)):
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
                         for loc_file in config.raw_files.feature_files[_site]]
-        response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
+        response_sets = [common_io.noerror_open(loc_file) for loc_file in config.raw_files.response_files[_site]]
         boundary_set = common_io.get_site_boundary_set(config, _site)
 
         all_set_upper_lefts, xy_sample_locations = common_io.get_all_interior_extent_subset_pixel_locations(
@@ -389,7 +389,7 @@ def get_proj(fname: str) -> str:
     Returns:
     The projection of the input fname
     """
-    ds = gdal.Open(fname, gdal.GA_ReadOnly)
+    ds = common_io.noerror_open(fname)
     if (ds is not None):
         proj = ds.GetProjection()
         if (proj is not None):
