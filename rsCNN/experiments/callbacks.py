@@ -105,15 +105,16 @@ def get_model_callbacks(config: configs.Config, existing_history: dict) -> List[
     if config.callback_early_stopping.use_callback:
         callbacks.append(
             keras.callbacks.EarlyStopping(
-                monitor='loss',
+                monitor='val_loss',
                 min_delta=config.callback_early_stopping.min_delta,
                 patience=config.callback_early_stopping.patience,
+                restore_best_weights=True
             ),
         )
     if config.callback_reduced_learning_rate.use_callback:
         callbacks.append(
             keras.callbacks.ReduceLROnPlateau(
-                monitor='loss',
+                monitor='val_loss',
                 factor=config.callback_reduced_learning_rate.factor,
                 min_delta=config.callback_reduced_learning_rate.min_delta,
                 patience=config.callback_reduced_learning_rate.patience,
