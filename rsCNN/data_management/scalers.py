@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+from typing import List
 
 import joblib
 import numpy as np
@@ -10,12 +11,29 @@ import sklearn.preprocessing
 _logger = logging.getLogger(__name__)
 
 
-def check_scaler_exists(scaler_name: str) -> bool:
-    return hasattr(sys.modules[__name__], scaler_name)
+def get_available_scalers() -> List[str]:
+    """Gets list of available scaler names.
+
+    Returns:
+        List of available scaler names.
+    """
+    return sorted([attr for attr in sys.modules[__name__].__dict__.keys()
+                   if not attr.startswith('Base') and attr.endswith('Scaler')])
 
 
 def get_scaler(scaler_name: str, scaler_options: dict) -> 'BaseGlobalScaler':
-    check_scaler_exists(scaler_name)
+    """Gets scaler matching the provided name.
+
+    Args:
+        scaler_name: Scaler name from available scalers.
+        scaler_options: Configuration for requested scaler.
+
+    Returns:
+        Scaler matching the provided name.
+    """
+    available_scalers = get_available_scalers()
+    assert scaler_name in available_scalers, \
+        'Scaler {} not in available scalers: {}'.format(scaler_name, available_scalers)
     return getattr(sys.modules[__name__], scaler_name)(**scaler_options)
 
 

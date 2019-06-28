@@ -59,5 +59,7 @@ def combine_histories(existing_history: dict, new_history: dict) -> dict:
     """
     combined_history = existing_history.copy()
     for key, value in new_history.items():
-        combined_history.setdefault(key, list()).extend(value)
+        if type(value) is list:
+            # Note:  this avoids combining attributes like model_name and is_model_trained
+            combined_history.setdefault(key, list()).extend(value)
     return combined_history

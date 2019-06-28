@@ -237,6 +237,8 @@ def get_config_differences(config_a: Config, config_b: Config) -> Dict:
         section_b = dict_b.get(section, dict())
         all_options = set(list(section_a.keys()) + list(section_b.keys()))
         for option in all_options:
+            if section == 'model_training' and option == 'dir_out':
+                continue
             value_a = section_a.get(option, None)
             value_b = section_b.get(option, None)
             if value_a != value_b:

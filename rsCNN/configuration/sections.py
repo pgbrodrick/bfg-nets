@@ -6,13 +6,16 @@ import os
 import re
 from typing import Dict, List, Type
 
+from rsCNN import architectures
 from rsCNN.configuration import DEFAULT_OPTIONAL_VALUE, DEFAULT_REQUIRED_VALUE
 from rsCNN.data_management import scalers
+from rsCNN.experiments import losses
 
 
 _logger = logging.getLogger(__name__)
 
 VECTORIZED_FILENAMES = ('kml', 'shp')
+
 
 class BaseConfigSection(object):
     """
@@ -159,7 +162,7 @@ class RawFiles(BaseConfigSection):
             if self.boundary_bad_value is None:
                 errors.append('boundary_bad_value must be provided if boundary_files is provided')
 
-        errors.extend(check_input_file_formats(self.feature_files, self.response_files, self.boundary_files))
+        errors.extend(_check_input_file_formats(self.feature_files, self.response_files, self.boundary_files))
 
         return errors
 
@@ -171,6 +174,9 @@ class DataBuild(BaseConfigSection):
     _dir_out_type = str
     dir_out = '.'
     """str: Directory to which built data files are saved."""
+    _log_level_type = str
+    log_level = 'INFO'
+    """str: Experiment log level. One of ERROR, WARNING, INFO, or DEBUG."""
     _filename_prefix_out_type = str
     filename_prefix_out = ''
     """str: Optional prefix for built data filenames, useful for organizing or tracking built data files
@@ -259,14 +265,15 @@ class DataSamples(BaseConfigSection):
 
     def _check_config_validity(self) -> List[str]:
         errors = list()
+        available_scalers = scalers.get_available_scalers()
         if (self.feature_scaler_names is list):
             for scaler_name in self.feature_scaler_names:
-                if not scalers.check_scaler_exists(scaler_name):
+                if scaler_name not in available_scalers:
                     errors.append('feature_scaler_names contains a scaler name that does not exist:  {}'.format(
                         scaler_name))
         if (self.response_scaler_names is list):
             for scaler_name in self.response_scaler_names:
-                if not scalers.check_scaler_exists(scaler_name):
+                if scaler_name not in available_scalers:
                     errors.append('response_scaler_names contains a scaler name that does not exist:  {}'.format(
                         scaler_name))
         return errors
@@ -279,6 +286,9 @@ class ModelTraining(BaseConfigSection):
     _dir_out_type = str
     dir_out = '.'
     """str: Directory to which new model files are saved and from which existing model files are loaded."""
+    _log_level_type = str
+    log_level = 'INFO'
+    """str: Experiment log level. One of ERROR, WARNING, INFO, or DEBUG."""
     _verbosity_type = int
     verbosity = 1
     """int: Verbosity value for keras library. Either 0 for silent or 1 for verbose."""
@@ -296,10 +306,21 @@ class ModelTraining(BaseConfigSection):
     """int: Maximum number of epochs to run model training."""
     _optimizer_type = str
     optimizer = 'adam'
-    """str: Optimizer to use during model training."""
+    """str: Optimizer to use during model training. See Keras documentation for more information."""
     _weighted_type = bool
     weighted = False
     """bool: Should underrepresented classes be overweighted during model training"""
+
+    def _check_config_validity(self) -> List[str]:
+        errors = list()
+        available_architectures = architectures.get_available_architectures()
+        if self.architecture_name not in available_architectures:
+            errors.append('architecture_name {} not in available architectures: {}'.format(
+                self.architecture_name, available_architectures))
+        available_losses = losses.get_available_loss_methods()
+        if self.loss_metric not in available_losses:
+            errors.append('loss_metric {} not in available loss metrics: {}'.format(self.loss_metric, available_losses))
+        return errors
 
 
 class ModelReporting(BaseConfigSection):
@@ -372,7 +393,7 @@ class CallbackEarlyStopping(BaseConfigSection):
     min_delta = 0.0001
     """float: See Keras documentation."""
     _patience_type = int
-    patience = 50
+    patience = 10
     """int: See Keras documentation."""
 
 
@@ -387,7 +408,7 @@ class CallbackReducedLearningRate(BaseConfigSection):
     min_delta = 0.0001
     """float: See Keras documentation."""
     _patience_type = int
-    patience = 10
+    patience = 5
     """int: See Keras documentation."""
 
 
@@ -399,7 +420,7 @@ def get_config_sections() -> List[Type[BaseConfigSection]]:
 
 
 def check_input_file_validity(f_file_list, r_file_list, b_file_list) -> List[str]:
-    errors = check_input_file_formats(f_file_list, r_file_list, b_file_list)
+    errors = _check_input_file_formats(f_file_list, r_file_list, b_file_list)
     # Checks that all files can be opened by gdal
     for _site in range(len(f_file_list)):
         for _band in range(len(f_file_list[_site])):
@@ -426,7 +447,7 @@ def check_input_file_validity(f_file_list, r_file_list, b_file_list) -> List[str
         else:
             file_type.append('R')
 
-        for _file in range(1,len(r_file_list[0])):
+        for _file in range(1, len(r_file_list[0])):
             if (r_file_list[_site][_file].split('.')[-1] in VECTORIZED_FILENAMES):
                 if (file_type[-1] == 'R'):
                     file_type[-1] = 'M'
@@ -453,7 +474,7 @@ def check_input_file_validity(f_file_list, r_file_list, b_file_list) -> List[str
     return errors
 
 
-def check_input_file_formats(f_file_list, r_file_list, b_file_list) -> List[str]:
+def _check_input_file_formats(f_file_list, r_file_list, b_file_list) -> List[str]:
     errors = []
     # f = feature, r = response, b = boundary
 

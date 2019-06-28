@@ -1,10 +1,11 @@
 
 
-
 import argparse
-import os,sys
+import os
+import sys
 import requests
-import gdal, subprocess
+import gdal
+import subprocess
 
 from rsCNN.configuration import configs
 from rsCNN.data_management import data_core, apply_model_to_data

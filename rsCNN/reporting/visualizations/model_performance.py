@@ -1,12 +1,13 @@
 from typing import List
 
+from matplotlib import gridspec
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 import sklearn.metrics
 
 from rsCNN.reporting import samples
-from rsCNN.reporting.visualizations import colormaps, figures as viz_figures, subplots
+from rsCNN.reporting.visualizations import colormaps, subplots
 
 
 def plot_classification_report(sampled: samples.Samples) -> List[plt.Figure]:
@@ -65,7 +66,7 @@ def _calculate_classification_classes_actual_and_predicted(sampled):
     return classes, actual, predicted
 
 
-def plot_spatial_categorical_error(
+def plot_spatial_classification_error(
         sampled: samples.Samples,
         max_pages: int = 8,
         max_responses_per_page: int = 10
@@ -116,7 +117,10 @@ def _plot_spatial_error(
         num_figs_on_page = min(max_responses_per_page, error.shape[-1] - idx_response)
         nrows = 1
         ncols = num_figs_on_page
-        fig, grid = viz_figures.get_figure_and_grid(nrows, ncols)
+        width = 30 * ncols / (nrows + ncols)
+        height = 30 * nrows / (nrows + ncols)
+        fig = plt.figure(figsize=(width, height))
+        grid = gridspec.GridSpec(nrows, ncols)
         for ax in _get_axis_generator_for_page(grid, nrows, ncols):
             min_ = 0
             max_ = np.nanmax(error[buffer:-buffer, buffer:-buffer, idx_response])

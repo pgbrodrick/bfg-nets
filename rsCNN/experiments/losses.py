@@ -12,7 +12,12 @@ _LOSS_TYPE_MSE = ('mse', 'mean_squared_error')
 _LOSS_TYPE_RSME = ('rmse', 'root_mean_squared_error')
 
 
-def get_valid_loss_methods():
+def get_available_loss_methods():
+    """Gets list of available loss methods.
+
+    Returns:
+        List of available loss methods.
+    """
     return [lm for lms in (_LOSS_TYPE_CC, _LOSS_TYPE_MAE, _LOSS_TYPE_MSE, _LOSS_TYPE_RSME) for lm in lms]
 
 

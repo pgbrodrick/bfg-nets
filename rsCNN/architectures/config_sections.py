@@ -120,6 +120,7 @@ def create_model_from_architecture_config_section(
         architecture_name: Architecture to create. Get a list of currently available architectures using
         rsCNN.architectures.get_available_architectures().
         architecture_config_section: Options for the specified architecture.
+        inshape: Inshape for input data.
 
     Returns:
         Keras model object.
