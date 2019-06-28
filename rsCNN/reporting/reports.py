@@ -25,7 +25,6 @@ _LABEL_CONTINUOUS = 'CONTINUOUS'
 class Reporter(object):
     data_container = None
     experiment = None
-    config = None
 
     def __init__(
             self,
@@ -37,30 +36,30 @@ class Reporter(object):
         assert not errors, errors
         self.data_container = data_container
         self.experiment = experiment
-        self.config = config
 
     def create_model_report(self) -> None:
-        filepath_report = os.path.join(self.config.model_training.dir_out, _FILENAME_MODEL_REPORT)
+        filepath_report = os.path.join(self.experiment.config.model_training.dir_out, _FILENAME_MODEL_REPORT)
         with PdfPages(filepath_report) as pdf:
             _logger.info('Plot Summary')
             self._add_figures(self.plot_model_summary(), pdf)
             _logger.info('Plot Training Sequence Figures')
             sampled = samples.Samples(
-                self.data_container.training_sequence, self.experiment.model, self.config,
-                self.experiment.is_model_trained, data_sequence_label='Training'
+                self.data_container.training_sequence, self.experiment.model, self.experiment.is_model_trained,
+                data_sequence_label='Training'
             )
             self._create_model_report_for_sequence(sampled, pdf)
             _logger.info('Plot Validation Sequence Figures')
             sampled = samples.Samples(
-                self.data_container.validation_sequence, self.experiment.model, self.config,
-                self.experiment.is_model_trained, data_sequence_label='Validation'
+                self.data_container.validation_sequence, self.experiment.model, self.experiment.is_model_trained,
+                data_sequence_label='Validation'
             )
             self._create_model_report_for_sequence(sampled, pdf)
             _logger.info('Plot Model History')
             if self.experiment.is_model_trained:
                 self._add_figures(histories.plot_history(self.experiment.history), pdf)
             if self.experiment.is_model_trained:
-                self._add_figures(logs.plot_log_warnings_and_errors(self.config), pdf)
+                self._add_figures(
+                    logs.plot_log_warnings_and_errors(self.data_container.config, self.experiment.config), pdf)
 
     def _create_model_report_for_sequence(self, sampled: samples.Samples, pdf: PdfPages) -> None:
         if self.experiment.is_model_trained and self._get_response_data_types() is _LABEL_CATEGORICAL:
@@ -69,9 +68,9 @@ class Reporter(object):
         self._add_figures(self.plot_single_sequence_prediction_histogram(sampled), pdf)
         if self.experiment.is_model_trained:
             self._add_figures(self.plot_samples(sampled), pdf)
-            if self.config.model_reporting.network_progression_show_full:
+            if self.experiment.config.model_reporting.network_progression_show_full:
                 self._add_figures(self.plot_network_feature_progression(sampled, compact=False), pdf)
-            if self.config.model_reporting.network_progression_show_compact:
+            if self.experiment.config.model_reporting.network_progression_show_compact:
                 self._add_figures(self.plot_network_feature_progression(sampled, compact=True), pdf)
             self._add_figures(self.plot_spatial_error(sampled), pdf)
 
@@ -101,8 +100,8 @@ class Reporter(object):
         return networks.plot_network_feature_progression(
             sampled,
             compact=compact,
-            max_pages=max_pages or self.config.model_reporting.network_progression_max_pages,
-            max_filters=max_filters or self.config.model_reporting.network_progression_max_filters
+            max_pages=max_pages or self.experiment.config.model_reporting.network_progression_max_pages,
+            max_filters=max_filters or self.experiment.config.model_reporting.network_progression_max_filters
         )
 
     def plot_samples(
@@ -119,20 +118,22 @@ class Reporter(object):
             plotter = samples_viz.plot_classification_samples
         elif self._get_response_data_types() is _LABEL_CONTINUOUS:
             plotter = samples_viz.plot_regression_samples
+        max_responses_per_page = max_responses_per_page or self.experiment.config.model_reporting.max_responses_per_page
         return plotter(
             sampled,
-            max_pages=max_pages or self.config.model_reporting.max_pages_per_figure,
-            max_samples_per_page=max_samples_per_page or self.config.model_reporting.max_samples_per_page,
-            max_features_per_page=max_features_per_page or self.config.model_reporting.max_features_per_page,
-            max_responses_per_page=max_responses_per_page or self.config.model_reporting.max_responses_per_page
+            max_pages=max_pages or self.experiment.config.model_reporting.max_pages_per_figure,
+            max_samples_per_page=max_samples_per_page or self.experiment.config.model_reporting.max_samples_per_page,
+            max_features_per_page=max_features_per_page or self.experiment.config.model_reporting.max_features_per_page,
+            max_responses_per_page=max_responses_per_page
         )
 
     def plot_single_sequence_prediction_histogram(
             self, sampled: samples.Samples, max_responses_per_page: int = None
     ) -> List[plt.Figure]:
+        max_responses_per_page = max_responses_per_page or self.experiment.config.model_reporting.max_responses_per_page
         return samples_viz.plot_single_sequence_prediction_histogram(
             sampled,
-            max_responses_per_page=max_responses_per_page or self.config.model_reporting.max_responses_per_page
+            max_responses_per_page=max_responses_per_page
         )
 
     def plot_spatial_error(
@@ -146,10 +147,11 @@ class Reporter(object):
             plotter = model_performance.plot_spatial_classification_error
         elif self._get_response_data_types() is _LABEL_CONTINUOUS:
             plotter = model_performance.plot_spatial_regression_error
+        max_responses_per_page = max_responses_per_page or self.experiment.config.model_reporting.max_responses_per_page
         return plotter(
             sampled,
-            max_pages=max_pages or self.config.model_reporting.max_pages_per_figure,
-            max_responses_per_page=max_responses_per_page or self.config.model_reporting.max_responses_per_page
+            max_pages=max_pages or self.experiment.config.model_reporting.max_pages_per_figure,
+            max_responses_per_page=max_responses_per_page
         )
 
     def plot_classification_report(self, sampled: samples.Samples) -> List[plt.Figure]:
@@ -157,7 +159,7 @@ class Reporter(object):
         return model_performance.plot_classification_report(sampled)
 
     def _get_response_data_types(self) -> str:
-        data_types = set([data_type for file_dt in self.config.raw_files.response_data_type for data_type in file_dt])
+        data_types = set([dt for file_dts in self.experiment.config.raw_files.response_data_type for dt in file_dts])
         if data_types == {'C'}:
             return _LABEL_CATEGORICAL
         elif data_types == {'R'}:

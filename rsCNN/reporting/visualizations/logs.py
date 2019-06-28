@@ -12,11 +12,11 @@ from rsCNN.experiments import experiments
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
 
-def plot_log_warnings_and_errors(config: configs.Config) -> List[plt.Figure]:
+def plot_log_warnings_and_errors(config_data: configs.Config, config_model: configs.Config) -> List[plt.Figure]:
     figures = list()
-    filepath_logs_data = data_core.get_log_filepath(config)
+    filepath_logs_data = data_core.get_log_filepath(config_data)
     figures.append(_plot_log_warnings_and_errors(filepath_logs_data, 'Built data'))
-    filepath_logs_model = experiments.get_log_filepath(config)
+    filepath_logs_model = experiments.get_log_filepath(config_model)
     figures.append(_plot_log_warnings_and_errors(filepath_logs_model, 'Model training'))
     return figures
 
