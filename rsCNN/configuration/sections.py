@@ -12,6 +12,39 @@ from rsCNN.data_management import scalers
 from rsCNN.experiments import losses
 
 
+"""
+How to use sections:  Configs and ConfigSections are the tools we (currently) use to handle the numerous parameters
+associated with neural network experiments. In general, we want to validate that ConfigSections have options with
+the expected values and relationships, and we use two important methods to do this without duplicating too much code.
+
+Important note:  please feel free to suggest better ways of handling these things.
+
+To validate that attributes have the correct type, ensure that the attributes are on the config section and have an
+associated hidden attribute with a particular name pattern. Specifically, given an attribute named 'attribute', the
+hidden attribute should be named '_attribute_type' and its value should be the type expected for that attribute.
+Methods on the BaseConfigSection will ensure that this attribute type is checked and errors will be raised to the user
+if it's not appropriate. Example:
+
+```
+class GenericConfigSection(BaseConfigSection):
+    _attribute_type = list                  <-- Used to validate attributes have correct types
+    attribute = DEFAULT_REQUIRED_VALUE
+```
+
+To validate that attributes have appropriate relationships or characteristics, use the hidden _check_config_validity
+method to add more detailed validation checks. Simply return a list of string descriptions of errors from the method as
+demonstrated:
+
+```
+def _check_config_validity(self) -> List[str]:
+    errors = list()
+    if self.attribute_min >= self.attribute_max:
+        errors.append('attribute_min must be less than attribute_max.')
+    return errors
+```
+"""
+
+
 _logger = logging.getLogger(__name__)
 
 VECTORIZED_FILENAMES = ('kml', 'shp')
@@ -389,6 +422,9 @@ class CallbackEarlyStopping(BaseConfigSection):
     _use_callback_type = bool
     use_callback = True
     """bool: See Keras documentation."""
+    _loss_metric_type = str
+    loss_metric = 'val_loss'
+    """str: Loss metric to monitor for early stopping. See Keras documentation."""
     _min_delta_type = float
     min_delta = 0.0001
     """float: See Keras documentation."""
@@ -404,6 +440,9 @@ class CallbackReducedLearningRate(BaseConfigSection):
     _factor_type = float
     factor = 0.5
     """float: See Keras documentation."""
+    _loss_metric_type = str
+    loss_metric = 'val_loss'
+    """str: Loss metric to monitor for reducing learning rate. See Keras documentation."""
     _min_delta_type = float
     min_delta = 0.0001
     """float: See Keras documentation."""

@@ -10,6 +10,7 @@ raw_files:
   ignore_projections: false
 data_build:
   dir_out: .
+  log_level: INFO
   filename_prefix_out: ''
   network_category: FCN
   random_seed: 1
@@ -71,10 +72,12 @@ callback_tensorboard:
   write_images: true
 callback_early_stopping:
   use_callback: true
+  loss_metric: val_loss
   min_delta: 0.0001
   patience: 10
 callback_reduced_learning_rate:
   use_callback: true
   factor: 0.5
+  loss_metric: val_loss
   min_delta: 0.0001
   patience: 5
