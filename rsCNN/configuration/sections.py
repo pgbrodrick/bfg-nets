@@ -2,6 +2,7 @@ from collections import OrderedDict
 import gdal
 import logging
 import numpy as np
+import os
 import re
 from typing import Dict, List, Type
 
@@ -408,7 +409,7 @@ def check_input_file_validity(f_file_list, r_file_list, b_file_list) -> List[str
     for _site in range(len(r_file_list)):
         for _band in range(len(r_file_list[_site])):
             if(gdal.Open(r_file_list[_site][_band], gdal.GA_ReadOnly) is None and
-                    r_file_list[_site][_band].split('.')[-1] not in VECTORIZED_FILENAMES):
+                    os.path.splitext(r_file_list[_site][_band])[-1] not in VECTORIZED_FILENAMES):
                 errors.append('Could not open response site {}, file {}'.format(_site, _band))
 
     # Checks on the number of bands per file
@@ -420,13 +421,13 @@ def check_input_file_validity(f_file_list, r_file_list, b_file_list) -> List[str
 
     file_type = []
     for _site in range(len(r_file_list)):
-        if (r_file_list[_site][0].split('.')[-1] in VECTORIZED_FILENAMES):
+        if (os.path.splitext(r_file_list[_site][0])[-1] in VECTORIZED_FILENAMES):
             file_type.append('V')
         else:
             file_type.append('R')
 
         for _file in range(1,len(r_file_list[0])):
-            if (r_file_list[_site][_file].split('.')[-1] in VECTORIZED_FILENAMES):
+            if (os.path.splitext(r_file_list[_site][_file])[-1] in VECTORIZED_FILENAMES):
                 if (file_type[-1] == 'R'):
                     file_type[-1] = 'M'
                     break
@@ -441,7 +442,7 @@ def check_input_file_validity(f_file_list, r_file_list, b_file_list) -> List[str
 
     if (np.all(un_file_types == 'R')):
 
-        is_vector = any([x.split('.')[-1] in VECTORIZED_FILENAMES for x in r_file_list[0]])
+        is_vector = any([os.path.splitext(x)[-1] in VECTORIZED_FILENAMES for x in r_file_list[0]])
         if not is_vector:
             num_r_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in r_file_list[0]]
             for _site in range(len(r_file_list)):

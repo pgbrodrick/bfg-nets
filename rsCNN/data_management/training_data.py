@@ -423,9 +423,9 @@ def get_proj(fname: str) -> str:
                 raise Exception(exception_str)
             return srs.GetAttrValue('projcs')
 
-    if (os.path.basename(fname).split('.')[-1] == 'shp'):
+    if (os.path.splitext(os.path.basename(fname))[-1] == 'shp'):
         vset = ogr.GetDriverByName('ESRI Shapefile').Open(fname, gdal.GA_ReadOnly)
-    elif (os.path.basename(fname).split('.')[-1] == 'kml'):
+    elif (os.path.splitext(os.path.basename(fname))[-1] == 'kml'):
         vset = ogr.GetDriverByName('KML').Open(fname, gdal.GA_ReadOnly)
     else:
         exception_str = 'Cannot find projection from file {}'.format(fname)
@@ -522,12 +522,12 @@ def check_resolutions(f_files: List[List[str]], r_files: List[List[str]], b_file
             f_res.append(np.array(gdal.Open(f_files[_site][_file], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]])
 
         for _file in range(len(r_files[_site])):
-            if (r_files[_site][_file].split('.')[-1] not in sections.VECTORIZED_FILENAMES):
+            if (os.path.splitext(r_files[_site][_file])[-1] not in sections.VECTORIZED_FILENAMES):
                 r_res.append(np.array(gdal.Open(r_files[_site][_file], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]])
 
         b_res = None
         if (len(b_files) > 0):
-            if (b_files[_site].split('.')[-1] not in sections.VECTORIZED_FILENAMES):
+            if (os.path.splitext(b_files[_site])[-1] not in sections.VECTORIZED_FILENAMES):
                 b_res = np.array(gdal.Open(b_files[_site], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]]
 
         un_f_res = []
@@ -721,8 +721,8 @@ def read_segmentation_chunk(_site: int,
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         return False
 
-    response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
-    local_response, mask = common_io.read_map_subset(response_sets, r_ul, window_diameter, mask,
+    local_response, mask = common_io.read_map_subset(config.raw_files.response_files[_site],
+                                                     r_ul, window_diameter, mask,
                                                      config.raw_files.response_nodata_value,
                                                      lower_bound=config.data_build.response_min_value,
                                                      upper_bound=config.data_build.response_min_value)
@@ -730,8 +730,7 @@ def read_segmentation_chunk(_site: int,
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         return False
 
-    feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.feature_files[_site]]
-    local_feature, mask = common_io.read_map_subset(feature_sets, f_ul, window_diameter, mask,
+    local_feature, mask = common_io.read_map_subset(config.raw_files.feature_files[_site], f_ul, window_diameter, mask,
                                                     config.raw_files.feature_nodata_value)
 
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):

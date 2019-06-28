@@ -88,8 +88,15 @@ def get_all_interior_extent_subset_pixel_locations(gdal_datasets: List[List[gdal
     return all_upper_lefts, xy_sample_locations
 
 
-def read_map_subset(datasets: List, upper_lefts: List[List[int]], window_diameter: int, mask=None, nodata_value=None,
+def read_map_subset(datafiles: List[str], upper_lefts: List[List[int]], window_diameter: int, mask=None, nodata_value=None,
                     lower_bound = None, upper_bound = None):
+
+    raster_count = 0
+    datasets = []
+    for _f in range(len(datafiles)):
+        if (os.path.splitext(datafiles[_f])[-1] is not in configs.sections.VECTORIZED_FILENAMES):
+            datasets.append(gdal.Open(datafiles[_f],gdal.GA_ReadOnly))
+
     local_array = np.zeros((window_diameter, window_diameter, np.sum([lset.RasterCount for lset in datasets])))
     if mask is None:
         mask = np.zeros((window_diameter, window_diameter)).astype(bool)
@@ -147,7 +154,7 @@ def get_site_boundary_vector_file(config: configs.Config, _site) -> gdal.Dataset
         boundary_file = None
     else:
         boundary_file = config.raw_files.boundary_files[_site]
-        if (not boundary_file.split('.')[-1] in configs.sections.VECTORIZED_FILENAMES):
+        if (not os.path.splitext(boundary_file)[-1] in configs.sections.VECTORIZED_FILENAMES):
             boundary_file = None
 
     return boundary_file

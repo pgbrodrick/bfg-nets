@@ -30,7 +30,7 @@ def one_hot_encode_array(raw_band_types: List[str], array: np.array, memmap_file
 
         if (memmap_file is not None):
             cat_memmap_file = os.path.join(
-                os.path.dirname(memmap_file), str(os.path.basename(memmap_file).split('.')[0]) + '_cat.npy')
+                os.path.dirname(memmap_file), str(os.path.splitext(os.path.basename(memmap_file))[0]) + '_cat.npy')
             cat_array = np.memmap(cat_memmap_file,
                                   dtype=np.float32,
                                   mode='w+',
@@ -66,7 +66,7 @@ def one_hot_encode_array(raw_band_types: List[str], array: np.array, memmap_file
 
 def permute_array(source: np.array, source_filename: str, permutation: np.array) -> np.array:
     perm_memmap_file = os.path.join(
-        os.path.dirname(source_filename), str(os.path.basename(source_filename).split('.')[0]) + '_perm.npy')
+        os.path.dirname(source_filename), str(os.path.splitext(os.path.basename(source_filename))[0]) + '_perm.npy')
 
     shape = source.shape
     dtype = source.dtype
