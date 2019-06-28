@@ -1,6 +1,6 @@
 raw_files:
   feature_files: [['scratch/dem.tif']]
-  response_files: [['scratch/mounds_utm.tif']]
+  response_files: [['scratch/mounds_utm.shp']]
   boundary_files: ['scratch/training_boundary.shp']
   feature_data_type: ['R']
   response_data_type: ['C']

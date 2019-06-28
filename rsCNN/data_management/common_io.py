@@ -4,7 +4,7 @@ import gdal
 import logging
 import numpy as np
 from numpy import matlib
-import os
+import sys, os
 import rasterio.features
 from typing import List, Tuple
 
@@ -161,7 +161,9 @@ def get_site_boundary_set(config: configs.Config, _site) -> gdal.Dataset:
     if not config.raw_files.boundary_files:
         boundary_set = None
     else:
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
         boundary_set = gdal.Open(config.raw_files.boundary_files[_site], gdal.GA_ReadOnly)
+        gdal.PopErrorHandler()
 
     return boundary_set
 
@@ -225,4 +227,5 @@ def read_mask_chunk(
         mask = mask == config.raw_files.boundary_bad_value
 
     return mask
+
 
