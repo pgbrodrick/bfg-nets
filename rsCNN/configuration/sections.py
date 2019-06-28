@@ -173,6 +173,9 @@ class DataBuild(BaseConfigSection):
     _dir_out_type = str
     dir_out = '.'
     """str: Directory to which built data files are saved."""
+    _log_level_type = str
+    log_level = 'INFO'
+    """str: Experiment log level. One of ERROR, WARNING, INFO, or DEBUG."""
     _filename_prefix_out_type = str
     filename_prefix_out = ''
     """str: Optional prefix for built data filenames, useful for organizing or tracking built data files

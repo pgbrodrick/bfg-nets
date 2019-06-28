@@ -48,7 +48,7 @@ class Experiment(object):
         self.logger.setLevel(self.config.model_training.log_level)
 
         # Either save config to new model directory or check that existing config matches provided config
-        filepath_config = get_config_filepath(self.config.model_training.dir_out)
+        filepath_config = get_config_filepath(self.config)
         if not os.path.exists(filepath_config):
             configs.save_config_to_file(self.config, filepath_config)
         else:
@@ -68,17 +68,17 @@ class Experiment(object):
             self.config.model_training.weighted
         )
 
-        if os.path.exists(get_model_filepath(self.config.model_training.dir_out)):
+        if os.path.exists(get_model_filepath(self.config)):
             _logger.debug('Loading existing model from model training directory at {}'.format(
-                get_model_filepath(self.config.model_training.dir_out)))
+                get_model_filepath(self.config)))
             self.loaded_existing_model = True
             self.model = models.load_model(
-                get_model_filepath(self.config.model_training.dir_out),
+                get_model_filepath(self.config),
                 custom_objects={'_cropped_loss': loss_function}
             )
         else:
             _logger.debug('Building new model, no model exists at {}'.format(
-                get_model_filepath(self.config.model_training.dir_out)))
+                get_model_filepath(self.config)))
 
             assert data_container or num_features, 'Model building requires either DataContainer or num_features.'
             if not num_features:
@@ -96,14 +96,14 @@ class Experiment(object):
                 self.config.model_training.architecture_name, self.config.architecture, inshape)
             self.model.compile(loss=loss_function, optimizer=self.config.model_training.optimizer)
 
-        if os.path.exists(get_history_filepath(self.config.model_training.dir_out)):
+        if os.path.exists(get_history_filepath(self.config)):
             assert self.loaded_existing_model, \
                 'Model training history exists in model training directory, but no model found; directory: {}' \
                 .format(self.config.model_training.dir_out)
             _logger.debug('Loading existing history from model training directory at {}'.format(
-                get_history_filepath(self.config.model_training.dir_out)))
+                get_history_filepath(self.config)))
             self.loaded_existing_history = True
-            self.history = histories.load_history(get_history_filepath(self.config.model_training.dir_out))
+            self.history = histories.load_history(get_history_filepath(self.config))
             if 'lr' in self.history:
                 learning_rate = self.history['lr'][-1]
                 _logger.debug('Setting learning rate to value from last training epoch: {}'.format(learning_rate))
@@ -150,8 +150,8 @@ class Experiment(object):
         self.history = histories.combine_histories(self.history, new_history.history)
         self.history[_KEY_HISTORY_IS_MODEL_TRAINED] = True
         self.is_model_trained = True
-        histories.save_history(self.history, get_history_filepath(self.config.model_training.dir_out))
-        models.save_model(self.model, get_model_filepath(self.config.model_training.dir_out))
+        histories.save_history(self.history, get_history_filepath(self.config))
+        models.save_model(self.model, get_model_filepath(self.config))
 
     def calculate_model_memory_footprint(self, batch_size: int) -> float:
         """Calculate model memory footprint. Shamelessly copied from (but not tested rigorously):
@@ -187,56 +187,56 @@ class Experiment(object):
 
 
 def load_experiment_from_directory(dir_experiment: str) -> Experiment:
-    filepath_config = get_config_filepath(dir_experiment)
+    filepath_config = os.path.join(dir_experiment, configs.DEFAULT_FILENAME_CONFIG)
     assert os.path.exists(filepath_config), 'Experiment directory must contain a config file.'
     config = configs.create_config_from_file(filepath_config)
     config.model_training.dir_out = dir_experiment
     return Experiment(config)
 
 
-def get_config_filepath(dir_out: str) -> str:
+def get_config_filepath(config: configs.Config) -> str:
     """Get the default config path for experiments.
 
     Args:
-        dir_out: Experiment directory.
+        config: rsCNN config object.
 
     Returns:
-        Filepath to config.
+        Filepath to model training config.
     """
-    return os.path.join(dir_out, configs.DEFAULT_FILENAME_CONFIG)
+    return os.path.join(config.model_training.dir_out, configs.DEFAULT_FILENAME_CONFIG)
 
 
-def get_history_filepath(dir_out: str) -> str:
+def get_history_filepath(config: configs.Config) -> str:
     """Get the default model training history path for experiments.
 
     Args:
-        dir_out: Experiment directory.
+        config: rsCNN config object.
 
     Returns:
         Filepath to model training history.
     """
-    return os.path.join(dir_out, histories.DEFAULT_FILENAME_HISTORY)
+    return os.path.join(config.model_training.dir_out, histories.DEFAULT_FILENAME_HISTORY)
 
 
-def get_log_filepath(dir_out: str) -> str:
-    """Get the default log path for experiments.
+def get_log_filepath(config: configs.Config) -> str:
+    """Get the default model training log path for experiments.
 
     Args:
-        dir_out: Experiment directory.
+        config: rsCNN config object.
 
     Returns:
-        Filepath to experiment log.
+        Filepath to model training log.
     """
-    return os.path.join(dir_out, _DEFAULT_FILENAME_LOG)
+    return os.path.join(config.model_training.dir_out, _DEFAULT_FILENAME_LOG)
 
 
-def get_model_filepath(dir_out: str) -> str:
+def get_model_filepath(config: configs.Config) -> str:
     """Get the default model path for experiments.
 
     Args:
-        dir_out: Experiment directory.
+        config: rsCNN config object.
 
     Returns:
         Filepath to model.
     """
-    return os.path.join(dir_out, models.DEFAULT_FILENAME_MODEL)
+    return os.path.join(config.model_training.dir_out, models.DEFAULT_FILENAME_MODEL)

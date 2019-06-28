@@ -5,7 +5,8 @@ from typing import List, Tuple
 import fiona
 import gdal
 import numpy as np
-import ogr, osr
+import ogr
+import osr
 import rasterio.features
 from tqdm import tqdm
 

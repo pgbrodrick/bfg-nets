@@ -60,8 +60,7 @@ class Reporter(object):
             if self.experiment.is_model_trained:
                 self._add_figures(histories.plot_history(self.experiment.history), pdf)
             if self.experiment.is_model_trained:
-                self._add_figures(logs.plot_log_warnings_and_errors(
-                    experiments.get_log_filepath(self.config.model_training.dir_out)), pdf)
+                self._add_figures(logs.plot_log_warnings_and_errors(self.config), pdf)
 
     def _create_model_report_for_sequence(self, sampled: samples.Samples, pdf: PdfPages) -> None:
         if self.experiment.is_model_trained and self._get_response_data_types() is _LABEL_CATEGORICAL:

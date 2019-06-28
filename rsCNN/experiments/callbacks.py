@@ -19,10 +19,16 @@ class HistoryCheckpoint(keras.callbacks.Callback):
     """
     A custom Keras callback for checkpointing model training history and associated information.
     """
+    config = None
+    existing_history = None
+    period = None
+    verbose = None
+    epochs_since_last_save = None
+    epoch_begin = None
 
-    def __init__(self, dir_out, existing_history=None, period=1, verbose=0):
+    def __init__(self, config: configs.Config, existing_history=None, period=1, verbose=0):
         super().__init__()
-        self.dir_out = dir_out
+        self.config = config
         if existing_history is None:
             existing_history = dict()
         self.existing_history = existing_history
@@ -70,7 +76,7 @@ class HistoryCheckpoint(keras.callbacks.Callback):
                 'Parallel models are doing something unusual with histories. Tell Nick and let\'s debug.'
             new_history = self.model.model.history
         combined_history = histories.combine_histories(self.existing_history, new_history)
-        histories.save_history(combined_history, experiments.get_history_filepath(self.dir_out))
+        histories.save_history(combined_history, experiments.get_history_filepath(self.config))
 
 
 def get_model_callbacks(config: configs.Config, existing_history: dict) -> List[keras.callbacks.Callback]:
@@ -85,13 +91,13 @@ def get_model_callbacks(config: configs.Config, existing_history: dict) -> List[
     """
     callbacks = [
         HistoryCheckpoint(
-            dir_out=config.model_training.dir_out,
+            config=config,
             existing_history=existing_history,
             period=config.callback_general.checkpoint_periods,
             verbose=config.model_training.verbosity,
         ),
         keras.callbacks.ModelCheckpoint(
-            experiments.get_model_filepath(config.model_training.dir_out),
+            experiments.get_model_filepath(config),
             period=config.callback_general.checkpoint_periods,
             verbose=config.model_training.verbosity,
         ),

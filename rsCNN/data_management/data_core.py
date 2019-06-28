@@ -1,13 +1,14 @@
-
-from typing import List, Tuple
 import logging
+import os
+from typing import List
+
 import gdal
 import numpy as np
-import os
 
 from rsCNN.configuration import configs, sections
 from rsCNN.data_management import scalers, training_data
 from rsCNN.data_management.sequences import MemmappedSequence
+from rsCNN.utils import logging as root_logging
 
 
 _FILENAME_BUILT_DATA_CONFIG_SUFFIX = 'built_data_config.yaml'
@@ -21,6 +22,8 @@ _FILENAME_DATA_CONTAINER = 'data_container.npz'
 
 
 _logger = logging.getLogger(__name__)
+
+_DEFAULT_FILENAME_LOG = 'log.out'
 
 
 class DataContainer:
@@ -42,11 +45,19 @@ class DataContainer:
     response_scaler = list()
 
     train_folds = None
+    logger = None
+    """logging.Logger: Root logger for DataContainer. Available if user wants to directly modify the log formatting,
+    handling, or other behavior."""
 
     def __init__(self, config: configs.Config):
         errors = config.get_human_readable_config_errors(include_sections=['raw_files', 'data_build', 'data_samples'])
         assert not errors, errors
         self.config = config
+
+        create_built_data_output_directory(self.config)
+
+        self.logger = root_logging.get_root_logger(get_log_filepath(self.config))
+        self.logger.setLevel(self.config.data_build.log_level)
 
         if (os.path.isfile(get_built_data_container_filepath(self.config))):
             _logger.info('Previously saved DataContainer found')
@@ -65,8 +76,6 @@ class DataContainer:
             errors = sections.check_input_file_validity(self.config.raw_files.feature_files,
                                                         self.config.raw_files.response_files,
                                                         self.config.raw_files.boundary_files)
-
-            create_built_data_output_directory(self.config)
 
             print(self.config.raw_files.boundary_files)
             if (self.config.raw_files.ignore_projections is False and len(errors) == 0):
@@ -191,7 +200,7 @@ class DataContainer:
         # 3) band_types is list of lists (of strings, contained in valid_band_types), with the outer list referring to
         #    files and the inner list referring to bands
 
-        #TODO - add in some check for vector types
+        # TODO - add in some check for vector types
         is_vector = any([x.split('.')[-1] in sections.VECTORIZED_FILENAMES for x in file_list[0]])
         if (is_vector):
             return errors
@@ -288,6 +297,18 @@ def create_built_data_output_directory(config: configs.Config) -> None:
     if not os.path.exists(config.data_build.dir_out):
         _logger.debug('Create built data output directory at {}'.format(config.data_build.dir_out))
         os.makedirs(config.data_build.dir_out)
+
+
+def get_log_filepath(config: configs.Config) -> str:
+    """Get the default log path for data builds.
+
+    Args:
+        config: rsCNN config object.
+
+    Returns:
+        Filepath to built data log.
+    """
+    return os.path.join(config.data_build.dir_out, _DEFAULT_FILENAME_LOG)
 
 
 def get_temporary_features_filepath(config: configs.Config) -> str:
