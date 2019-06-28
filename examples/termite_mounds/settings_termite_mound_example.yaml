@@ -22,8 +22,8 @@ data_build:
   loss_window_radius: 16
   feature_mean_centering: True
   feature_nodata_maximum_fraction: 0.0
-  response_min_value: 0
-  response_max_value: 10000
+  response_min_value: null
+  response_max_value: null
   response_background_value: None
 data_samples:
   apply_random_transformations: true

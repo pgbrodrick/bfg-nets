@@ -96,7 +96,6 @@ def build_training_data_ordered(
                                               config,
                                               reference_subset_geotransforms[_site],
                                               _sample_index)
-            print((success, all_site_xy_locations[_site][_site_xy_index[_site], :]))
 
             _site_xy_index[_site] += 1
             popped = None
@@ -117,7 +116,6 @@ def build_training_data_ordered(
                 site_read_count += 1
                 if (site_read_count > num_reads_per_site or _sample_index >= config.data_build.max_samples):
                     break
-    quit()
     progress_bar.close()
     del all_site_upper_lefts
     del all_site_xy_locations
@@ -715,7 +713,6 @@ def read_segmentation_chunk(_site: int,
         if r_ul[_r] is not None:
             r_ul[_r] += offset_from_ul
 
-    #import ipdb; ipdb.set_trace();
     if (b_ul is not None):
         b_ul += offset_from_ul
 
