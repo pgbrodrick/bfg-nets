@@ -1,4 +1,5 @@
 import copy
+import fiona
 import gdal
 import logging
 import numpy as np
@@ -188,68 +189,59 @@ def build_training_data_from_response_points(
         np.random.seed(config.data_build.random_seed)
 
     num_features = np.sum([len(feat_type) for feat_type in feature_raw_band_types])
-    assert config.data_build.max_samples * (2 * config.data_build.window_radius) ** 2 * num_features / 1024**3 < 10, \
-        'Max samples requested exceeds temporary and arbitrary threshold, we need to handle this to support more'
+
+    feature_memmap_size_gb = num_features*4*config.data_build.max_samples * \
+                             (config.data_build.window_radius*2)**2 / 1024.**3
+    assert feature_memmap_size_gb < config.data_build.max_built_data_gb, \
+        'Expected feature memmap size: {} Gb, limit: {}'.format(feature_memmap_size_gb, config.data_build.max_built_data_gb)
 
     xy_sample_points_per_site = []
     responses_per_site = []
     for _site in range(0, len(config.raw_files.feature_files)):
-        _logger.debug('Open feature and response datasets for site {}'.format(_site))
-        feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.feature_files[_site]]
-        response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
-        boundary_set = common_io.get_site_boundary_set(config, _site)
 
-        _logger.debug('Calculate overlapping extent')
-        [f_ul, r_ul, [b_ul]], x_px_size, y_px_size = common_io.get_overlapping_extent(
-            [feature_sets, response_sets, [bs for bs in [boundary_set] if bs is not None]])
-
-        x_sample_points = []
-        y_sample_points = []
-        band_responses = []
         _logger.debug('Run through first response')
-        for _line in range(y_px_size):
-            line_dat = np.squeeze(response_sets[_site].ReadAsArray(r_ul[0][0], r_ul[0][1] + _line, x_px_size, 1))
-            if len(line_dat.shape) == 1:
-                line_dat = line_dat.reshape(-1, 1)
+        if (config.raw_files.response_files[_site][0] in sections.VECTORIZED_FILENAMES):
+            assert(len(config.raw_files.response_files[_site]) == 1), 'Only 1 vector file per site supported for CNN'
 
-            if config.data_build.response_background_value is not None:
-                good_data = np.all(line_dat != config.data_build.response_background_value, axis=1)
-            else:
-                good_data = np.ones(line_dat.shape[0]).astype(bool)
+            feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
+                            for loc_file in config.raw_files.feature_files[_site]]
+            boundary_set = common_io.get_site_boundary_set(config, _site)
 
-            if (config.raw_files.response_nodata_value is not None):
-                good_data[np.any(line_dat == config.raw_files.response_nodata_value, axis=1)] = False
+            lower_coord, upper_coord = common_io.get_overlapping_extent_coordinates(
+                [feature_sets, [], [bs for bs in [boundary_set] if bs is not None]])
 
-            if (np.sum(good_data) > 0):
-                line_x = np.arange(x_px_size)
-                line_y = line_x.copy()
-                line_y[:] = _line
+            resolution = feature_sets[0].GetGeoTransform()[1,5]
 
-                x_sample_points.extend(line_x[good_data].tolist())
-                y_sample_points.extend(line_y[good_data].tolist())
-                band_responses.append(line_dat[good_data, :])
+            vector = fiona.open(config.raw_files.response_files[_site][0])
+            x_sample_points = []
+            y_sample_points = []
+            band_responses = []
+            for _sample in tqdm(range(len(vector))):
+                if (vector[_sample]['geometry']['type'] == 'Point'):
+                    x_sample_points.append(vector[_sample]['geometry']['coordinates'][0])
+                    y_sample_points.append(vector[_sample]['geometry']['coordinates'][1])
+                    band_responses.append(vector[_sample]['properties']['Class'])
 
-        xy_sample_points = np.vstack([np.array(x_sample_points), np.array(y_sample_points)]).T
-        responses_per_file = [np.vstack(band_responses).astype(np.float32)]
-        _logger.debug('Found {} responses for site {}'.format(len(responses_per_file[0]), _site))
+                    if (x_sample_points[-1] < lower_coord[0] + resolution[0]*config.data_build.window_radius or
+                        x_sample_points[-1] > upper_coord[0] - resolution[0]*config.data_build.window_radius or
+                        y_sample_points[-1] < upper_coord[1] + resolution[1]*config.data_build.window_radius or
+                        y_sample_points[-1] > lower_coord[1] - resolution[1]*config.data_build.window_radius ):
 
-        _logger.debug('Grab the rest of the resopnses')
-        for _file in range(1, len(response_sets)):
-            band_responses = np.zeros(responses_per_file[0].shape[0])
-            for _point in range(len(xy_sample_points)):
-                band_responses[_point] = response_sets[_file].ReadAsArray(
-                    r_ul[_file][0], r_ul[_file][1], 1, 1).astype(np.float32)
-            responses_per_file.append(band_responses.copy())
+                        x_sample_points.pop(-1)
+                        y_sample_points.pop(-1)
+                        band_responses.pop(-1)
+                else:
+                    _logger.info('WARNING: Non point gemoetry ignored in file {}'.format(config.raw_files.response_files[_site][0]))
+            vector.close()
 
-        responses_per_file = np.hstack(responses_per_file)
-        _logger.debug('All responses now obtained, response stack of shape: {}'.format(responses_per_file.shape))
-
-        _logger.debug('Check responses 1 onward for nodata values')
-        good_data = np.all(responses_per_file != config.data_build.response_background_value, axis=1)
-        xy_sample_points = xy_sample_points[good_data, :]
+            xy_sample_points = np.vstack([np.array(x_sample_points), np.array(y_sample_points)]).T
+            responses_per_file = np.array(band_responses)
+        else:
+            ## TODO: Needs completion
+            assert False, 'Mode not yet supported'
 
         xy_sample_points_per_site.append(xy_sample_points)
-        responses_per_site.append(np.vstack(band_responses))
+        responses_per_site.append(responses_per_file)
 
     total_samples = sum([site_responses.shape[0] for site_responses in responses_per_site])
     _logger.debug('Found {} total samples across {} sites'.format(total_samples, len(responses_per_site)))
@@ -275,7 +267,21 @@ def build_training_data_from_response_points(
         _logger.debug('Kept {} total samples across {} sites after discarding'.format(
             total_samples, len(responses_per_site)))
 
-    # TODO: fix max size issue, but force for now to prevent overly sized sets
+
+    unique_responses = []
+    for _site in range(len(responses_per_site)):
+        site_unique = np.unique(responses_per_site[_site]).tolist().extend(unique_responses)
+        unique_responses = site_unique
+
+    for _response in range(len(unique_responses)):
+        _logger.info('Response: {} encoded as: {}'.format(unique_responses[_response], _response))
+
+    for _site in range(len(responses_per_site)):
+        revised_responses = np.zeros(responses_per_site[_site].shape)
+        for _response in range(len(unique_responses)):
+            revised_responses[responses_per_site[_site] == unique_responses[_response]] = _response
+        responses_per_site[_site] = revised_responses.copy()
+
     features = np.memmap(
         data_core.get_temporary_features_filepath(config), dtype=np.float32, mode='w+',
         shape=(total_samples, 2*config.data_build.window_radius, 2*config.data_build.window_radius, num_features)
@@ -286,16 +292,18 @@ def build_training_data_from_response_points(
         _logger.debug('Open feature and response datasets for site {}'.format(_site))
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
                         for loc_file in config.raw_files.feature_files[_site]]
-        response_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly) for loc_file in config.raw_files.response_files[_site]]
         boundary_set = common_io.get_site_boundary_set(config, _site)
 
         _logger.debug('Calculate interior rectangle location and extent')
-        [f_ul, r_ul, [b_ul]], x_px_size, y_px_size = common_io.get_overlapping_extent(
-            [feature_sets, response_sets, [bs for bs in [boundary_set] if bs is not None]])
+        lower_coord, upper_coord = common_io.get_overlapping_extent_coordinates(
+            [feature_sets, [], [bs for bs in [boundary_set] if bs is not None]])
+
+        resolution = feature_sets[0].GetGeoTransform()[1,5]
 
         # xy_sample_locations is current the response centers, but we need to use the pixel ULs.  So subtract
         # out the corresponding feature radius
-        xy_sample_locations = xy_sample_points_per_site[_site] - config.data_build.window_radius
+        xy_sample_locations = (xy_sample_points_per_site[_site] - np.array(lower_coord))*resolution - \
+                              config.data_build.window_radius
 
         ref_trans = feature_sets[0].GetGeoTransform()
         subset_geotransform = None
@@ -312,15 +320,15 @@ def build_training_data_from_response_points(
             local_boundary_vector_file = None
             local_boundary_upper_left = None
             if (boundary_set is not None):
-                local_boundary_upper_left = b_ul + xy_sample_locations[_cr, :]
+                local_boundary_upper_left = xy_sample_locations[_cr, :]
             if (subset_geotransform is not None):
                 # define a geotramsform for the subset we are going to take
-                subset_geotransform[0] = ref_trans[0] + (f_ul[0][0] + xy_sample_locations[_cr, 0]) * ref_trans[1]
-                subset_geotransform[3] = ref_trans[3] + (f_ul[0][1] + xy_sample_locations[_cr, 1]) * ref_trans[5]
+                subset_geotransform[0] = ref_trans[0] + (xy_sample_locations[_cr, 0]) * ref_trans[1]
+                subset_geotransform[3] = ref_trans[3] + (xy_sample_locations[_cr, 1]) * ref_trans[5]
                 local_boundary_vector_file = config.raw_files.boundary_files[_site]
 
             local_feature = read_labeling_chunk(
-                feature_sets, f_ul + xy_sample_locations[_cr, :], config, boundary_vector_file=local_boundary_vector_file,
+                feature_sets, xy_sample_locations[_cr, :], config, boundary_vector_file=local_boundary_vector_file,
                 boundary_upper_left=local_boundary_upper_left, b_set=boundary_set,
                 boundary_subset_geotransform=subset_geotransform
             )
