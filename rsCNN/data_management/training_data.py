@@ -200,7 +200,8 @@ def build_training_data_from_response_points(
     for _site in range(0, len(config.raw_files.feature_files)):
 
         _logger.debug('Run through first response')
-        if (config.raw_files.response_files[_site][0] in sections.VECTORIZED_FILENAMES):
+        print(config.raw_files.response_files[_site][0])
+        if (config.raw_files.response_files[_site][0].split('.')[-1] in sections.VECTORIZED_FILENAMES):
             assert(len(config.raw_files.response_files[_site]) == 1), 'Only 1 vector file per site supported for CNN'
 
             feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
@@ -210,7 +211,7 @@ def build_training_data_from_response_points(
             lower_coord, upper_coord = common_io.get_overlapping_extent_coordinates(
                 [feature_sets, [], [bs for bs in [boundary_set] if bs is not None]])
 
-            resolution = feature_sets[0].GetGeoTransform()[1,5]
+            resolution = np.squeeze(np.array(feature_sets[0].GetGeoTransform()))[np.array([1,5])]
 
             vector = fiona.open(config.raw_files.response_files[_site][0])
             x_sample_points = []
@@ -298,7 +299,7 @@ def build_training_data_from_response_points(
         lower_coord, upper_coord = common_io.get_overlapping_extent_coordinates(
             [feature_sets, [], [bs for bs in [boundary_set] if bs is not None]])
 
-        resolution = feature_sets[0].GetGeoTransform()[1,5]
+        resolution = np.squeeze(np.array(feature_sets[0].GetGeoTransform()))[np.array([1,5])]
 
         # xy_sample_locations is current the response centers, but we need to use the pixel ULs.  So subtract
         # out the corresponding feature radius
