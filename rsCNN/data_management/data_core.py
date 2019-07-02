@@ -200,8 +200,6 @@ class DataContainer:
         # 3) band_types is list of lists (of strings, contained in valid_band_types), with the outer list referring to
         #    files and the inner list referring to bands
 
-        import ipdb; ipdb.set_trace;
-
         # TODO - add in some check for vector types
         is_vector = any([x.split('.')[-1] in sections.VECTORIZED_FILENAMES for x in file_list[0]])
         if (is_vector):
@@ -228,7 +226,7 @@ class DataContainer:
                             errors.append('Invalid band types at file {}, band {}'.format(_file, _band))
 
             else:
-                if (len(band_types) != len(file_list)):
+                if (len(band_types) != len(file_list[0])):
                     errors.append('Length of band_types ({}) is not equal to length of file list ({}).  Incorrect input format'.format(len(band_types),len(file_list)))
                 for _file in range(len(band_types)):
                     if (band_types[_file] not in valid_band_types):
