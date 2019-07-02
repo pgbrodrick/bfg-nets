@@ -14,7 +14,6 @@ _logger = logging.getLogger(__name__)
 
 def one_hot_encode_array(raw_band_types: List[str], array: np.array, memmap_file: str = None):
 
-    import ipdb; ipdb.set_trace()
     cat_band_locations = [idx for idx, val in enumerate(raw_band_types) if val == 'C']
     band_types = raw_band_types.copy()
     for _c in reversed(range(len(cat_band_locations))):
