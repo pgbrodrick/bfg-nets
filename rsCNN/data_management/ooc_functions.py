@@ -14,6 +14,7 @@ _logger = logging.getLogger(__name__)
 
 def one_hot_encode_array(raw_band_types: List[str], array: np.array, memmap_file: str = None):
 
+    import ipdb; ipdb.set_trace()
     cat_band_locations = [idx for idx, val in enumerate(raw_band_types) if val == 'C']
     band_types = raw_band_types.copy()
     for _c in reversed(range(len(cat_band_locations))):
@@ -23,7 +24,7 @@ def one_hot_encode_array(raw_band_types: List[str], array: np.array, memmap_file
         assert len(un_array) < _MAX_UNIQUE_RESPONSES,\
             'Too many ({}) unique responses found, suspected incorrect categorical specification'.format(len(un_array))
         _logger.info('Found {} categorical responses'.format(len(un_array)))
-        _logger.debug('Cat response: {}'.format(un_array))
+        _logger.info('Cat response: {}'.format(un_array))
 
         array_shape = list(array.shape)
         array_shape[-1] = len(un_array) + array.shape[-1] - 1
@@ -71,7 +72,6 @@ def permute_array(source: np.array, source_filename: str, permutation: np.array)
     shape = source.shape
     dtype = source.dtype
 
-    print((perm_memmap_file, dtype, shape))
     dest = np.memmap(perm_memmap_file, dtype=dtype, mode='w+', shape=shape)
 
     for i in range(len(permutation)):

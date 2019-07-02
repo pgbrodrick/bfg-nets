@@ -95,6 +95,7 @@ class Experiment(object):
             self.model = config_sections.create_model_from_architecture_config_section(
                 self.config.model_training.architecture_name, self.config.architecture, inshape)
             self.model.compile(loss=loss_function, optimizer=self.config.model_training.optimizer)
+            self.model.summary()
 
         if os.path.exists(get_history_filepath(self.config)):
             assert self.loaded_existing_model, \
