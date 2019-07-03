@@ -18,7 +18,7 @@ _FILENAME_RESPONSES_SUFFIX = 'responses_{}.npy'
 _FILENAME_RESPONSES_TEMPORARY_SUFFIX = '_responses_memmap_temporary.npy'
 _FILENAME_WEIGHTS_SUFFIX = 'weights_{}.npy'
 _FILENAME_WEIGHTS_TEMPORARY_SUFFIX = '_weights_memmap_temporary.npy'
-_FILENAME_DATA_CONTAINER = 'data_container.npz'
+_FILENAME_DATA_CONTAINER = 'data_container_{}.npz'
 
 
 _logger = logging.getLogger(__name__)
@@ -77,7 +77,6 @@ class DataContainer:
                                                         self.config.raw_files.response_files,
                                                         self.config.raw_files.boundary_files)
 
-            print(self.config.raw_files.boundary_files)
             if (self.config.raw_files.ignore_projections is False and len(errors) == 0):
                 errors.extend(training_data.check_projections(self.config.raw_files.feature_files,
                                                               self.config.raw_files.response_files,
@@ -355,4 +354,4 @@ def get_memmap_basename(config: configs.Config) -> str:
 
 
 def get_built_data_container_filepath(config: configs.Config) -> str:
-    return os.path.join(config.data_build.dir_out, _FILENAME_DATA_CONTAINER)
+    return os.path.join(config.data_build.dir_out, _FILENAME_DATA_CONTAINER.format(config.data_build.filename_prefix_out))

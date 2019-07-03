@@ -352,9 +352,15 @@ def build_training_data_from_response_points(
     assert sample_index > 0, 'Insufficient feature data corresponding to response data.  Consider increasing maximum feature nodata size'
 
     # transform responses
-    responses = np.vstack(responses_per_site).astype(np.float32)
+    responses_raw = np.vstack(responses_per_site).astype(np.float32)
     del responses_per_site
-    np.save(data_core.get_temporary_responses_filepath(config),responses)
+    responses = np.memmap(
+        data_core.get_temporary_responses_filepath(config), dtype=np.float32, mode='w+',
+        shape=(sample_index,1)
+    )
+    responses[:] = responses_raw[:]
+    del responses_raw
+
     _log_munged_data_information(features, responses)
 
     features = _resize_munged_features(features, sample_index, config)

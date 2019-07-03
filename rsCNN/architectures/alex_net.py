@@ -43,30 +43,29 @@ def create_model(
 
     # Encodings
     inlayer = keras.layers.Input(shape=inshape)
-    #encoder = inlayer
+    encoder = inlayer
 
-    #if use_initial_colorspace_transformation_layer:
-    #    intermediate_color_depth = int(inshape[-1] ** 2)
-    #    encoder = Conv2D(filters=intermediate_color_depth, kernel_size=(1, 1), padding='same')(inlayer)
-    #    encoder = Conv2D(filters=inshape[-1], kernel_size=(1, 1), padding='same')(encoder)
-    #    encoder = BatchNormalization()(encoder)
+    if use_initial_colorspace_transformation_layer:
+        intermediate_color_depth = int(inshape[-1] ** 2)
+        encoder = Conv2D(filters=intermediate_color_depth, kernel_size=(1, 1), padding='same')(inlayer)
+        encoder = Conv2D(filters=inshape[-1], kernel_size=(1, 1), padding='same')(encoder)
+        encoder = BatchNormalization()(encoder)
 
-    ## Each encoder block has a number of subblocks
-    #for num_subblocks in block_structure:
-    #    for idx_sublayer in range(num_subblocks):
-    #        # Each subblock has a number of convolutions
-    #        encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(encoder)
-    #        if use_batch_norm:
-    #            encoder = BatchNormalization()(encoder)
-    #    # Each encoder block passes its pre-pooled layers through to the decoder
-    #    layers_pass_through.append(encoder)
-    #    encoder = MaxPooling2D(pool_size=pool_size)(encoder)
-    #    if use_growth:
-    #        filters *= 2
+    # Each encoder block has a number of subblocks
+    for num_subblocks in block_structure:
+        for idx_sublayer in range(num_subblocks):
+            # Each subblock has a number of convolutions
+            encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(encoder)
+            if use_batch_norm:
+                encoder = BatchNormalization()(encoder)
+        # Each encoder block passes its pre-pooled layers through to the decoder
+        layers_pass_through.append(encoder)
+        encoder = MaxPooling2D(pool_size=pool_size)(encoder)
+        if use_growth:
+            filters *= 2
 
-    #encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(encoder)
-    inlayer = keras.layers.Input(shape=inshape)
-    output_layer = Flatten()(inlayer)
+    encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(encoder)
+    output_layer = Flatten()(encoder)
     output_layer = Dense(units=filters)(output_layer)
     output_layer = Dense(units=filters)(output_layer)
     output_layer = Dense(units=n_classes, activation=output_activation)(output_layer)
