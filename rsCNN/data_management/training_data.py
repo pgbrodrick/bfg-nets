@@ -103,18 +103,18 @@ def build_training_data_ordered(
                     config.raw_files.feature_files[_site][0]))
                 popped = remaining_sites.pop(_rs_index)
 
+                _rs_index += 1
+                if (_rs_index >= len(remaining_sites)):
+                    _rs_index = 0
+
             if success is True:
                 _sample_index += 1
                 progress_bar.update(1)
 
-                if (popped is not None):
-                    _rs_index += 1
-                    if (_rs_index >= len(remaining_sites)):
-                        _rs_index = 0
-
                 site_read_count += 1
                 if (site_read_count > num_reads_per_site or _sample_index >= config.data_build.max_samples):
                     break
+
     progress_bar.close()
     del all_site_upper_lefts
     del all_site_xy_locations

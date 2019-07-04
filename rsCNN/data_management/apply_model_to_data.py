@@ -86,7 +86,7 @@ def apply_model_to_raster(
 
         write_ul = []
         for row in rowlist:
-            d, m = common_io.read_map_subset([feature_set],
+            d, m = common_io.read_map_subset([feature_file],
                                              [[col, row]],
                                              config.data_build.window_radius * 2,
                                              mask=None,

@@ -118,6 +118,7 @@ def read_map_subset(datafiles: List[str], upper_lefts: List[List[int]], window_d
     raster_count = 0
     datasets = []
     for _f in range(len(datafiles)):
+        print(datafiles[_f])
         if (datafiles[_f].split('.')[-1] not in configs.sections.VECTORIZED_FILENAMES):
             datasets.append(gdal.Open(datafiles[_f], gdal.GA_ReadOnly))
             raster_count += datasets[-1].RasterCount
