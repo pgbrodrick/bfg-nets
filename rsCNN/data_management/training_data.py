@@ -75,7 +75,7 @@ def build_training_data_ordered(
     num_reads_per_site = int(np.floor(config.data_build.max_samples / len(config.raw_files.feature_files)))
 
     _logger.debug('Step through sites in order and grab {} sample from each until max samples'.format(num_reads_per_site))
-    progress_bar = tqdm(total=config.data_build.max_samples, ncols=80)
+    progress_bar = tqdm(total=config.data_build.max_samples, ncols=80, desc='Reading data chunks')
 
     _sample_index = 0
     _rs_index = 0
@@ -217,7 +217,7 @@ def build_training_data_from_response_points(
             x_sample_points = []
             y_sample_points = []
             band_responses = []
-            for _sample in tqdm(range(len(vector)),ncols=80):
+            for _sample in tqdm(range(len(vector)),ncols=80, desc='Reading responses'):
                 if (vector[_sample]['geometry']['type'] == 'Point'):
                     x_sample_points.append(vector[_sample]['geometry']['coordinates'][0])
                     y_sample_points.append(vector[_sample]['geometry']['coordinates'][1])
@@ -320,7 +320,7 @@ def build_training_data_from_response_points(
 
         good_response_data = np.zeros(responses_per_site[_site].shape[0]).astype(bool)
         # Now read in features
-        for _cr in tqdm(range(len(xy_sample_locations)), ncols=80):
+        for _cr in tqdm(range(len(xy_sample_locations)), ncols=80, desc='Reading features'):
 
             local_xy_px_locations = []
             if (boundary_set is not None):

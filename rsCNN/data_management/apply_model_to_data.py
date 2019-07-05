@@ -80,7 +80,7 @@ def apply_model_to_raster(
     collist.append(cr[1]-2*config.data_build.window_radius)
     rowlist.append(rr[1]-2*config.data_build.window_radius)
 
-    for _c in tqdm(range(len(collist)), ncols=80):
+    for _c in tqdm(range(len(collist)), ncols=80, desc='Applying model to scene'):
         col = collist[_c]
         images = []
 
@@ -169,7 +169,7 @@ def maximum_likelihood_classification(
     output = np.zeros((dataset.RasterYSize, dataset.RasterXSize))
     output[dataset.GetRasterBand(1).ReadAsArray() == dataset.GetRasterBand(1).GetNoDataValue()] = output_nodata_value
 
-    for line in tqdm(np.arange(0, dataset.RasterYSize).astype(int), ncols=80):
+    for line in tqdm(np.arange(0, dataset.RasterYSize).astype(int), ncols=80, desc='Calculating max likelihood'):
         prob = dataset.ReadAsArray(0, line, dataset.RasterXSize, 1)
         output[line, :] = np.argmax(prob)
         output[np.any(prob == output_nodata_value, axis=0)] = output_nodata_value
