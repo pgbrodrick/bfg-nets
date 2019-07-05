@@ -281,7 +281,7 @@ class DataContainer:
                  )
 
     def _load_data_core(self):
-        npzf = np.load(get_built_data_container_filepath(self.config))
+        npzf = np.load(get_built_data_container_filepath(self.config),allow_pickle=True)
         self.feature_band_types = npzf['feature_band_types']
         self.response_band_types = npzf['response_band_types']
         self.feature_raw_band_types = npzf['feature_raw_band_types']
