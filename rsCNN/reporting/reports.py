@@ -63,13 +63,12 @@ class Reporter(object):
             self._add_figures(self.plot_classification_report(sampled), pdf)
             self._add_figures(self.plot_confusion_matrix(sampled), pdf, tight=False)
         self._add_figures(self.plot_single_sequence_prediction_histogram(sampled), pdf)
-        if self.experiment.is_model_trained:
-            self._add_figures(self.plot_samples(sampled), pdf)
-            if self.experiment.config.model_reporting.network_progression_show_full:
-                self._add_figures(self.plot_network_feature_progression(sampled, compact=False), pdf)
-            if self.experiment.config.model_reporting.network_progression_show_compact:
-                self._add_figures(self.plot_network_feature_progression(sampled, compact=True), pdf)
-            self._add_figures(self.plot_spatial_error(sampled), pdf)
+        self._add_figures(self.plot_samples(sampled), pdf)
+        if self.experiment.config.model_reporting.network_progression_show_full:
+            self._add_figures(self.plot_network_feature_progression(sampled, compact=False), pdf)
+        if self.experiment.config.model_reporting.network_progression_show_compact:
+            self._add_figures(self.plot_network_feature_progression(sampled, compact=True), pdf)
+        self._add_figures(self.plot_spatial_error(sampled), pdf)
 
     def _add_figures(self, figures: List[plt.Figure], pdf: PdfPages, tight: bool = True) -> None:
         for fig in figures:
@@ -149,7 +148,6 @@ class Reporter(object):
         )
 
     def plot_classification_report(self, sampled: samples.Samples) -> List[plt.Figure]:
-        assert self.experiment.is_model_trained, 'Cannot plot classification report because model is not trained.'
         return model_performance.plot_classification_report(sampled)
 
     def _get_response_data_types(self) -> str:
