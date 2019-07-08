@@ -1,3 +1,4 @@
+import logging
 from typing import Union
 
 from matplotlib import patches
@@ -11,7 +12,9 @@ from rsCNN.reporting.visualizations import colormaps
 
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
+_logger = logging.getLogger(__name__)
 
+_LABEL_CATEGORICAL_RESPONSES = 'categorical_responses'
 _FLOAT_DECIMALS = 2
 
 """    
@@ -76,7 +79,7 @@ def plot_categorical_responses(
         add_xlabel: bool,
         add_ylabel: bool
 ) -> None:
-    _plot_sample_attribute(sampled, idx_sample, idx_response, 'categorical_responses', ax, add_xlabel, add_ylabel)
+    _plot_sample_attribute(sampled, idx_sample, idx_response, _LABEL_CATEGORICAL_RESPONSES, ax, add_xlabel, add_ylabel)
 
 
 def plot_raw_predictions(
@@ -112,10 +115,20 @@ def _plot_sample_attribute(
         add_xlabel: bool,
         add_ylabel: bool
 ) -> None:
+    # Return early if axis is not provided or attribute is not available
     if ax is None:
         return
+    if attribute_name != _LABEL_CATEGORICAL_RESPONSES:
+        is_attribute_available = getattr(sampled, attribute_name) is not None
+    else:
+        is_attribute_available = sampled.raw_responses is not None
+    if not is_attribute_available:
+        _logger.debug('Not plotting {}; attribute not available'.format(
+            attribute_name if attribute_name != _LABEL_CATEGORICAL_RESPONSES else 'raw_responses'))
+        return
+
     # Categorical responses need special handling, in that we use a particular color scheme
-    if attribute_name != 'categorical_responses':
+    if attribute_name != _LABEL_CATEGORICAL_RESPONSES:
         attribute_values = getattr(sampled, attribute_name)[idx_sample, :, :, idx_axis]
         min_, max_ = getattr(sampled, attribute_name + '_range')[idx_axis, :]
         colormap = colormaps.COLORMAP_DEFAULT
@@ -126,15 +139,18 @@ def _plot_sample_attribute(
         colormap = colormaps.COLORMAP_CATEGORICAL
         assert not colormaps.check_is_categorical_colormap_repeated(sampled.num_responses), \
             'Number of categorical responses is greater than length of colormap, figure out how to handle gracefully'
+
     # Handle nan conversions for transformed data
     if attribute_name in ('trans_features', 'trans_responses', 'trans_predictions'):
         attribute_values = attribute_values.copy()
         attribute_values[attribute_values == sampled.data_sequence.nan_replacement_value] = np.nan
-    x_label = '\n'.join(word.capitalize() for word in attribute_name.split('_') if word != 'raw').rstrip('s')
+
+    # Plot
     ax.imshow(attribute_values, vmin=min_, vmax=max_, cmap=colormap)
     ax.set_xticks([])
     ax.set_yticks([])
     if add_xlabel:
+        x_label = '\n'.join(word.capitalize() for word in attribute_name.split('_') if word != 'raw').rstrip('s')
         ax.set_xlabel(
             '{} {}\n{}\n{}'.format(x_label, idx_axis, _format_number(min_), _format_number(max_)))
         ax.xaxis.set_label_position('top')
@@ -151,6 +167,10 @@ def plot_classification_predictions_max_likelihood(
 ) -> None:
     if ax is None:
         return
+    if sampled.raw_predictions is None:
+        _logger.debug('Not plotting raw predictions max likelihood; raw_predictions attribute not available')
+        return
+
     # Note:  this assumes that the softmax applied to all prediction axes and that there was no transformation applied
     #  to the categorical data.
     min_ = 0
@@ -171,6 +191,10 @@ def plot_classification_predictions_max_likelihood(
 def plot_weights(sampled: samples.Samples, idx_sample: int, ax: plt.Axes, add_xlabel: bool, add_ylabel: bool) -> None:
     if ax is None:
         return
+    if sampled.weights is None:
+        _logger.debug('Not plotting weights; weights attribute not available')
+        return
+
     min_, max_ = sampled.weights_range[0, :]
     weights = sampled.weights[idx_sample, :].copy()
     weights[weights == 0] = np.nan
@@ -197,6 +221,11 @@ def plot_binary_error_classification(
 ) -> None:
     if ax is None:
         return
+    if sampled.raw_responses is None or sampled.raw_predictions is None:
+        _logger.debug('Not plotting classification errors; ' +
+                      'raw_responses and/or raw_predictions attributes are not available')
+        return
+
     # Note:  this assumes that the softmax applied to all prediction axes and that there was no transformation applied
     #  to the categorical data.
     # Note:  the actual range of this data will be from 0 to 1, i.e., is the class incorrect or correct, but the plots
@@ -226,6 +255,11 @@ def plot_raw_error_regression(
 ) -> None:
     if ax is None:
         return
+    if sampled.raw_responses is None or sampled.raw_predictions is None:
+        _logger.debug('Not plotting raw regression errors; ' +
+                      'raw_responses and/or raw_predictions attributes are not available')
+        return
+
     error = sampled.raw_predictions[idx_sample, :, :, idx_response] - \
         sampled.raw_responses[idx_sample, :, :, idx_response]
     min_ = float(np.nanmin(error))
@@ -251,6 +285,11 @@ def plot_transformed_error_regression(
 ) -> None:
     if ax is None:
         return
+    if sampled.raw_responses is None or sampled.raw_predictions is None:
+        _logger.debug('Not plotting transformed regression errors; ' +
+                      'raw_responses and/or raw_predictions attributes are not available')
+        return
+
     error = sampled.trans_predictions[idx_sample, :, :, idx_response] - \
         sampled.trans_responses[idx_sample, :, :, idx_response]
     max_ = float(np.max([np.abs(np.nanmin(error)), np.nanmax(error)]))
@@ -270,9 +309,10 @@ def plot_transformed_error_regression(
 def add_internal_window_to_subplot(sampled: samples.Samples, ax: plt.Axes) -> None:
     if ax is None:
         return
+
     loss_window_radius = sampled.config.data_build.loss_window_radius
     window_radius = sampled.config.data_build.window_radius
-    if (loss_window_radius == window_radius):
+    if loss_window_radius == window_radius:
         return
     buffer = int(window_radius - loss_window_radius)
     rect = patches.Rectangle(

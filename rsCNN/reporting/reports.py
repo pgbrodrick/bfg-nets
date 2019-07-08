@@ -109,8 +109,6 @@ class Reporter(object):
             max_features_per_page: int = None,
             max_responses_per_page: int = None
     ) -> List[plt.Figure]:
-        assert self.experiment.is_model_trained, \
-            'Cannot plot raw and transformed prediction samples because model is not trained.'
         if self._get_response_data_types() is _LABEL_CATEGORICAL:
             plotter = samples_viz.plot_classification_samples
         elif self._get_response_data_types() is _LABEL_CONTINUOUS:

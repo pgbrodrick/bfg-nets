@@ -15,7 +15,7 @@ _logger = logging.getLogger(__name__)
 
 
 def plot_classification_report(sampled: samples.Samples) -> List[plt.Figure]:
-    if not sampled.raw_responses or not sampled.raw_predictions:
+    if sampled.raw_responses is None or sampled.raw_predictions is None:
         _logger.debug('Confusion matrix not plotted; no responses or predictions available.')
         return list()
 
@@ -29,7 +29,7 @@ def plot_classification_report(sampled: samples.Samples) -> List[plt.Figure]:
 
 
 def plot_confusion_matrix(sampled: samples.Samples) -> [plt.Figure]:
-    if not sampled.raw_responses or not sampled.raw_predictions:
+    if sampled.raw_responses is None or sampled.raw_predictions is None:
         _logger.debug('Confusion matrix not plotted; no responses or predictions available.')
         return list()
 
