@@ -184,8 +184,9 @@ def plot_single_sequence_prediction_histogram(
             ax = plt.subplot(gs1[0, _r])
             b, h = _get_lhist(sampled.trans_responses[..., _r])
             ax.plot(h, b, color='black')
-            b, h = _get_lhist(sampled.trans_predictions[..., _r])
-            ax.plot(h, b, color='green')
+            if sampled.trans_predictions is not None:
+                b, h = _get_lhist(sampled.trans_predictions[..., _r])
+                ax.plot(h, b, color='green')
 
             if (_r == _response_ind):
                 plt.ylabel('Raw')
@@ -195,8 +196,9 @@ def plot_single_sequence_prediction_histogram(
 
             b, h = _get_lhist(sampled.raw_responses[..., _r])
             ax.plot(h, b, color='black')
-            b, h = _get_lhist(sampled.raw_predictions[..., _r])
-            ax.plot(h, b, color='green')
+            if sampled.raw_predictions is not None:
+                b, h = _get_lhist(sampled.raw_predictions[..., _r])
+                ax.plot(h, b, color='green')
 
             if (_r == _response_ind):
                 plt.ylabel('Transformed')
