@@ -152,10 +152,20 @@ class RawFiles(BaseConfigSection):
     """
     _feature_files_type = list
     feature_files = DEFAULT_REQUIRED_VALUE
-    """list: List of filepaths to raw feature rasters."""
+    """list: List of filepaths to raw feature rasters.  Format is a list of lists, where the outer
+    grouping is sites, and the inner grouping is different data files for that particular site.
+    E.G.: [[site_1_file_1, site_1_file_2],[site_2_file_1, site_2_file_2]].  File order and type
+    between sites is expected to match.  Files must all be the same projection and resolution, but
+    need not be aligned to the same extent - if they are not, the common inner-area will be
+    utilized."""
     _response_files_type = list
     response_files = DEFAULT_REQUIRED_VALUE
-    """list: List of filepaths to raw response rasters."""
+    """list: List of filepaths to raw response rasters or vectors (shp or kml supported currently).  Format is a list of lists, where the outer
+    grouping is sites, and the inner grouping is different data files for that particular site.
+    E.G.: [[site_1_file_1, site_1_file_2],[site_2_file_1, site_2_file_2]].  File order and type
+    between sites is expected to match.  Files must all be the same projection and resolution, but
+    need not be aligned to the same extent - if they are not, the common inner-area will be
+    utilized."""
     _boundary_files_type = list
     boundary_files = DEFAULT_OPTIONAL_VALUE
     """list: Optional list of filepaths to boundaries. Data is built or sampled within the boundaries."""

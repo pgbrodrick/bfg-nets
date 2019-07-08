@@ -27,7 +27,8 @@ _DEFAULT_FILENAME_LOG = 'log.out'
 
 
 class DataContainer:
-    """ A container class that holds all sorts of data objects
+    """ A container class that holds data objects that will need to be
+    passed around for modeling, reporting, and application.
     """
     config = None
     features = list()
@@ -50,6 +51,11 @@ class DataContainer:
     handling, or other behavior."""
 
     def __init__(self, config: configs.Config):
+        """ Initialization, attempts to load previously built data container 
+        if it exists
+        Arguments:
+        config (configs.Config) : Configuration file.
+        """
         errors = config.get_human_readable_config_errors(include_sections=['raw_files', 'data_build', 'data_samples'])
         assert not errors, errors
         self.config = config
@@ -66,7 +72,16 @@ class DataContainer:
             except:
                 _logger.info('Failed to load previously saved DataContainer')
 
-    def build_or_load_rawfile_data(self, rebuild: bool = False):
+    def build_or_load_rawfile_data(self, rebuild: bool = False) -> None:
+        """ If rawfile data has previously been built as described by the
+        config, load it back up (essentially free operation, only data shells
+        will be loaded).  If rawfile data does not yet exist, build it as
+        described by the config.
+
+        Arguments:
+        rebuild (Optional[bool]) : Flag used to rebuild data from scratch, 
+        even if it already exists.  Defaults to False.
+        """
 
         # Load data if it already exists
         if training_data.check_built_data_files_exist(self.config) and not rebuild:
@@ -121,6 +136,15 @@ class DataContainer:
         self.weights = weights
 
     def build_or_load_scalers(self, rebuild=False):
+        """ If scalers have previously been built as described by the
+        config, load them back up.  If scalers do not yet exist,
+        build it as described by the config.  Required data to have already
+        been built.
+
+        Arguments:
+        rebuild (Optional[bool]) : Flag used to refit scalers, 
+        even if they already exists.  Defaults to False.
+        """
 
         # TODO:  I think this worked only if feature_scaler_name was a string, but it was also possible to be a list
         #  according to the DataConfig, in which case it would error out. This needs to be updated for multiple scalers.
@@ -149,6 +173,9 @@ class DataContainer:
         self.response_scaler = response_scaler
 
     def load_sequences(self):
+        """ Create and attach sequences to self.  Requires data to 
+        already be built and any scalers to have been fit.
+        """
         train_folds = [idx for idx in range(self.config.data_build.number_folds)
                        if idx not in (self.config.data_build.validation_fold, self.config.data_build.test_fold)]
 
@@ -190,6 +217,13 @@ class DataContainer:
         return data_sequence
 
     def check_band_types(self, file_list, band_types):
+        """ Check the format of the band types config parameter.
+
+        Arguments:
+        file_list (list): List of list of input files
+        band_types (list): List of list of band types, corresponding to the
+        first site in the file_list
+        """
         errors = []
         valid_band_types = ['R', 'C']
         # 3 options are available for specifying band_types:
