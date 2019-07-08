@@ -884,7 +884,7 @@ def check_built_data_files_exist(config: configs.Config) -> bool:
     if not missing_files:
         _logger.debug('Built data files found at paths: {}'.format(', '.join(filepaths)))
     else:
-        _logger.warning('Built data files were not found at paths: {}'.format(', '.join(missing_files)))
+        _logger.info('Built data files were not found at paths: {}'.format(', '.join(missing_files)))
     return not missing_files
 
 

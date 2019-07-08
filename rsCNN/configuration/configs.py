@@ -103,7 +103,7 @@ class Config(object):
         """
         assert not (include_sections and exclude_sections), \
             'Both include_sections and exclude_sections cannot be specified.'
-        _logger.debug('Checking config sections for errors')
+        _logger.debug('Checking config sections for configuration issues')
         errors = list()
         config_sections = sections.get_config_sections()
         if include_sections:
@@ -120,7 +120,7 @@ class Config(object):
             errors.extend(populated_section.check_config_validity())
             if config_section is sections.ModelTraining:
                 errors.extend(self.architecture.check_config_validity())
-        _logger.debug('{} errors found'.format(len(errors)))
+        _logger.debug('{} configuration issues found'.format(len(errors)))
         return errors
 
     def get_human_readable_config_errors(
