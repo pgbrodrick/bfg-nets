@@ -1,3 +1,4 @@
+import logging
 from typing import List
 
 import keras
@@ -8,6 +9,8 @@ from rsCNN.reporting import samples
 
 
 plt.switch_backend('Agg')  # Needed for remote server plotting
+
+_logger = logging.getLogger(__name__)
 
 
 def plot_model_summary(model: keras.Model) -> List[plt.Figure]:
@@ -28,6 +31,10 @@ def plot_network_feature_progression(
         max_pages: int = 10,
         max_filters: int = 10
 ) -> List[plt.Figure]:
+    if not sampled.is_model_trained:
+        _logger.debug('Network feature progression not plotted; model is not trained')
+        return list()
+
     return [_plot_sample_feature_progression(sampled, idx_sample, compact, max_filters)
             for idx_sample in range(min(max_pages, sampled.num_samples))]
 

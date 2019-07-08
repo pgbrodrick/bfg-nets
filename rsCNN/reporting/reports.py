@@ -94,7 +94,6 @@ class Reporter(object):
             max_pages: int = None,
             max_filters: int = None
     ) -> List[plt.Figure]:
-        assert self.experiment.is_model_trained, 'Cannot plot network feature progression because model is not trained.'
         return networks.plot_network_feature_progression(
             sampled,
             compact=compact,

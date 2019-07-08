@@ -9,6 +9,7 @@ class Samples(object):
     data_sequence = None
     data_sequence_label = None
     model = None
+    is_model_trained = None
     config = None
     num_samples = None
     num_features = None
@@ -40,6 +41,7 @@ class Samples(object):
     ) -> None:
         self.data_sequence = data_sequence
         self.model = model
+        self.is_model_trained = is_model_trained
         self.config = config
         self.data_sequence_label = data_sequence_label
         self._get_sampled_features_responses_and_set_metadata_and_weights()
