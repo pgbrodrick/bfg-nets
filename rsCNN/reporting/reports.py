@@ -137,7 +137,6 @@ class Reporter(object):
             max_pages: int = None,
             max_responses_per_page: int = None
     ) -> List[plt.Figure]:
-        assert self.experiment.is_model_trained, 'Cannot plot spatial error because model is not trained.'
         if self._get_response_data_types() is _LABEL_CATEGORICAL:
             plotter = model_performance.plot_spatial_classification_error
         elif self._get_response_data_types() is _LABEL_CONTINUOUS:

@@ -83,6 +83,10 @@ def plot_spatial_classification_error(
         max_pages: int = 8,
         max_responses_per_page: int = 10
 ) -> List[plt.Figure]:
+    if sampled.raw_responses is None or sampled.raw_predictions is None:
+        _logger.debug('Spatial classification error not plotted; no raw responses or predictions available.')
+        return list()
+
     actual = np.expand_dims(np.argmax(sampled.raw_responses, axis=-1), -1)
     predicted = np.expand_dims(np.argmax(sampled.raw_predictions, axis=-1), -1)
     error = (actual != predicted).astype(float)
@@ -100,6 +104,10 @@ def plot_spatial_regression_error(
         max_pages: int = 8,
         max_responses_per_page: int = 10,
 ) -> List[plt.Figure]:
+    if sampled.raw_responses is None or sampled.raw_predictions is None:
+        _logger.debug('Spatial regression error not plotted; no raw responses or predictions available.')
+        return list()
+
     abs_error = np.nanmean(np.abs(sampled.raw_predictions - sampled.raw_responses), axis=0)
     return _plot_spatial_error(abs_error, sampled, max_pages, max_responses_per_page)
 
