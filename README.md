@@ -25,8 +25,10 @@ This option is recommended because GPUs are orders of magnitude more efficient a
 1. `conda env create --name=myenv --file=environment_GPU.yaml`
 1. `conda activate myenv`
 1. `conda env update --file=environment.yaml`
+1. In the base of the repo:  `pip install --editable .`
 
-## CPU-compatible
+### CPU-compatible
 
 1. Install anaconda or miniconda.
 1. `conda env create --name=envname --file=environment.yaml`
+1. In the base of the repo:  `pip install --editable .`
