@@ -55,9 +55,8 @@ class Reporter(object):
             )
             self._create_model_report_for_sequence(sampled, pdf)
             _logger.info('Plot Model History')
-            self._add_figures(histories.plot_history(self.experiment.history), pdf)
-            self._add_figures(
-                logs.plot_log_warnings_and_errors(self.data_container.config, self.experiment.config), pdf)
+            self._add_figures(self.plot_model_history(), pdf)
+            self._add_figures(self.plot_log_warnings_and_errors(), pdf)
 
     def _create_model_report_for_sequence(self, sampled: samples.Samples, pdf: PdfPages) -> None:
         if self.experiment.is_model_trained and self._get_response_data_types() is _LABEL_CATEGORICAL:
@@ -82,9 +81,11 @@ class Reporter(object):
     def plot_model_summary(self) -> List[plt.Figure]:
         return networks.plot_model_summary(self.experiment.model)
 
-    def plot_model_history(self):
-        assert self.experiment.is_model_trained, 'Cannot plot model history because model is not trained.'
+    def plot_model_history(self) -> List[plt.Figure]:
         return histories.plot_history(self.experiment.history)
+
+    def plot_log_warnings_and_errors(self) -> List[plt.Figure]:
+        return logs.plot_log_warnings_and_errors(self.data_container.config, self.experiment.config)
 
     def plot_network_feature_progression(
             self,
