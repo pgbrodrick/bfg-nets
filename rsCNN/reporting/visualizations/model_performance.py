@@ -1,3 +1,4 @@
+import logging
 from typing import List
 
 from matplotlib import gridspec
@@ -10,7 +11,14 @@ from rsCNN.reporting import samples
 from rsCNN.reporting.visualizations import colormaps, subplots
 
 
+_logger = logging.getLogger(__name__)
+
+
 def plot_classification_report(sampled: samples.Samples) -> List[plt.Figure]:
+    if not sampled.raw_responses or not sampled.raw_predictions:
+        _logger.debug('Confusion matrix not plotted; no responses or predictions available.')
+        return list()
+
     classes, actual, predicted = _calculate_classification_classes_actual_and_predicted(sampled)
     report = 'Classification report\n\n' + sklearn.metrics.classification_report(actual, predicted, classes)
     fig, ax = plt.subplots(figsize=(8.5, 11), nrows=1, ncols=1)
@@ -21,6 +29,10 @@ def plot_classification_report(sampled: samples.Samples) -> List[plt.Figure]:
 
 
 def plot_confusion_matrix(sampled: samples.Samples) -> [plt.Figure]:
+    if not sampled.raw_responses or not sampled.raw_predictions:
+        _logger.debug('Confusion matrix not plotted; no responses or predictions available.')
+        return list()
+
     classes, actual, predicted = _calculate_classification_classes_actual_and_predicted(sampled)
     confusion_matrix = sklearn.metrics.confusion_matrix(actual, predicted, labels=classes)
     normed_matrix = confusion_matrix.astype(float) / confusion_matrix.sum(axis=1)[:, np.newaxis]

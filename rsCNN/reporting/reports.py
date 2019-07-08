@@ -77,7 +77,6 @@ class Reporter(object):
             pdf.savefig(fig, bbox_inches='tight' if tight else None)
 
     def plot_confusion_matrix(self, sampled: samples.Samples) -> List[plt.Figure]:
-        assert self.experiment.is_model_trained, 'Cannot plot confusion matrix because model is not trained.'
         return model_performance.plot_confusion_matrix(sampled)
 
     def plot_model_summary(self) -> List[plt.Figure]:
