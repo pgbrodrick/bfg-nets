@@ -32,6 +32,7 @@ def _plot_log_warnings_and_errors(filepath_log: str, log_label: str) -> plt.Figu
                 log_label, len(lines)))
     else:
         lines = ['{} log report:  no log file was found at {}'.format(log_label, filepath_log)]
+    lines = ''.join(lines)
     fig, axes = plt.subplots(figsize=(8.5, 11), nrows=1, ncols=1)
     plt.text(0, 0, lines, **{'fontsize': 8, 'fontfamily': 'monospace'})
     plt.axis('off')
