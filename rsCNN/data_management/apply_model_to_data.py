@@ -21,7 +21,8 @@ def apply_model_to_raster(
         destination_basename: str,
         make_png: bool = False,
         make_tif: bool = True,
-        CNN_MODE: bool = False
+        CNN_MODE: bool = False,
+        exclude_feature_nodata: bool = False
 ) -> None:
     """ Apply a trained model to a raster file.
 
@@ -40,6 +41,10 @@ def apply_model_to_raster(
         Should an output be created in PNG format?
       make_tif - boolean
         Should an output be created in TIF format?
+      CNN_MODE - boolean
+        Should the model be applied in CNN mode.
+      exclude_feature_nodata - boolean
+        
     """
 
     config = data_container.config
@@ -117,8 +122,9 @@ def apply_model_to_raster(
 
         pred_y[np.logical_not(np.isfinite(pred_y))] = config.raw_files.response_nodata_value
 
-        #nd_set = np.all(np.isnan(images), axis=-1)
-        #pred_y[nd_set, ...] = data_config.response_nodata_value
+        if (exclude_feature_nodata):
+            nd_set = np.all(np.isnan(images), axis=-1)
+            pred_y[nd_set, ...] = data_config.response_nodata_value
 
         if (not CNN_MODE):
             if (internal_offset != 0):
