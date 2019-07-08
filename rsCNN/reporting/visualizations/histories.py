@@ -17,7 +17,7 @@ def plot_history(history: dict) -> [plt.Figure]:
 
     # Epoch times and delays
     ax = axes[0, 0]
-    if history['epoch_start'] and history['epoch_finish']:
+    if 'epoch_start' in history and 'epoch_finish' in history:
         epoch_time = [(finish - start).seconds for start,
                       finish in zip(history['epoch_start'], history['epoch_finish'])]
         epoch_delay = [(start - finish).seconds for start, finish
@@ -32,7 +32,7 @@ def plot_history(history: dict) -> [plt.Figure]:
 
     # Epoch times different view
     ax = axes[0, 1]
-    if history['train_start'] and history['epoch_finish']:
+    if 'train_start' in history and 'epoch_finish' in history:
         minutes_elapsed_per_epoch = np.array(
             [(dt - history['train_start']).seconds / 60 for dt in history['epoch_finish']]
         )
@@ -46,7 +46,7 @@ def plot_history(history: dict) -> [plt.Figure]:
 
     # Loss
     ax = axes[1, 0]
-    if history['loss']:
+    if 'loss' in history:
         ax.plot(history['loss'][-160:], c='black', label='Training loss')
         if 'val_loss' in history:
             ax.plot(history['val_loss'][-160:], '--', c='blue', label='Validation loss')
@@ -58,7 +58,7 @@ def plot_history(history: dict) -> [plt.Figure]:
 
     # Learning rate
     ax = axes[1, 1]
-    if history['lr']:
+    if 'lr' in history:
         ax.plot(history['lr'][-160:], c='black')
         ax.set_xlabel('Epoch')
         ax.set_ylabel('Learning rate')
