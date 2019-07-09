@@ -402,13 +402,12 @@ def build_training_data_from_response_points(
 
 
 def get_proj(fname: str) -> str:
-    """ Get the projection of a raster/vector dataset.
-    Arguments:
-    fname - str
-      Name of input file.
+    """
+    Get the projection of a raster/vector dataset.
 
-    Returns:
-    The projection of the input fname
+    :param str fname: Name of input file
+
+    :return The projection of the input fname
     """
     ds = common_io.noerror_open(fname)
     if (ds is not None):
