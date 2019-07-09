@@ -79,7 +79,6 @@ class DataContainer:
         will be loaded).  If rawfile data does not yet exist, build it as
         described by the config.
 
-        Arguments:
         :param Optional[bool] rebuild: Flag used to rebuild data from scratch,
         even if it already exists.  Defaults to False.
         """
@@ -142,7 +141,6 @@ class DataContainer:
         build it as described by the config.  Required data to have already
         been built.
 
-        Arguments:
         :param Optional[bool] rebuild: Flag used to refit scalers,
         even if they already exists.  Defaults to False.
         """
