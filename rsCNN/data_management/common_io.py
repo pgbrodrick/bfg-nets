@@ -199,16 +199,12 @@ def get_site_boundary_vector_file(config: configs.Config, _site) -> str:
 
 def rasterize_vector(vector_file: str, geotransform: List[float], output_shape: Tuple) -> np.array:
     """ Rasterizes an input vector directly into a numpy array.
-    Arguments:
-    vector_file
-      Input vector file to be rasterized.
-    geotransform
-      A gdal style geotransform.
-    output_shape
-      The shape of the output file to be generated.
 
-    Return:
-    A rasterized 2-d numpy array.
+    :argument str vector_file: Input vector file to be rasterized
+    :argument List[float] geotransform: A gdal style geotransform
+    :argument Tuple output_shape: The shape of the output file to be generated
+
+    :return np.array mask: A rasterized 2-d numpy array
     """
     ds = fiona.open(vector_file, 'r')
     trans = copy.deepcopy(geotransform)

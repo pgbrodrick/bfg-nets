@@ -26,25 +26,17 @@ def apply_model_to_raster(
 ) -> None:
     """ Apply a trained model to a raster file.
 
-      Arguments:
-      cnn - CNN (rsCNN/networks/__init__.py)
-        Pre-trained model.
-      data_container - Dataset
-        Holds info like scalers
-      feature_file - str
-        File with feature data to apply the model to.
-      destination_basename -  str
-        Base of the output file (will get a .tif or .png extention).
+    :argument keras.Model cnn:  Pre-trained keras CNN model
+    :argument DataContainer data_container: Holds info like scalers
+    :argument str feature_file: File with feature data to apply the model to
+    :argument str destination_basename: Base of the output file (will get a .tif or .png extention)
 
-      Keyword Arguments:
-      make_png - boolean
-        Should an output be created in PNG format?
-      make_tif - boolean
-        Should an output be created in TIF format?
-      CNN_MODE - boolean
-        Should the model be applied in CNN mode.
-      exclude_feature_nodata - boolean
-        
+    :argument Optional(bool) make_png: Should an output be created in PNG format?
+    :argument Optional(bool) make_tif: Should an output be created in TIF format?
+    :argument Optional(bool) CNN_MODE: Should the model be applied in CNN mode?
+    :argument Optional(bool) exclude_feature_nodata: Flag to remove all pixels in features without data from applied model
+
+    :return None
     """
 
     config = data_container.config
@@ -164,13 +156,24 @@ def maximum_likelihood_classification(
         output_nodata_value: int = -1
 ) -> None:
     """ Convert a n-band map of probabilities to a classified image using maximum likelihood.
+
+    :argument keras.Model cnn:  Pre-trained keras CNN model
+    :argument DataContainer data_container: Holds info like scalers
+    :argument str feature_file: File with feature data to apply the model to
+    :argument str destination_basename: Base of the output file (will get a .tif or .png extention)
+
+    :argument Optional(bool) make_png: Should an output be created in PNG format?
+    :argument Optional(bool) make_tif: Should an output be created in TIF format?
+    :argument Optional(bool) CNN_MODE: Should the model be applied in CNN mode?
+    :argument Optional(bool) exclude_feature_nodata: Flag to remove all pixels in features without data from applied model
+
+    :return None
     """
 
     output_tif_file = output_file_base + '.tif'
     output_png_file = output_file_base + '.png'
 
     dataset = gdal.Open(likelihood_file, gdal.GA_ReadOnly)
-    n_classes = dataset.RasterCount
 
     output = np.zeros((dataset.RasterYSize, dataset.RasterXSize))
     output[dataset.GetRasterBand(1).ReadAsArray() == dataset.GetRasterBand(1).GetNoDataValue()] = output_nodata_value
