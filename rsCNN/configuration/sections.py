@@ -160,12 +160,11 @@ class RawFiles(BaseConfigSection):
     utilized."""
     _response_files_type = list
     response_files = DEFAULT_REQUIRED_VALUE
-    """list: List of filepaths to raw response rasters or vectors (shp or kml supported currently).  Format is a list of lists, where the outer
-    grouping is sites, and the inner grouping is different data files for that particular site.
-    E.G.: [[site_1_file_1, site_1_file_2],[site_2_file_1, site_2_file_2]].  File order and type
-    between sites is expected to match.  Files must all be the same projection and resolution, but
-    need not be aligned to the same extent - if they are not, the common inner-area will be
-    utilized."""
+    """list: List of filepaths to raw response rasters or vectors (shp or kml supported currently).  Format is a list of
+    lists, where the outer grouping is sites, and the inner grouping is different data files for that particular site.
+    E.G.: [[site_1_file_1, site_1_file_2],[site_2_file_1, site_2_file_2]].  File order and type between sites is 
+    expected to match.  Files must all be the same projection and resolution, but need not be aligned to the same extent
+    - if they are not, the common inner-area will be utilized."""
     _boundary_files_type = list
     boundary_files = DEFAULT_OPTIONAL_VALUE
     """list: Optional list of filepaths to boundaries. Data is built or sampled within the boundaries."""
@@ -185,11 +184,14 @@ class RawFiles(BaseConfigSection):
     """float: Value that denotes missing data in response files."""
     _boundary_bad_value_type = float
     boundary_bad_value = DEFAULT_OPTIONAL_VALUE
-    """float: Value that denotes out-of-bounds areas in boundary files."""
+    """float: Value that denotes out-of-bounds areas in boundary files. For example, raster files may have non-negative
+    values to represent in-bounds areas and -9999 to represent out-of-bounds areas. Because this parameter must 
+    currently be set when boundary files are used, when the boundary files are shapefiles with vectors/polygons to
+    represent in-bounds areas, this parameter should be set to a nonsensical value, like -9999 or 0."""
     _ignore_projections_type = bool
     ignore_projections = False
-    """bool: Should projection differences between feature and response files be ignored? This option ' +
-    'should only be true if the user is confident that projections are identical despite encodings."""
+    """bool: Should projection differences between feature and response files be ignored? This option
+    should only be true if the user is confident that projections are identical despite encodings."""
 
     def _check_config_validity(self) -> List[str]:
         errors = list()
