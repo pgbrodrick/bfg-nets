@@ -185,9 +185,8 @@ class RawFiles(BaseConfigSection):
     _boundary_bad_value_type = float
     boundary_bad_value = DEFAULT_OPTIONAL_VALUE
     """float: Value that denotes out-of-bounds areas in boundary files. For example, raster files may have non-negative
-    values to represent in-bounds areas and -9999 to represent out-of-bounds areas. Because this parameter must 
-    currently be set when boundary files are used, when the boundary files are shapefiles with vectors/polygons to
-    represent in-bounds areas, this parameter should be set to a nonsensical value, like -9999 or 0."""
+    values to represent in-bounds areas and -9999 to represent out-of-bounds areas. This value must be 0 when working
+    with shapefiles where vectors/polygons denote in-bounds areas."""
     _ignore_projections_type = bool
     ignore_projections = False
     """bool: Should projection differences between feature and response files be ignored? This option
