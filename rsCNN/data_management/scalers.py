@@ -188,7 +188,7 @@ class StandardScaler(BaseSklearnScaler):
 
 class MinMaxScaler(BaseSklearnScaler):
 
-    def __init__(self, savename_base, feature_range=(-1, 1)):
+    def __init__(self, savename_base, feature_range=(0, 1)):
         self.scaler = sklearn.preprocessing.MinMaxScaler(feature_range=feature_range, copy=True)
         super().__init__(savename_base)
 
