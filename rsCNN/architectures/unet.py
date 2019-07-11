@@ -66,7 +66,7 @@ def create_model(
         encoder = MaxPooling2D(pool_size=pool_size)(encoder)
         if use_growth:
             filters *= 2
-    filters = filters/2
+    filters = int(filters/2)
 
     # Decodings
     decoder = encoder
