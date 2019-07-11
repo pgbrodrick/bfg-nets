@@ -189,7 +189,7 @@ def plot_single_sequence_prediction_histogram(
                 ax.plot(h, b, color='green')
 
             if (_r == _response_ind):
-                plt.ylabel('Raw')
+                plt.ylabel('Transformed')
             plt.title('Response ' + str(_r))
 
             ax = plt.subplot(gs1[1, _r])
@@ -199,9 +199,12 @@ def plot_single_sequence_prediction_histogram(
             if sampled.raw_predictions is not None:
                 b, h = _get_lhist(sampled.raw_predictions[..., _r])
                 ax.plot(h, b, color='green')
+                plt.legend(['Response','Prediction'])
+            else:
+                plt.legend(['Response'])
 
             if (_r == _response_ind):
-                plt.ylabel('Transformed')
+                plt.ylabel('Raw')
 
         _response_ind += max_responses_per_page
         fig_list.append(fig)
