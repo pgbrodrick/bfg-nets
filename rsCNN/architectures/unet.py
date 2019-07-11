@@ -26,6 +26,7 @@ def create_model(
         padding: str = config_sections.DEFAULT_PADDING,
         pool_size: Tuple[int, int] = config_sections.DEFAULT_POOL_SIZE,
         use_batch_norm: bool = config_sections.DEFAULT_USE_BATCH_NORM,
+        internal_activation: str = config_sections.DEFAULT_INTERNAL_ACTIVATION,
         use_growth: bool = config_sections.DEFAULT_USE_GROWTH,
         use_initial_colorspace_transformation_layer: bool =
     config_sections.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
@@ -49,7 +50,7 @@ def create_model(
 
     if use_initial_colorspace_transformation_layer:
         intermediate_color_depth = int(inshape[-1] ** 2)
-        encoder = Conv2D(filters=intermediate_color_depth, kernel_size=(1, 1), padding='same')(inlayer)
+        encoder = Conv2D(filters=intermediate_color_depth, kernel_size=(1, 1), padding='same', activation=internal_activation)(inlayer)
         encoder = Conv2D(filters=inshape[-1], kernel_size=(1, 1), padding='same')(encoder)
         encoder = BatchNormalization()(encoder)
 
@@ -57,7 +58,7 @@ def create_model(
     for num_sublayers in block_structure:
         for idx_sublayer in range(num_sublayers):
             # Each subblock has a number of convolutions
-            encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(encoder)
+            encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, activation=internal_activation)(encoder)
             if use_batch_norm:
                 encoder = BatchNormalization()(encoder)
         # Each encoder block passes its pre-pooled layers through to the decoder
@@ -72,11 +73,11 @@ def create_model(
     for num_subblocks, layer_passed_through in zip(reversed(block_structure), reversed(layers_pass_through)):
         for idx_sublayer in range(num_subblocks):
             # Each subblock has a number of convolutions
-            decoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(decoder)
+            decoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, activation=internal_activation)(decoder)
             if use_batch_norm:
                 decoder = BatchNormalization()(decoder)
         decoder = UpSampling2D(size=pool_size)(decoder)
-        decoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(decoder)
+        decoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, activation=internal_activation)(decoder)
         if use_batch_norm:
             decoder = BatchNormalization()(decoder)
         decoder = Concatenate()([layer_passed_through, decoder])
@@ -84,7 +85,7 @@ def create_model(
             filters = int(filters / 2)
 
     # Last convolutions
-    output_layer = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(decoder)
+    output_layer = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, activation=internal_activation)(decoder)
     if use_batch_norm:
         output_layer = BatchNormalization()(output_layer)
     output_layer = Conv2D(

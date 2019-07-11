@@ -145,6 +145,7 @@ def test_unet_builds_and_compiles():
         padding='same',
         pool_size=(2, 2),
         use_batch_norm=True,
+        internal_activation='relu',
         use_growth=True,
         use_initial_colorspace_transformation_layer=True
     )

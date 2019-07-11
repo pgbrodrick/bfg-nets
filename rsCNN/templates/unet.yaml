@@ -48,6 +48,7 @@ architecture:
   kernel_size: [3, 3]
   min_conv_width: 8
   n_classes: REQUIRED
+  internal_activation: relu
   output_activation: REQUIRED
   padding: same
   pool_size: [2, 2]

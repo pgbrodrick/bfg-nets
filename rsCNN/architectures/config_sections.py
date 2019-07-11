@@ -11,6 +11,7 @@ DEFAULT_FILTERS = 64
 DEFAULT_KERNEL_SIZE = (3, 3)
 DEFAULT_PADDING = 'same'
 DEFAULT_USE_BATCH_NORM = False
+DEFAULT_INTERNAL_ACTIVATION = 'relu'
 DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER = False
 
 # Architecture-specific parameters
@@ -37,6 +38,10 @@ class BaseArchitectureConfigSection(sections.BaseConfigSection):
     """int: The number of classes (filters) used in the final network layer. Example 1:  if the network is being trained
     to predict a single continuous variable, this should be 1. Example 2:  if the network is being trained to classify 
     pixels into five classes, this should be 5."""
+    _internal_activation_type = str
+    internal_activation = DEFAULT_INTERNAL_ACTIVATION
+    """str: The internal activation function used between layers. See Keras documentation for more details and available 
+    options."""
     _output_activation_type = str
     output_activation = DEFAULT_REQUIRED_VALUE
     """str: The activation type for the final output layer. See Keras documentation for more details and available 
