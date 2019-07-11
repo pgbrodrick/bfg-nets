@@ -51,7 +51,7 @@ def create_model(
     if use_initial_colorspace_transformation_layer:
         intermediate_color_depth = int(inshape[-1] ** 2)
         encoder = Conv2D(filters=intermediate_color_depth, kernel_size=(1, 1), padding='same', activation=internal_activation)(inlayer)
-        encoder = Conv2D(filters=inshape[-1], kernel_size=(1, 1), padding='same')(encoder)
+        encoder = Conv2D(filters=inshape[-1], kernel_size=(1, 1), padding='same', activation=internal_activation)(encoder)
         encoder = BatchNormalization()(encoder)
 
     # Each encoder block has a number of subblocks
@@ -77,18 +77,16 @@ def create_model(
             decoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, activation=internal_activation)(decoder)
             if use_batch_norm:
                 decoder = BatchNormalization()(decoder)
-        decoder = UpSampling2D(size=pool_size)(decoder)
-        decoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, activation=internal_activation)(decoder)
-        if use_batch_norm:
-            decoder = BatchNormalization()(decoder)
+
         decoder = Concatenate()([layer_passed_through, decoder])
         if use_growth:
             filters = int(filters / 2)
 
     # Last convolutions
-    output_layer = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, activation=internal_activation)(decoder)
-    if use_batch_norm:
-        output_layer = BatchNormalization()(output_layer)
+    for _ind in range(2):
+        output_layer = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, activation=internal_activation)(decoder)
+        if use_batch_norm:
+            output_layer = BatchNormalization()(output_layer)
     output_layer = Conv2D(
         filters=n_classes, kernel_size=(1, 1), padding='same', activation=output_activation)(output_layer)
     return keras.models.Model(inputs=[inlayer], outputs=[output_layer])
