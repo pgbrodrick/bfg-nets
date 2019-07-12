@@ -24,6 +24,7 @@ def create_model(
         output_activation: str,
         block_structure: Tuple[int, ...] = config_sections.DEFAULT_BLOCK_STRUCTURE,
         filters: int = config_sections.DEFAULT_FILTERS,
+        internal_activation: str = config_sections.DEFAULT_INTERNAL_ACTIVATION,
         kernel_size: Tuple[int, int] = config_sections.DEFAULT_KERNEL_SIZE,
         min_conv_width=1,  # TODO:  we need to kill this parameter, it doesn't do anything except a simple check
         padding: str = config_sections.DEFAULT_PADDING,

@@ -21,12 +21,12 @@ def create_model(
         output_activation: str,
         block_structure: Tuple[int, ...] = config_sections.DEFAULT_BLOCK_STRUCTURE,
         filters: int = config_sections.DEFAULT_FILTERS,
+        internal_activation: str = config_sections.DEFAULT_INTERNAL_ACTIVATION,
         kernel_size: Tuple[int, int] = config_sections.DEFAULT_KERNEL_SIZE,
         min_conv_width: int = config_sections.DEFAULT_MIN_CONV_WIDTH,
         padding: str = config_sections.DEFAULT_PADDING,
         pool_size: Tuple[int, int] = config_sections.DEFAULT_POOL_SIZE,
         use_batch_norm: bool = config_sections.DEFAULT_USE_BATCH_NORM,
-        internal_activation: str = config_sections.DEFAULT_INTERNAL_ACTIVATION,
         use_growth: bool = config_sections.DEFAULT_USE_GROWTH,
         use_initial_colorspace_transformation_layer: bool =
     config_sections.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
