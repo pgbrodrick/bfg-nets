@@ -78,7 +78,7 @@ def create_model(
             if use_batch_norm:
                 decoder = BatchNormalization()(decoder)
 
-        decoder = Conv2DTranspose(size=pool_size)(decoder)
+        decoder = Conv2DTranspose(size=pool_size, kernel_size=kernel_size)(decoder)
         if use_batch_norm:
             decoder = BatchNormalization()(decoder)
         decoder = Concatenate()([layer_passed_through, decoder])
