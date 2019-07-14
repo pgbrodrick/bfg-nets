@@ -3,7 +3,7 @@ from typing import Tuple
 import keras
 from keras.layers import BatchNormalization, Concatenate, Conv2D, MaxPooling2D, UpSampling2D, Conv2DTranspose
 
-from rsCNN.architectures import config_sections
+from rsCNN.architectures import config_sections, network_sections
 
 
 class ArchitectureConfigSection(
@@ -49,10 +49,8 @@ def create_model(
     encoder = inlayer
 
     if use_initial_colorspace_transformation_layer:
-        intermediate_color_depth = int(inshape[-1] ** 2)
-        encoder = Conv2D(filters=intermediate_color_depth, kernel_size=(1, 1), padding='same', activation=internal_activation)(inlayer)
-        encoder = Conv2D(filters=inshape[-1], kernel_size=(1, 1), padding='same', activation=internal_activation)(encoder)
-        encoder = BatchNormalization()(encoder)
+        encoder = network_sections.colorspace_transformation(inshape, encoder, use_batch_norm)
+
 
     # Each encoder block has a number of subblocks
     for num_sublayers in block_structure:
