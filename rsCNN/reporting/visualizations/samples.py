@@ -151,7 +151,7 @@ def _plot_regression_sample(
 
         for idx_response in range(num_responses):
             num_subplots += 1
-            subplots.plot_transformed_responses(
+            subplots.plot_transformed_predictions(
                 sampled, idx_sample, idx_response, sample_axes.__next__(), idx_sample == 0, False)
 
         num_subplots += 1
