@@ -79,8 +79,6 @@ def create_model(
                 decoder = BatchNormalization()(decoder)
 
         decoder = UpSampling2D(size=pool_size, interpolation='bilinear')(decoder)
-        if use_batch_norm:
-            decoder = BatchNormalization()(decoder)
         decoder = Concatenate()([layer_passed_through, decoder])
         if use_growth:
             filters = int(filters / 2)
