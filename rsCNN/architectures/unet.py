@@ -23,7 +23,6 @@ def create_model(
         filters: int = config_sections.DEFAULT_FILTERS,
         internal_activation: str = config_sections.DEFAULT_INTERNAL_ACTIVATION,
         kernel_size: Tuple[int, int] = config_sections.DEFAULT_KERNEL_SIZE,
-        min_conv_width: int = config_sections.DEFAULT_MIN_CONV_WIDTH,
         padding: str = config_sections.DEFAULT_PADDING,
         pool_size: Tuple[int, int] = config_sections.DEFAULT_POOL_SIZE,
         use_batch_norm: bool = config_sections.DEFAULT_USE_BATCH_NORM,
@@ -35,57 +34,62 @@ def create_model(
     """
 
     input_width = inshape[0]
+
+    #TODO: Move assertion to configs check
     minimum_width = input_width / 2 ** len(block_structure)
-    assert minimum_width >= min_conv_width, \
-        'The convolution width in the last encoding block ({}) is less than '.format(minimum_width) + \
-        'the minimum specified width ({}). Either reduce '.format(min_conv_width) + \
-        'the number of blocks in block_structure (currently {}) or '.format(len(block_structure)) + \
-        'the value of min_conv_width.'
+    assert minimum_width >= 2, \
+        'The convolution width in the last encoding block ({}) is less than 2.' + \
+        'Reduce the number of blocks in block_structure (currently {}).'.format(len(block_structure))
+
+    conv2d_options = {'filters': filters,
+                      'kernel_size': kernel_size,
+                      'padding': padding,
+                      'activation': internal_activation,
+                      'use_batch_norm': use_batch_norm}
 
     layers_pass_through = list()
 
-    # Encodings
     inlayer = keras.layers.Input(shape=inshape)
     encoder = inlayer
 
     if use_initial_colorspace_transformation_layer:
         encoder = network_sections.colorspace_transformation(inshape, encoder, use_batch_norm)
 
-
+    # Encoding Layers
     # Each encoder block has a number of subblocks
     for num_sublayers in block_structure:
-        for idx_sublayer in range(num_sublayers):
+        for _sublayer in range(num_sublayers):
             # Each subblock has a number of convolutions
-            encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, activation=internal_activation)(encoder)
-            if use_batch_norm:
-                encoder = BatchNormalization()(encoder)
+            encoder = network_sections.Conv2D_Options(encoder, conv2d_options)
         # Each encoder block passes its pre-pooled layers through to the decoder
         layers_pass_through.append(encoder)
         encoder = MaxPooling2D(pool_size=pool_size)(encoder)
         if use_growth:
-            filters *= 2
-    filters = int(filters/2)
+            conv2d_options['filters'] *= 2
 
-    # Decodings
-    decoder = encoder
+    # Transition Layers
+    transition = encoder
+    for _sublayer in range(2):
+        transition = network_sections.Conv2D_Options(transition, conv2d_options)
+
+    # Decoding Layers
+    decoder = transition
     # Each decoder block has a number of subblocks, but in reverse order of encoder
     for num_subblocks, layer_passed_through in zip(reversed(block_structure), reversed(layers_pass_through)):
-        for idx_sublayer in range(num_subblocks):
-            # Each subblock has a number of convolutions
-            decoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, activation=internal_activation)(decoder)
-            if use_batch_norm:
-                decoder = BatchNormalization()(decoder)
+        if use_growth:
+            conv2d_options['filters'] = int(conv2d_options['filters'] / 2)
 
         decoder = UpSampling2D(size=pool_size, interpolation='bilinear')(decoder)
+        decoder = network_sections.Conv2D_Options(decoder, conv2d_options)
         decoder = Concatenate()([layer_passed_through, decoder])
-        if use_growth:
-            filters = int(filters / 2)
 
-    # Last convolutions
-    for _ind in range(2):
-        output_layer = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding, activation=internal_activation)(decoder)
-        if use_batch_norm:
-            output_layer = BatchNormalization()(output_layer)
-    output_layer = Conv2D(
-        filters=n_classes, kernel_size=(1, 1), padding='same', activation=output_activation)(output_layer)
+        for _sublayer in range(num_subblocks):
+            # Each subblock has a number of convolutions
+            decoder = network_sections.Conv2D_Options(decoder, conv2d_options)
+
+    # Output convolutions
+    output_layer = decoder
+    output_layer = network_sections.Conv2D_Options(output_layer, conv2d_options)
+    output_layer = Conv2D(filters=n_classes, kernel_size=(1, 1), padding='same', activation=output_activation)(output_layer)
     return keras.models.Model(inputs=[inlayer], outputs=[output_layer])
+
