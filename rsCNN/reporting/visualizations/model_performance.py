@@ -143,7 +143,10 @@ def _plot_spatial_error(
         grid = gridspec.GridSpec(nrows, ncols)
         for ax in _get_axis_generator_for_page(grid, nrows, ncols):
             min_ = 0
-            max_ = np.nanmax(error[buffer:-buffer, buffer:-buffer, idx_response])
+            if (buffer > 0):
+                max_ = np.nanmax(error[buffer:-buffer, buffer:-buffer, idx_response])
+            else:
+                max_ = np.nanmax(error[..., idx_response])
             ax.imshow(error[..., idx_response], vmin=min_, vmax=max_, cmap=colormaps.COLORMAP_ERROR)
             ax.set_xlabel('Response {}'.format(idx_response))
             ax.xaxis.set_label_position('top')
