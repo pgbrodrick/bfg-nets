@@ -68,9 +68,6 @@ class AutoencoderMixin(object):
     """
     Mixin for architectures with autoencoder downsampling/upsampling characteristics.
     """
-    _min_conv_width_type = int
-    min_conv_width = DEFAULT_MIN_CONV_WIDTH
-    """int: Minimum convolution width at the end of downsampling steps."""
     _pool_size_type = tuple
     pool_size = DEFAULT_POOL_SIZE
     """tuple: Pooling and upsampling size during each downsampling/upsampling step."""
