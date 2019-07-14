@@ -82,7 +82,7 @@ def create_model(
     decoder_block_structure = reversed(block_structure[:-1])
     passthrough_layers = reversed(passthrough_layers)
     for idx_block, (num_layers, passthrough) in enumerate(zip(decoder_block_structure, passthrough_layers)):
-        conv = Conv2DTranspose(filters=filters, kernel_size=kernel_size, padding=padding, strides=pool_size)(conv)
+        conv = Conv2DTranspose(filters=filters, kernel_size=kernel_size, padding=padding, dilation_rate=pool_size)(conv)
         conv = Concatenate()([passthrough, conv])
         # Iterate through layers in dense block
         for idx_layer in range(num_layers):
