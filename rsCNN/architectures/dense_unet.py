@@ -36,10 +36,10 @@ def create_model(
 
 
     conv2d_options = {'filters': filters,
-                  'kernel_size': kernel_size,
-                  'padding': padding,
-                  'activation': internal_activation,
-                  'use_batch_norm': use_batch_norm}
+                      'kernel_size': kernel_size,
+                      'padding': padding,
+                      'activation': internal_activation,
+                      'use_batch_norm': use_batch_norm}
 
     transition_options = conv2d_options.copy()
     transition_options['kernel_size'] = (1,1)

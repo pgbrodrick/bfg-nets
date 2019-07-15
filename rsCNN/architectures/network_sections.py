@@ -51,12 +51,11 @@ def dense_2d_block(inlayer: keras.layers, conv_options: dict, block_depth: int):
     :return keras.layers.Conv2D output_layer: Keras layer ready to start the main network
     """
 
-    dense_set = [inlayer]
+    dense_layer = inlayer
     for _block_step in range(block_depth):
-        intermediate_layer = Conv2D_Options(dense_set, conv_options)
-        dense_set.append(intermediate_layer)
+        intermediate_layer = Conv2D_Options(dense_layer, conv_options)
 
-        dense_layer = Concatenate()([dense_set, intermediate_layer], axis=-1)
+        dense_layer = Concatenate()([dense_layer, intermediate_layer], axis=-1)
 
     return dense_layer
 
