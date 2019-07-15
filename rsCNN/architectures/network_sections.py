@@ -55,7 +55,7 @@ def dense_2d_block(inlayer: keras.layers, conv_options: dict, block_depth: int):
     for _block_step in range(block_depth):
         intermediate_layer = Conv2D_Options(dense_layer, conv_options)
 
-        dense_layer = Concatenate()([dense_layer, intermediate_layer], axis=-1)
+        dense_layer = Concatenate(axis=-1)([dense_layer, intermediate_layer])
 
     return dense_layer
 
