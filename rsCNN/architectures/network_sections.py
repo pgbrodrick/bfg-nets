@@ -39,3 +39,26 @@ def Conv2D_Options(inlayer: keras.layers, options: dict):
         output_layer = BatchNormalization()(output_layer)
 
     return output_layer
+
+
+def dense_2d_block(inlayer: keras.layers, conv_options: dict, block_depth: int):
+    """ Create a single, dense block.
+
+    :argument keras.layers inlayer: Input layer to the convolution.
+    :argument dict conv_options: All options to pass into the input convolution layer.
+    :argument int block_depth: How deep (many layers) is the dense block.
+
+    :return keras.layers.Conv2D output_layer: Keras layer ready to start the main network
+    """
+
+    dense_set = [inlayer]
+    for _block_step in range(block_depth):
+        intermediate_layer = Conv2D_Options(dense_set, conv_options)
+        dense_set.append(intermediate_layer)
+
+        dense_layer = Concatenate()([dense_set, intermediate_layer], axis=-1)
+
+    return dense_layer
+
+
+

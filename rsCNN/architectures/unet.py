@@ -69,7 +69,7 @@ def create_model(
 
     # Transition Layers
     transition = encoder
-    for _sublayer in range(2):
+    for _sublayer in range(block_structure[-1]):
         transition = network_sections.Conv2D_Options(transition, conv2d_options)
 
     # Decoding Layers
