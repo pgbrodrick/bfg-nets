@@ -15,7 +15,7 @@ _logger = logging.getLogger(__name__)
 
 
 def upper_left_pixel(trans, interior_x, interior_y):
-    x_ul = max((trans[0] - interior_x)/trans[1], 0)
+    x_ul = max((interior_x - trans[0])/trans[1], 0)
     y_ul = max((interior_y - trans[3])/trans[5], 0)
     return x_ul, y_ul
 
