@@ -22,7 +22,6 @@ def create_model(
         block_structure: Tuple[int, ...] = config_sections.DEFAULT_BLOCK_STRUCTURE,
         filters: int = config_sections.DEFAULT_FILTERS,
         kernel_size: Tuple[int, int] = config_sections.DEFAULT_KERNEL_SIZE,
-        min_conv_width: int = config_sections.DEFAULT_MIN_CONV_WIDTH,
         padding: str = config_sections.DEFAULT_PADDING,
         pool_size: Tuple[int, int] = config_sections.DEFAULT_POOL_SIZE,
         use_batch_norm: bool = config_sections.DEFAULT_USE_BATCH_NORM,
@@ -30,14 +29,6 @@ def create_model(
         use_initial_colorspace_transformation_layer: bool =
     config_sections.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
 ) -> keras.models.Model:
-
-    input_width = inshape[0]
-    minimum_width = input_width / 2 ** len(block_structure)
-    assert minimum_width >= min_conv_width, \
-        'The convolution width in the last encoding block ({}) is less than '.format(minimum_width) + \
-        'the minimum specified width ({}). Either reduce '.format(min_conv_width) + \
-        'the number of blocks in block_structure (currently {}) or '.format(len(block_structure)) + \
-        'the value of min_conv_width.'
 
     layers_pass_through = list()
 
