@@ -45,6 +45,7 @@ model_training:
 architecture:
   dilation_rate: 2
   filters: REQUIRED
+  internal_activation: relu
   kernel_size: [3, 3]
   n_classes: REQUIRED
   num_layers: 8

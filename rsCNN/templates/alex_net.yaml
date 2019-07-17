@@ -45,8 +45,8 @@ model_training:
 architecture:
   block_structure: [2, 2, 2, 2]
   filters: REQUIRED
+  internal_activation: relu
   kernel_size: [3, 3]
-  min_conv_width: 8
   n_classes: REQUIRED
   output_activation: REQUIRED
   padding: same
