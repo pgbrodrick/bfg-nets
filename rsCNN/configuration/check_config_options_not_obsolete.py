@@ -27,7 +27,11 @@ def check_config_options_not_obsolete():
         architecture_obsolete, num_architecture_obsolete = _check_architecture_config_options(config)
         all_obsolete.append(architecture_obsolete)
         num_all_obsolete += num_architecture_obsolete
-    _logger.info('Config parameter check complete:  found {} potentially obsolete options'.format(num_all_obsolete))
+    message = 'Config parameter check complete:  found {} potentially obsolete options'.format(num_all_obsolete)
+    if num_all_obsolete == 0:
+        _logger.info(message)
+    else:
+        _logger.warning(message)
     return all_obsolete
 
 
@@ -43,7 +47,9 @@ def _check_generic_config_options(config: configs.Config) -> Tuple[List[str], in
         message = 'Config section {} has {} potentially obsolete options'.format(section_name, len(obsolete))
         if obsolete:
             message += ':  {}'.format(', '.join(obsolete))
-        _logger.info(message)
+            _logger.warning(message)
+        else:
+            _logger.debug(message)
         all_obsolete.append(message)
         num_obsolete += len(obsolete)
     return all_obsolete, num_obsolete
@@ -56,7 +62,9 @@ def _check_architecture_config_options(config: configs.Config) -> Tuple[str, int
         config.model_training.architecture_name, len(obsolete))
     if obsolete:
         message += ':  {}'.format(', '.join(obsolete))
-    _logger.info(message)
+        _logger.warning(message)
+    else:
+        _logger.debug(message)
     return message, len(obsolete)
 
 
