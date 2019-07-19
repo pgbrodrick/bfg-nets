@@ -49,6 +49,8 @@ def plot_model_loss_comparison(model_histories: List[dict]) -> List[plt.Figure]:
     x_min = 0
     x_max = 0
     for history in sorted(model_histories, key=lambda x: x['model_name']):
+        if 'loss' not in history or 'val_loss' not in history:
+            continue
         axes[0].plot(history['loss'], label=history['model_name'])
         axes[1].plot(history['val_loss'])
         x_max = max(x_max, *history['loss'], *history['val_loss'])
@@ -70,9 +72,8 @@ def plot_model_timing_comparison(model_histories: List[dict]) -> List[plt.Figure
     timings = list()
     for history in sorted(model_histories, key=lambda x: x['model_name']):
         labels.append(history['model_name'])
-        # TODO:  remove this check after rerunning models with the old key
-        if 'train_end' in history:
-            history['train_finish'] = history['train_end']
+        if 'train_start' not in history or 'train_finish' not in history:
+            continue
         timings.append((history['train_finish'] - history['train_start']).seconds / 60)
     ax.barh(np.arange(len(timings)), timings, tick_label=labels)
     ax.set_xlabel('Minutes')
