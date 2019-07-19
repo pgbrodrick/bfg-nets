@@ -116,7 +116,7 @@ def apply_model_to_raster(
 
         if (exclude_feature_nodata):
             nd_set = np.all(np.isnan(images), axis=-1)
-            pred_y[nd_set, ...] = data_config.response_nodata_value
+            pred_y[nd_set, ...] = config.response_nodata_value
 
         if (not CNN_MODE):
             if (internal_offset != 0):
@@ -132,8 +132,8 @@ def apply_model_to_raster(
         outDataset.FlushCache()
 
     # if (make_png):
-    #    output[output == data_config.response_nodata_value] = np.nan
-    #    feature[feature == data_config.response_nodata_value] = np.nan
+    #    output[output == config.response_nodata_value] = np.nan
+    #    feature[feature == config.response_nodata_value] = np.nan
     #    gs1 = gridspec.GridSpec(1, n_classes+1)
     #    for n in range(0, n_classes):
     #        ax = plt.subplot(gs1[0, n])
