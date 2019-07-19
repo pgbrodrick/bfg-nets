@@ -116,7 +116,7 @@ def apply_model_to_raster(
 
         if (exclude_feature_nodata):
             nd_set = np.all(np.isnan(images), axis=-1)
-            pred_y[nd_set, ...] = config.response_nodata_value
+            pred_y[nd_set, ...] = config.raw_files.response_nodata_value
 
         if (not CNN_MODE):
             if (internal_offset != 0):
