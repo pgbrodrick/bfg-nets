@@ -71,9 +71,9 @@ def plot_model_timing_comparison(model_histories: List[dict]) -> List[plt.Figure
     labels = list()
     timings = list()
     for history in sorted(model_histories, key=lambda x: x['model_name']):
-        labels.append(history['model_name'])
         if 'train_start' not in history or 'train_finish' not in history:
             continue
+        labels.append(history['model_name'])
         timings.append((history['train_finish'] - history['train_start']).seconds / 60)
     ax.barh(np.arange(len(timings)), timings, tick_label=labels)
     ax.set_xlabel('Minutes')
