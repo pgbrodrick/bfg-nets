@@ -23,8 +23,6 @@ def create_model_comparison_report(
     if dirs_histories:
         paths_histories.extend(walk_directories_for_model_histories(dirs_histories))
         assert len(paths_histories) > 0, 'No model histories found to compare'
-    if not os.path.exists(os.path.dirname(filepath_out)):
-        os.makedirs(os.path.dirname(filepath_out))
     model_histories = [histories.load_history(path_history) for path_history in paths_histories]
     with PdfPages(filepath_out) as pdf:
         _add_figures(plot_model_loss_comparison(model_histories), pdf)
@@ -41,7 +39,7 @@ def walk_directories_for_model_histories(directories: List[str]) -> List[str]:
     for directory in directories:
         for path, dirs, files in os.walk(directory):
             for file_ in files:
-                if file_ == 'history.pkl':
+                if file_ == histories.DEFAULT_FILENAME_HISTORY:
                     paths_histories.append(os.path.join(path, file_))
     return paths_histories
 
