@@ -26,17 +26,19 @@ def apply_model_to_raster(
 ) -> None:
     """ Apply a trained model to a raster file.
 
-    :argument keras.Model cnn:  Pre-trained keras CNN model
-    :argument DataContainer data_container: Holds info like scalers
-    :argument str feature_file: File with feature data to apply the model to
-    :argument str destination_basename: Base of the output file (will get a .tif or .png extention)
+    Args:
+        cnn:  Pre-trained keras CNN model
+        data_container: Holds info like scalers
+        feature_file: File with feature data to apply the model to
+        destination_basename: Base of the output file (will get a .tif or .png extention)
 
-    :argument Optional(bool) make_png: Should an output be created in PNG format?
-    :argument Optional(bool) make_tif: Should an output be created in TIF format?
-    :argument Optional(bool) CNN_MODE: Should the model be applied in CNN mode?
-    :argument Optional(bool) exclude_feature_nodata: Flag to remove all pixels in features without data from applied model
+        make_png: Should an output be created in PNG format?
+        make_tif: Should an output be created in TIF format?
+        CNN_MODE: Should the model be applied in CNN mode?
+        exclude_feature_nodata: Flag to remove all pixels in features without data from applied model
 
-    :return None
+    :Returns
+        None
     """
 
     config = data_container.config
@@ -157,17 +159,19 @@ def maximum_likelihood_classification(
 ) -> None:
     """ Convert a n-band map of probabilities to a classified image using maximum likelihood.
 
-    :argument keras.Model cnn:  Pre-trained keras CNN model
-    :argument DataContainer data_container: Holds info like scalers
-    :argument str feature_file: File with feature data to apply the model to
-    :argument str destination_basename: Base of the output file (will get a .tif or .png extention)
+    Args:
+        cnn:  Pre-trained keras CNN model
+        data_container: Holds info like scalers
+        feature_file: File with feature data to apply the model to
+        destination_basename: Base of the output file (will get a .tif or .png extention)
 
-    :argument Optional(bool) make_png: Should an output be created in PNG format?
-    :argument Optional(bool) make_tif: Should an output be created in TIF format?
-    :argument Optional(bool) CNN_MODE: Should the model be applied in CNN mode?
-    :argument Optional(bool) exclude_feature_nodata: Flag to remove all pixels in features without data from applied model
+        make_png: Should an output be created in PNG format?
+        make_tif: Should an output be created in TIF format?
+        CNN_MODE: Should the model be applied in CNN mode?
+        exclude_feature_nodata: Flag to remove all pixels in features without data from applied model
 
-    :return None
+    :Returns
+        None
     """
 
     output_tif_file = output_file_base + '.tif'

@@ -55,7 +55,8 @@ class DataContainer:
         """
         Initialization, attempts to load previously built data container if it exists
 
-        :param configs.Config config: Configuration file.
+        Args:
+            config: Configuration file.
         """
         errors = config.get_human_readable_config_errors(include_sections=['raw_files', 'data_build', 'data_samples'])
         assert not errors, errors
@@ -79,8 +80,8 @@ class DataContainer:
         will be loaded).  If rawfile data does not yet exist, build it as
         described by the config.
 
-        :param Optional[bool] rebuild: Flag used to rebuild data from scratch,
-        even if it already exists.  Defaults to False.
+        Args:
+            rebuild: Flag used to rebuild data from scratch, even if it already exists.  Defaults to False.
         """
 
         # Load data if it already exists
@@ -141,8 +142,8 @@ class DataContainer:
         build it as described by the config.  Required data to have already
         been built.
 
-        :param Optional[bool] rebuild: Flag used to refit scalers,
-        even if they already exists.  Defaults to False.
+        Args:
+            rebuild: Flag used to refit scalers, even if they already exists.  Defaults to False.
         """
 
         # TODO:  I think this worked only if feature_scaler_name was a string, but it was also possible to be a list
@@ -215,14 +216,16 @@ class DataContainer:
         )
         return data_sequence
 
-    def check_band_types(self, file_list, band_types):
+    def check_band_types(self, file_list, band_types) -> List[str]:
         """ Check the format of the band types config parameter.
 
-        :param List[List[str]] file_list: List of list of input files
-        :param List[List[str]] band_types: List of list of band types, corresponding to the
-        first site in the file_list
+        Args:
+            file_list: List of list of input files
+            band_types: List of list of band types, corresponding to the
+                        first site in the file_list
 
-        :return List[str] errors: List of errors
+        :Returns
+            errors: List of errors
         """
         errors = []
         valid_band_types = ['R', 'C']
@@ -267,14 +270,16 @@ class DataContainer:
 
         return errors
 
-    def get_band_types(self, file_list, band_types):
+    def get_band_types(self, file_list, band_types) -> List[str]:
         """ Check the format of the band types config parameter.
 
-        :param List[List[str]] file_list: List of list of input files
-        :param List[List[str]] band_types: List of list of band types, corresponding to the
+        Args:
+            file_list: List of list of input files
+            band_types: List of list of band types, corresponding to the
         first site in the file_list
 
-        :return List[str] band_types: Raw output band types.
+        Returns:
+            band_types: Raw output band types.
         """
 
         valid_band_types = ['R', 'C']
@@ -344,9 +349,11 @@ def create_built_data_output_directory(config: configs.Config) -> None:
 def get_log_filepath(config: configs.Config) -> str:
     """Get the default log path for data builds.
 
-    :param configs.Config config: Configuration file.
+    Args:
+        config: Configuration file.
 
-    :return str log_filepath: Filepath to built data log.
+    Returns:
+        log_filepath: Filepath to built data log.
     """
     return os.path.join(config.data_build.dir_out, _DEFAULT_FILENAME_LOG)
 
