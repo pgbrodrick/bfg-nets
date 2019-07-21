@@ -113,11 +113,14 @@ def apply_model_to_raster(
             pred_y = pred_y[:,window_radius_difference:-window_radius_difference,window_radius_difference:-window_radius_difference,:]
         output = np.zeros((config.data_build.loss_window_radius*2, x_len, pred_y.shape[-1]))
         for _c in range(len(x_index)):
-            output[:,x_index[_c]:x_index[_c]+config.data_build.loss_window_radius*2,:] = pred_y[_c,...]
+            output[:,x_index[_c]+window_radius_difference:x_index[_c]+window_radius_difference+config.data_build.loss_window_radius*2,:] = pred_y[_c,...]
 
-        output_memmap = np.memmap(temporary_outname, mode='r+', shape=(y_len,x_len,n_classes), dtype=np.float32)
+        _logger.debug('Convert output shape from (y,x,b) to (b,y,x)')
+        output = np.moveaxis(output,[0,1,2],[1,2,0])
+
+        output_memmap = np.memmap(temporary_outname, mode='r+', shape=(n_classes,y_len,x_len), dtype=np.float32)
         outrow = _row + window_radius_difference
-        output_memmap[outrow:outrow+config.data_build.loss_window_radius*2,:,:] = output
+        output_memmap[:,outrow:outrow+config.data_build.loss_window_radius*2,:] = output
         del output_memmap
 
     if (output_format != 'ENVI'):
@@ -157,10 +160,7 @@ def _convert_chunk_to_tiles(feature_data: np.array, loss_window_radius: int, win
     output_array = []
     col_index = []
     for _col in range(0,feature_data.shape[1],loss_window_radius*2):
-        if (feature_data.shape[1] - _col >= window_radius*2):
-            col_index.append(_col)
-        else:
-            col_index.append(feature_data.shape[1]-window_radius*2)
+        col_index.append(min(_col, feature_data.shape[1]-window_radius*2))
         output_array.append(feature_data[:,col_index[-1]:col_index[-1]+window_radius*2,:])
     output_array = np.stack(output_array)
     output_array = np.reshape(output_array,(output_array.shape[0],output_array.shape[1],output_array.shape[2],feature_data.shape[-1]))
@@ -194,11 +194,11 @@ def _read_chunk_by_row(feature_sets: List[gdal.Dataset], pixel_upper_lefts: List
     feat_ind = 0
     for _feat in range(len(feature_sets)):
         dat = np.zeros((feature_sets[_feat].RasterCount,y_size,x_size))
-        for _line in range(line_offset,y_size):
+        for _line in range(y_size):
             dat[:,_line:_line+1,:] = feature_sets[_feat].ReadAsArray(pixel_upper_lefts[_feat][0],
-                                     pixel_upper_lefts[_feat][1] + _line,x_size,1).astype(np.float32)
-        dat = np.swapaxes(dat,0,1)
-        dat = np.swapaxes(dat,1,2)
+                                     pixel_upper_lefts[_feat][1] + line_offset + _line,x_size,1).astype(np.float32)
+        # Swap dat from (b,y,x) to (y,x,b)
+        dat = np.moveaxis(dat, [0,1,2], [2,0,1])
 
         output_array[...,feat_ind:feat_ind+dat.shape[-1]] = dat
         feat_ind += dat.shape[-1]
