@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import List, Tuple
 
@@ -12,7 +13,6 @@ from tqdm import tqdm
 
 from rsCNN.data_management import common_io, ooc_functions
 from rsCNN.data_management.data_core import DataContainer
-from rsCNN.utils import logging
 
 plt.switch_backend('Agg')  # Needed for remote server plotting
 
@@ -134,6 +134,9 @@ def apply_model_to_raster(
                 os.remove(temporary_outname + '.aux.xml')
             except OSError:
                 pass
+        else:
+            _logger.error('Failed to successfully convert output ENVI file to {}.  ENVI file available at: {}'.
+                          format(output_format, temporary_outname))
 
 
 def _convert_chunk_to_tiles(feature_data: np.array, loss_window_radius: int, window_radius: int) -> \
