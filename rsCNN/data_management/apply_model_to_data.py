@@ -53,40 +53,41 @@ def apply_model_to_raster(
 
     assert os.path.dirname(destination_basename), 'Output directory does not exist'
 
-    assert feature_files is list, 'Feature files for given site must be provided as a list'
+    assert type(feature_files) is list, 'Feature files for given site must be provided as a list'
 
     valid_output_formats = ['GTiff','ENVI']
     err_str = 'Not a viable output format, options are: {}'.format(valid_output_formats)
     assert output_format in valid_output_formats, err_str
 
     # Open feature dataset and establish n_classes
-    feature_sets = [[gdal.Open(f, gdal.GA_ReadOnly) for f in feature_files]]
-    internal_ul_list, x_len, y_len = common_io.get_overlapping_extent(feature_sets)
+    feature_sets = [gdal.Open(f, gdal.GA_ReadOnly) for f in feature_files]
+    [internal_ul_list], x_len, y_len = common_io.get_overlapping_extent([feature_sets])
 
     assert x_len > 0 and y_len > 0, 'No common feature file interior'
 
     n_classes = len(data_container.response_band_types)
 
     # Initialize Output Dataset
-    driver = gdal.GetDriverByName(output_format)
+    driver = gdal.GetDriverByName('ENVI')
     driver.Register()
 
     temporary_outname = destination_basename
     if (output_format != 'ENVI'):
         temporary_outname = temporary_outname + '_temporary_ENVI_file'
     outDataset = driver.Create(temporary_outname, x_len, y_len, n_classes, gdal.GDT_Float32)
-    out_trans = list(feature_sets[0][0].GetGeoTransform())
+    out_trans = list(feature_sets[0].GetGeoTransform())
     out_trans[0] = out_trans[0] + internal_ul_list[0][0]*out_trans[1]
     out_trans[3] = out_trans[3] + internal_ul_list[0][0]*out_trans[5]
-    outDataset.SetProjection(feature_sets[0][0].GetProjection())
+    outDataset.SetProjection(feature_sets[0].GetProjection())
     outDataset.SetGeoTransform(out_trans)
     del outDataset
 
-    for _row in range(0,y_len, config.data_build.loss_window_radius*2):
+    for _row in tqdm(range(0,y_len, config.data_build.loss_window_radius*2),ncols=80):
+        _row = min(_row, y_len - 2*config.data_build.window_radius)
         col_dat = _read_chunk_by_row(feature_sets, internal_ul_list, x_len, config.data_build.window_radius*2, _row,
                              data_container.feature_raw_band_types)
 
-        tile_dat, x_index = _convert_chunk_to_tiles(col_dat, config.loss_window_radius, config.window_radius)
+        tile_dat, x_index = _convert_chunk_to_tiles(col_dat, config.data_build.loss_window_radius, config.data_build.window_radius)
         tile_dat = ooc_functions.one_hot_encode_array(data_container.feature_raw_band_types, tile_dat,
                                                       data_container.feature_per_band_encoded_values)
 
@@ -104,19 +105,19 @@ def apply_model_to_raster(
 
         if (exclude_feature_nodata):
             nd_set = np.all(np.isnan(tile_dat), axis=-1)
-            pred_y[nd_set, ...] = config.raw_files.response_nodata_value
+            pred_y[nd_set, ...] = config.data_build.raw_files.response_nodata_value
         del tile_dat
 
-        window_radius_difference = config.loss_window_radius - config.window_radius
+        window_radius_difference = config.data_build.window_radius - config.data_build.loss_window_radius
         if (window_radius_difference > 0):
             pred_y = pred_y[:,window_radius_difference:-window_radius_difference,window_radius_difference:-window_radius_difference,:]
         output = np.zeros((config.data_build.loss_window_radius*2, x_len, pred_y.shape[-1]))
-        for _c in x_index:
-            output[:,_c:_c+config.loss_window_radius*2,:] = pred_y[_c,...]
+        for _c in range(len(x_index)):
+            output[:,x_index[_c]:x_index[_c]+config.data_build.loss_window_radius*2,:] = pred_y[_c,...]
 
         output_memmap = np.memmap(temporary_outname, mode='r+', shape=(y_len,x_len,n_classes), dtype=np.float32)
         outrow = _row + window_radius_difference
-        output_memmap[outrow:outrow+config.loss_window_radius,:,:] = output
+        output_memmap[outrow:outrow+config.data_build.loss_window_radius*2,:,:] = output
         del output_memmap
 
     if (output_format != 'ENVI'):
@@ -162,7 +163,7 @@ def _convert_chunk_to_tiles(feature_data: np.array, loss_window_radius: int, win
             col_index.append(feature_data.shape[1]-window_radius*2)
         output_array.append(feature_data[:,col_index[-1]:col_index[-1]+window_radius*2,:])
     output_array = np.stack(output_array)
-    output_array = np.reshape((output_array.shape[0],output_array.shape[1],output_array.shape[2],feature_data.shape[-1]))
+    output_array = np.reshape(output_array,(output_array.shape[0],output_array.shape[1],output_array.shape[2],feature_data.shape[-1]))
 
     col_index = np.array(col_index)
 
