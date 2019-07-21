@@ -167,9 +167,7 @@ def _convert_chunk_to_tiles(feature_data: np.array, loss_window_radius: int, win
     return output_array, col_index
 
 
-
-
-def _read_chunk_by_row(feature_sets: List[gdal.dataset], pixel_upper_lefts: List[List[int]], x_size: int, y_size: int,
+def _read_chunk_by_row(feature_sets: List[gdal.Dataset], pixel_upper_lefts: List[List[int]], x_size: int, y_size: int,
               line_offset: int, raw_band_types: List[str]) -> np.array:
     """
     Read a chunk of feature data line-by-line.
