@@ -53,6 +53,8 @@ def apply_model_to_raster(
 
     assert os.path.dirname(destination_basename), 'Output directory does not exist'
 
+    assert feature_files is list, 'Feature files for given site must be provided as a list'
+
     valid_output_formats = ['GTiff','ENVI']
     err_str = 'Not a viable output format, options are: {}'.format(valid_output_formats)
     assert output_format in valid_output_formats, err_str
