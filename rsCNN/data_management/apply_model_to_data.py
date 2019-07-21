@@ -1,4 +1,5 @@
 import os
+from typing import List, Tuple
 
 import gdal
 import keras
@@ -17,10 +18,9 @@ plt.switch_backend('Agg')  # Needed for remote server plotting
 def apply_model_to_raster(
         cnn: keras.Model,
         data_container: DataContainer,
-        feature_file: str,
+        feature_files: List[str],
         destination_basename: str,
-        make_png: bool = False,
-        make_tif: bool = True,
+        output_format: str = 'GTiff',
         CNN_MODE: bool = False,
         exclude_feature_nodata: bool = False
 ) -> None:
@@ -29,11 +29,10 @@ def apply_model_to_raster(
     Args:
         cnn:  Pre-trained keras CNN model
         data_container: Holds info like scalers
-        feature_file: File with feature data to apply the model to
-        destination_basename: Base of the output file (will get a .tif or .png extention)
+        feature_files: Per-site feature files to apply the model to
+        destination_basename: Base of the output file (will get appropriate extension)
 
-        make_png: Should an output be created in PNG format?
-        make_tif: Should an output be created in TIF format?
+        output_format: A viable gdal output data format.
         CNN_MODE: Should the model be applied in CNN mode?
         exclude_feature_nodata: Flag to remove all pixels in features without data from applied model
 
@@ -45,23 +44,38 @@ def apply_model_to_raster(
 
     assert os.path.dirname(destination_basename), 'Output directory does not exist'
 
+    valid_output_formats = ['GTiff','ENVI']
+    err_str = 'Not a viable output format, options are: {}'.format(valid_output_formats)
+    assert output_format in valid_output_formats, err_str
+
     # Open feature dataset and establish n_classes
-    feature_set = gdal.Open(feature_file, gdal.GA_ReadOnly)
-    n_classes = cnn.predict(
-        np.zeros((1, config.data_build.window_radius*2, config.data_build.window_radius*2, feature_set.RasterCount))).shape[-1]
+    feature_sets = [[gdal.Open(f, gdal.GA_ReadOnly) for f in feature_files]]
+    internal_ul_list, x_len, y_len = common_io.get_overlapping_extent(feature_sets)
+
+    assert x_len > 0 and y_len > 0, 'No common feature file interior'
+
+    n_classes = len(data_container.response_band_types)
 
     # Initialize Output Dataset
-    driver = gdal.GetDriverByName('GTiff')
+    driver = gdal.GetDriverByName(output_format)
     driver.Register()
 
+    outname = destination_basename
+    if (output_format == 'GTiff'):
+        outname += '.tif'
+
     outDataset = driver.Create(destination_basename + '.tif',
-                               feature_set.RasterXSize,
-                               feature_set.RasterYSize,
+                               x_len,
+                               y_len,
                                n_classes,
                                gdal.GDT_Float32)
 
-    outDataset.SetProjection(feature_set.GetProjection())
-    outDataset.SetGeoTransform(feature_set.GetGeoTransform())
+    out_trans = list(feature_sets[0][0]).GetGeoTransform()
+    out_trans[0] = out_trans[0] + internal_ul_list[0][0]*out_trans[1]
+    out_trans[3] = out_trans[3] + internal_ul_list[0][0]*out_trans[5]
+
+    outDataset.SetProjection(feature_sets[0][0].GetProjection())
+    outDataset.SetGeoTransform(out_trans)
 
     step_size = config.data_build.loss_window_radius*2
     if (CNN_MODE):
@@ -71,8 +85,8 @@ def apply_model_to_raster(
         internal_offset = config.data_build.window_radius - config.data_build.loss_window_radius
 
     # Find the UL indicies of all prediction locations
-    cr = [0, feature_set.RasterXSize]
-    rr = [0, feature_set.RasterYSize]
+    cr = [0, x_len]
+    rr = [0, y_len]
 
     collist = [x for x in range(cr[0], cr[1] - 2*config.data_build.window_radius, step_size)]
     rowlist = [x for x in range(rr[0], rr[1] - 2*config.data_build.window_radius, step_size)]
@@ -148,6 +162,50 @@ def apply_model_to_raster(
     #    plt.savefig(destination_basename + '.png', dpi=png_dpi, bbox_inches='tight')
     #    plt.clf()
 
+def _read_row(feature_sets: List[gdal.dataset], pixel_upper_lefts: List[List[int]], x_size: int, y_size: int,
+              raw_band_types: List[str], categorical_encodings: List[np.array]) -> np.array:
+    """
+    Read a line of feature data.
+
+    Args:
+        feature_sets: each feature dataset to read
+        pixel_upper_lefts: upper left hand pixel of each dataset
+        x_size: size of x data to read
+        y_size: size of y data to read
+        raw_band_types: band types before encoding
+        categorical_encodings: encodings of each categorical band type
+
+    Returns:
+        feature_array: feature array
+    """
+
+    total_features = len(raw_band_types)
+    if (len(categorical_encodings) > 0):
+        for en in categorical_encodings:
+            total_features += len(en) - 1
+    output_array = np.zeros((y_size, x_size,total_features))
+
+    encoding_ind = 0
+    feat_ind = 0
+    for _feat in range(len(feature_sets)):
+        dat = feature_sets[_feat].ReadAsArray(pixel_upper_lefts[_feat][0],pixel_upper_lefts[_feat][1],x_size,y_size).\
+            astype(np.float32)
+        if (feature_sets[_feat].RasterCount == 1):
+            dat = np.reshape(dat,(1,dat.shape[0],dat.shape[1]))
+        dat = np.swapaxes(dat,0,1)
+        dat = np.swapaxes(dat,1,2)
+        if (raw_band_types[_feat] == 'C'):
+            encoding = categorical_encodings[encoding_ind]
+            encoding_ind += 1
+        else:
+            encoding = []
+        dat = ooc_functions.one_hot_encode_array([raw_band_types[_feat]], dat, per_band_encoding=encoding)
+
+        output_array[...,feat_ind:feat_ind+dat.shape[-1]] = dat
+        feat_ind += dat.shape[-1]
+
+    return output_array
+
 
 def maximum_likelihood_classification(
         likelihood_file: str,
@@ -211,3 +269,5 @@ def maximum_likelihood_classification(
         plt.axis('off')
         plt.savefig(output_png_file, dpi=png_dpi, bbox_inches='tight')
         plt.clf()
+
+

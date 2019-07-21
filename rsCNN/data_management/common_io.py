@@ -4,7 +4,6 @@ import gdal
 import logging
 import numpy as np
 from numpy import matlib
-import sys, os
 import rasterio.features
 from typing import List, Tuple
 

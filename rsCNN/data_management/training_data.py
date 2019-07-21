@@ -18,7 +18,7 @@ def build_training_data_ordered(
         config: configs.Config,
         feature_raw_band_types: List[List[str]],
         response_raw_band_types: List[List[str]]
-) -> Tuple[List[np.array], List[np.array], List[np.array], List[str], List[str]]:
+) -> Tuple[List[np.array], List[np.array], List[np.array], List[str], List[str], List[np.array], List[np.array]]:
 
     # TODO:  check default, and set it to a standard value
     if config.data_build.random_seed:
@@ -152,10 +152,10 @@ def build_training_data_ordered(
     _log_munged_data_information(features, responses, weights)
 
     _logger.debug('One-hot encode features')
-    features, feature_band_types = ooc_functions.one_hot_encode_array(
+    features, feature_band_types, feature_per_band_encoded_values = ooc_functions.one_hot_encode_array(
         feature_raw_band_types, features, data_core.get_temporary_features_filepath(config))
     _logger.debug('One-hot encode responses')
-    responses, response_band_types = ooc_functions.one_hot_encode_array(
+    responses, response_band_types, response_per_band_encoded_values = ooc_functions.one_hot_encode_array(
         response_raw_band_types, responses, data_core.get_temporary_responses_filepath(config))
     _log_munged_data_information(features, responses, weights)
 
@@ -175,14 +175,15 @@ def build_training_data_ordered(
     _logger.debug('Store data build config sections')
     _save_built_data_config_sections_to_verify_successful(config)
     features, responses, weights = load_built_data_files(config, writeable=False)
-    return features, responses, weights, feature_band_types, response_band_types
+    return features, responses, weights, feature_band_types, response_band_types, feature_per_band_encoded_values, \
+           response_per_band_encoded_values
 
 
 def build_training_data_from_response_points(
         config: configs.Config,
         feature_raw_band_types: List[List[str]],
         response_raw_band_types: List[List[str]]
-) -> Tuple[List[np.array], List[np.array], List[np.array], List[str], List[str]]:
+) -> Tuple[List[np.array], List[np.array], List[np.array], List[str], List[str], List[np.array], List[np.array]]:
 
     _logger.info('Build training data from response points')
     if (config.data_build.random_seed is not None):
@@ -376,9 +377,9 @@ def build_training_data_from_response_points(
     _log_munged_data_information(features, responses, weights)
 
     # one hot encode
-    features, feature_band_types = ooc_functions.one_hot_encode_array(
+    features, feature_band_types, feature_per_band_encoded_values = ooc_functions.one_hot_encode_array(
         feature_raw_band_types, features, data_core.get_temporary_features_filepath(config))
-    responses, response_band_types = ooc_functions.one_hot_encode_array(
+    responses, response_band_types, response_per_band_encoded_values = ooc_functions.one_hot_encode_array(
         response_raw_band_types, responses, data_core.get_temporary_responses_filepath(config))
     _log_munged_data_information(features, responses, weights)
 
@@ -398,7 +399,7 @@ def build_training_data_from_response_points(
 
     _save_built_data_config_sections_to_verify_successful(config)
     features, responses, weights = load_built_data_files(config, writeable=False)
-    return features, responses, weights, feature_band_types, response_band_types
+    return features, responses, weights, feature_band_types, response_band_types, feature_per_band_encoded_values, response_per_band_encoded_values
 
 
 def get_proj(fname: str) -> str:

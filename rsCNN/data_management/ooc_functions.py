@@ -12,14 +12,43 @@ _MAX_UNIQUE_RESPONSES = 100
 _logger = logging.getLogger(__name__)
 
 
-def one_hot_encode_array(raw_band_types: List[str], array: np.array, memmap_file: str = None):
+def one_hot_encode_array(raw_band_types: List[str], array: np.array, memmap_file: str = None, per_band_encoding: List[np.array] = None):
+    """One hot encode an array of mixed real and categorical variables.
+
+    Args:
+        raw_band_types: Band types for given array, either 'R' for real or 'C' for categorical.
+        array: array to encode
+
+        memmap_file: file to use to do things out-of-core
+        per_band_encoding: if none, this will be calculated and returned.  If not none, these will be used to encode
+                           the array
+
+    Returns:
+        array: now one-hot-encoded
+        band_types: the one-hot-encoded versinon of the band-types
+        return_band_encoding: the encoding used on a per-categorical-band basis, if per_band_encoding was None when
+                              provided, otherwise None
+    """
 
     cat_band_locations = [idx for idx, val in enumerate(raw_band_types) if val == 'C']
     band_types = raw_band_types.copy()
+
+    if (per_band_encoding is None):
+        return_band_encoding = []
+    else:
+        assert len(per_band_encoding) == len(cat_band_locations), \
+            'Inconsistent lengths of categorical band locations and per_band_encoding provided'
+        return_band_encoding = None
+
     for _c in reversed(range(len(cat_band_locations))):
 
-        un_array = array[..., cat_band_locations[_c]]
-        un_array = np.unique(un_array[np.isfinite(un_array)])
+        if (per_band_encoding is not None):
+            un_array = array[..., cat_band_locations[_c]]
+            un_array = np.unique(un_array[np.isfinite(un_array)])
+            return_band_encoding.append(un_array)
+        else:
+            un_array = per_band_encoding[_c]
+
         assert len(un_array) < _MAX_UNIQUE_RESPONSES,\
             'Too many ({}) unique responses found, suspected incorrect categorical specification'.format(len(un_array))
         _logger.info('Found {} categorical responses'.format(len(un_array)))
@@ -61,7 +90,11 @@ def one_hot_encode_array(raw_band_types: List[str], array: np.array, memmap_file
         band_types.pop(cat_band_locations[_c])
         for _r in range(len(un_array)):
             band_types.insert(cat_band_locations[_c], 'B' + str(int(_c)))
-    return array, band_types
+
+    if (per_band_encoding is None):
+        return array
+    else:
+        return array, band_types, return_band_encoding
 
 
 def permute_array(source: np.array, source_filename: str, permutation: np.array) -> np.array:

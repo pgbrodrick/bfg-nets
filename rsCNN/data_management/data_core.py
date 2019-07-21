@@ -43,6 +43,9 @@ class DataContainer:
     feature_raw_band_types = None
     response_raw_band_types = None
 
+    feature_per_band_encoded_values = None
+    response_per_band_encoded_values = None
+
     feature_scaler = list()
     response_scaler = list()
 
@@ -117,17 +120,20 @@ class DataContainer:
                 self.config.raw_files.response_files, self.config.raw_files.response_data_type)
 
             if (self.config.data_build.network_category == 'FCN'):
-                features, responses, weights, feature_band_types, response_band_types = training_data.build_training_data_ordered(
+                features, responses, weights, feature_band_types, response_band_types, feature_per_band_encoded_values,\
+                response_per_band_encoded_values = training_data.build_training_data_ordered(
                     self.config, self.feature_raw_band_types, self.response_raw_band_types)
             elif (self.config.data_build.network_category == 'CNN'):
-                features, responses, weights, feature_band_types, response_band_types = \
-                    training_data.build_training_data_from_response_points(
+                features, responses, weights, feature_band_types, response_band_types, feature_per_band_encoded_values,\
+                response_per_band_encoded_values = training_data.build_training_data_from_response_points(
                         self.config, self.feature_raw_band_types, self.response_raw_band_types)
             else:
                 raise NotImplementedError('Unknown response data format')
 
             self.feature_band_types = feature_band_types
             self.response_band_types = response_band_types
+            self.feature_per_band_encoded_values = feature_per_band_encoded_values
+            self.response_per_band_encoded_values = response_per_band_encoded_values
 
             _logger.info('Saving DataContainer')
             self._save_data_core()
@@ -325,6 +331,8 @@ class DataContainer:
                  response_band_types=self.response_band_types,
                  feature_raw_band_types=self.feature_raw_band_types,
                  response_raw_band_types=self.response_raw_band_types,
+                 feature_per_band_encoded_values=self.feature_per_band_encoded_values,
+                 response_per_band_encoded_values=self.response_per_band_encoded_values,
                  train_folds=self.train_folds
                  )
 
@@ -335,6 +343,20 @@ class DataContainer:
         self.feature_raw_band_types = npzf['feature_raw_band_types']
         self.response_raw_band_types = npzf['response_raw_band_types']
         self.train_folds = npzf['train_folds']
+
+        ### Support deprecated data containers, if no errors thrown
+        if 'feature_per_band_encoded_values' in list(npzf):
+            self.feature_per_band_encoded_values= npzf['feature_per_band_encoded_values']
+            self.response_per_band_encoded_values= npzf['response_per_band_encoded_values']
+        else:
+            if ('C' not in list(self.response_band_types) and 'C' not in list(self.feature_band_types)):
+                _logger.error('Error, deprecated form of data container that does not container feature encodings ' + \
+                              'detected, and response or features include categorical variables.  Please rebuild data.')
+                assert False, 'Bad data container'
+            else:
+                self.feature_per_band_encoded_values = []
+                self.response_per_band_encoded_values = []
+                _logger.warning('Deprecated form of data container found - no categoricals detected, so proceeding.')
 
 
 ################### Filepath Nomenclature Functions ##############################
