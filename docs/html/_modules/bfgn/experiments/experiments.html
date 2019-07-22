@@ -1,0 +1,428 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>bfgn.experiments.experiments &mdash; bfgn  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> bfgn
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">bfgn</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>bfgn.experiments.experiments</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for bfgn.experiments.experiments</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">keras.backend</span> <span class="k">as</span> <span class="nn">K</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">bfgn.architectures</span> <span class="k">import</span> <span class="n">config_sections</span>
+<span class="kn">from</span> <span class="nn">bfgn.configuration</span> <span class="k">import</span> <span class="n">configs</span>
+<span class="kn">from</span> <span class="nn">bfgn.data_management.data_core</span> <span class="k">import</span> <span class="n">DataContainer</span>
+<span class="kn">from</span> <span class="nn">bfgn.data_management.sequences</span> <span class="k">import</span> <span class="n">BaseSequence</span>
+<span class="kn">from</span> <span class="nn">bfgn.experiments</span> <span class="k">import</span> <span class="n">callbacks</span><span class="p">,</span> <span class="n">histories</span><span class="p">,</span> <span class="n">losses</span><span class="p">,</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">bfgn.utils</span> <span class="k">import</span> <span class="n">compute_access</span><span class="p">,</span> <span class="n">logging</span> <span class="k">as</span> <span class="n">root_logging</span>
+
+
+<span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">_DEFAULT_FILENAME_LOG</span> <span class="o">=</span> <span class="s1">&#39;log.out&#39;</span>
+<span class="n">_KEY_HISTORY_IS_MODEL_TRAINED</span> <span class="o">=</span> <span class="s1">&#39;is_model_trained&#39;</span>
+
+
+<div class="viewcode-block" id="Experiment"><a class="viewcode-back" href="../../../bfgn.experiments.html#bfgn.experiments.experiments.Experiment">[docs]</a><span class="k">class</span> <span class="nc">Experiment</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;configs.Config: bfgn configuration object.&quot;&quot;&quot;</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;keras.models.Model: Keras model object.&quot;&quot;&quot;</span>
+    <span class="n">history</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;dict: Model training history.&quot;&quot;&quot;</span>
+    <span class="n">loaded_existing_history</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;bool: Whether an existing history object was loaded from the model training directory.&quot;&quot;&quot;</span>
+    <span class="n">loaded_existing_model</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;bool: Whether an existing model object was loaded from the model training directory.&quot;&quot;&quot;</span>
+    <span class="n">is_model_trained</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;bool: Whether model is trained to stopping criteria. If False, either not trained at all or training was stopped </span>
+<span class="sd">    before stopping criteria.&quot;&quot;&quot;</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;logging.Logger: Root logger for Experiment. Available if user wants to directly modify the log formatting,</span>
+<span class="sd">    handling, or other behavior.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_human_readable_config_errors</span><span class="p">(</span><span class="n">exclude_sections</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;raw_files&#39;</span><span class="p">,</span> <span class="s1">&#39;model_reporting&#39;</span><span class="p">])</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">errors</span><span class="p">,</span> <span class="n">errors</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">root_logging</span><span class="o">.</span><span class="n">get_root_logger</span><span class="p">(</span><span class="n">get_log_filepath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">log_level</span><span class="p">)</span>
+
+        <span class="c1"># Either save config to new model directory or check that existing config matches provided config</span>
+        <span class="n">filepath_config</span> <span class="o">=</span> <span class="n">get_config_filepath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">filepath_config</span><span class="p">):</span>
+            <span class="n">configs</span><span class="o">.</span><span class="n">save_config_to_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">filepath_config</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">config_existing</span> <span class="o">=</span> <span class="n">configs</span><span class="o">.</span><span class="n">create_config_from_file</span><span class="p">(</span><span class="n">filepath_config</span><span class="p">)</span>
+            <span class="n">config_differences</span> <span class="o">=</span> <span class="n">configs</span><span class="o">.</span><span class="n">get_config_differences</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">config_existing</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="ow">not</span> <span class="n">config_differences</span><span class="p">,</span> \
+                <span class="s1">&#39;Provided configuration differs from existing configuration at </span><span class="si">{}</span><span class="s1">; differing values: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">filepath_config</span><span class="p">,</span> <span class="n">config_differences</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Experiment.build_or_load_model"><a class="viewcode-back" href="../../../bfgn.experiments.html#bfgn.experiments.experiments.Experiment.build_or_load_model">[docs]</a>    <span class="k">def</span> <span class="nf">build_or_load_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_container</span><span class="p">:</span> <span class="n">DataContainer</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">num_features</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Building or loading model&#39;</span><span class="p">)</span>
+
+        <span class="n">loss_function</span> <span class="o">=</span> <span class="n">losses</span><span class="o">.</span><span class="n">get_cropped_loss_function</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">loss_metric</span><span class="p">,</span>
+            <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">data_build</span><span class="o">.</span><span class="n">window_radius</span><span class="p">,</span>
+            <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">data_build</span><span class="o">.</span><span class="n">loss_window_radius</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">weighted</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">get_model_filepath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">)):</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Loading existing model from model training directory at </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">get_model_filepath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">)))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">loaded_existing_model</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span>
+                <span class="n">get_model_filepath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">),</span>
+                <span class="n">custom_objects</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_cropped_loss&#39;</span><span class="p">:</span> <span class="n">loss_function</span><span class="p">}</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Building new model, no model exists at </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">get_model_filepath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">)))</span>
+
+            <span class="k">assert</span> <span class="n">data_container</span> <span class="ow">or</span> <span class="n">num_features</span><span class="p">,</span> <span class="s1">&#39;Model building requires either DataContainer or num_features.&#39;</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">num_features</span><span class="p">:</span>
+                <span class="n">inshape</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">data_build</span><span class="o">.</span><span class="n">window_radius</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">data_build</span><span class="o">.</span><span class="n">window_radius</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span>
+                    <span class="nb">len</span><span class="p">(</span><span class="n">data_container</span><span class="o">.</span><span class="n">feature_band_types</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Inshape is set to </span><span class="si">{}</span><span class="s1">, was determined from </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">inshape</span><span class="p">,</span> <span class="s1">&#39;DataContainer&#39;</span> <span class="k">if</span> <span class="n">data_container</span> <span class="k">else</span> <span class="s1">&#39;num_features&#39;</span>
+            <span class="p">))</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">loaded_existing_model</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">config_sections</span><span class="o">.</span><span class="n">create_model_from_architecture_config_section</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">architecture_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">architecture</span><span class="p">,</span> <span class="n">inshape</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">loss</span><span class="o">=</span><span class="n">loss_function</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">optimizer</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">get_history_filepath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">)):</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">loaded_existing_model</span><span class="p">,</span> \
+                <span class="s1">&#39;Model training history exists in model training directory, but no model found; directory: </span><span class="si">{}</span><span class="s1">&#39;</span> \
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">)</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Loading existing history from model training directory at </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">get_history_filepath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">)))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">loaded_existing_history</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="n">histories</span><span class="o">.</span><span class="n">load_history</span><span class="p">(</span><span class="n">get_history_filepath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">))</span>
+            <span class="k">if</span> <span class="s1">&#39;lr&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">:</span>
+                <span class="n">learning_rate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;lr&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Setting learning rate to value from last training epoch: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">learning_rate</span><span class="p">))</span>
+                <span class="n">K</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">lr</span><span class="p">,</span> <span class="n">learning_rate</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">loaded_existing_model</span><span class="p">,</span> \
+                <span class="s1">&#39;Trained model exists in model training directory, but no training history found; directory: </span><span class="si">{}</span><span class="s1">&#39;</span> \
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">loaded_existing_history</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;model_name&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">,</span>
+                <span class="n">_KEY_HISTORY_IS_MODEL_TRAINED</span><span class="p">:</span> <span class="kc">False</span>
+            <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_model_trained</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="n">_KEY_HISTORY_IS_MODEL_TRAINED</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Experiment.fit_model_with_data_container"><a class="viewcode-back" href="../../../bfgn.experiments.html#bfgn.experiments.experiments.Experiment.fit_model_with_data_container">[docs]</a>    <span class="k">def</span> <span class="nf">fit_model_with_data_container</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_container</span><span class="p">:</span> <span class="n">DataContainer</span><span class="p">,</span> <span class="n">resume_training</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_model_with_sequences</span><span class="p">(</span>
+            <span class="n">data_container</span><span class="o">.</span><span class="n">training_sequence</span><span class="p">,</span> <span class="n">data_container</span><span class="o">.</span><span class="n">validation_sequence</span><span class="p">,</span> <span class="n">resume_training</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="Experiment.fit_model_with_sequences"><a class="viewcode-back" href="../../../bfgn.experiments.html#bfgn.experiments.experiments.Experiment.fit_model_with_sequences">[docs]</a>    <span class="k">def</span> <span class="nf">fit_model_with_sequences</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">training_sequence</span><span class="p">:</span> <span class="n">BaseSequence</span><span class="p">,</span>
+            <span class="n">validation_sequence</span><span class="p">:</span> <span class="n">BaseSequence</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">resume_training</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">loaded_existing_model</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">resume_training</span><span class="p">,</span> <span class="s1">&#39;Resume must be true to continue training an existing model&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">assert_gpu</span><span class="p">:</span>
+            <span class="n">compute_access</span><span class="o">.</span><span class="n">assert_gpu_available</span><span class="p">()</span>
+
+        <span class="n">model_callbacks</span> <span class="o">=</span> <span class="n">callbacks</span><span class="o">.</span><span class="n">get_model_callbacks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span>
+
+        <span class="n">new_history</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">fit_generator</span><span class="p">(</span>
+            <span class="n">training_sequence</span><span class="p">,</span>
+            <span class="n">epochs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">max_epochs</span><span class="p">,</span>
+            <span class="n">verbose</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">verbosity</span><span class="p">,</span>
+            <span class="n">callbacks</span><span class="o">=</span><span class="n">model_callbacks</span><span class="p">,</span>
+            <span class="n">validation_data</span><span class="o">=</span><span class="n">validation_sequence</span><span class="p">,</span>
+            <span class="n">max_queue_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">initial_epoch</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lr&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">())),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="n">histories</span><span class="o">.</span><span class="n">combine_histories</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">,</span> <span class="n">new_history</span><span class="o">.</span><span class="n">history</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="n">_KEY_HISTORY_IS_MODEL_TRAINED</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_model_trained</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">histories</span><span class="o">.</span><span class="n">save_history</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">,</span> <span class="n">get_history_filepath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">))</span>
+        <span class="n">models</span><span class="o">.</span><span class="n">save_model</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">get_model_filepath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Experiment.calculate_model_memory_footprint"><a class="viewcode-back" href="../../../bfgn.experiments.html#bfgn.experiments.experiments.Experiment.calculate_model_memory_footprint">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_model_memory_footprint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Calculate model memory footprint. Shamelessly copied from (but not tested rigorously):</span>
+<span class="sd">        https://stackoverflow.com/questions/43137288/how-to-determine-needed-memory-of-keras-model.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            batch_size:  Batch size for training.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Model memory footprint in gigabytes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">shapes_mem_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">layers</span><span class="p">:</span>
+            <span class="n">single_layer_mem</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">l</span><span class="o">.</span><span class="n">output_shape</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">single_layer_mem</span> <span class="o">*=</span> <span class="n">s</span>
+            <span class="n">shapes_mem_count</span> <span class="o">+=</span> <span class="n">single_layer_mem</span>
+
+        <span class="n">trainable_count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">([</span><span class="n">K</span><span class="o">.</span><span class="n">count_params</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">trainable_weights</span><span class="p">)])</span>
+        <span class="n">non_trainable_count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">([</span><span class="n">K</span><span class="o">.</span><span class="n">count_params</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">non_trainable_weights</span><span class="p">)])</span>
+
+        <span class="k">if</span> <span class="n">K</span><span class="o">.</span><span class="n">floatx</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;float16&#39;</span><span class="p">:</span>
+            <span class="n">number_size</span> <span class="o">=</span> <span class="mf">2.0</span>
+        <span class="k">elif</span> <span class="n">K</span><span class="o">.</span><span class="n">floatx</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;float32&#39;</span><span class="p">:</span>
+            <span class="n">number_size</span> <span class="o">=</span> <span class="mf">4.0</span>
+        <span class="k">if</span> <span class="n">K</span><span class="o">.</span><span class="n">floatx</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;float64&#39;</span><span class="p">:</span>
+            <span class="n">number_size</span> <span class="o">=</span> <span class="mf">8.0</span>
+
+        <span class="n">total_memory</span> <span class="o">=</span> <span class="n">number_size</span><span class="o">*</span><span class="p">(</span><span class="n">batch_size</span><span class="o">*</span><span class="n">shapes_mem_count</span> <span class="o">+</span> <span class="n">trainable_count</span> <span class="o">+</span> <span class="n">non_trainable_count</span><span class="p">)</span>
+        <span class="n">gbytes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">total_memory</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1024.0</span> <span class="o">**</span> <span class="mi">3</span><span class="p">),</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">gbytes</span></div></div>
+
+
+<div class="viewcode-block" id="load_experiment_from_directory"><a class="viewcode-back" href="../../../bfgn.experiments.html#bfgn.experiments.experiments.load_experiment_from_directory">[docs]</a><span class="k">def</span> <span class="nf">load_experiment_from_directory</span><span class="p">(</span><span class="n">dir_experiment</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Experiment</span><span class="p">:</span>
+    <span class="n">filepath_config</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dir_experiment</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">DEFAULT_FILENAME_CONFIG</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">filepath_config</span><span class="p">),</span> <span class="s1">&#39;Experiment directory must contain a config file.&#39;</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">configs</span><span class="o">.</span><span class="n">create_config_from_file</span><span class="p">(</span><span class="n">filepath_config</span><span class="p">)</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span> <span class="o">=</span> <span class="n">dir_experiment</span>
+    <span class="k">return</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">config</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_config_filepath"><a class="viewcode-back" href="../../../bfgn.experiments.html#bfgn.experiments.experiments.get_config_filepath">[docs]</a><span class="k">def</span> <span class="nf">get_config_filepath</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Get the default config path for experiments.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        config: bfgn config object.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Filepath to model training config.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">DEFAULT_FILENAME_CONFIG</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_history_filepath"><a class="viewcode-back" href="../../../bfgn.experiments.html#bfgn.experiments.experiments.get_history_filepath">[docs]</a><span class="k">def</span> <span class="nf">get_history_filepath</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Get the default model training history path for experiments.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        config: bfgn config object.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Filepath to model training history.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">,</span> <span class="n">histories</span><span class="o">.</span><span class="n">DEFAULT_FILENAME_HISTORY</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_log_filepath"><a class="viewcode-back" href="../../../bfgn.experiments.html#bfgn.experiments.experiments.get_log_filepath">[docs]</a><span class="k">def</span> <span class="nf">get_log_filepath</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Get the default model training log path for experiments.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        config: bfgn config object.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Filepath to model training log.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">,</span> <span class="n">_DEFAULT_FILENAME_LOG</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_model_filepath"><a class="viewcode-back" href="../../../bfgn.experiments.html#bfgn.experiments.experiments.get_model_filepath">[docs]</a><span class="k">def</span> <span class="nf">get_model_filepath</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Get the default model path for experiments.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        config: bfgn config object.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Filepath to model.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">,</span> <span class="n">models</span><span class="o">.</span><span class="n">DEFAULT_FILENAME_MODEL</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Philip G. Brodrick and Nicholas S. Fabina
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

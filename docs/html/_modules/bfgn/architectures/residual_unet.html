@@ -1,0 +1,301 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>bfgn.architectures.residual_unet &mdash; bfgn  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> bfgn
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">bfgn</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+          <li><a href="../architectures.html">bfgn.architectures</a> &raquo;</li>
+        
+      <li>bfgn.architectures.residual_unet</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for bfgn.architectures.residual_unet</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span> <span class="nn">keras</span>
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="k">import</span> <span class="n">BatchNormalization</span><span class="p">,</span> <span class="n">Concatenate</span><span class="p">,</span> <span class="n">Conv2D</span><span class="p">,</span> <span class="n">MaxPooling2D</span><span class="p">,</span> <span class="n">UpSampling2D</span>
+
+<span class="kn">from</span> <span class="nn">bfgn.architectures</span> <span class="k">import</span> <span class="n">config_sections</span>
+
+
+<div class="viewcode-block" id="ArchitectureConfigSection"><a class="viewcode-back" href="../../../bfgn.architectures.html#bfgn.architectures.residual_unet.ArchitectureConfigSection">[docs]</a><span class="k">class</span> <span class="nc">ArchitectureConfigSection</span><span class="p">(</span>
+    <span class="n">config_sections</span><span class="o">.</span><span class="n">AutoencoderMixin</span><span class="p">,</span>
+    <span class="n">config_sections</span><span class="o">.</span><span class="n">BlockMixin</span><span class="p">,</span>
+    <span class="n">config_sections</span><span class="o">.</span><span class="n">GrowthMixin</span><span class="p">,</span>
+    <span class="n">config_sections</span><span class="o">.</span><span class="n">BaseArchitectureConfigSection</span>
+<span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="create_model"><a class="viewcode-back" href="../../../bfgn.architectures.html#bfgn.architectures.residual_unet.create_model">[docs]</a><span class="k">def</span> <span class="nf">create_model</span><span class="p">(</span>
+        <span class="n">inshape</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+        <span class="n">n_classes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">output_activation</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">block_structure</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">config_sections</span><span class="o">.</span><span class="n">DEFAULT_BLOCK_STRUCTURE</span><span class="p">,</span>
+        <span class="n">filters</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">config_sections</span><span class="o">.</span><span class="n">DEFAULT_FILTERS</span><span class="p">,</span>
+        <span class="n">kernel_size</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">config_sections</span><span class="o">.</span><span class="n">DEFAULT_KERNEL_SIZE</span><span class="p">,</span>
+        <span class="n">padding</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">config_sections</span><span class="o">.</span><span class="n">DEFAULT_PADDING</span><span class="p">,</span>
+        <span class="n">pool_size</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">config_sections</span><span class="o">.</span><span class="n">DEFAULT_POOL_SIZE</span><span class="p">,</span>
+        <span class="n">use_batch_norm</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">config_sections</span><span class="o">.</span><span class="n">DEFAULT_USE_BATCH_NORM</span><span class="p">,</span>
+        <span class="n">use_growth</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">config_sections</span><span class="o">.</span><span class="n">DEFAULT_USE_GROWTH</span><span class="p">,</span>
+        <span class="n">use_initial_colorspace_transformation_layer</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span>
+    <span class="n">config_sections</span><span class="o">.</span><span class="n">DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">:</span>
+
+    <span class="n">input_width</span> <span class="o">=</span> <span class="n">inshape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">minimum_width</span> <span class="o">=</span> <span class="n">input_width</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">**</span> <span class="nb">len</span><span class="p">(</span><span class="n">block_structure</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="n">minimum_width</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">,</span> \
+        <span class="s1">&#39;The convolution width in the last encoding block (</span><span class="si">{}</span><span class="s1">) is less than 2.&#39;</span> <span class="o">+</span> \
+        <span class="s1">&#39;Reduce the number of blocks in block_structure (currently </span><span class="si">{}</span><span class="s1">).&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">block_structure</span><span class="p">))</span>
+
+    <span class="c1"># Need to track the following throughout the model creation</span>
+    <span class="n">layers_pass_through</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+    <span class="c1"># Encodings</span>
+    <span class="n">inlayer</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">inshape</span><span class="p">)</span>
+    <span class="n">encoder</span> <span class="o">=</span> <span class="n">inlayer</span>
+
+    <span class="k">if</span> <span class="n">use_initial_colorspace_transformation_layer</span><span class="p">:</span>
+        <span class="n">intermediate_color_depth</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">inshape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">encoder</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="n">intermediate_color_depth</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">)(</span><span class="n">inlayer</span><span class="p">)</span>
+        <span class="n">encoder</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="n">inshape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">)(</span><span class="n">encoder</span><span class="p">)</span>
+        <span class="n">encoder</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">()(</span><span class="n">encoder</span><span class="p">)</span>
+
+    <span class="c1"># Each encoder block has a number of subblocks</span>
+    <span class="k">for</span> <span class="n">num_subblocks</span> <span class="ow">in</span> <span class="n">block_structure</span><span class="p">:</span>
+        <span class="c1"># Store the subblock input for the residual connection</span>
+        <span class="n">input_subblock</span> <span class="o">=</span> <span class="n">encoder</span>
+        <span class="k">for</span> <span class="n">idx_sublayer</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_subblocks</span><span class="p">):</span>
+            <span class="c1"># Each subblock has a number of convolutions</span>
+            <span class="n">encoder</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="n">filters</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="n">kernel_size</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">)(</span><span class="n">encoder</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">use_batch_norm</span><span class="p">:</span>
+                <span class="n">encoder</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">()(</span><span class="n">encoder</span><span class="p">)</span>
+        <span class="c1"># Add the residual connection from the previous subblock output to the current subblock output</span>
+        <span class="n">encoder</span> <span class="o">=</span> <span class="n">_add_residual_shortcut</span><span class="p">(</span><span class="n">input_subblock</span><span class="p">,</span> <span class="n">encoder</span><span class="p">)</span>
+        <span class="c1"># Each encoder block passes its pre-pooled layers through to the decoder</span>
+        <span class="n">layers_pass_through</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">encoder</span><span class="p">)</span>
+        <span class="n">encoder</span> <span class="o">=</span> <span class="n">MaxPooling2D</span><span class="p">(</span><span class="n">pool_size</span><span class="o">=</span><span class="n">pool_size</span><span class="p">)(</span><span class="n">encoder</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">use_growth</span><span class="p">:</span>
+            <span class="n">filters</span> <span class="o">*=</span> <span class="mi">2</span>
+
+    <span class="c1"># Decodings</span>
+    <span class="n">decoder</span> <span class="o">=</span> <span class="n">encoder</span>
+    <span class="c1"># Each decoder block has a number of subblocks, but in reverse order of encoder</span>
+    <span class="k">for</span> <span class="n">num_subblocks</span><span class="p">,</span> <span class="n">layer_passed_through</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">block_structure</span><span class="p">),</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">layers_pass_through</span><span class="p">)):</span>
+        <span class="c1"># Store the subblock input for the residual connection</span>
+        <span class="n">input_subblock</span> <span class="o">=</span> <span class="n">decoder</span>
+        <span class="k">for</span> <span class="n">idx_sublayer</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_subblocks</span><span class="p">):</span>
+            <span class="c1"># Each subblock has a number of convolutions</span>
+            <span class="n">decoder</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="n">filters</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="n">kernel_size</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">)(</span><span class="n">decoder</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">use_batch_norm</span><span class="p">:</span>
+                <span class="n">decoder</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">()(</span><span class="n">decoder</span><span class="p">)</span>
+        <span class="c1"># Add the residual connection from the previous subblock output to the current subblock output</span>
+        <span class="n">decoder</span> <span class="o">=</span> <span class="n">_add_residual_shortcut</span><span class="p">(</span><span class="n">input_subblock</span><span class="p">,</span> <span class="n">decoder</span><span class="p">)</span>
+        <span class="n">decoder</span> <span class="o">=</span> <span class="n">UpSampling2D</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">pool_size</span><span class="p">)(</span><span class="n">decoder</span><span class="p">)</span>
+        <span class="n">decoder</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="n">filters</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="n">kernel_size</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">)(</span><span class="n">decoder</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">use_batch_norm</span><span class="p">:</span>
+            <span class="n">decoder</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">()(</span><span class="n">decoder</span><span class="p">)</span>
+        <span class="n">decoder</span> <span class="o">=</span> <span class="n">Concatenate</span><span class="p">()([</span><span class="n">layer_passed_through</span><span class="p">,</span> <span class="n">decoder</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">use_growth</span><span class="p">:</span>
+            <span class="n">filters</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">filters</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># Last convolutions</span>
+    <span class="n">output_layer</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="n">filters</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="n">kernel_size</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">)(</span><span class="n">decoder</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">use_batch_norm</span><span class="p">:</span>
+        <span class="n">output_layer</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">()(</span><span class="n">output_layer</span><span class="p">)</span>
+    <span class="n">output_layer</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span>
+        <span class="n">filters</span><span class="o">=</span><span class="n">n_classes</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">output_activation</span><span class="p">)(</span><span class="n">output_layer</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">inlayer</span><span class="p">],</span> <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">output_layer</span><span class="p">])</span></div>
+
+
+<span class="k">def</span> <span class="nf">_add_residual_shortcut</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">:</span> <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Layer</span><span class="p">,</span> <span class="n">residual_module</span><span class="p">:</span> <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Layer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Adds a shortcut connection by combining a input tensor and residual module</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">shortcut</span> <span class="o">=</span> <span class="n">input_tensor</span>
+
+    <span class="c1"># We need to apply a convolution if the input and block shapes do not match, every block transition</span>
+    <span class="n">inshape</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">int_shape</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="n">residual_shape</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">int_shape</span><span class="p">(</span><span class="n">residual_module</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="k">if</span> <span class="n">inshape</span> <span class="o">!=</span> <span class="n">residual_shape</span><span class="p">:</span>
+        <span class="n">strides</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">inshape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">residual_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])),</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">inshape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">residual_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span>
+        <span class="n">shortcut</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Conv2D</span><span class="p">(</span>
+            <span class="n">filters</span><span class="o">=</span><span class="n">residual_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;valid&#39;</span><span class="p">,</span> <span class="n">strides</span><span class="o">=</span><span class="n">strides</span><span class="p">)(</span><span class="n">shortcut</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">add</span><span class="p">([</span><span class="n">shortcut</span><span class="p">,</span> <span class="n">residual_module</span><span class="p">])</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Philip G. Brodrick and Nicholas S. Fabina
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

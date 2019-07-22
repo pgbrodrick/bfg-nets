@@ -1,0 +1,470 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>bfgn.reporting.visualizations package &mdash; bfgn  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> bfgn
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">bfgn.reporting.visualizations package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-bfgn.reporting.visualizations.colormaps">bfgn.reporting.visualizations.colormaps module</a></li>
+<li><a class="reference internal" href="#module-bfgn.reporting.visualizations.histories">bfgn.reporting.visualizations.histories module</a></li>
+<li><a class="reference internal" href="#module-bfgn.reporting.visualizations.logs">bfgn.reporting.visualizations.logs module</a></li>
+<li><a class="reference internal" href="#module-bfgn.reporting.visualizations.model_performance">bfgn.reporting.visualizations.model_performance module</a></li>
+<li><a class="reference internal" href="#module-bfgn.reporting.visualizations.networks">bfgn.reporting.visualizations.networks module</a></li>
+<li><a class="reference internal" href="#module-bfgn.reporting.visualizations.samples">bfgn.reporting.visualizations.samples module</a></li>
+<li><a class="reference internal" href="#module-bfgn.reporting.visualizations.subplots">bfgn.reporting.visualizations.subplots module</a></li>
+<li><a class="reference internal" href="#module-bfgn.reporting.visualizations">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">bfgn</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>bfgn.reporting.visualizations package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/bfgn.reporting.visualizations.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="bfgn-reporting-visualizations-package">
+<h1>bfgn.reporting.visualizations package<a class="headerlink" href="#bfgn-reporting-visualizations-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-bfgn.reporting.visualizations.colormaps">
+<span id="bfgn-reporting-visualizations-colormaps-module"></span><h2>bfgn.reporting.visualizations.colormaps module<a class="headerlink" href="#module-bfgn.reporting.visualizations.colormaps" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bfgn.reporting.visualizations.colormaps.check_is_categorical_colormap_repeated">
+<code class="sig-prename descclassname">bfgn.reporting.visualizations.colormaps.</code><code class="sig-name descname">check_is_categorical_colormap_repeated</code><span class="sig-paren">(</span><em class="sig-param">num_classes</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/visualizations/colormaps.html#check_is_categorical_colormap_repeated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.visualizations.colormaps.check_is_categorical_colormap_repeated" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.reporting.visualizations.histories">
+<span id="bfgn-reporting-visualizations-histories-module"></span><h2>bfgn.reporting.visualizations.histories module<a class="headerlink" href="#module-bfgn.reporting.visualizations.histories" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bfgn.reporting.visualizations.histories.plot_history">
+<code class="sig-prename descclassname">bfgn.reporting.visualizations.histories.</code><code class="sig-name descname">plot_history</code><span class="sig-paren">(</span><em class="sig-param">history</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/visualizations/histories.html#plot_history"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.visualizations.histories.plot_history" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>[&lt;class ‘matplotlib.figure.Figure’&gt;]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.reporting.visualizations.logs">
+<span id="bfgn-reporting-visualizations-logs-module"></span><h2>bfgn.reporting.visualizations.logs module<a class="headerlink" href="#module-bfgn.reporting.visualizations.logs" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bfgn.reporting.visualizations.logs.plot_log_warnings_and_errors">
+<code class="sig-prename descclassname">bfgn.reporting.visualizations.logs.</code><code class="sig-name descname">plot_log_warnings_and_errors</code><span class="sig-paren">(</span><em class="sig-param">config_data</em>, <em class="sig-param">config_model</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/visualizations/logs.html#plot_log_warnings_and_errors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.visualizations.logs.plot_log_warnings_and_errors" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Figure</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.reporting.visualizations.model_performance">
+<span id="bfgn-reporting-visualizations-model-performance-module"></span><h2>bfgn.reporting.visualizations.model_performance module<a class="headerlink" href="#module-bfgn.reporting.visualizations.model_performance" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bfgn.reporting.visualizations.model_performance.plot_classification_report">
+<code class="sig-prename descclassname">bfgn.reporting.visualizations.model_performance.</code><code class="sig-name descname">plot_classification_report</code><span class="sig-paren">(</span><em class="sig-param">sampled</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/visualizations/model_performance.html#plot_classification_report"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.visualizations.model_performance.plot_classification_report" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Figure</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.reporting.visualizations.model_performance.plot_confusion_matrix">
+<code class="sig-prename descclassname">bfgn.reporting.visualizations.model_performance.</code><code class="sig-name descname">plot_confusion_matrix</code><span class="sig-paren">(</span><em class="sig-param">sampled</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/visualizations/model_performance.html#plot_confusion_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.visualizations.model_performance.plot_confusion_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>[&lt;class ‘matplotlib.figure.Figure’&gt;]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.reporting.visualizations.model_performance.plot_spatial_classification_error">
+<code class="sig-prename descclassname">bfgn.reporting.visualizations.model_performance.</code><code class="sig-name descname">plot_spatial_classification_error</code><span class="sig-paren">(</span><em class="sig-param">sampled</em>, <em class="sig-param">max_pages=8</em>, <em class="sig-param">max_responses_per_page=10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/visualizations/model_performance.html#plot_spatial_classification_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.visualizations.model_performance.plot_spatial_classification_error" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Figure</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.reporting.visualizations.model_performance.plot_spatial_regression_error">
+<code class="sig-prename descclassname">bfgn.reporting.visualizations.model_performance.</code><code class="sig-name descname">plot_spatial_regression_error</code><span class="sig-paren">(</span><em class="sig-param">sampled</em>, <em class="sig-param">max_pages=8</em>, <em class="sig-param">max_responses_per_page=10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/visualizations/model_performance.html#plot_spatial_regression_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.visualizations.model_performance.plot_spatial_regression_error" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Figure</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.reporting.visualizations.networks">
+<span id="bfgn-reporting-visualizations-networks-module"></span><h2>bfgn.reporting.visualizations.networks module<a class="headerlink" href="#module-bfgn.reporting.visualizations.networks" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bfgn.reporting.visualizations.networks.plot_model_summary">
+<code class="sig-prename descclassname">bfgn.reporting.visualizations.networks.</code><code class="sig-name descname">plot_model_summary</code><span class="sig-paren">(</span><em class="sig-param">model</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/visualizations/networks.html#plot_model_summary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.visualizations.networks.plot_model_summary" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Figure</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.reporting.visualizations.networks.plot_network_feature_progression">
+<code class="sig-prename descclassname">bfgn.reporting.visualizations.networks.</code><code class="sig-name descname">plot_network_feature_progression</code><span class="sig-paren">(</span><em class="sig-param">sampled</em>, <em class="sig-param">compact=False</em>, <em class="sig-param">max_pages=10</em>, <em class="sig-param">max_filters=10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/visualizations/networks.html#plot_network_feature_progression"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.visualizations.networks.plot_network_feature_progression" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Figure</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.reporting.visualizations.samples">
+<span id="bfgn-reporting-visualizations-samples-module"></span><h2>bfgn.reporting.visualizations.samples module<a class="headerlink" href="#module-bfgn.reporting.visualizations.samples" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bfgn.reporting.visualizations.samples.plot_classification_samples">
+<code class="sig-prename descclassname">bfgn.reporting.visualizations.samples.</code><code class="sig-name descname">plot_classification_samples</code><span class="sig-paren">(</span><em class="sig-param">sampled</em>, <em class="sig-param">max_pages=8</em>, <em class="sig-param">max_samples_per_page=10</em>, <em class="sig-param">max_features_per_page=5</em>, <em class="sig-param">max_responses_per_page=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/visualizations/samples.html#plot_classification_samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.visualizations.samples.plot_classification_samples" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Figure</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.reporting.visualizations.samples.plot_regression_samples">
+<code class="sig-prename descclassname">bfgn.reporting.visualizations.samples.</code><code class="sig-name descname">plot_regression_samples</code><span class="sig-paren">(</span><em class="sig-param">sampled</em>, <em class="sig-param">max_pages=8</em>, <em class="sig-param">max_samples_per_page=10</em>, <em class="sig-param">max_features_per_page=5</em>, <em class="sig-param">max_responses_per_page=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/visualizations/samples.html#plot_regression_samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.visualizations.samples.plot_regression_samples" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Figure</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.reporting.visualizations.samples.plot_single_sequence_prediction_histogram">
+<code class="sig-prename descclassname">bfgn.reporting.visualizations.samples.</code><code class="sig-name descname">plot_single_sequence_prediction_histogram</code><span class="sig-paren">(</span><em class="sig-param">sampled</em>, <em class="sig-param">max_responses_per_page=15</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/visualizations/samples.html#plot_single_sequence_prediction_histogram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.visualizations.samples.plot_single_sequence_prediction_histogram" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.reporting.visualizations.subplots">
+<span id="bfgn-reporting-visualizations-subplots-module"></span><h2>bfgn.reporting.visualizations.subplots module<a class="headerlink" href="#module-bfgn.reporting.visualizations.subplots" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bfgn.reporting.visualizations.subplots.plot_raw_features">
+<code class="sig-prename descclassname">bfgn.reporting.visualizations.subplots.</code><code class="sig-name descname">plot_raw_features</code><span class="sig-paren">(</span><em class="sig-param">sampled</em>, <em class="sig-param">idx_sample</em>, <em class="sig-param">idx_feature</em>, <em class="sig-param">ax</em>, <em class="sig-param">add_xlabel</em>, <em class="sig-param">add_ylabel</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/visualizations/subplots.html#plot_raw_features"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.visualizations.subplots.plot_raw_features" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.reporting.visualizations.subplots.plot_transformed_features">
+<code class="sig-prename descclassname">bfgn.reporting.visualizations.subplots.</code><code class="sig-name descname">plot_transformed_features</code><span class="sig-paren">(</span><em class="sig-param">sampled</em>, <em class="sig-param">idx_sample</em>, <em class="sig-param">idx_feature</em>, <em class="sig-param">ax</em>, <em class="sig-param">add_xlabel</em>, <em class="sig-param">add_ylabel</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/visualizations/subplots.html#plot_transformed_features"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.visualizations.subplots.plot_transformed_features" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.reporting.visualizations.subplots.plot_raw_responses">
+<code class="sig-prename descclassname">bfgn.reporting.visualizations.subplots.</code><code class="sig-name descname">plot_raw_responses</code><span class="sig-paren">(</span><em class="sig-param">sampled</em>, <em class="sig-param">idx_sample</em>, <em class="sig-param">idx_response</em>, <em class="sig-param">ax</em>, <em class="sig-param">add_xlabel</em>, <em class="sig-param">add_ylabel</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/visualizations/subplots.html#plot_raw_responses"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.visualizations.subplots.plot_raw_responses" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.reporting.visualizations.subplots.plot_transformed_responses">
+<code class="sig-prename descclassname">bfgn.reporting.visualizations.subplots.</code><code class="sig-name descname">plot_transformed_responses</code><span class="sig-paren">(</span><em class="sig-param">sampled</em>, <em class="sig-param">idx_sample</em>, <em class="sig-param">idx_response</em>, <em class="sig-param">ax</em>, <em class="sig-param">add_xlabel</em>, <em class="sig-param">add_ylabel</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/visualizations/subplots.html#plot_transformed_responses"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.visualizations.subplots.plot_transformed_responses" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.reporting.visualizations.subplots.plot_categorical_responses">
+<code class="sig-prename descclassname">bfgn.reporting.visualizations.subplots.</code><code class="sig-name descname">plot_categorical_responses</code><span class="sig-paren">(</span><em class="sig-param">sampled</em>, <em class="sig-param">idx_sample</em>, <em class="sig-param">idx_response</em>, <em class="sig-param">ax</em>, <em class="sig-param">add_xlabel</em>, <em class="sig-param">add_ylabel</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/visualizations/subplots.html#plot_categorical_responses"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.visualizations.subplots.plot_categorical_responses" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.reporting.visualizations.subplots.plot_raw_predictions">
+<code class="sig-prename descclassname">bfgn.reporting.visualizations.subplots.</code><code class="sig-name descname">plot_raw_predictions</code><span class="sig-paren">(</span><em class="sig-param">sampled</em>, <em class="sig-param">idx_sample</em>, <em class="sig-param">idx_response</em>, <em class="sig-param">ax</em>, <em class="sig-param">add_xlabel</em>, <em class="sig-param">add_ylabel</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/visualizations/subplots.html#plot_raw_predictions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.visualizations.subplots.plot_raw_predictions" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.reporting.visualizations.subplots.plot_transformed_predictions">
+<code class="sig-prename descclassname">bfgn.reporting.visualizations.subplots.</code><code class="sig-name descname">plot_transformed_predictions</code><span class="sig-paren">(</span><em class="sig-param">sampled</em>, <em class="sig-param">idx_sample</em>, <em class="sig-param">idx_response</em>, <em class="sig-param">ax</em>, <em class="sig-param">add_xlabel</em>, <em class="sig-param">add_ylabel</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/visualizations/subplots.html#plot_transformed_predictions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.visualizations.subplots.plot_transformed_predictions" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.reporting.visualizations.subplots.plot_classification_predictions_max_likelihood">
+<code class="sig-prename descclassname">bfgn.reporting.visualizations.subplots.</code><code class="sig-name descname">plot_classification_predictions_max_likelihood</code><span class="sig-paren">(</span><em class="sig-param">sampled</em>, <em class="sig-param">idx_sample</em>, <em class="sig-param">ax</em>, <em class="sig-param">add_xlabel</em>, <em class="sig-param">add_ylabel</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/visualizations/subplots.html#plot_classification_predictions_max_likelihood"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.visualizations.subplots.plot_classification_predictions_max_likelihood" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.reporting.visualizations.subplots.plot_weights">
+<code class="sig-prename descclassname">bfgn.reporting.visualizations.subplots.</code><code class="sig-name descname">plot_weights</code><span class="sig-paren">(</span><em class="sig-param">sampled</em>, <em class="sig-param">idx_sample</em>, <em class="sig-param">ax</em>, <em class="sig-param">add_xlabel</em>, <em class="sig-param">add_ylabel</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/visualizations/subplots.html#plot_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.visualizations.subplots.plot_weights" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.reporting.visualizations.subplots.plot_binary_error_classification">
+<code class="sig-prename descclassname">bfgn.reporting.visualizations.subplots.</code><code class="sig-name descname">plot_binary_error_classification</code><span class="sig-paren">(</span><em class="sig-param">sampled</em>, <em class="sig-param">idx_sample</em>, <em class="sig-param">ax</em>, <em class="sig-param">add_xlabel</em>, <em class="sig-param">add_ylabel</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/visualizations/subplots.html#plot_binary_error_classification"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.visualizations.subplots.plot_binary_error_classification" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.reporting.visualizations.subplots.plot_raw_error_regression">
+<code class="sig-prename descclassname">bfgn.reporting.visualizations.subplots.</code><code class="sig-name descname">plot_raw_error_regression</code><span class="sig-paren">(</span><em class="sig-param">sampled</em>, <em class="sig-param">idx_sample</em>, <em class="sig-param">idx_response</em>, <em class="sig-param">ax</em>, <em class="sig-param">add_xlabel</em>, <em class="sig-param">add_ylabel</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/visualizations/subplots.html#plot_raw_error_regression"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.visualizations.subplots.plot_raw_error_regression" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.reporting.visualizations.subplots.plot_transformed_error_regression">
+<code class="sig-prename descclassname">bfgn.reporting.visualizations.subplots.</code><code class="sig-name descname">plot_transformed_error_regression</code><span class="sig-paren">(</span><em class="sig-param">sampled</em>, <em class="sig-param">idx_sample</em>, <em class="sig-param">idx_response</em>, <em class="sig-param">ax</em>, <em class="sig-param">add_xlabel</em>, <em class="sig-param">add_ylabel</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/visualizations/subplots.html#plot_transformed_error_regression"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.visualizations.subplots.plot_transformed_error_regression" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.reporting.visualizations.subplots.add_internal_window_to_subplot">
+<code class="sig-prename descclassname">bfgn.reporting.visualizations.subplots.</code><code class="sig-name descname">add_internal_window_to_subplot</code><span class="sig-paren">(</span><em class="sig-param">sampled</em>, <em class="sig-param">ax</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/visualizations/subplots.html#add_internal_window_to_subplot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.visualizations.subplots.add_internal_window_to_subplot" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.reporting.visualizations">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-bfgn.reporting.visualizations" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Philip G. Brodrick and Nicholas S. Fabina
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,770 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>bfgn.configuration.sections &mdash; bfgn  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> bfgn
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">bfgn</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>bfgn.configuration.sections</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for bfgn.configuration.sections</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span>
+<span class="kn">import</span> <span class="nn">gdal</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Type</span>
+
+<span class="kn">from</span> <span class="nn">bfgn</span> <span class="k">import</span> <span class="n">architectures</span>
+<span class="kn">from</span> <span class="nn">bfgn.configuration</span> <span class="k">import</span> <span class="n">DEFAULT_OPTIONAL_VALUE</span><span class="p">,</span> <span class="n">DEFAULT_REQUIRED_VALUE</span>
+<span class="kn">from</span> <span class="nn">bfgn.data_management</span> <span class="k">import</span> <span class="n">scalers</span>
+<span class="kn">from</span> <span class="nn">bfgn.experiments</span> <span class="k">import</span> <span class="n">losses</span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">How to use sections:  Configs and ConfigSections are the tools we (currently) use to handle the numerous parameters</span>
+<span class="sd">associated with neural network experiments. In general, we want to validate that ConfigSections have options with</span>
+<span class="sd">the expected values and relationships, and we use two important methods to do this without duplicating too much code.</span>
+
+<span class="sd">Important note:  please feel free to suggest better ways of handling these things.</span>
+
+<span class="sd">To validate that attributes have the correct type, ensure that the attributes are on the config section and have an</span>
+<span class="sd">associated hidden attribute with a particular name pattern. Specifically, given an attribute named &#39;attribute&#39;, the</span>
+<span class="sd">hidden attribute should be named &#39;_attribute_type&#39; and its value should be the type expected for that attribute.</span>
+<span class="sd">Methods on the BaseConfigSection will ensure that this attribute type is checked and errors will be raised to the user</span>
+<span class="sd">if it&#39;s not appropriate. Example:</span>
+
+<span class="sd">```</span>
+<span class="sd">class GenericConfigSection(BaseConfigSection):</span>
+<span class="sd">    _attribute_type = list                  &lt;-- Used to validate attributes have correct types</span>
+<span class="sd">    attribute = DEFAULT_REQUIRED_VALUE</span>
+<span class="sd">```</span>
+
+<span class="sd">To validate that attributes have appropriate relationships or characteristics, use the hidden _check_config_validity</span>
+<span class="sd">method to add more detailed validation checks. Simply return a list of string descriptions of errors from the method as</span>
+<span class="sd">demonstrated:</span>
+
+<span class="sd">```</span>
+<span class="sd">def _check_config_validity(self) -&gt; List[str]:</span>
+<span class="sd">    errors = list()</span>
+<span class="sd">    if self.attribute_min &gt;= self.attribute_max:</span>
+<span class="sd">        errors.append(&#39;attribute_min must be less than attribute_max.&#39;)</span>
+<span class="sd">    return errors</span>
+<span class="sd">```</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">VECTORIZED_FILENAMES</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;kml&#39;</span><span class="p">,</span> <span class="s1">&#39;shp&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="BaseConfigSection"><a class="viewcode-back" href="../../../bfgn.configuration.html#bfgn.configuration.sections.BaseConfigSection">[docs]</a><span class="k">class</span> <span class="nc">BaseConfigSection</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base Configuration Section from which all Configuration Sections inherit. Handles shared functionality like getting,</span>
+<span class="sd">    setting, and cleaning configuration options.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_config_options</span> <span class="o">=</span> <span class="bp">NotImplemented</span>
+    <span class="n">_options_required</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_options_optional</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_options_required</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_option_keys</span><span class="p">()</span> <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="n">DEFAULT_REQUIRED_VALUE</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_options_optional</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_option_keys</span><span class="p">()</span> <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="n">DEFAULT_OPTIONAL_VALUE</span><span class="p">]</span>
+
+<div class="viewcode-block" id="BaseConfigSection.get_config_name_as_snake_case"><a class="viewcode-back" href="../../../bfgn.configuration.html#bfgn.configuration.sections.BaseConfigSection.get_config_name_as_snake_case">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_config_name_as_snake_case</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">snake_case_converter</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;((?&lt;=[a-z0-9])[A-Z]|(?!^)[A-Z](?=[a-z]))&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">snake_case_converter</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;_\1&#39;</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="BaseConfigSection.get_config_options_as_dict"><a class="viewcode-back" href="../../../bfgn.configuration.html#bfgn.configuration.sections.BaseConfigSection.get_config_options_as_dict">[docs]</a>    <span class="k">def</span> <span class="nf">get_config_options_as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">]]:</span>
+        <span class="n">config_options</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_option_keys</span><span class="p">():</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">tuple</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>  <span class="c1"># Lists look nicer in config files and seem friendlier</span>
+            <span class="n">config_options</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">return</span> <span class="n">config_options</span></div>
+
+<div class="viewcode-block" id="BaseConfigSection.get_option_keys"><a class="viewcode-back" href="../../../bfgn.configuration.html#bfgn.configuration.sections.BaseConfigSection.get_option_keys">[docs]</a>    <span class="k">def</span> <span class="nf">get_option_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">))]</span></div>
+
+<div class="viewcode-block" id="BaseConfigSection.set_config_options"><a class="viewcode-back" href="../../../bfgn.configuration.html#bfgn.configuration.sections.BaseConfigSection.set_config_options">[docs]</a>    <span class="k">def</span> <span class="nf">set_config_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_options</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">highlight_required</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Setting config options for section </span><span class="si">{}</span><span class="s1"> from </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">config_options</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_option_keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">config_options</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">config_options</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Setting option &quot;</span><span class="si">{}</span><span class="s1">&quot; to provided value &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+                <span class="c1"># We leave the labels for required and optional values as-is for templates, i.e., when highlights are</span>
+                <span class="c1"># required, otherwise we convert those labels to None</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">highlight_required</span> <span class="ow">and</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">(</span><span class="n">DEFAULT_REQUIRED_VALUE</span><span class="p">,</span> <span class="n">DEFAULT_OPTIONAL_VALUE</span><span class="p">):</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Setting option &quot;</span><span class="si">{}</span><span class="s1">&quot; to default value &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clean_config_option_value</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+        <span class="k">return</span></div>
+
+    <span class="k">def</span> <span class="nf">_clean_config_option_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">option_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">any</span><span class="p">:</span>
+        <span class="c1"># PyYAML reads None as a string so we need to convert to the None type</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;None&#39;</span><span class="p">,</span> <span class="s1">&#39;none&#39;</span><span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1"># Some parameters are treated as floats, but ints are acceptable input formats</span>
+        <span class="c1"># Treating ints as floats is more flexible and requires fewer assumptions / accomodations in the code</span>
+        <span class="c1"># Example:  users are likely to provide -9999 instead of -9999.0</span>
+        <span class="n">type_expected</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_expected_type_for_option_key</span><span class="p">(</span><span class="n">option_key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span> <span class="ow">and</span> <span class="n">type_expected</span> <span class="ow">is</span> <span class="nb">float</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="c1"># Some parameters are treated as tuples, but lists are acceptable input formats</span>
+        <span class="c1"># Treating lists as tuples is more desirable for objects that should not mutable</span>
+        <span class="c1"># Example:  YAML supports lists naturally, but requires more complex syntax for tuples, so users are not</span>
+        <span class="c1"># likely to provide tuples</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span> <span class="ow">and</span> <span class="n">type_expected</span> <span class="ow">is</span> <span class="nb">tuple</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span>
+
+<div class="viewcode-block" id="BaseConfigSection.check_config_validity"><a class="viewcode-back" href="../../../bfgn.configuration.html#bfgn.configuration.sections.BaseConfigSection.check_config_validity">[docs]</a>    <span class="k">def</span> <span class="nf">check_config_validity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="n">message_required</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> in config section </span><span class="si">{}</span><span class="s1"> is required, but either 1) None was provided or 2) no value &#39;</span> <span class="o">+</span> \
+                           <span class="s1">&#39;was provided. The expected type is </span><span class="si">{}</span><span class="s1">.&#39;</span>
+        <span class="n">message_type</span> <span class="o">=</span> <span class="s1">&#39;Invalid type for config option </span><span class="si">{}</span><span class="s1"> in config section </span><span class="si">{}</span><span class="s1">. The provided value </span><span class="si">{}</span><span class="s1"> is a </span><span class="si">{}</span><span class="s1">, &#39;</span> <span class="o">+</span> \
+                       <span class="s1">&#39;but the required value should be a </span><span class="si">{}</span><span class="s1">.&#39;</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_option_keys</span><span class="p">():</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+            <span class="c1"># No further checking is necessary if the provided type matches to expected type</span>
+            <span class="n">type_expected</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_expected_type_for_option_key</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">is</span> <span class="n">type_expected</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="c1"># Optional values which were not provided (i.e., are None), are acceptable</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_options_optional</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="c1"># At this point, we know there&#39;s an issue with this key</span>
+            <span class="c1"># Either we have a required option that can never be None, or we have a type mismatch</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_options_required</span><span class="p">:</span>
+                <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">message_required</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">type_expected</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">message_type</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="n">type_expected</span><span class="p">))</span>
+        <span class="n">errors</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_check_config_validity</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">errors</span></div>
+
+    <span class="k">def</span> <span class="nf">_check_config_validity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_get_expected_type_for_option_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">option_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_</span><span class="si">{}</span><span class="s1">_type&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">option_key</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="RawFiles"><a class="viewcode-back" href="../../../bfgn.configuration.html#bfgn.configuration.sections.RawFiles">[docs]</a><span class="k">class</span> <span class="nc">RawFiles</span><span class="p">(</span><span class="n">BaseConfigSection</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Raw file configuration, information necessary to locate and parse the raw files.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_feature_files_type</span> <span class="o">=</span> <span class="nb">list</span>
+    <span class="n">feature_files</span> <span class="o">=</span> <span class="n">DEFAULT_REQUIRED_VALUE</span>
+    <span class="sd">&quot;&quot;&quot;list: List of filepaths to raw feature rasters.  Format is a list of lists, where the outer</span>
+<span class="sd">    grouping is sites, and the inner grouping is different data files for that particular site.</span>
+<span class="sd">    E.G.: [[site_1_file_1, site_1_file_2],[site_2_file_1, site_2_file_2]].  File order and type</span>
+<span class="sd">    between sites is expected to match.  Files must all be the same projection and resolution, but</span>
+<span class="sd">    need not be aligned to the same extent - if they are not, the common inner-area will be</span>
+<span class="sd">    utilized.&quot;&quot;&quot;</span>
+    <span class="n">_response_files_type</span> <span class="o">=</span> <span class="nb">list</span>
+    <span class="n">response_files</span> <span class="o">=</span> <span class="n">DEFAULT_REQUIRED_VALUE</span>
+    <span class="sd">&quot;&quot;&quot;list: List of filepaths to raw response rasters or vectors (shp or kml supported currently).  Format is a list of</span>
+<span class="sd">    lists, where the outer grouping is sites, and the inner grouping is different data files for that particular site.</span>
+<span class="sd">    E.G.: [[site_1_file_1, site_1_file_2],[site_2_file_1, site_2_file_2]].  File order and type between sites is </span>
+<span class="sd">    expected to match.  Files must all be the same projection and resolution, but need not be aligned to the same extent</span>
+<span class="sd">    - if they are not, the common inner-area will be utilized.&quot;&quot;&quot;</span>
+    <span class="n">_boundary_files_type</span> <span class="o">=</span> <span class="nb">list</span>
+    <span class="n">boundary_files</span> <span class="o">=</span> <span class="n">DEFAULT_OPTIONAL_VALUE</span>
+    <span class="sd">&quot;&quot;&quot;list: Optional list of filepaths to boundaries. Data is built or sampled within the boundaries.&quot;&quot;&quot;</span>
+    <span class="n">_feature_data_type_type</span> <span class="o">=</span> <span class="nb">list</span>
+    <span class="n">feature_data_type</span> <span class="o">=</span> <span class="n">DEFAULT_REQUIRED_VALUE</span>
+    <span class="sd">&quot;&quot;&quot;list: Data type from each input feature band.  R for Real, C for Categorical.  All C bands will be one-hot</span>
+<span class="sd">    encoded. Provided as a list of lists corresponding to each band from each file in the raw input files list.&quot;&quot;&quot;</span>
+    <span class="n">_response_data_type_type</span> <span class="o">=</span> <span class="nb">list</span>
+    <span class="n">response_data_type</span> <span class="o">=</span> <span class="n">DEFAULT_REQUIRED_VALUE</span>
+    <span class="sd">&quot;&quot;&quot;list: Data type from each input feature band.  R for Real, C for Categorical.  All C bands will be one-hot</span>
+<span class="sd">    encoded. Provided as a list of lists corresponding to each band from each file in the raw input files list.&quot;&quot;&quot;</span>
+    <span class="n">_feature_nodata_value_type</span> <span class="o">=</span> <span class="nb">float</span>
+    <span class="n">feature_nodata_value</span> <span class="o">=</span> <span class="o">-</span><span class="mi">9999</span>
+    <span class="sd">&quot;&quot;&quot;float: Value that denotes missing data in feature files.&quot;&quot;&quot;</span>
+    <span class="n">_response_nodata_value_type</span> <span class="o">=</span> <span class="nb">float</span>
+    <span class="n">response_nodata_value</span> <span class="o">=</span> <span class="o">-</span><span class="mi">9999</span>
+    <span class="sd">&quot;&quot;&quot;float: Value that denotes missing data in response files.&quot;&quot;&quot;</span>
+    <span class="n">_boundary_bad_value_type</span> <span class="o">=</span> <span class="nb">float</span>
+    <span class="n">boundary_bad_value</span> <span class="o">=</span> <span class="n">DEFAULT_OPTIONAL_VALUE</span>
+    <span class="sd">&quot;&quot;&quot;float: Value that denotes out-of-bounds areas in boundary files. For example, raster files may have non-negative</span>
+<span class="sd">    values to represent in-bounds areas and -9999 to represent out-of-bounds areas. This value must be 0 when working</span>
+<span class="sd">    with shapefiles where vectors/polygons denote in-bounds areas.&quot;&quot;&quot;</span>
+    <span class="n">_ignore_projections_type</span> <span class="o">=</span> <span class="nb">bool</span>
+    <span class="n">ignore_projections</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="sd">&quot;&quot;&quot;bool: Should projection differences between feature and response files be ignored? This option</span>
+<span class="sd">    should only be true if the user is confident that projections are identical despite encodings.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_check_config_validity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">feature_files</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">response_files</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">feature_files</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;feature_files must have more than one file&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">response_files</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;response_files must have more than one file&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">feature_files</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">response_files</span><span class="p">):</span>
+                <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;feature_files and response_files must have corresponding files and &#39;</span> <span class="o">+</span>
+                              <span class="s1">&#39;be the same length&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boundary_files</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">boundary_bad_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;boundary_bad_value must be provided if boundary_files is provided&#39;</span><span class="p">)</span>
+
+        <span class="n">errors</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_check_input_file_formats</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">feature_files</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_files</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">boundary_files</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">errors</span></div>
+
+
+<div class="viewcode-block" id="DataBuild"><a class="viewcode-back" href="../../../bfgn.configuration.html#bfgn.configuration.sections.DataBuild">[docs]</a><span class="k">class</span> <span class="nc">DataBuild</span><span class="p">(</span><span class="n">BaseConfigSection</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Data build configuration, information necessary to structure and format the built data files.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_dir_out_type</span> <span class="o">=</span> <span class="nb">str</span>
+    <span class="n">dir_out</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span>
+    <span class="sd">&quot;&quot;&quot;str: Directory to which built data files are saved.&quot;&quot;&quot;</span>
+    <span class="n">_log_level_type</span> <span class="o">=</span> <span class="nb">str</span>
+    <span class="n">log_level</span> <span class="o">=</span> <span class="s1">&#39;INFO&#39;</span>
+    <span class="sd">&quot;&quot;&quot;str: Experiment log level. One of ERROR, WARNING, INFO, or DEBUG.&quot;&quot;&quot;</span>
+    <span class="n">_filename_prefix_out_type</span> <span class="o">=</span> <span class="nb">str</span>
+    <span class="n">filename_prefix_out</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="sd">&quot;&quot;&quot;str: Optional prefix for built data filenames, useful for organizing or tracking built data files</span>
+<span class="sd">    from different build strategies.&quot;&quot;&quot;</span>
+    <span class="n">_network_category_type</span> <span class="o">=</span> <span class="nb">str</span>
+    <span class="n">network_category</span> <span class="o">=</span> <span class="s1">&#39;FCN&#39;</span>
+    <span class="sd">&quot;&quot;&quot;str: Either CNN for convolutional neural network or FCN for fully convolutional network.&quot;&quot;&quot;</span>
+    <span class="n">_random_seed_type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">random_seed</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="sd">&quot;&quot;&quot;int: Random seed for reproducible data generation.&quot;&quot;&quot;</span>
+    <span class="n">_max_samples_type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">max_samples</span> <span class="o">=</span> <span class="n">DEFAULT_REQUIRED_VALUE</span>
+    <span class="sd">&quot;&quot;&quot;int: Maximum number of built data samples to draw from the raw data files. Sampling stops when the raw data files </span>
+<span class="sd">    are fully crawled or the maximum samples are reached.&quot;&quot;&quot;</span>
+    <span class="n">_max_built_data_gb_type</span> <span class="o">=</span> <span class="nb">float</span>
+    <span class="n">max_built_data_gb</span> <span class="o">=</span> <span class="mf">10.0</span>
+    <span class="sd">&quot;&quot;&quot;float: The maximum size of any given memmap array created in GB.&quot;&quot;&quot;</span>
+    <span class="n">_number_folds_type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">number_folds</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="sd">&quot;&quot;&quot;int: Number of training data folds.&quot;&quot;&quot;</span>
+    <span class="n">_validation_fold_type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">validation_fold</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="sd">&quot;&quot;&quot;int: Index of fold to use for validation.&quot;&quot;&quot;</span>
+    <span class="n">_test_fold_type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">test_fold</span> <span class="o">=</span> <span class="n">DEFAULT_OPTIONAL_VALUE</span>
+    <span class="sd">&quot;&quot;&quot;int: Index of fold to use for testing.&quot;&quot;&quot;</span>
+    <span class="n">_window_radius_type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">window_radius</span> <span class="o">=</span> <span class="n">DEFAULT_REQUIRED_VALUE</span>
+    <span class="sd">&quot;&quot;&quot;int: Window radius determines the full image size as 2x the window radius&quot;&quot;&quot;</span>
+    <span class="n">_loss_window_radius_type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">loss_window_radius</span> <span class="o">=</span> <span class="n">DEFAULT_REQUIRED_VALUE</span>
+    <span class="sd">&quot;&quot;&quot;int: Loss window radius determines the internal image window to use for loss calculations during model </span>
+<span class="sd">    training.&quot;&quot;&quot;</span>
+    <span class="c1"># TODO:  convert to a list, one instance per file</span>
+    <span class="n">_feature_mean_centering_type</span> <span class="o">=</span> <span class="nb">bool</span>
+    <span class="n">feature_mean_centering</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="sd">&quot;&quot;&quot;bool: Should features be mean centered?&quot;&quot;&quot;</span>
+    <span class="n">_feature_nodata_maximum_fraction_type</span> <span class="o">=</span> <span class="nb">float</span>
+    <span class="n">feature_nodata_maximum_fraction</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="sd">&quot;&quot;&quot;float: Only include built data samples with a lower proportion of missing feature data values.&quot;&quot;&quot;</span>
+    <span class="c1"># TODO: Phil:  expand to multiple response values per file?</span>
+    <span class="n">_response_min_value_type</span> <span class="o">=</span> <span class="nb">float</span>
+    <span class="n">response_min_value</span> <span class="o">=</span> <span class="n">DEFAULT_OPTIONAL_VALUE</span>
+    <span class="sd">&quot;&quot;&quot;float: Response values below this minimum are converted to missing data. Currently applied to all response values </span>
+<span class="sd">    uniformly.&quot;&quot;&quot;</span>
+    <span class="c1"># TODO: Phil:  expand to multiple response values per file?</span>
+    <span class="n">_response_max_value_type</span> <span class="o">=</span> <span class="nb">float</span>
+    <span class="n">response_max_value</span> <span class="o">=</span> <span class="n">DEFAULT_OPTIONAL_VALUE</span>
+    <span class="sd">&quot;&quot;&quot;float: Response values above this maximum are converted to missing data. Currently applied to all response values </span>
+<span class="sd">    uniformly.&quot;&quot;&quot;</span>
+    <span class="n">_response_background_value_type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">response_background_value</span> <span class="o">=</span> <span class="n">DEFAULT_OPTIONAL_VALUE</span>
+    <span class="sd">&quot;&quot;&quot;int: Built data samples containing only this response are discarded and not included in the final built data </span>
+<span class="sd">    files.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_check_config_validity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="n">response_data_format_options</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;FCN&#39;</span><span class="p">,</span> <span class="s1">&#39;CNN&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">network_category</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">response_data_format_options</span><span class="p">:</span>
+            <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;response_data_format is invalid option (</span><span class="si">{}</span><span class="s1">), must be one of the following:  </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">network_category</span><span class="p">,</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">response_data_format_options</span><span class="p">)</span>
+            <span class="p">))</span>
+        <span class="k">return</span> <span class="n">errors</span></div>
+
+
+<div class="viewcode-block" id="DataSamples"><a class="viewcode-back" href="../../../bfgn.configuration.html#bfgn.configuration.sections.DataSamples">[docs]</a><span class="k">class</span> <span class="nc">DataSamples</span><span class="p">(</span><span class="n">BaseConfigSection</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Data sample configuration, information necessary to parse built data files and pass data to models during training.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_apply_random_transformations_type</span> <span class="o">=</span> <span class="nb">bool</span>
+    <span class="n">apply_random_transformations</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="sd">&quot;&quot;&quot;bool: Should random transformations, including rotations and flips, be applied to sample images.&quot;&quot;&quot;</span>
+    <span class="n">_batch_size_type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">100</span>
+    <span class="sd">&quot;&quot;&quot;int: The sample batch size for images passed to the model.&quot;&quot;&quot;</span>
+    <span class="n">_feature_scaler_names_type</span> <span class="o">=</span> <span class="nb">list</span>
+    <span class="n">feature_scaler_names</span> <span class="o">=</span> <span class="n">DEFAULT_REQUIRED_VALUE</span>
+    <span class="sd">&quot;&quot;&quot;list: Names of the scalers which are applied to each feature file.&quot;&quot;&quot;</span>
+    <span class="n">_response_scaler_names_type</span> <span class="o">=</span> <span class="nb">list</span>
+    <span class="n">response_scaler_names</span> <span class="o">=</span> <span class="n">DEFAULT_REQUIRED_VALUE</span>
+    <span class="sd">&quot;&quot;&quot;list: Names of the scalers which are applied to each response file.&quot;&quot;&quot;</span>
+    <span class="n">_feature_nodata_encoding_type</span> <span class="o">=</span> <span class="nb">float</span>
+    <span class="n">feature_nodata_encoding</span> <span class="o">=</span> <span class="o">-</span><span class="mf">10.0</span>
+    <span class="sd">&quot;&quot;&quot;float: The encoding for missing data values passed to the model, given that neural networks are sensitive to </span>
+<span class="sd">    nans.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_check_config_validity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="n">available_scalers</span> <span class="o">=</span> <span class="n">scalers</span><span class="o">.</span><span class="n">get_available_scalers</span><span class="p">()</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">feature_scaler_names</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">scaler_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_scaler_names</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">scaler_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">available_scalers</span><span class="p">:</span>
+                    <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;feature_scaler_names contains a scaler name that does not exist:  </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">scaler_name</span><span class="p">))</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">response_scaler_names</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">scaler_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_scaler_names</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">scaler_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">available_scalers</span><span class="p">:</span>
+                    <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;response_scaler_names contains a scaler name that does not exist:  </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">scaler_name</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">errors</span></div>
+
+
+<div class="viewcode-block" id="ModelTraining"><a class="viewcode-back" href="../../../bfgn.configuration.html#bfgn.configuration.sections.ModelTraining">[docs]</a><span class="k">class</span> <span class="nc">ModelTraining</span><span class="p">(</span><span class="n">BaseConfigSection</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Model training configuration, information necessary to train models from start to finish.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_dir_out_type</span> <span class="o">=</span> <span class="nb">str</span>
+    <span class="n">dir_out</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span>
+    <span class="sd">&quot;&quot;&quot;str: Directory to which new model files are saved and from which existing model files are loaded.&quot;&quot;&quot;</span>
+    <span class="n">_log_level_type</span> <span class="o">=</span> <span class="nb">str</span>
+    <span class="n">log_level</span> <span class="o">=</span> <span class="s1">&#39;INFO&#39;</span>
+    <span class="sd">&quot;&quot;&quot;str: Experiment log level. One of ERROR, WARNING, INFO, or DEBUG.&quot;&quot;&quot;</span>
+    <span class="n">_verbosity_type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">verbosity</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="sd">&quot;&quot;&quot;int: Verbosity value for keras library. Either 0 for silent or 1 for verbose.&quot;&quot;&quot;</span>
+    <span class="n">_assert_gpu_type</span> <span class="o">=</span> <span class="nb">bool</span>
+    <span class="n">assert_gpu</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="sd">&quot;&quot;&quot;bool: Assert, i.e., fail if GPUs are required and not available.&quot;&quot;&quot;</span>
+    <span class="n">_architecture_name_type</span> <span class="o">=</span> <span class="nb">str</span>
+    <span class="n">architecture_name</span> <span class="o">=</span> <span class="n">DEFAULT_REQUIRED_VALUE</span>
+    <span class="sd">&quot;&quot;&quot;str: Architecture name from existing options.&quot;&quot;&quot;</span>
+    <span class="n">_loss_metric_type</span> <span class="o">=</span> <span class="nb">str</span>
+    <span class="n">loss_metric</span> <span class="o">=</span> <span class="n">DEFAULT_REQUIRED_VALUE</span>
+    <span class="sd">&quot;&quot;&quot;str: Loss metric to use for model training.&quot;&quot;&quot;</span>
+    <span class="n">_max_epochs_type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">max_epochs</span> <span class="o">=</span> <span class="mi">100</span>
+    <span class="sd">&quot;&quot;&quot;int: Maximum number of epochs to run model training.&quot;&quot;&quot;</span>
+    <span class="n">_optimizer_type</span> <span class="o">=</span> <span class="nb">str</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="s1">&#39;adam&#39;</span>
+    <span class="sd">&quot;&quot;&quot;str: Optimizer to use during model training. See Keras documentation for more information.&quot;&quot;&quot;</span>
+    <span class="n">_weighted_type</span> <span class="o">=</span> <span class="nb">bool</span>
+    <span class="n">weighted</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="sd">&quot;&quot;&quot;bool: Should underrepresented classes be overweighted during model training&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_check_config_validity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="n">available_architectures</span> <span class="o">=</span> <span class="n">architectures</span><span class="o">.</span><span class="n">get_available_architectures</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">architecture_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">available_architectures</span><span class="p">:</span>
+            <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;architecture_name </span><span class="si">{}</span><span class="s1"> not in available architectures: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">architecture_name</span><span class="p">,</span> <span class="n">available_architectures</span><span class="p">))</span>
+        <span class="n">available_losses</span> <span class="o">=</span> <span class="n">losses</span><span class="o">.</span><span class="n">get_available_loss_methods</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_metric</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">available_losses</span><span class="p">:</span>
+            <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;loss_metric </span><span class="si">{}</span><span class="s1"> not in available loss metrics: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loss_metric</span><span class="p">,</span> <span class="n">available_losses</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">errors</span></div>
+
+
+<div class="viewcode-block" id="ModelReporting"><a class="viewcode-back" href="../../../bfgn.configuration.html#bfgn.configuration.sections.ModelReporting">[docs]</a><span class="k">class</span> <span class="nc">ModelReporting</span><span class="p">(</span><span class="n">BaseConfigSection</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Model reporting configuration, information necessary to generate reports for evaluating model performance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_max_pages_per_figure_type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">max_pages_per_figure</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="sd">&quot;&quot;&quot;int: The max number of pages per figure in the model report.&quot;&quot;&quot;</span>
+    <span class="n">_max_samples_per_page_type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">max_samples_per_page</span> <span class="o">=</span> <span class="mi">20</span>
+    <span class="sd">&quot;&quot;&quot;int: The max number of samples per page in supported figures in the model report&quot;&quot;&quot;</span>
+    <span class="n">_max_features_per_page_type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">max_features_per_page</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="sd">&quot;&quot;&quot;int: The max number of features per page in supported figures in the model report&quot;&quot;&quot;</span>
+    <span class="n">_max_responses_per_page_type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">max_responses_per_page</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="sd">&quot;&quot;&quot;int: The max number of responses per page in supported figures in the model report&quot;&quot;&quot;</span>
+    <span class="n">_network_progression_max_pages_type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">network_progression_max_pages</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="sd">&quot;&quot;&quot;int: The max number of pages for the network progression figure in the model report. Note that the network</span>
+<span class="sd">    progression figure is particularly expensive, both for computation and memory.&quot;&quot;&quot;</span>
+    <span class="n">_network_progression_max_filters_type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">network_progression_max_filters</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="sd">&quot;&quot;&quot;int: The max number of filters for the network progression figure in the model report. Note that the network</span>
+<span class="sd">    progression figure is particularly expensive, both for computation and memory.&quot;&quot;&quot;</span>
+    <span class="n">_network_progression_show_full_type</span> <span class="o">=</span> <span class="nb">bool</span>
+    <span class="n">network_progression_show_full</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="sd">&quot;&quot;&quot;bool: Whether to plot the full network progression plot, with fully-visible filters.&quot;&quot;&quot;</span>
+    <span class="n">_network_progression_show_compact_type</span> <span class="o">=</span> <span class="nb">bool</span>
+    <span class="n">network_progression_show_compact</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="sd">&quot;&quot;&quot;bool: Whether to plot the compact network progression plot, with partially-visible filters.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="CallbackGeneral"><a class="viewcode-back" href="../../../bfgn.configuration.html#bfgn.configuration.sections.CallbackGeneral">[docs]</a><span class="k">class</span> <span class="nc">CallbackGeneral</span><span class="p">(</span><span class="n">BaseConfigSection</span><span class="p">):</span>
+    <span class="n">_checkpoint_periods_type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">checkpoint_periods</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="sd">&quot;&quot;&quot;int: Number of periods of model training between model state and history saves.&quot;&quot;&quot;</span>
+    <span class="n">_use_terminate_on_nan_type</span> <span class="o">=</span> <span class="nb">bool</span>
+    <span class="n">use_terminate_on_nan</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="sd">&quot;&quot;&quot;bool: Terminate model training if nans are observed.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="CallbackTensorboard"><a class="viewcode-back" href="../../../bfgn.configuration.html#bfgn.configuration.sections.CallbackTensorboard">[docs]</a><span class="k">class</span> <span class="nc">CallbackTensorboard</span><span class="p">(</span><span class="n">BaseConfigSection</span><span class="p">):</span>
+    <span class="n">_use_callback_type</span> <span class="o">=</span> <span class="nb">bool</span>
+    <span class="n">use_callback</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="sd">&quot;&quot;&quot;bool: Use the Tensorboard callback to enable Tensorboard by saving necessary data.&quot;&quot;&quot;</span>
+    <span class="n">_update_freq_type</span> <span class="o">=</span> <span class="nb">str</span>
+    <span class="n">update_freq</span> <span class="o">=</span> <span class="s2">&quot;epoch&quot;</span>
+    <span class="sd">&quot;&quot;&quot;str: See Keras documentation.&quot;&quot;&quot;</span>
+    <span class="n">_histogram_freq_type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">histogram_freq</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="sd">&quot;&quot;&quot;int: See Keras documentation.&quot;&quot;&quot;</span>
+    <span class="n">_write_graph_type</span> <span class="o">=</span> <span class="nb">bool</span>
+    <span class="n">write_graph</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="sd">&quot;&quot;&quot;bool: See Keras documentation.&quot;&quot;&quot;</span>
+    <span class="n">_write_grads_type</span> <span class="o">=</span> <span class="nb">bool</span>
+    <span class="n">write_grads</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="sd">&quot;&quot;&quot;bool: See Keras documentation.&quot;&quot;&quot;</span>
+    <span class="n">_write_images_type</span> <span class="o">=</span> <span class="nb">bool</span>
+    <span class="n">write_images</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="sd">&quot;&quot;&quot;bool: See Keras documentation.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="CallbackEarlyStopping"><a class="viewcode-back" href="../../../bfgn.configuration.html#bfgn.configuration.sections.CallbackEarlyStopping">[docs]</a><span class="k">class</span> <span class="nc">CallbackEarlyStopping</span><span class="p">(</span><span class="n">BaseConfigSection</span><span class="p">):</span>
+    <span class="n">_use_callback_type</span> <span class="o">=</span> <span class="nb">bool</span>
+    <span class="n">use_callback</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="sd">&quot;&quot;&quot;bool: See Keras documentation.&quot;&quot;&quot;</span>
+    <span class="n">_loss_metric_type</span> <span class="o">=</span> <span class="nb">str</span>
+    <span class="n">loss_metric</span> <span class="o">=</span> <span class="s1">&#39;val_loss&#39;</span>
+    <span class="sd">&quot;&quot;&quot;str: Loss metric to monitor for early stopping. See Keras documentation.&quot;&quot;&quot;</span>
+    <span class="n">_min_delta_type</span> <span class="o">=</span> <span class="nb">float</span>
+    <span class="n">min_delta</span> <span class="o">=</span> <span class="mf">0.0001</span>
+    <span class="sd">&quot;&quot;&quot;float: See Keras documentation.&quot;&quot;&quot;</span>
+    <span class="n">_patience_type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">patience</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="sd">&quot;&quot;&quot;int: See Keras documentation.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="CallbackReducedLearningRate"><a class="viewcode-back" href="../../../bfgn.configuration.html#bfgn.configuration.sections.CallbackReducedLearningRate">[docs]</a><span class="k">class</span> <span class="nc">CallbackReducedLearningRate</span><span class="p">(</span><span class="n">BaseConfigSection</span><span class="p">):</span>
+    <span class="n">_use_callback_type</span> <span class="o">=</span> <span class="nb">bool</span>
+    <span class="n">use_callback</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="sd">&quot;&quot;&quot;bool: See Keras documentation.&quot;&quot;&quot;</span>
+    <span class="n">_factor_type</span> <span class="o">=</span> <span class="nb">float</span>
+    <span class="n">factor</span> <span class="o">=</span> <span class="mf">0.5</span>
+    <span class="sd">&quot;&quot;&quot;float: See Keras documentation.&quot;&quot;&quot;</span>
+    <span class="n">_loss_metric_type</span> <span class="o">=</span> <span class="nb">str</span>
+    <span class="n">loss_metric</span> <span class="o">=</span> <span class="s1">&#39;val_loss&#39;</span>
+    <span class="sd">&quot;&quot;&quot;str: Loss metric to monitor for reducing learning rate. See Keras documentation.&quot;&quot;&quot;</span>
+    <span class="n">_min_delta_type</span> <span class="o">=</span> <span class="nb">float</span>
+    <span class="n">min_delta</span> <span class="o">=</span> <span class="mf">0.0001</span>
+    <span class="sd">&quot;&quot;&quot;float: See Keras documentation.&quot;&quot;&quot;</span>
+    <span class="n">_patience_type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">patience</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="sd">&quot;&quot;&quot;int: See Keras documentation.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="get_config_sections"><a class="viewcode-back" href="../../../bfgn.configuration.html#bfgn.configuration.sections.get_config_sections">[docs]</a><span class="k">def</span> <span class="nf">get_config_sections</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">BaseConfigSection</span><span class="p">]]:</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">RawFiles</span><span class="p">,</span> <span class="n">DataBuild</span><span class="p">,</span> <span class="n">DataSamples</span><span class="p">,</span> <span class="n">ModelTraining</span><span class="p">,</span> <span class="n">ModelReporting</span><span class="p">,</span> <span class="n">CallbackGeneral</span><span class="p">,</span> <span class="n">CallbackTensorboard</span><span class="p">,</span>
+        <span class="n">CallbackEarlyStopping</span><span class="p">,</span> <span class="n">CallbackReducedLearningRate</span>
+    <span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="check_input_file_validity"><a class="viewcode-back" href="../../../bfgn.configuration.html#bfgn.configuration.sections.check_input_file_validity">[docs]</a><span class="k">def</span> <span class="nf">check_input_file_validity</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">,</span> <span class="n">r_file_list</span><span class="p">,</span> <span class="n">b_file_list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">errors</span> <span class="o">=</span> <span class="n">_check_input_file_formats</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">,</span> <span class="n">r_file_list</span><span class="p">,</span> <span class="n">b_file_list</span><span class="p">)</span>
+    <span class="c1"># Checks that all files can be opened by gdal</span>
+    <span class="k">for</span> <span class="n">_site</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">_band</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">])):</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">][</span><span class="n">_band</span><span class="p">],</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GA_ReadOnly</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+                <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;Could not open feature site </span><span class="si">{}</span><span class="s1">, file </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_site</span><span class="p">,</span> <span class="n">_band</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">_site</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r_file_list</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">_band</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">])):</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">_noerror_open</span><span class="p">(</span><span class="n">r_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">][</span><span class="n">_band</span><span class="p">])</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span>
+                    <span class="n">r_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">][</span><span class="n">_band</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">VECTORIZED_FILENAMES</span><span class="p">):</span>
+                <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;Could not open response site </span><span class="si">{}</span><span class="s1">, file </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_site</span><span class="p">,</span> <span class="n">_band</span><span class="p">))</span>
+
+    <span class="c1"># Checks on the number of bands per file</span>
+    <span class="n">num_f_bands_per_file</span> <span class="o">=</span> <span class="p">[</span><span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GA_ReadOnly</span><span class="p">)</span><span class="o">.</span><span class="n">RasterCount</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">f_file_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+    <span class="k">for</span> <span class="n">_site</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">_file</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">])):</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">][</span><span class="n">_file</span><span class="p">],</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GA_ReadOnly</span><span class="p">)</span><span class="o">.</span><span class="n">RasterCount</span> <span class="o">!=</span> <span class="n">num_f_bands_per_file</span><span class="p">[</span><span class="n">_file</span><span class="p">]):</span>
+                <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;Inconsistent number of feature bands in site </span><span class="si">{}</span><span class="s1">, file </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_site</span><span class="p">,</span> <span class="n">_file</span><span class="p">))</span>
+
+    <span class="n">file_type</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">_site</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r_file_list</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">r_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">VECTORIZED_FILENAMES</span><span class="p">):</span>
+            <span class="n">file_type</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;V&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">file_type</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;R&#39;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">_file</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">r_file_list</span><span class="p">[</span><span class="mi">0</span><span class="p">])):</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">r_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">][</span><span class="n">_file</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">VECTORIZED_FILENAMES</span><span class="p">):</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">file_type</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;R&#39;</span><span class="p">):</span>
+                    <span class="n">file_type</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;M&#39;</span>
+                    <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">file_type</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;V&#39;</span><span class="p">):</span>
+                    <span class="n">file_type</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;M&#39;</span>
+                    <span class="k">break</span>
+
+    <span class="n">un_file_types</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">file_type</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">un_file_types</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;Response file types mixed, found per-site order:</span><span class="se">\n</span><span class="si">{}</span><span class="se">\n</span><span class="s1">R=Raster</span><span class="se">\n</span><span class="s1">V=Vector</span><span class="se">\n</span><span class="s1">M=Mixed&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">un_file_types</span> <span class="o">==</span> <span class="s1">&#39;R&#39;</span><span class="p">)):</span>
+
+        <span class="n">is_vector</span> <span class="o">=</span> <span class="nb">any</span><span class="p">([</span><span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">VECTORIZED_FILENAMES</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">r_file_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_vector</span><span class="p">:</span>
+            <span class="n">num_r_bands_per_file</span> <span class="o">=</span> <span class="p">[</span><span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GA_ReadOnly</span><span class="p">)</span><span class="o">.</span><span class="n">RasterCount</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">r_file_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="k">for</span> <span class="n">_site</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r_file_list</span><span class="p">)):</span>
+                <span class="k">for</span> <span class="n">_file</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">])):</span>
+                    <span class="k">if</span><span class="p">(</span><span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">r_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">][</span><span class="n">_file</span><span class="p">],</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GA_ReadOnly</span><span class="p">)</span><span class="o">.</span><span class="n">RasterCount</span> <span class="o">!=</span> <span class="n">num_r_bands_per_file</span><span class="p">[</span><span class="n">_file</span><span class="p">]):</span>
+                        <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;Inconsistent number of response bands in site </span><span class="si">{}</span><span class="s1">, file </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_site</span><span class="p">,</span> <span class="n">_file</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">errors</span></div>
+
+
+<span class="k">def</span> <span class="nf">_check_input_file_formats</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">,</span> <span class="n">r_file_list</span><span class="p">,</span> <span class="n">b_file_list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># f = feature, r = response, b = boundary</span>
+
+    <span class="c1"># file lists r and f are expected a list of lists.  The outer list is a series of sites (location a, b, etc.).</span>
+    <span class="c1"># The inner list is a series of files associated with that site (band x, y, z).  Each site must have the</span>
+    <span class="c1"># same number of files, and each file from each site must have the same number of bands, in the same order.</span>
+    <span class="c1"># file list b is a list for each site, with one boundary file expected to be the interior boundary for all</span>
+    <span class="c1"># bands.</span>
+
+    <span class="c1"># Check that feature and response files are lists</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;Feature files must be a list of lists&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">r_file_list</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;Response files must be a list of lists&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;Feature or response files not in correct format...all checks cannot be completed&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">errors</span>
+
+    <span class="c1"># Checks on the matching numbers of sites</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">r_file_list</span><span class="p">)):</span>
+        <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;Feature and response site lists must be the same length&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;At least one feature and response site is required&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">b_file_list</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">b_file_list</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">)):</span>
+            <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="s1">&#39;Boundary and feature file lists must be the same length. Boundary list: </span><span class="si">{}</span><span class="s1">. Feature list: </span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">b_file_list</span><span class="p">,</span> <span class="n">f_file_list</span><span class="p">))</span>
+
+    <span class="c1"># Checks that we have lists of lists for f and r</span>
+    <span class="k">for</span> <span class="n">_site</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">)):</span>
+        <span class="k">if</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">])</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;Features at site </span><span class="si">{}</span><span class="s1"> are not as a list&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_site</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">_site</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r_file_list</span><span class="p">)):</span>
+        <span class="k">if</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">r_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">])</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;Responses at site </span><span class="si">{}</span><span class="s1"> are not as a list&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_site</span><span class="p">))</span>
+
+    <span class="c1"># Checks on the number of files per site</span>
+    <span class="n">num_f_files_per_site</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">num_r_files_per_site</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">r_file_list</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">_site</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">)):</span>
+        <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">f_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">])</span> <span class="o">!=</span> <span class="n">num_f_files_per_site</span><span class="p">):</span>
+            <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;Inconsistent number of feature files at site </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_site</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">_site</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r_file_list</span><span class="p">)):</span>
+        <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r_file_list</span><span class="p">[</span><span class="n">_site</span><span class="p">])</span> <span class="o">!=</span> <span class="n">num_r_files_per_site</span><span class="p">):</span>
+            <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;Inconsistent number of response files at site </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_site</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">errors</span>
+
+
+<span class="k">def</span> <span class="nf">_noerror_open</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">file_handle</span><span class="o">=</span><span class="n">gdal</span><span class="o">.</span><span class="n">GA_ReadOnly</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+    <span class="n">gdal</span><span class="o">.</span><span class="n">PushErrorHandler</span><span class="p">(</span><span class="s1">&#39;CPLQuietErrorHandler&#39;</span><span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">file_handle</span><span class="p">)</span>
+    <span class="n">gdal</span><span class="o">.</span><span class="n">PopErrorHandler</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">dataset</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Philip G. Brodrick and Nicholas S. Fabina
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

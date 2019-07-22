@@ -1,0 +1,647 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>bfgn.experiments package &mdash; bfgn  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> bfgn
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">bfgn.experiments package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-bfgn.experiments.callbacks">bfgn.experiments.callbacks module</a></li>
+<li><a class="reference internal" href="#module-bfgn.experiments.experiments">bfgn.experiments.experiments module</a></li>
+<li><a class="reference internal" href="#module-bfgn.experiments.histories">bfgn.experiments.histories module</a></li>
+<li><a class="reference internal" href="#module-bfgn.experiments.losses">bfgn.experiments.losses module</a></li>
+<li><a class="reference internal" href="#module-bfgn.experiments.models">bfgn.experiments.models module</a></li>
+<li><a class="reference internal" href="#module-bfgn.experiments">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">bfgn</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>bfgn.experiments package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/bfgn.experiments.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="bfgn-experiments-package">
+<h1>bfgn.experiments package<a class="headerlink" href="#bfgn-experiments-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-bfgn.experiments.callbacks">
+<span id="bfgn-experiments-callbacks-module"></span><h2>bfgn.experiments.callbacks module<a class="headerlink" href="#module-bfgn.experiments.callbacks" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bfgn.experiments.callbacks.HistoryCheckpoint">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.experiments.callbacks.</code><code class="sig-name descname">HistoryCheckpoint</code><span class="sig-paren">(</span><em class="sig-param">config</em>, <em class="sig-param">existing_history=None</em>, <em class="sig-param">period=1</em>, <em class="sig-param">verbose=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/experiments/callbacks.html#HistoryCheckpoint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.experiments.callbacks.HistoryCheckpoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">keras.callbacks.Callback</span></code></p>
+<p>A custom Keras callback for checkpointing model training history and associated information.</p>
+<dl class="attribute">
+<dt id="bfgn.experiments.callbacks.HistoryCheckpoint.config">
+<code class="sig-name descname">config</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.experiments.callbacks.HistoryCheckpoint.config" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.experiments.callbacks.HistoryCheckpoint.existing_history">
+<code class="sig-name descname">existing_history</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.experiments.callbacks.HistoryCheckpoint.existing_history" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.experiments.callbacks.HistoryCheckpoint.period">
+<code class="sig-name descname">period</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.experiments.callbacks.HistoryCheckpoint.period" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.experiments.callbacks.HistoryCheckpoint.verbose">
+<code class="sig-name descname">verbose</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.experiments.callbacks.HistoryCheckpoint.verbose" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.experiments.callbacks.HistoryCheckpoint.epochs_since_last_save">
+<code class="sig-name descname">epochs_since_last_save</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.experiments.callbacks.HistoryCheckpoint.epochs_since_last_save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.experiments.callbacks.HistoryCheckpoint.epoch_begin">
+<code class="sig-name descname">epoch_begin</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.experiments.callbacks.HistoryCheckpoint.epoch_begin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bfgn.experiments.callbacks.HistoryCheckpoint.on_train_begin">
+<code class="sig-name descname">on_train_begin</code><span class="sig-paren">(</span><em class="sig-param">logs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/experiments/callbacks.html#HistoryCheckpoint.on_train_begin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.experiments.callbacks.HistoryCheckpoint.on_train_begin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bfgn.experiments.callbacks.HistoryCheckpoint.on_train_end">
+<code class="sig-name descname">on_train_end</code><span class="sig-paren">(</span><em class="sig-param">logs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/experiments/callbacks.html#HistoryCheckpoint.on_train_end"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.experiments.callbacks.HistoryCheckpoint.on_train_end" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bfgn.experiments.callbacks.HistoryCheckpoint.on_epoch_begin">
+<code class="sig-name descname">on_epoch_begin</code><span class="sig-paren">(</span><em class="sig-param">epoch</em>, <em class="sig-param">logs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/experiments/callbacks.html#HistoryCheckpoint.on_epoch_begin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.experiments.callbacks.HistoryCheckpoint.on_epoch_begin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bfgn.experiments.callbacks.HistoryCheckpoint.on_epoch_end">
+<code class="sig-name descname">on_epoch_end</code><span class="sig-paren">(</span><em class="sig-param">epoch</em>, <em class="sig-param">logs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/experiments/callbacks.html#HistoryCheckpoint.on_epoch_end"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.experiments.callbacks.HistoryCheckpoint.on_epoch_end" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.experiments.callbacks.get_model_callbacks">
+<code class="sig-prename descclassname">bfgn.experiments.callbacks.</code><code class="sig-name descname">get_model_callbacks</code><span class="sig-paren">(</span><em class="sig-param">config</em>, <em class="sig-param">existing_history</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/experiments/callbacks.html#get_model_callbacks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.experiments.callbacks.get_model_callbacks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates model callbacks from a bfgn config.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> (<a class="reference internal" href="bfgn.configuration.html#bfgn.configuration.configs.Config" title="bfgn.configuration.configs.Config"><code class="xref py py-class docutils literal notranslate"><span class="pre">Config</span></code></a>) – bfgn config.</p></li>
+<li><p><strong>existing_history</strong> (<a class="reference external" href="https://docs.python.org/2/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>) – Existing model training history if the model has already been partially or completely trained.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Callback</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>List of model callbacks.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.experiments.experiments">
+<span id="bfgn-experiments-experiments-module"></span><h2>bfgn.experiments.experiments module<a class="headerlink" href="#module-bfgn.experiments.experiments" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bfgn.experiments.experiments.Experiment">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.experiments.experiments.</code><code class="sig-name descname">Experiment</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/experiments/experiments.html#Experiment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.experiments.experiments.Experiment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/2/library/functions.html#object" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="attribute">
+<dt id="bfgn.experiments.experiments.Experiment.model">
+<code class="sig-name descname">model</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.experiments.experiments.Experiment.model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Keras model object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>keras.models.Model</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.experiments.experiments.Experiment.history">
+<code class="sig-name descname">history</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.experiments.experiments.Experiment.history" title="Permalink to this definition">¶</a></dt>
+<dd><p>Model training history.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/stdtypes.html#dict" title="(in Python v2.7)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.experiments.experiments.Experiment.loaded_existing_history">
+<code class="sig-name descname">loaded_existing_history</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.experiments.experiments.Experiment.loaded_existing_history" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether an existing history object was loaded from the model training directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.experiments.experiments.Experiment.loaded_existing_model">
+<code class="sig-name descname">loaded_existing_model</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.experiments.experiments.Experiment.loaded_existing_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether an existing model object was loaded from the model training directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.experiments.experiments.Experiment.is_model_trained">
+<code class="sig-name descname">is_model_trained</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.experiments.experiments.Experiment.is_model_trained" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether model is trained to stopping criteria. If False, either not trained at all or training was stopped
+before stopping criteria.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.experiments.experiments.Experiment.config">
+<code class="sig-name descname">config</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.experiments.experiments.Experiment.config" title="Permalink to this definition">¶</a></dt>
+<dd><p>bfgn configuration object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="bfgn.configuration.html#bfgn.configuration.configs.Config" title="bfgn.configuration.configs.Config">configs.Config</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.experiments.experiments.Experiment.logger">
+<code class="sig-name descname">logger</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.experiments.experiments.Experiment.logger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Root logger for Experiment. Available if user wants to directly modify the log formatting,
+handling, or other behavior.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/logging.html#logging.Logger" title="(in Python v2.7)">logging.Logger</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="bfgn.experiments.experiments.Experiment.build_or_load_model">
+<code class="sig-name descname">build_or_load_model</code><span class="sig-paren">(</span><em class="sig-param">data_container=None</em>, <em class="sig-param">num_features=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/experiments/experiments.html#Experiment.build_or_load_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.experiments.experiments.Experiment.build_or_load_model" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="bfgn.experiments.experiments.Experiment.fit_model_with_data_container">
+<code class="sig-name descname">fit_model_with_data_container</code><span class="sig-paren">(</span><em class="sig-param">data_container</em>, <em class="sig-param">resume_training=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/experiments/experiments.html#Experiment.fit_model_with_data_container"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.experiments.experiments.Experiment.fit_model_with_data_container" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="bfgn.experiments.experiments.Experiment.fit_model_with_sequences">
+<code class="sig-name descname">fit_model_with_sequences</code><span class="sig-paren">(</span><em class="sig-param">training_sequence</em>, <em class="sig-param">validation_sequence=None</em>, <em class="sig-param">resume_training=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/experiments/experiments.html#Experiment.fit_model_with_sequences"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.experiments.experiments.Experiment.fit_model_with_sequences" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="bfgn.experiments.experiments.Experiment.calculate_model_memory_footprint">
+<code class="sig-name descname">calculate_model_memory_footprint</code><span class="sig-paren">(</span><em class="sig-param">batch_size</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/experiments/experiments.html#Experiment.calculate_model_memory_footprint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.experiments.experiments.Experiment.calculate_model_memory_footprint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate model memory footprint. Shamelessly copied from (but not tested rigorously):
+<a class="reference external" href="https://stackoverflow.com/questions/43137288/how-to-determine-needed-memory-of-keras-model">https://stackoverflow.com/questions/43137288/how-to-determine-needed-memory-of-keras-model</a>.
+:type batch_size: <a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>
+:param batch_size: Batch size for training.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Model memory footprint in gigabytes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.experiments.experiments.load_experiment_from_directory">
+<code class="sig-prename descclassname">bfgn.experiments.experiments.</code><code class="sig-name descname">load_experiment_from_directory</code><span class="sig-paren">(</span><em class="sig-param">dir_experiment</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/experiments/experiments.html#load_experiment_from_directory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.experiments.experiments.load_experiment_from_directory" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#bfgn.experiments.experiments.Experiment" title="bfgn.experiments.experiments.Experiment"><code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.experiments.experiments.get_config_filepath">
+<code class="sig-prename descclassname">bfgn.experiments.experiments.</code><code class="sig-name descname">get_config_filepath</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/experiments/experiments.html#get_config_filepath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.experiments.experiments.get_config_filepath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the default config path for experiments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="bfgn.configuration.html#bfgn.configuration.configs.Config" title="bfgn.configuration.configs.Config"><code class="xref py py-class docutils literal notranslate"><span class="pre">Config</span></code></a>) – bfgn config object.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Filepath to model training config.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.experiments.experiments.get_history_filepath">
+<code class="sig-prename descclassname">bfgn.experiments.experiments.</code><code class="sig-name descname">get_history_filepath</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/experiments/experiments.html#get_history_filepath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.experiments.experiments.get_history_filepath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the default model training history path for experiments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="bfgn.configuration.html#bfgn.configuration.configs.Config" title="bfgn.configuration.configs.Config"><code class="xref py py-class docutils literal notranslate"><span class="pre">Config</span></code></a>) – bfgn config object.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Filepath to model training history.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.experiments.experiments.get_log_filepath">
+<code class="sig-prename descclassname">bfgn.experiments.experiments.</code><code class="sig-name descname">get_log_filepath</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/experiments/experiments.html#get_log_filepath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.experiments.experiments.get_log_filepath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the default model training log path for experiments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="bfgn.configuration.html#bfgn.configuration.configs.Config" title="bfgn.configuration.configs.Config"><code class="xref py py-class docutils literal notranslate"><span class="pre">Config</span></code></a>) – bfgn config object.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Filepath to model training log.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.experiments.experiments.get_model_filepath">
+<code class="sig-prename descclassname">bfgn.experiments.experiments.</code><code class="sig-name descname">get_model_filepath</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/experiments/experiments.html#get_model_filepath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.experiments.experiments.get_model_filepath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the default model path for experiments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="bfgn.configuration.html#bfgn.configuration.configs.Config" title="bfgn.configuration.configs.Config"><code class="xref py py-class docutils literal notranslate"><span class="pre">Config</span></code></a>) – bfgn config object.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Filepath to model.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.experiments.histories">
+<span id="bfgn-experiments-histories-module"></span><h2>bfgn.experiments.histories module<a class="headerlink" href="#module-bfgn.experiments.histories" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bfgn.experiments.histories.load_history">
+<code class="sig-prename descclassname">bfgn.experiments.histories.</code><code class="sig-name descname">load_history</code><span class="sig-paren">(</span><em class="sig-param">filepath</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/experiments/histories.html#load_history"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.experiments.histories.load_history" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads model training history from serialized file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>filepath</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Filepath from which history is loaded.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://docs.python.org/2/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>History object if it exists at path.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.experiments.histories.save_history">
+<code class="sig-prename descclassname">bfgn.experiments.histories.</code><code class="sig-name descname">save_history</code><span class="sig-paren">(</span><em class="sig-param">history</em>, <em class="sig-param">filepath</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/experiments/histories.html#save_history"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.experiments.histories.save_history" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves model training history to serialized file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>history</strong> (<a class="reference external" href="https://docs.python.org/2/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>) – Model training history object.</p></li>
+<li><p><strong>filepath</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Filepath to which history is saved.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.experiments.histories.combine_histories">
+<code class="sig-prename descclassname">bfgn.experiments.histories.</code><code class="sig-name descname">combine_histories</code><span class="sig-paren">(</span><em class="sig-param">existing_history</em>, <em class="sig-param">new_history</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/experiments/histories.html#combine_histories"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.experiments.histories.combine_histories" title="Permalink to this definition">¶</a></dt>
+<dd><p>Combines model training history objects, such that the new history from a more recent training session is
+appended to the existing history from a previous training session.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>existing_history</strong> (<a class="reference external" href="https://docs.python.org/2/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>) – Model training history from a previous training session.</p></li>
+<li><p><strong>new_history</strong> (<a class="reference external" href="https://docs.python.org/2/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>) – Model training history from a more recent training session.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/2/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Combined model training history.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.experiments.losses">
+<span id="bfgn-experiments-losses-module"></span><h2>bfgn.experiments.losses module<a class="headerlink" href="#module-bfgn.experiments.losses" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bfgn.experiments.losses.get_available_loss_methods">
+<code class="sig-prename descclassname">bfgn.experiments.losses.</code><code class="sig-name descname">get_available_loss_methods</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/experiments/losses.html#get_available_loss_methods"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.experiments.losses.get_available_loss_methods" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets list of available loss methods.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>List of available loss methods.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.experiments.losses.get_cropped_loss_function">
+<code class="sig-prename descclassname">bfgn.experiments.losses.</code><code class="sig-name descname">get_cropped_loss_function</code><span class="sig-paren">(</span><em class="sig-param">loss_method</em>, <em class="sig-param">outer_width</em>, <em class="sig-param">inner_width</em>, <em class="sig-param">weighted=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/experiments/losses.html#get_cropped_loss_function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.experiments.losses.get_cropped_loss_function" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a loss function callable with optional per-pixel weighting and edge-trimming.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>loss_method</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – The loss calculate to implement, currently supports categorical_crossentropy or cc,</p></li>
+<li><p><strong>or mae</strong><strong>, </strong><strong>mean_squared_error</strong><strong> or </strong><strong>mse</strong><strong>, </strong><strong>and root_mean_squared_error</strong><strong> or </strong><strong>rmse.</strong> (<em>mean_absolute_error</em>) – </p></li>
+<li><p><strong>outer_width</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The full dimension (height or width) of the input image; e.g., 128 for a 128x128 image.</p></li>
+<li><p><strong>inner_width</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The full dimension (height or width) of the loss window to use. Must not be greater than 128 for a</p></li>
+<li><p><strong>image</strong><strong>, </strong><strong>with generally better results at 25% to 50% of the full image size; i.e.</strong><strong>, </strong><strong>32 to 64 for a 128x128</strong> (<em>128x128</em>) – </p></li>
+<li><p><strong>image.</strong> – </p></li>
+<li><p><strong>weighted</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Whether the training response array has weights appended to the last axis to use in loss calculations.</p></li>
+<li><p><strong>does not have a simple way to pass weight values to loss functions</strong><strong>, </strong><strong>so a common work-around is to append</strong> (<em>Keras</em>) – </p></li>
+<li><p><strong>values to the sample responses and reference those weights in the loss functions directly. The bfgn</strong> (<em>weight</em>) – </p></li>
+<li><p><strong>will automatically build and append weights if the configuration specifieds that the loss function</strong> (<em>package</em>) – </p></li>
+<li><p><strong>be weighted.</strong> (<em>should</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Loss function callable to be passed to a Keras model.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.experiments.models">
+<span id="bfgn-experiments-models-module"></span><h2>bfgn.experiments.models module<a class="headerlink" href="#module-bfgn.experiments.models" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bfgn.experiments.models.load_model">
+<code class="sig-prename descclassname">bfgn.experiments.models.</code><code class="sig-name descname">load_model</code><span class="sig-paren">(</span><em class="sig-param">filepath</em>, <em class="sig-param">custom_objects=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/experiments/models.html#load_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.experiments.models.load_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads model from serialized file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filepath</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Filepath from which model is loaded.</p></li>
+<li><p><strong>custom_objects</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://docs.python.org/2/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>]) – Custom objects necessary to build model, including loss functions.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Keras model object if it exists at path.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.experiments.models.save_model">
+<code class="sig-prename descclassname">bfgn.experiments.models.</code><code class="sig-name descname">save_model</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">filepath</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/experiments/models.html#save_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.experiments.models.save_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves model to serialized file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code>) – Keras model object.</p></li>
+<li><p><strong>filepath</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Filepath to which model is saved.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.experiments">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-bfgn.experiments" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Philip G. Brodrick and Nicholas S. Fabina
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,1167 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>bfgn.data_management package &mdash; bfgn  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> bfgn
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">bfgn.data_management package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-bfgn.data_management.apply_model_to_data">bfgn.data_management.apply_model_to_data module</a></li>
+<li><a class="reference internal" href="#module-bfgn.data_management.common_io">bfgn.data_management.common_io module</a></li>
+<li><a class="reference internal" href="#module-bfgn.data_management.data_core">bfgn.data_management.data_core module</a></li>
+<li><a class="reference internal" href="#module-bfgn.data_management.ooc_functions">bfgn.data_management.ooc_functions module</a></li>
+<li><a class="reference internal" href="#module-bfgn.data_management.scalers">bfgn.data_management.scalers module</a></li>
+<li><a class="reference internal" href="#module-bfgn.data_management.sequences">bfgn.data_management.sequences module</a></li>
+<li><a class="reference internal" href="#module-bfgn.data_management.single_image_scaling">bfgn.data_management.single_image_scaling module</a></li>
+<li><a class="reference internal" href="#module-bfgn.data_management.training_data">bfgn.data_management.training_data module</a></li>
+<li><a class="reference internal" href="#module-bfgn.data_management">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">bfgn</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>bfgn.data_management package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/bfgn.data_management.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="bfgn-data-management-package">
+<h1>bfgn.data_management package<a class="headerlink" href="#bfgn-data-management-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-bfgn.data_management.apply_model_to_data">
+<span id="bfgn-data-management-apply-model-to-data-module"></span><h2>bfgn.data_management.apply_model_to_data module<a class="headerlink" href="#module-bfgn.data_management.apply_model_to_data" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bfgn.data_management.apply_model_to_data.apply_model_to_raster">
+<code class="sig-prename descclassname">bfgn.data_management.apply_model_to_data.</code><code class="sig-name descname">apply_model_to_raster</code><span class="sig-paren">(</span><em class="sig-param">cnn</em>, <em class="sig-param">data_container</em>, <em class="sig-param">feature_files</em>, <em class="sig-param">destination_basename</em>, <em class="sig-param">output_format='GTiff'</em>, <em class="sig-param">creation_options=None</em>, <em class="sig-param">CNN_MODE=False</em>, <em class="sig-param">exclude_feature_nodata=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/apply_model_to_data.html#apply_model_to_raster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.apply_model_to_data.apply_model_to_raster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply a trained model to a raster file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cnn</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code>) – Pre-trained keras CNN model</p></li>
+<li><p><strong>data_container</strong> (<a class="reference internal" href="#bfgn.data_management.data_core.DataContainer" title="bfgn.data_management.data_core.DataContainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataContainer</span></code></a>) – Holds info like scalers</p></li>
+<li><p><strong>feature_files</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]) – Per-site feature files to apply the model to</p></li>
+<li><p><strong>destination_basename</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Base of the output file (will get appropriate extension)</p></li>
+<li><p><strong>output_format</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – A viable gdal output data format.</p></li>
+<li><p><strong>creation_options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]) – GDAL creation options to pass for output file, e.g.: [‘TILED=YES’, ‘COMPRESS=DEFLATE’]</p></li>
+<li><p><strong>CNN_MODE</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Should the model be applied in CNN mode?</p></li>
+<li><p><strong>exclude_feature_nodata</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Flag to remove all pixels in features without data from applied model</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>:Returns</dt><dd><p>None</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.apply_model_to_data.maximum_likelihood_classification">
+<code class="sig-prename descclassname">bfgn.data_management.apply_model_to_data.</code><code class="sig-name descname">maximum_likelihood_classification</code><span class="sig-paren">(</span><em class="sig-param">likelihood_file</em>, <em class="sig-param">output_file_base</em>, <em class="sig-param">make_png=True</em>, <em class="sig-param">make_tif=False</em>, <em class="sig-param">png_dpi=200</em>, <em class="sig-param">output_nodata_value=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/apply_model_to_data.html#maximum_likelihood_classification"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.apply_model_to_data.maximum_likelihood_classification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a n-band map of probabilities to a classified image using maximum likelihood.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cnn</strong> – Pre-trained keras CNN model</p></li>
+<li><p><strong>data_container</strong> – Holds info like scalers</p></li>
+<li><p><strong>feature_file</strong> – File with feature data to apply the model to</p></li>
+<li><p><strong>destination_basename</strong> – Base of the output file (will get a .tif or .png extention)</p></li>
+<li><p><strong>make_png</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Should an output be created in PNG format?</p></li>
+<li><p><strong>make_tif</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Should an output be created in TIF format?</p></li>
+<li><p><strong>CNN_MODE</strong> – Should the model be applied in CNN mode?</p></li>
+<li><p><strong>exclude_feature_nodata</strong> – Flag to remove all pixels in features without data from applied model</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>:Returns</dt><dd><p>None</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.data_management.common_io">
+<span id="bfgn-data-management-common-io-module"></span><h2>bfgn.data_management.common_io module<a class="headerlink" href="#module-bfgn.data_management.common_io" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bfgn.data_management.common_io.upper_left_pixel">
+<code class="sig-prename descclassname">bfgn.data_management.common_io.</code><code class="sig-name descname">upper_left_pixel</code><span class="sig-paren">(</span><em class="sig-param">trans</em>, <em class="sig-param">interior_x</em>, <em class="sig-param">interior_y</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/common_io.html#upper_left_pixel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.common_io.upper_left_pixel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.common_io.get_overlapping_extent">
+<code class="sig-prename descclassname">bfgn.data_management.common_io.</code><code class="sig-name descname">get_overlapping_extent</code><span class="sig-paren">(</span><em class="sig-param">dataset_list_of_lists</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/common_io.html#get_overlapping_extent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.common_io.get_overlapping_extent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.common_io.get_overlapping_extent_coordinates">
+<code class="sig-prename descclassname">bfgn.data_management.common_io.</code><code class="sig-name descname">get_overlapping_extent_coordinates</code><span class="sig-paren">(</span><em class="sig-param">dataset_list_of_lists</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/common_io.html#get_overlapping_extent_coordinates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.common_io.get_overlapping_extent_coordinates" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.common_io.get_all_interior_extent_subset_pixel_locations">
+<code class="sig-prename descclassname">bfgn.data_management.common_io.</code><code class="sig-name descname">get_all_interior_extent_subset_pixel_locations</code><span class="sig-paren">(</span><em class="sig-param">gdal_datasets</em>, <em class="sig-param">window_radius</em>, <em class="sig-param">inner_window_radius=None</em>, <em class="sig-param">shuffle=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/common_io.html#get_all_interior_extent_subset_pixel_locations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.common_io.get_all_interior_extent_subset_pixel_locations" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.common_io.read_map_subset">
+<code class="sig-prename descclassname">bfgn.data_management.common_io.</code><code class="sig-name descname">read_map_subset</code><span class="sig-paren">(</span><em class="sig-param">datafiles</em>, <em class="sig-param">upper_lefts</em>, <em class="sig-param">window_diameter</em>, <em class="sig-param">mask=None</em>, <em class="sig-param">nodata_value=None</em>, <em class="sig-param">lower_bound=None</em>, <em class="sig-param">upper_bound=None</em>, <em class="sig-param">reference_geotransform=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/common_io.html#read_map_subset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.common_io.read_map_subset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.common_io.get_boundary_sets_from_boundary_files">
+<code class="sig-prename descclassname">bfgn.data_management.common_io.</code><code class="sig-name descname">get_boundary_sets_from_boundary_files</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/common_io.html#get_boundary_sets_from_boundary_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.common_io.get_boundary_sets_from_boundary_files" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dataset</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.common_io.get_site_boundary_set">
+<code class="sig-prename descclassname">bfgn.data_management.common_io.</code><code class="sig-name descname">get_site_boundary_set</code><span class="sig-paren">(</span><em class="sig-param">config</em>, <em class="sig-param">_site</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/common_io.html#get_site_boundary_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.common_io.get_site_boundary_set" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dataset</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.common_io.get_site_boundary_vector_file">
+<code class="sig-prename descclassname">bfgn.data_management.common_io.</code><code class="sig-name descname">get_site_boundary_vector_file</code><span class="sig-paren">(</span><em class="sig-param">config</em>, <em class="sig-param">_site</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/common_io.html#get_site_boundary_vector_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.common_io.get_site_boundary_vector_file" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.common_io.rasterize_vector">
+<code class="sig-prename descclassname">bfgn.data_management.common_io.</code><code class="sig-name descname">rasterize_vector</code><span class="sig-paren">(</span><em class="sig-param">vector_file</em>, <em class="sig-param">geotransform</em>, <em class="sig-param">output_shape</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/common_io.html#rasterize_vector"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.common_io.rasterize_vector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rasterizes an input vector directly into a numpy array.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vector_file</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Input vector file to be rasterized</p></li>
+<li><p><strong>geotransform</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]) – A gdal style geotransform</p></li>
+<li><p><strong>output_shape</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>) – The shape of the output file to be generated</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A rasterized 2-d numpy array</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>mask</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.common_io.read_mask_chunk">
+<code class="sig-prename descclassname">bfgn.data_management.common_io.</code><code class="sig-name descname">read_mask_chunk</code><span class="sig-paren">(</span><em class="sig-param">_site</em>, <em class="sig-param">upper_left</em>, <em class="sig-param">window_diameter</em>, <em class="sig-param">reference_geotransform</em>, <em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/common_io.html#read_mask_chunk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.common_io.read_mask_chunk" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.common_io.noerror_open">
+<code class="sig-prename descclassname">bfgn.data_management.common_io.</code><code class="sig-name descname">noerror_open</code><span class="sig-paren">(</span><em class="sig-param">filename</em>, <em class="sig-param">file_handle=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/common_io.html#noerror_open"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.common_io.noerror_open" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dataset</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.data_management.data_core">
+<span id="bfgn-data-management-data-core-module"></span><h2>bfgn.data_management.data_core module<a class="headerlink" href="#module-bfgn.data_management.data_core" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bfgn.data_management.data_core.DataContainer">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.data_management.data_core.</code><code class="sig-name descname">DataContainer</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/data_core.html#DataContainer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.data_core.DataContainer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/2/library/functions.html#object" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>A container class that holds data objects that will need to be
+passed around for modeling, reporting, and application.</p>
+<dl class="attribute">
+<dt id="bfgn.data_management.data_core.DataContainer.features">
+<code class="sig-name descname">features</code><em class="property"> = []</em><a class="headerlink" href="#bfgn.data_management.data_core.DataContainer.features" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.data_management.data_core.DataContainer.responses">
+<code class="sig-name descname">responses</code><em class="property"> = []</em><a class="headerlink" href="#bfgn.data_management.data_core.DataContainer.responses" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.data_management.data_core.DataContainer.weights">
+<code class="sig-name descname">weights</code><em class="property"> = []</em><a class="headerlink" href="#bfgn.data_management.data_core.DataContainer.weights" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.data_management.data_core.DataContainer.training_sequence">
+<code class="sig-name descname">training_sequence</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.data_management.data_core.DataContainer.training_sequence" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.data_management.data_core.DataContainer.validation_sequence">
+<code class="sig-name descname">validation_sequence</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.data_management.data_core.DataContainer.validation_sequence" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.data_management.data_core.DataContainer.feature_band_types">
+<code class="sig-name descname">feature_band_types</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.data_management.data_core.DataContainer.feature_band_types" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.data_management.data_core.DataContainer.response_band_types">
+<code class="sig-name descname">response_band_types</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.data_management.data_core.DataContainer.response_band_types" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.data_management.data_core.DataContainer.feature_raw_band_types">
+<code class="sig-name descname">feature_raw_band_types</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.data_management.data_core.DataContainer.feature_raw_band_types" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.data_management.data_core.DataContainer.response_raw_band_types">
+<code class="sig-name descname">response_raw_band_types</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.data_management.data_core.DataContainer.response_raw_band_types" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.data_management.data_core.DataContainer.feature_per_band_encoded_values">
+<code class="sig-name descname">feature_per_band_encoded_values</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.data_management.data_core.DataContainer.feature_per_band_encoded_values" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.data_management.data_core.DataContainer.response_per_band_encoded_values">
+<code class="sig-name descname">response_per_band_encoded_values</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.data_management.data_core.DataContainer.response_per_band_encoded_values" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.data_management.data_core.DataContainer.feature_scaler">
+<code class="sig-name descname">feature_scaler</code><em class="property"> = []</em><a class="headerlink" href="#bfgn.data_management.data_core.DataContainer.feature_scaler" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.data_management.data_core.DataContainer.response_scaler">
+<code class="sig-name descname">response_scaler</code><em class="property"> = []</em><a class="headerlink" href="#bfgn.data_management.data_core.DataContainer.response_scaler" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.data_management.data_core.DataContainer.train_folds">
+<code class="sig-name descname">train_folds</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.data_management.data_core.DataContainer.train_folds" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.data_management.data_core.DataContainer.config">
+<code class="sig-name descname">config</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.data_management.data_core.DataContainer.config" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.data_management.data_core.DataContainer.logger">
+<code class="sig-name descname">logger</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.data_management.data_core.DataContainer.logger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Root logger for DataContainer. Available if user wants to directly modify the log formatting,
+handling, or other behavior.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/logging.html#logging.Logger" title="(in Python v2.7)">logging.Logger</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="bfgn.data_management.data_core.DataContainer.build_or_load_rawfile_data">
+<code class="sig-name descname">build_or_load_rawfile_data</code><span class="sig-paren">(</span><em class="sig-param">rebuild=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/data_core.html#DataContainer.build_or_load_rawfile_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.data_core.DataContainer.build_or_load_rawfile_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>If rawfile data has previously been built as described by the
+config, load it back up (essentially free operation, only data shells
+will be loaded).  If rawfile data does not yet exist, build it as
+described by the config.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>rebuild</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Flag used to rebuild data from scratch, even if it already exists.  Defaults to False.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="bfgn.data_management.data_core.DataContainer.build_or_load_scalers">
+<code class="sig-name descname">build_or_load_scalers</code><span class="sig-paren">(</span><em class="sig-param">rebuild=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/data_core.html#DataContainer.build_or_load_scalers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.data_core.DataContainer.build_or_load_scalers" title="Permalink to this definition">¶</a></dt>
+<dd><p>If scalers have previously been built as described by the
+config, load them back up.  If scalers do not yet exist,
+build it as described by the config.  Required data to have already
+been built.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>rebuild</strong> – Flag used to refit scalers, even if they already exists.  Defaults to False.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="bfgn.data_management.data_core.DataContainer.load_sequences">
+<code class="sig-name descname">load_sequences</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/data_core.html#DataContainer.load_sequences"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.data_core.DataContainer.load_sequences" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create and attach sequences to self.  Requires data to
+already be built and any scalers to have been fit.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bfgn.data_management.data_core.DataContainer.check_band_types">
+<code class="sig-name descname">check_band_types</code><span class="sig-paren">(</span><em class="sig-param">file_list</em>, <em class="sig-param">band_types</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/data_core.html#DataContainer.check_band_types"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.data_core.DataContainer.check_band_types" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the format of the band types config parameter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>file_list</strong> – List of list of input files</p></li>
+<li><p><strong>band_types</strong> – List of list of band types, corresponding to the
+first site in the file_list</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>:Returns</dt><dd><p>errors: List of errors</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="bfgn.data_management.data_core.DataContainer.get_band_types">
+<code class="sig-name descname">get_band_types</code><span class="sig-paren">(</span><em class="sig-param">file_list</em>, <em class="sig-param">band_types</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/data_core.html#DataContainer.get_band_types"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.data_core.DataContainer.get_band_types" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the format of the band types config parameter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>file_list</strong> – List of list of input files</p></li>
+<li><p><strong>band_types</strong> – List of list of band types, corresponding to the</p></li>
+</ul>
+</dd>
+</dl>
+<p>first site in the file_list</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Raw output band types.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>band_types</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.data_core.create_built_data_output_directory">
+<code class="sig-prename descclassname">bfgn.data_management.data_core.</code><code class="sig-name descname">create_built_data_output_directory</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/data_core.html#create_built_data_output_directory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.data_core.create_built_data_output_directory" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.data_core.get_log_filepath">
+<code class="sig-prename descclassname">bfgn.data_management.data_core.</code><code class="sig-name descname">get_log_filepath</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/data_core.html#get_log_filepath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.data_core.get_log_filepath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the default log path for data builds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="bfgn.configuration.html#bfgn.configuration.configs.Config" title="bfgn.configuration.configs.Config"><code class="xref py py-class docutils literal notranslate"><span class="pre">Config</span></code></a>) – Configuration file.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Filepath to built data log.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>log_filepath</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.data_core.get_temporary_features_filepath">
+<code class="sig-prename descclassname">bfgn.data_management.data_core.</code><code class="sig-name descname">get_temporary_features_filepath</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/data_core.html#get_temporary_features_filepath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.data_core.get_temporary_features_filepath" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.data_core.get_temporary_responses_filepath">
+<code class="sig-prename descclassname">bfgn.data_management.data_core.</code><code class="sig-name descname">get_temporary_responses_filepath</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/data_core.html#get_temporary_responses_filepath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.data_core.get_temporary_responses_filepath" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.data_core.get_temporary_weights_filepath">
+<code class="sig-prename descclassname">bfgn.data_management.data_core.</code><code class="sig-name descname">get_temporary_weights_filepath</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/data_core.html#get_temporary_weights_filepath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.data_core.get_temporary_weights_filepath" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.data_core.get_temporary_data_filepaths">
+<code class="sig-prename descclassname">bfgn.data_management.data_core.</code><code class="sig-name descname">get_temporary_data_filepaths</code><span class="sig-paren">(</span><em class="sig-param">config</em>, <em class="sig-param">filename_suffix</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/data_core.html#get_temporary_data_filepaths"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.data_core.get_temporary_data_filepaths" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.data_core.get_built_features_filepaths">
+<code class="sig-prename descclassname">bfgn.data_management.data_core.</code><code class="sig-name descname">get_built_features_filepaths</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/data_core.html#get_built_features_filepaths"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.data_core.get_built_features_filepaths" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.data_core.get_built_responses_filepaths">
+<code class="sig-prename descclassname">bfgn.data_management.data_core.</code><code class="sig-name descname">get_built_responses_filepaths</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/data_core.html#get_built_responses_filepaths"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.data_core.get_built_responses_filepaths" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.data_core.get_built_weights_filepaths">
+<code class="sig-prename descclassname">bfgn.data_management.data_core.</code><code class="sig-name descname">get_built_weights_filepaths</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/data_core.html#get_built_weights_filepaths"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.data_core.get_built_weights_filepaths" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.data_core.get_built_data_config_filepath">
+<code class="sig-prename descclassname">bfgn.data_management.data_core.</code><code class="sig-name descname">get_built_data_config_filepath</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/data_core.html#get_built_data_config_filepath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.data_core.get_built_data_config_filepath" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.data_core.get_built_data_filepaths">
+<code class="sig-prename descclassname">bfgn.data_management.data_core.</code><code class="sig-name descname">get_built_data_filepaths</code><span class="sig-paren">(</span><em class="sig-param">config</em>, <em class="sig-param">filename_suffix</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/data_core.html#get_built_data_filepaths"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.data_core.get_built_data_filepaths" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.data_core.get_memmap_basename">
+<code class="sig-prename descclassname">bfgn.data_management.data_core.</code><code class="sig-name descname">get_memmap_basename</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/data_core.html#get_memmap_basename"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.data_core.get_memmap_basename" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.data_core.get_built_data_container_filepath">
+<code class="sig-prename descclassname">bfgn.data_management.data_core.</code><code class="sig-name descname">get_built_data_container_filepath</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/data_core.html#get_built_data_container_filepath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.data_core.get_built_data_container_filepath" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.data_management.ooc_functions">
+<span id="bfgn-data-management-ooc-functions-module"></span><h2>bfgn.data_management.ooc_functions module<a class="headerlink" href="#module-bfgn.data_management.ooc_functions" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bfgn.data_management.ooc_functions.one_hot_encode_array">
+<code class="sig-prename descclassname">bfgn.data_management.ooc_functions.</code><code class="sig-name descname">one_hot_encode_array</code><span class="sig-paren">(</span><em class="sig-param">raw_band_types</em>, <em class="sig-param">array</em>, <em class="sig-param">memmap_file=None</em>, <em class="sig-param">per_band_encoding=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/ooc_functions.html#one_hot_encode_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.ooc_functions.one_hot_encode_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>One hot encode an array of mixed real and categorical variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raw_band_types</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]) – Band types for given array, either ‘R’ for real or ‘C’ for categorical.</p></li>
+<li><p><strong>array</strong> (<em>&lt;built-in function array&gt;</em>) – array to encode</p></li>
+<li><p><strong>memmap_file</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]) – file to use to do things out-of-core</p></li>
+<li><p><strong>per_band_encoding</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[&lt;built-in function array&gt;]]) – if none, this will be calculated and returned.  If not none, these will be used to encode
+the array</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><p>now one-hot-encoded
+band_types: the one-hot-encoded versinon of the band-types
+return_band_encoding: the encoding used on a per-categorical-band basis, if per_band_encoding was None when</p>
+<blockquote>
+<div><p>provided, otherwise None</p>
+</div></blockquote>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.ooc_functions.permute_array">
+<code class="sig-prename descclassname">bfgn.data_management.ooc_functions.</code><code class="sig-name descname">permute_array</code><span class="sig-paren">(</span><em class="sig-param">source</em>, <em class="sig-param">source_filename</em>, <em class="sig-param">permutation</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/ooc_functions.html#permute_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.ooc_functions.permute_array" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.data_management.scalers">
+<span id="bfgn-data-management-scalers-module"></span><h2>bfgn.data_management.scalers module<a class="headerlink" href="#module-bfgn.data_management.scalers" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bfgn.data_management.scalers.get_available_scalers">
+<code class="sig-prename descclassname">bfgn.data_management.scalers.</code><code class="sig-name descname">get_available_scalers</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#get_available_scalers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.get_available_scalers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets list of available scaler names.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>List of available scaler names.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.scalers.get_scaler">
+<code class="sig-prename descclassname">bfgn.data_management.scalers.</code><code class="sig-name descname">get_scaler</code><span class="sig-paren">(</span><em class="sig-param">scaler_name</em>, <em class="sig-param">scaler_options</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#get_scaler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.get_scaler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets scaler matching the provided name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scaler_name</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Scaler name from available scalers.</p></li>
+<li><p><strong>scaler_options</strong> (<a class="reference external" href="https://docs.python.org/2/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>) – Configuration for requested scaler.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#bfgn.data_management.scalers.BaseGlobalScaler" title="bfgn.data_management.scalers.BaseGlobalScaler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseGlobalScaler</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Scaler matching the provided name.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="class">
+<dt id="bfgn.data_management.scalers.BaseGlobalScaler">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.data_management.scalers.</code><code class="sig-name descname">BaseGlobalScaler</code><span class="sig-paren">(</span><em class="sig-param">savename_base=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#BaseGlobalScaler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.BaseGlobalScaler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/2/library/functions.html#object" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Scalers handle the process of transforming data prior to fitting or predicting using the neural network, as
+well as inverse transforming the data for applications or review afterwards. In this case, we use readily available
+scalers from the scikit-learn package to handle the nitty-gritty of the transform and inverse transform, and we use
+the Scaler class to handle the nitty-gritty of reshaping and otherwise handling the image arrays.</p>
+<dl class="attribute">
+<dt id="bfgn.data_management.scalers.BaseGlobalScaler.scaler_name">
+<code class="sig-name descname">scaler_name</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.data_management.scalers.BaseGlobalScaler.scaler_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.data_management.scalers.BaseGlobalScaler.savename">
+<code class="sig-name descname">savename</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.data_management.scalers.BaseGlobalScaler.savename" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bfgn.data_management.scalers.BaseGlobalScaler.fit">
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param">image_array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#BaseGlobalScaler.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.BaseGlobalScaler.fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bfgn.data_management.scalers.BaseGlobalScaler.inverse_transform">
+<code class="sig-name descname">inverse_transform</code><span class="sig-paren">(</span><em class="sig-param">image_array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#BaseGlobalScaler.inverse_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.BaseGlobalScaler.inverse_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bfgn.data_management.scalers.BaseGlobalScaler.transform">
+<code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param">image_array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#BaseGlobalScaler.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.BaseGlobalScaler.transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bfgn.data_management.scalers.BaseGlobalScaler.fit_transform">
+<code class="sig-name descname">fit_transform</code><span class="sig-paren">(</span><em class="sig-param">image_array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#BaseGlobalScaler.fit_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.BaseGlobalScaler.fit_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bfgn.data_management.scalers.BaseGlobalScaler.save">
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#BaseGlobalScaler.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.BaseGlobalScaler.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bfgn.data_management.scalers.BaseGlobalScaler.load">
+<code class="sig-name descname">load</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#BaseGlobalScaler.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.BaseGlobalScaler.load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="bfgn.data_management.scalers.BaseSklearnScaler">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.data_management.scalers.</code><code class="sig-name descname">BaseSklearnScaler</code><span class="sig-paren">(</span><em class="sig-param">savename_base</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#BaseSklearnScaler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.BaseSklearnScaler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bfgn.data_management.scalers.BaseGlobalScaler" title="bfgn.data_management.scalers.BaseGlobalScaler"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.data_management.scalers.BaseGlobalScaler</span></code></a></p>
+<dl class="attribute">
+<dt id="bfgn.data_management.scalers.BaseSklearnScaler.scaler">
+<code class="sig-name descname">scaler</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.data_management.scalers.BaseSklearnScaler.scaler" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bfgn.data_management.scalers.BaseSklearnScaler.inverse_transform">
+<code class="sig-name descname">inverse_transform</code><span class="sig-paren">(</span><em class="sig-param">image_array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#BaseSklearnScaler.inverse_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.BaseSklearnScaler.inverse_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bfgn.data_management.scalers.BaseSklearnScaler.transform">
+<code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param">image_array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#BaseSklearnScaler.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.BaseSklearnScaler.transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bfgn.data_management.scalers.BaseSklearnScaler.save">
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#BaseSklearnScaler.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.BaseSklearnScaler.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bfgn.data_management.scalers.BaseSklearnScaler.load">
+<code class="sig-name descname">load</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#BaseSklearnScaler.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.BaseSklearnScaler.load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="bfgn.data_management.scalers.NullScaler">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.data_management.scalers.</code><code class="sig-name descname">NullScaler</code><span class="sig-paren">(</span><em class="sig-param">savename_base</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#NullScaler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.NullScaler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bfgn.data_management.scalers.BaseGlobalScaler" title="bfgn.data_management.scalers.BaseGlobalScaler"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.data_management.scalers.BaseGlobalScaler</span></code></a></p>
+<dl class="method">
+<dt id="bfgn.data_management.scalers.NullScaler.inverse_transform">
+<code class="sig-name descname">inverse_transform</code><span class="sig-paren">(</span><em class="sig-param">image_array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#NullScaler.inverse_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.NullScaler.inverse_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bfgn.data_management.scalers.NullScaler.transform">
+<code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param">image_array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#NullScaler.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.NullScaler.transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bfgn.data_management.scalers.NullScaler.save">
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#NullScaler.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.NullScaler.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bfgn.data_management.scalers.NullScaler.load">
+<code class="sig-name descname">load</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#NullScaler.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.NullScaler.load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="bfgn.data_management.scalers.ConstantScaler">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.data_management.scalers.</code><code class="sig-name descname">ConstantScaler</code><span class="sig-paren">(</span><em class="sig-param">savename_base</em>, <em class="sig-param">constant_scaler=None</em>, <em class="sig-param">constant_offset=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#ConstantScaler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.ConstantScaler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bfgn.data_management.scalers.BaseGlobalScaler" title="bfgn.data_management.scalers.BaseGlobalScaler"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.data_management.scalers.BaseGlobalScaler</span></code></a></p>
+<dl class="attribute">
+<dt id="bfgn.data_management.scalers.ConstantScaler.constant_scaler">
+<code class="sig-name descname">constant_scaler</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.data_management.scalers.ConstantScaler.constant_scaler" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.data_management.scalers.ConstantScaler.constant_offset">
+<code class="sig-name descname">constant_offset</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.data_management.scalers.ConstantScaler.constant_offset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bfgn.data_management.scalers.ConstantScaler.inverse_transform">
+<code class="sig-name descname">inverse_transform</code><span class="sig-paren">(</span><em class="sig-param">image_array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#ConstantScaler.inverse_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.ConstantScaler.inverse_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bfgn.data_management.scalers.ConstantScaler.transform">
+<code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param">image_array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#ConstantScaler.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.ConstantScaler.transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bfgn.data_management.scalers.ConstantScaler.save">
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#ConstantScaler.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.ConstantScaler.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bfgn.data_management.scalers.ConstantScaler.load">
+<code class="sig-name descname">load</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#ConstantScaler.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.ConstantScaler.load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="bfgn.data_management.scalers.StandardScaler">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.data_management.scalers.</code><code class="sig-name descname">StandardScaler</code><span class="sig-paren">(</span><em class="sig-param">savename_base</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#StandardScaler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.StandardScaler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bfgn.data_management.scalers.BaseSklearnScaler" title="bfgn.data_management.scalers.BaseSklearnScaler"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.data_management.scalers.BaseSklearnScaler</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bfgn.data_management.scalers.MinMaxScaler">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.data_management.scalers.</code><code class="sig-name descname">MinMaxScaler</code><span class="sig-paren">(</span><em class="sig-param">savename_base</em>, <em class="sig-param">feature_range=(0</em>, <em class="sig-param">1)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#MinMaxScaler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.MinMaxScaler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bfgn.data_management.scalers.BaseSklearnScaler" title="bfgn.data_management.scalers.BaseSklearnScaler"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.data_management.scalers.BaseSklearnScaler</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bfgn.data_management.scalers.RobustScaler">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.data_management.scalers.</code><code class="sig-name descname">RobustScaler</code><span class="sig-paren">(</span><em class="sig-param">savename_base</em>, <em class="sig-param">quantile_range=(10.0</em>, <em class="sig-param">90.0)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#RobustScaler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.RobustScaler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bfgn.data_management.scalers.BaseSklearnScaler" title="bfgn.data_management.scalers.BaseSklearnScaler"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.data_management.scalers.BaseSklearnScaler</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bfgn.data_management.scalers.PowerScaler">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.data_management.scalers.</code><code class="sig-name descname">PowerScaler</code><span class="sig-paren">(</span><em class="sig-param">savename_base</em>, <em class="sig-param">method='box-cox'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#PowerScaler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.PowerScaler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bfgn.data_management.scalers.BaseSklearnScaler" title="bfgn.data_management.scalers.BaseSklearnScaler"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.data_management.scalers.BaseSklearnScaler</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bfgn.data_management.scalers.QuantileUniformScaler">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.data_management.scalers.</code><code class="sig-name descname">QuantileUniformScaler</code><span class="sig-paren">(</span><em class="sig-param">savename_base</em>, <em class="sig-param">output_distribution='uniform'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/scalers.html#QuantileUniformScaler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.scalers.QuantileUniformScaler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bfgn.data_management.scalers.BaseSklearnScaler" title="bfgn.data_management.scalers.BaseSklearnScaler"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.data_management.scalers.BaseSklearnScaler</span></code></a></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.data_management.sequences">
+<span id="bfgn-data-management-sequences-module"></span><h2>bfgn.data_management.sequences module<a class="headerlink" href="#module-bfgn.data_management.sequences" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bfgn.data_management.sequences.BaseSequence">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.data_management.sequences.</code><code class="sig-name descname">BaseSequence</code><span class="sig-paren">(</span><em class="sig-param">feature_scaler</em>, <em class="sig-param">response_scaler</em>, <em class="sig-param">batch_size</em>, <em class="sig-param">apply_random_transforms=False</em>, <em class="sig-param">nan_replacement_value=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/sequences.html#BaseSequence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.sequences.BaseSequence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">keras.utils.data_utils.Sequence</span></code></p>
+<dl class="attribute">
+<dt id="bfgn.data_management.sequences.BaseSequence.feature_scaler">
+<code class="sig-name descname">feature_scaler</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.data_management.sequences.BaseSequence.feature_scaler" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.data_management.sequences.BaseSequence.response_scaler">
+<code class="sig-name descname">response_scaler</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.data_management.sequences.BaseSequence.response_scaler" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.data_management.sequences.BaseSequence.apply_random_transforms">
+<code class="sig-name descname">apply_random_transforms</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.data_management.sequences.BaseSequence.apply_random_transforms" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bfgn.data_management.sequences.BaseSequence.get_raw_and_transformed_sample">
+<code class="sig-name descname">get_raw_and_transformed_sample</code><span class="sig-paren">(</span><em class="sig-param">index</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/sequences.html#BaseSequence.get_raw_and_transformed_sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.sequences.BaseSequence.get_raw_and_transformed_sample" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[&lt;built-in function array&gt;], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[&lt;built-in function array&gt;]], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[&lt;built-in function array&gt;], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[&lt;built-in function array&gt;]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="bfgn.data_management.sequences.MemmappedSequence">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.data_management.sequences.</code><code class="sig-name descname">MemmappedSequence</code><span class="sig-paren">(</span><em class="sig-param">features</em>, <em class="sig-param">responses</em>, <em class="sig-param">weights</em>, <em class="sig-param">feature_scaler</em>, <em class="sig-param">response_scaler</em>, <em class="sig-param">batch_size</em>, <em class="sig-param">apply_random_transforms</em>, <em class="sig-param">feature_mean_centering</em>, <em class="sig-param">nan_replacement_value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/sequences.html#MemmappedSequence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.sequences.MemmappedSequence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bfgn.data_management.sequences.BaseSequence" title="bfgn.data_management.sequences.BaseSequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.data_management.sequences.BaseSequence</span></code></a></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.data_management.single_image_scaling">
+<span id="bfgn-data-management-single-image-scaling-module"></span><h2>bfgn.data_management.single_image_scaling module<a class="headerlink" href="#module-bfgn.data_management.single_image_scaling" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bfgn.data_management.single_image_scaling.scale_vector">
+<code class="sig-prename descclassname">bfgn.data_management.single_image_scaling.</code><code class="sig-name descname">scale_vector</code><span class="sig-paren">(</span><em class="sig-param">dat</em>, <em class="sig-param">flag</em>, <em class="sig-param">nodata_value=-9999</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/single_image_scaling.html#scale_vector"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.single_image_scaling.scale_vector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scale a 1-d numpy array in a specified maner, ignoring nodata values.
+Arguments:
+dat - input vector to be scaled
+flag - an indicator of the chosen scaling option</p>
+<p>Keyword Aguments:
+ndoata_value - value to be ignored, None of no nodata_value specified</p>
+<p>Return:
+The offset and gain scaling factors, in a two-value list form.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.single_image_scaling.scale_image">
+<code class="sig-prename descclassname">bfgn.data_management.single_image_scaling.</code><code class="sig-name descname">scale_image</code><span class="sig-paren">(</span><em class="sig-param">image</em>, <em class="sig-param">flag</em>, <em class="sig-param">nodata_value=-9999</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/single_image_scaling.html#scale_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.single_image_scaling.scale_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scale an image based on preset flag.
+Arguments:
+image - 3d array with assumed dimensions y,x,band
+flag - scaling flag to use (None if no scaling)</p>
+<p>Return:
+An image matching the input image dimension with scaling applied to it.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.single_image_scaling.scale_image_mean_std">
+<code class="sig-prename descclassname">bfgn.data_management.single_image_scaling.</code><code class="sig-name descname">scale_image_mean_std</code><span class="sig-paren">(</span><em class="sig-param">image</em>, <em class="sig-param">nodata_value=-9999</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/single_image_scaling.html#scale_image_mean_std"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.single_image_scaling.scale_image_mean_std" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mean center and standard-deviation normalize an image.
+Arguments:
+image - 3d array with assumed dimensions y,x,band</p>
+<p>Keyword Aguments:
+ndoata_value - value to be ignored, None of no nodata speified</p>
+<p>Return:
+Image with per-band mean centering and std normalization applied</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.single_image_scaling.scale_image_mean">
+<code class="sig-prename descclassname">bfgn.data_management.single_image_scaling.</code><code class="sig-name descname">scale_image_mean</code><span class="sig-paren">(</span><em class="sig-param">image</em>, <em class="sig-param">nodata_value=-9999</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/single_image_scaling.html#scale_image_mean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.single_image_scaling.scale_image_mean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mean center an image.
+Arguments:
+image - 3d array with assumed dimensions y,x,band</p>
+<p>Keyword Aguments:
+ndoata_value - value to be ignored, None of no nodata speified</p>
+<p>Return:
+Image with per-band mean centering applied</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.single_image_scaling.scale_image_minmax">
+<code class="sig-prename descclassname">bfgn.data_management.single_image_scaling.</code><code class="sig-name descname">scale_image_minmax</code><span class="sig-paren">(</span><em class="sig-param">image</em>, <em class="sig-param">nodata_value=-9999</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/single_image_scaling.html#scale_image_minmax"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.single_image_scaling.scale_image_minmax" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scale image based on local mins and maxes.
+Arguments:
+image - 3d array with assumed dimensions y,x,band</p>
+<p>Keyword Aguments:
+ndoata_value - value to be ignored, None of no nodata speified</p>
+<p>Return:
+Image with per-band minmax scaling applied</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.single_image_scaling.fill_nearest_neighbor">
+<code class="sig-prename descclassname">bfgn.data_management.single_image_scaling.</code><code class="sig-name descname">fill_nearest_neighbor</code><span class="sig-paren">(</span><em class="sig-param">image</em>, <em class="sig-param">nodata=-9999</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/single_image_scaling.html#fill_nearest_neighbor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.single_image_scaling.fill_nearest_neighbor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fill in missing values in an image using a nearest neighbor approach.
+Arguments:
+image - 3d array with assumed dimensions y,x,band</p>
+<p>Keyword Aguments:
+ndoata_value - value to be ignored, None of no nodata speified</p>
+<p>Return:
+Image with nodata_value values filled in with their nearest neighbors.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.data_management.training_data">
+<span id="bfgn-data-management-training-data-module"></span><h2>bfgn.data_management.training_data module<a class="headerlink" href="#module-bfgn.data_management.training_data" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bfgn.data_management.training_data.build_training_data_ordered">
+<code class="sig-prename descclassname">bfgn.data_management.training_data.</code><code class="sig-name descname">build_training_data_ordered</code><span class="sig-paren">(</span><em class="sig-param">config</em>, <em class="sig-param">feature_raw_band_types</em>, <em class="sig-param">response_raw_band_types</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/training_data.html#build_training_data_ordered"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.training_data.build_training_data_ordered" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[&lt;built-in function array&gt;], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[&lt;built-in function array&gt;], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[&lt;built-in function array&gt;], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[&lt;built-in function array&gt;], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[&lt;built-in function array&gt;]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.training_data.build_training_data_from_response_points">
+<code class="sig-prename descclassname">bfgn.data_management.training_data.</code><code class="sig-name descname">build_training_data_from_response_points</code><span class="sig-paren">(</span><em class="sig-param">config</em>, <em class="sig-param">feature_raw_band_types</em>, <em class="sig-param">response_raw_band_types</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/training_data.html#build_training_data_from_response_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.training_data.build_training_data_from_response_points" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[&lt;built-in function array&gt;], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[&lt;built-in function array&gt;], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[&lt;built-in function array&gt;], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[&lt;built-in function array&gt;], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[&lt;built-in function array&gt;]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.training_data.get_proj">
+<code class="sig-prename descclassname">bfgn.data_management.training_data.</code><code class="sig-name descname">get_proj</code><span class="sig-paren">(</span><em class="sig-param">fname</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/training_data.html#get_proj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.training_data.get_proj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the projection of a raster/vector dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>fname</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – Name of input file</p>
+</dd>
+</dl>
+<p>:return The projection of the input fname</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.training_data.check_projections">
+<code class="sig-prename descclassname">bfgn.data_management.training_data.</code><code class="sig-name descname">check_projections</code><span class="sig-paren">(</span><em class="sig-param">f_files</em>, <em class="sig-param">r_files</em>, <em class="sig-param">b_files=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/training_data.html#check_projections"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.training_data.check_projections" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.training_data.check_resolutions">
+<code class="sig-prename descclassname">bfgn.data_management.training_data.</code><code class="sig-name descname">check_resolutions</code><span class="sig-paren">(</span><em class="sig-param">f_files</em>, <em class="sig-param">r_files</em>, <em class="sig-param">b_files=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/training_data.html#check_resolutions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.training_data.check_resolutions" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.training_data.calculate_categorical_weights">
+<code class="sig-prename descclassname">bfgn.data_management.training_data.</code><code class="sig-name descname">calculate_categorical_weights</code><span class="sig-paren">(</span><em class="sig-param">responses</em>, <em class="sig-param">weights</em>, <em class="sig-param">config</em>, <em class="sig-param">batch_size=100</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/training_data.html#calculate_categorical_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.training_data.calculate_categorical_weights" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[&lt;built-in function array&gt;]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.training_data.read_labeling_chunk">
+<code class="sig-prename descclassname">bfgn.data_management.training_data.</code><code class="sig-name descname">read_labeling_chunk</code><span class="sig-paren">(</span><em class="sig-param">_site</em>, <em class="sig-param">offset_from_ul</em>, <em class="sig-param">config</em>, <em class="sig-param">reference_geotransform</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/training_data.html#read_labeling_chunk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.training_data.read_labeling_chunk" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.training_data.read_segmentation_chunk">
+<code class="sig-prename descclassname">bfgn.data_management.training_data.</code><code class="sig-name descname">read_segmentation_chunk</code><span class="sig-paren">(</span><em class="sig-param">_site</em>, <em class="sig-param">all_file_upper_lefts</em>, <em class="sig-param">offset_from_ul</em>, <em class="sig-param">config</em>, <em class="sig-param">reference_geotransform</em>, <em class="sig-param">sample_index</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/training_data.html#read_segmentation_chunk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.training_data.read_segmentation_chunk" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.training_data.load_built_data_files">
+<code class="sig-prename descclassname">bfgn.data_management.training_data.</code><code class="sig-name descname">load_built_data_files</code><span class="sig-paren">(</span><em class="sig-param">config</em>, <em class="sig-param">writeable=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/training_data.html#load_built_data_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.training_data.load_built_data_files" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[&lt;built-in function array&gt;], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[&lt;built-in function array&gt;], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[&lt;built-in function array&gt;]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.training_data.check_built_data_files_exist">
+<code class="sig-prename descclassname">bfgn.data_management.training_data.</code><code class="sig-name descname">check_built_data_files_exist</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/training_data.html#check_built_data_files_exist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.training_data.check_built_data_files_exist" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.data_management">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-bfgn.data_management" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Philip G. Brodrick and Nicholas S. Fabina
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

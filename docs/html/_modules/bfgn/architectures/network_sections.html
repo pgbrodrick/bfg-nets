@@ -1,0 +1,253 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>bfgn.architectures.network_sections &mdash; bfgn  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> bfgn
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">bfgn</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+          <li><a href="../architectures.html">bfgn.architectures</a> &raquo;</li>
+        
+      <li>bfgn.architectures.network_sections</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for bfgn.architectures.network_sections</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Tuple</span>
+
+
+<span class="kn">import</span> <span class="nn">keras</span>
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="k">import</span> <span class="n">BatchNormalization</span><span class="p">,</span> <span class="n">Concatenate</span><span class="p">,</span> <span class="n">Conv2D</span><span class="p">,</span> <span class="n">Conv2DTranspose</span><span class="p">,</span> <span class="n">MaxPooling2D</span><span class="p">,</span> <span class="n">ReLU</span><span class="p">,</span> <span class="n">UpSampling2D</span>
+
+
+<div class="viewcode-block" id="colorspace_transformation"><a class="viewcode-back" href="../../../bfgn.architectures.html#bfgn.architectures.network_sections.colorspace_transformation">[docs]</a><span class="k">def</span> <span class="nf">colorspace_transformation</span><span class="p">(</span><span class="n">inshape</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">inlayer</span><span class="p">:</span> <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="p">,</span>
+                              <span class="n">batch_normalization</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; Perform a series of layer transformations prior to the start of the main network.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        inshape: Shape of the incoming layer.</span>
+<span class="sd">        inlayer: Input layer to the transformation.</span>
+<span class="sd">        batch_normalization: Whether or not to use batch normalization.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        output_layer: Keras layer ready to start the main network</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">intermediate_color_depth</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">inshape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">output_layer</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="n">intermediate_color_depth</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">)(</span><span class="n">inlayer</span><span class="p">)</span>
+    <span class="n">output_layer</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="n">inshape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">)(</span><span class="n">output_layer</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">batch_normalization</span><span class="p">):</span>
+        <span class="n">output_layer</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">()(</span><span class="n">output_layer</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">output_layer</span></div>
+
+
+<div class="viewcode-block" id="Conv2D_Options"><a class="viewcode-back" href="../../../bfgn.architectures.html#bfgn.architectures.network_sections.Conv2D_Options">[docs]</a><span class="k">def</span> <span class="nf">Conv2D_Options</span><span class="p">(</span><span class="n">inlayer</span><span class="p">:</span> <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="p">,</span> <span class="n">options</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Conv2D</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; Perform a keras 2D convolution with the specified options.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        inlayer: Input layer to the convolution.</span>
+<span class="sd">        options: All options to pass into the input layer.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        output_layer: Keras layer ready to start the main network</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">use_batch_norm</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;use_batch_norm&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="n">output_layer</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="o">**</span><span class="n">options</span><span class="p">)(</span><span class="n">inlayer</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">use_batch_norm</span><span class="p">:</span>
+        <span class="n">output_layer</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">()(</span><span class="n">output_layer</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">output_layer</span></div>
+
+
+<div class="viewcode-block" id="dense_2d_block"><a class="viewcode-back" href="../../../bfgn.architectures.html#bfgn.architectures.network_sections.dense_2d_block">[docs]</a><span class="k">def</span> <span class="nf">dense_2d_block</span><span class="p">(</span><span class="n">inlayer</span><span class="p">:</span> <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="p">,</span> <span class="n">conv_options</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">block_depth</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Conv2D</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; Create a single, dense block.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        inlayer: Input layer to the convolution.</span>
+<span class="sd">        conv_options: All options to pass into the input convolution layer.</span>
+<span class="sd">        block_depth: How deep (many layers) is the dense block.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        output_layer: Keras layer ready to start the main network</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">dense_layer</span> <span class="o">=</span> <span class="n">inlayer</span>
+    <span class="k">for</span> <span class="n">_block_step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">block_depth</span><span class="p">):</span>
+        <span class="n">intermediate_layer</span> <span class="o">=</span> <span class="n">Conv2D_Options</span><span class="p">(</span><span class="n">dense_layer</span><span class="p">,</span> <span class="n">conv_options</span><span class="p">)</span>
+
+        <span class="n">dense_layer</span> <span class="o">=</span> <span class="n">Concatenate</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)([</span><span class="n">dense_layer</span><span class="p">,</span> <span class="n">intermediate_layer</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">dense_layer</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Philip G. Brodrick and Nicholas S. Fabina
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

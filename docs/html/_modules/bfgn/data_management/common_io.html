@@ -1,0 +1,439 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>bfgn.data_management.common_io &mdash; bfgn  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> bfgn
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">bfgn</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>bfgn.data_management.common_io</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for bfgn.data_management.common_io</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">fiona</span>
+<span class="kn">import</span> <span class="nn">gdal</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="k">import</span> <span class="n">matlib</span>
+<span class="kn">import</span> <span class="nn">rasterio.features</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">from</span> <span class="nn">bfgn.configuration</span> <span class="k">import</span> <span class="n">configs</span>
+
+
+<span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="upper_left_pixel"><a class="viewcode-back" href="../../../bfgn.data_management.html#bfgn.data_management.common_io.upper_left_pixel">[docs]</a><span class="k">def</span> <span class="nf">upper_left_pixel</span><span class="p">(</span><span class="n">trans</span><span class="p">,</span> <span class="n">interior_x</span><span class="p">,</span> <span class="n">interior_y</span><span class="p">):</span>
+    <span class="n">x_ul</span> <span class="o">=</span> <span class="nb">max</span><span class="p">((</span><span class="n">interior_x</span> <span class="o">-</span> <span class="n">trans</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">/</span><span class="n">trans</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">y_ul</span> <span class="o">=</span> <span class="nb">max</span><span class="p">((</span><span class="n">interior_y</span> <span class="o">-</span> <span class="n">trans</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span><span class="o">/</span><span class="n">trans</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x_ul</span><span class="p">,</span> <span class="n">y_ul</span></div>
+
+
+<div class="viewcode-block" id="get_overlapping_extent"><a class="viewcode-back" href="../../../bfgn.data_management.html#bfgn.data_management.common_io.get_overlapping_extent">[docs]</a><span class="k">def</span> <span class="nf">get_overlapping_extent</span><span class="p">(</span><span class="n">dataset_list_of_lists</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]]):</span>
+
+    <span class="c1"># Convert list of lists or list for interior convenience</span>
+    <span class="n">dataset_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span> <span class="k">for</span> <span class="n">sublist</span> <span class="ow">in</span> <span class="n">dataset_list_of_lists</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">sublist</span><span class="p">]</span>
+
+    <span class="c1"># Get list of all gdal geotransforms</span>
+    <span class="n">trans_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">_d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset_list</span><span class="p">)):</span>
+        <span class="n">trans_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dataset_list</span><span class="p">[</span><span class="n">_d</span><span class="p">]</span><span class="o">.</span><span class="n">GetGeoTransform</span><span class="p">())</span>
+
+    <span class="c1"># Find the interior (UL) x,y coordinates in map-space</span>
+    <span class="n">interior_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">trans_list</span><span class="p">])</span>
+    <span class="n">interior_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">trans_list</span><span class="p">])</span>
+
+    <span class="c1"># calculate the UL coordinates in pixel-space</span>
+    <span class="n">ul_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">_d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset_list</span><span class="p">)):</span>
+        <span class="n">ul_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">upper_left_pixel</span><span class="p">(</span><span class="n">trans_list</span><span class="p">[</span><span class="n">_d</span><span class="p">],</span> <span class="n">interior_x</span><span class="p">,</span> <span class="n">interior_y</span><span class="p">)))</span>
+
+    <span class="c1"># calculate the size of the matched interior extent</span>
+    <span class="n">x_len</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">([</span><span class="n">dataset_list</span><span class="p">[</span><span class="n">_d</span><span class="p">]</span><span class="o">.</span><span class="n">RasterXSize</span> <span class="o">-</span> <span class="n">ul_list</span><span class="p">[</span><span class="n">_d</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                                 <span class="k">for</span> <span class="n">_d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset_list</span><span class="p">))])))</span>
+    <span class="n">y_len</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">([</span><span class="n">dataset_list</span><span class="p">[</span><span class="n">_d</span><span class="p">]</span><span class="o">.</span><span class="n">RasterYSize</span> <span class="o">-</span> <span class="n">ul_list</span><span class="p">[</span><span class="n">_d</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+                                 <span class="k">for</span> <span class="n">_d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset_list</span><span class="p">))])))</span>
+
+    <span class="c1"># separate out into list of lists for return</span>
+    <span class="n">return_ul_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">_l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset_list_of_lists</span><span class="p">)):</span>
+        <span class="n">local_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset_list_of_lists</span><span class="p">[</span><span class="n">_l</span><span class="p">])):</span>
+            <span class="n">local_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ul_list</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+            <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># special case of no boundary file.  Append a None if no value:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">local_list</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">local_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+
+        <span class="n">local_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">local_list</span><span class="p">)</span>
+        <span class="n">return_ul_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">local_list</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">return_ul_list</span><span class="p">,</span> <span class="n">x_len</span><span class="p">,</span> <span class="n">y_len</span></div>
+
+
+<div class="viewcode-block" id="get_overlapping_extent_coordinates"><a class="viewcode-back" href="../../../bfgn.data_management.html#bfgn.data_management.common_io.get_overlapping_extent_coordinates">[docs]</a><span class="k">def</span> <span class="nf">get_overlapping_extent_coordinates</span><span class="p">(</span><span class="n">dataset_list_of_lists</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]]):</span>
+
+    <span class="c1"># Convert list of lists or list for interior convenience</span>
+    <span class="n">dataset_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span> <span class="k">for</span> <span class="n">sublist</span> <span class="ow">in</span> <span class="n">dataset_list_of_lists</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">sublist</span><span class="p">]</span>
+
+    <span class="c1"># Get list of all gdal geotransforms</span>
+    <span class="n">trans_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">_d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset_list</span><span class="p">)):</span>
+        <span class="n">trans_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dataset_list</span><span class="p">[</span><span class="n">_d</span><span class="p">]</span><span class="o">.</span><span class="n">GetGeoTransform</span><span class="p">())</span>
+
+    <span class="c1"># Find the interior (UL) x,y coordinates in map-space</span>
+    <span class="n">interior_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">trans_list</span><span class="p">])</span>
+    <span class="n">interior_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">trans_list</span><span class="p">])</span>
+
+    <span class="n">exterior_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">([</span><span class="n">trans_list</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">dataset_list</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">RasterXSize</span><span class="o">*</span><span class="n">trans_list</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+                            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">trans_list</span><span class="p">))])</span>
+    <span class="n">exterior_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">([</span><span class="n">trans_list</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="mi">3</span><span class="p">]</span><span class="o">+</span><span class="n">dataset_list</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">RasterYSize</span><span class="o">*</span><span class="n">trans_list</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="mi">5</span><span class="p">]</span>
+                            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">trans_list</span><span class="p">))])</span>
+
+    <span class="k">return</span> <span class="p">[</span><span class="n">interior_x</span><span class="p">,</span> <span class="n">interior_y</span><span class="p">],</span> <span class="p">[</span><span class="n">exterior_x</span><span class="p">,</span> <span class="n">exterior_y</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="get_all_interior_extent_subset_pixel_locations"><a class="viewcode-back" href="../../../bfgn.data_management.html#bfgn.data_management.common_io.get_all_interior_extent_subset_pixel_locations">[docs]</a><span class="k">def</span> <span class="nf">get_all_interior_extent_subset_pixel_locations</span><span class="p">(</span><span class="n">gdal_datasets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]],</span> <span class="n">window_radius</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">inner_window_radius</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">shuffle</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">inner_window_radius</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="n">inner_window_radius</span> <span class="o">=</span> <span class="n">window_radius</span>
+
+    <span class="n">all_upper_lefts</span><span class="p">,</span> <span class="n">x_px_size</span><span class="p">,</span> <span class="n">y_px_size</span> <span class="o">=</span> <span class="n">get_overlapping_extent</span><span class="p">(</span><span class="n">gdal_datasets</span><span class="p">)</span>
+
+    <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Calculate pixel-based interior offsets for data acquisition&#39;</span><span class="p">)</span>
+    <span class="n">x_sample_locations</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span>
+                                           <span class="nb">int</span><span class="p">(</span><span class="n">x_px_size</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">window_radius</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                                           <span class="nb">int</span><span class="p">(</span><span class="n">inner_window_radius</span><span class="o">*</span><span class="mi">2</span><span class="p">))]</span>
+    <span class="n">y_sample_locations</span> <span class="o">=</span> <span class="p">[</span><span class="n">y</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span>
+                                           <span class="nb">int</span><span class="p">(</span><span class="n">y_px_size</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">window_radius</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                                           <span class="nb">int</span><span class="p">(</span><span class="n">inner_window_radius</span><span class="o">*</span><span class="mi">2</span><span class="p">))]</span>
+
+    <span class="n">xy_sample_locations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">x_sample_locations</span><span class="p">)</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">y_sample_locations</span><span class="p">),</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">xy_sample_locations</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matlib</span><span class="o">.</span><span class="n">repmat</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x_sample_locations</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_sample_locations</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="n">xy_sample_locations</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matlib</span><span class="o">.</span><span class="n">repmat</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y_sample_locations</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)),</span> <span class="nb">len</span><span class="p">(</span><span class="n">x_sample_locations</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="k">del</span> <span class="n">x_sample_locations</span><span class="p">,</span> <span class="n">y_sample_locations</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">shuffle</span><span class="p">):</span>
+        <span class="n">xy_sample_locations</span> <span class="o">=</span> <span class="n">xy_sample_locations</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">xy_sample_locations</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="p">:]</span>
+
+    <span class="k">return</span> <span class="n">all_upper_lefts</span><span class="p">,</span> <span class="n">xy_sample_locations</span></div>
+
+
+<div class="viewcode-block" id="read_map_subset"><a class="viewcode-back" href="../../../bfgn.data_management.html#bfgn.data_management.common_io.read_map_subset">[docs]</a><span class="k">def</span> <span class="nf">read_map_subset</span><span class="p">(</span><span class="n">datafiles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">upper_lefts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="n">window_diameter</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">nodata_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">lower_bound</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">upper_bound</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">reference_geotransform</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+    <span class="n">raster_count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">datasets</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">_f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">datafiles</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">datafiles</span><span class="p">[</span><span class="n">_f</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">configs</span><span class="o">.</span><span class="n">sections</span><span class="o">.</span><span class="n">VECTORIZED_FILENAMES</span><span class="p">):</span>
+            <span class="n">datasets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">datafiles</span><span class="p">[</span><span class="n">_f</span><span class="p">],</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GA_ReadOnly</span><span class="p">))</span>
+            <span class="n">raster_count</span> <span class="o">+=</span> <span class="n">datasets</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">RasterCount</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">datasets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+            <span class="n">raster_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="n">local_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">window_diameter</span><span class="p">,</span> <span class="n">window_diameter</span><span class="p">,</span> <span class="n">raster_count</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">window_diameter</span><span class="p">,</span> <span class="n">window_diameter</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+
+    <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">_file</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">datasets</span><span class="p">)):</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">datasets</span><span class="p">[</span><span class="n">_file</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">file_set</span> <span class="o">=</span> <span class="n">datasets</span><span class="p">[</span><span class="n">_file</span><span class="p">]</span>
+            <span class="n">file_upper_left</span> <span class="o">=</span> <span class="n">upper_lefts</span><span class="p">[</span><span class="n">_file</span><span class="p">]</span>
+
+            <span class="n">file_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">window_diameter</span><span class="p">,</span> <span class="n">window_diameter</span><span class="p">,</span> <span class="n">file_set</span><span class="o">.</span><span class="n">RasterCount</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">_b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">file_set</span><span class="o">.</span><span class="n">RasterCount</span><span class="p">):</span>
+                <span class="n">file_array</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">_b</span><span class="p">]</span> <span class="o">=</span> <span class="n">file_set</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span>
+                    <span class="n">_b</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">ReadAsArray</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">file_upper_left</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">file_upper_left</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">window_diameter</span><span class="p">,</span> <span class="n">window_diameter</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">nodata_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+                <span class="n">file_array</span><span class="p">[</span><span class="n">file_array</span> <span class="o">==</span> <span class="n">nodata_value</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+            <span class="n">file_array</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">file_array</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="n">file_array</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+            <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">invalid</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">lower_bound</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+                    <span class="n">file_array</span><span class="p">[</span><span class="n">file_array</span> <span class="o">&lt;</span> <span class="n">lower_bound</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">upper_bound</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+                    <span class="n">file_array</span><span class="p">[</span><span class="n">file_array</span> <span class="o">&gt;</span> <span class="n">upper_bound</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+            <span class="n">mask</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">file_array</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">reference_geotransform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+            <span class="n">file_array</span> <span class="o">=</span> <span class="n">rasterize_vector</span><span class="p">(</span><span class="n">datafiles</span><span class="p">[</span><span class="n">_f</span><span class="p">],</span> <span class="n">reference_geotransform</span><span class="p">,</span>
+                                          <span class="p">(</span><span class="n">window_diameter</span><span class="p">,</span> <span class="n">window_diameter</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">mask</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="n">local_array</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span><span class="n">idx</span><span class="o">+</span><span class="n">file_array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">file_array</span>
+        <span class="n">idx</span> <span class="o">+=</span> <span class="n">file_array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">local_array</span><span class="p">,</span> <span class="n">mask</span></div>
+
+
+<div class="viewcode-block" id="get_boundary_sets_from_boundary_files"><a class="viewcode-back" href="../../../bfgn.data_management.html#bfgn.data_management.common_io.get_boundary_sets_from_boundary_files">[docs]</a><span class="k">def</span> <span class="nf">get_boundary_sets_from_boundary_files</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">raw_files</span><span class="o">.</span><span class="n">boundary_files</span><span class="p">:</span>
+        <span class="n">boundary_sets</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">raw_files</span><span class="o">.</span><span class="n">feature_files</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">boundary_sets</span> <span class="o">=</span> <span class="p">[</span><span class="n">noerror_open</span><span class="p">(</span><span class="n">loc_file</span><span class="p">)</span> <span class="k">if</span> <span class="n">loc_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+                         <span class="k">for</span> <span class="n">loc_file</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">raw_files</span><span class="o">.</span><span class="n">boundary_files</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">boundary_sets</span></div>
+
+
+<div class="viewcode-block" id="get_site_boundary_set"><a class="viewcode-back" href="../../../bfgn.data_management.html#bfgn.data_management.common_io.get_site_boundary_set">[docs]</a><span class="k">def</span> <span class="nf">get_site_boundary_set</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span><span class="p">,</span> <span class="n">_site</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">raw_files</span><span class="o">.</span><span class="n">boundary_files</span><span class="p">:</span>
+        <span class="n">boundary_set</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">boundary_set</span> <span class="o">=</span> <span class="n">noerror_open</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">raw_files</span><span class="o">.</span><span class="n">boundary_files</span><span class="p">[</span><span class="n">_site</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">boundary_set</span></div>
+
+
+<div class="viewcode-block" id="get_site_boundary_vector_file"><a class="viewcode-back" href="../../../bfgn.data_management.html#bfgn.data_management.common_io.get_site_boundary_vector_file">[docs]</a><span class="k">def</span> <span class="nf">get_site_boundary_vector_file</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span><span class="p">,</span> <span class="n">_site</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">raw_files</span><span class="o">.</span><span class="n">boundary_files</span><span class="p">:</span>
+        <span class="n">boundary_file</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">boundary_file</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">raw_files</span><span class="o">.</span><span class="n">boundary_files</span><span class="p">[</span><span class="n">_site</span><span class="p">]</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">boundary_file</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">configs</span><span class="o">.</span><span class="n">sections</span><span class="o">.</span><span class="n">VECTORIZED_FILENAMES</span><span class="p">):</span>
+            <span class="n">boundary_file</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">boundary_file</span></div>
+
+
+<div class="viewcode-block" id="rasterize_vector"><a class="viewcode-back" href="../../../bfgn.data_management.html#bfgn.data_management.common_io.rasterize_vector">[docs]</a><span class="k">def</span> <span class="nf">rasterize_vector</span><span class="p">(</span><span class="n">vector_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">geotransform</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">output_shape</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; Rasterizes an input vector directly into a numpy array.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        vector_file: Input vector file to be rasterized</span>
+<span class="sd">        geotransform: A gdal style geotransform</span>
+<span class="sd">        output_shape: The shape of the output file to be generated</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        mask: A rasterized 2-d numpy array</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">fiona</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">vector_file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+    <span class="n">trans</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">geotransform</span><span class="p">)</span>
+    <span class="n">trans</span> <span class="o">=</span> <span class="p">[</span><span class="n">trans</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">trans</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">trans</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+             <span class="n">trans</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">trans</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">trans</span><span class="p">[</span><span class="mi">3</span><span class="p">]]</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">output_shape</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ds</span><span class="p">)):</span>
+        <span class="n">rasterio</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">rasterize</span><span class="p">([</span><span class="n">ds</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="s1">&#39;geometry&#39;</span><span class="p">]],</span> <span class="n">transform</span><span class="o">=</span><span class="n">trans</span><span class="p">,</span> <span class="n">default_value</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">mask</span><span class="p">)</span>
+    <span class="n">ds</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">mask</span></div>
+
+
+<div class="viewcode-block" id="read_mask_chunk"><a class="viewcode-back" href="../../../bfgn.data_management.html#bfgn.data_management.common_io.read_mask_chunk">[docs]</a><span class="k">def</span> <span class="nf">read_mask_chunk</span><span class="p">(</span>
+        <span class="n">_site</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">upper_left</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">window_diameter</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">reference_geotransform</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
+
+    <span class="n">mask</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">boundary_set</span> <span class="o">=</span> <span class="n">get_site_boundary_set</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">_site</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">boundary_set</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">boundary_set</span><span class="o">.</span><span class="n">ReadAsArray</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">upper_left</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">upper_left</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">window_diameter</span><span class="p">,</span> <span class="n">window_diameter</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">boundary_vector_file</span> <span class="o">=</span> <span class="n">get_site_boundary_vector_file</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">_site</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">boundary_vector_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">rasterize_vector</span><span class="p">(</span><span class="n">boundary_vector_file</span><span class="p">,</span> <span class="n">reference_geotransform</span><span class="p">,</span>
+                                    <span class="p">(</span><span class="n">window_diameter</span><span class="p">,</span> <span class="n">window_diameter</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">mask</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">window_diameter</span><span class="p">,</span> <span class="n">window_diameter</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span> <span class="o">==</span> <span class="n">config</span><span class="o">.</span><span class="n">raw_files</span><span class="o">.</span><span class="n">boundary_bad_value</span>
+
+    <span class="k">return</span> <span class="n">mask</span></div>
+
+
+<div class="viewcode-block" id="noerror_open"><a class="viewcode-back" href="../../../bfgn.data_management.html#bfgn.data_management.common_io.noerror_open">[docs]</a><span class="k">def</span> <span class="nf">noerror_open</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">file_handle</span><span class="o">=</span><span class="n">gdal</span><span class="o">.</span><span class="n">GA_ReadOnly</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+    <span class="n">gdal</span><span class="o">.</span><span class="n">PushErrorHandler</span><span class="p">(</span><span class="s1">&#39;CPLQuietErrorHandler&#39;</span><span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">file_handle</span><span class="p">)</span>
+    <span class="n">gdal</span><span class="o">.</span><span class="n">PopErrorHandler</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">dataset</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Philip G. Brodrick and Nicholas S. Fabina
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

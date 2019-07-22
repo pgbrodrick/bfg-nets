@@ -1,0 +1,713 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>bfgn.architectures package &mdash; bfgn  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> bfgn
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">bfgn.architectures package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-bfgn.architectures.alex_net">bfgn.architectures.alex_net module</a></li>
+<li><a class="reference internal" href="#module-bfgn.architectures.config_sections">bfgn.architectures.config_sections module</a></li>
+<li><a class="reference internal" href="#module-bfgn.architectures.dense_flat_net">bfgn.architectures.dense_flat_net module</a></li>
+<li><a class="reference internal" href="#module-bfgn.architectures.dense_unet">bfgn.architectures.dense_unet module</a></li>
+<li><a class="reference internal" href="#module-bfgn.architectures.dilation_net">bfgn.architectures.dilation_net module</a></li>
+<li><a class="reference internal" href="#module-bfgn.architectures.flat_net">bfgn.architectures.flat_net module</a></li>
+<li><a class="reference internal" href="#module-bfgn.architectures.network_sections">bfgn.architectures.network_sections module</a></li>
+<li><a class="reference internal" href="#module-bfgn.architectures.residual_dilation_net">bfgn.architectures.residual_dilation_net module</a></li>
+<li><a class="reference internal" href="#module-bfgn.architectures.residual_flat_net">bfgn.architectures.residual_flat_net module</a></li>
+<li><a class="reference internal" href="#module-bfgn.architectures.residual_unet">bfgn.architectures.residual_unet module</a></li>
+<li><a class="reference internal" href="#module-bfgn.architectures.unet">bfgn.architectures.unet module</a></li>
+<li><a class="reference internal" href="#module-bfgn.architectures">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">bfgn</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>bfgn.architectures package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/bfgn.architectures.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="bfgn-architectures-package">
+<h1>bfgn.architectures package<a class="headerlink" href="#bfgn-architectures-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-bfgn.architectures.alex_net">
+<span id="bfgn-architectures-alex-net-module"></span><h2>bfgn.architectures.alex_net module<a class="headerlink" href="#module-bfgn.architectures.alex_net" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bfgn.architectures.alex_net.ArchitectureConfigSection">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.architectures.alex_net.</code><code class="sig-name descname">ArchitectureConfigSection</code><a class="reference internal" href="_modules/bfgn/architectures/alex_net.html#ArchitectureConfigSection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.alex_net.ArchitectureConfigSection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bfgn.architectures.config_sections.AutoencoderMixin" title="bfgn.architectures.config_sections.AutoencoderMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.AutoencoderMixin</span></code></a>, <a class="reference internal" href="#bfgn.architectures.config_sections.BlockMixin" title="bfgn.architectures.config_sections.BlockMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.BlockMixin</span></code></a>, <a class="reference internal" href="#bfgn.architectures.config_sections.GrowthMixin" title="bfgn.architectures.config_sections.GrowthMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.GrowthMixin</span></code></a>, <a class="reference internal" href="#bfgn.architectures.config_sections.BaseArchitectureConfigSection" title="bfgn.architectures.config_sections.BaseArchitectureConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.BaseArchitectureConfigSection</span></code></a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.architectures.alex_net.create_model">
+<code class="sig-prename descclassname">bfgn.architectures.alex_net.</code><code class="sig-name descname">create_model</code><span class="sig-paren">(</span><em class="sig-param">inshape</em>, <em class="sig-param">n_classes</em>, <em class="sig-param">output_activation</em>, <em class="sig-param">block_structure=(2</em>, <em class="sig-param">2</em>, <em class="sig-param">2</em>, <em class="sig-param">2)</em>, <em class="sig-param">filters=64</em>, <em class="sig-param">kernel_size=(3</em>, <em class="sig-param">3)</em>, <em class="sig-param">padding='same'</em>, <em class="sig-param">pool_size=(2</em>, <em class="sig-param">2)</em>, <em class="sig-param">use_batch_norm=False</em>, <em class="sig-param">use_growth=False</em>, <em class="sig-param">use_initial_colorspace_transformation_layer=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/architectures/alex_net.html#create_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.alex_net.create_model" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.architectures.config_sections">
+<span id="bfgn-architectures-config-sections-module"></span><h2>bfgn.architectures.config_sections module<a class="headerlink" href="#module-bfgn.architectures.config_sections" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bfgn.architectures.config_sections.BaseArchitectureConfigSection">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.architectures.config_sections.</code><code class="sig-name descname">BaseArchitectureConfigSection</code><a class="reference internal" href="_modules/bfgn/architectures/config_sections.html#BaseArchitectureConfigSection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.config_sections.BaseArchitectureConfigSection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="bfgn.configuration.html#bfgn.configuration.sections.BaseConfigSection" title="bfgn.configuration.sections.BaseConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.configuration.sections.BaseConfigSection</span></code></a></p>
+<p>Base class for architecture config section, includes options that are generic to all architectures.</p>
+<dl class="attribute">
+<dt id="bfgn.architectures.config_sections.BaseArchitectureConfigSection.filters">
+<code class="sig-name descname">filters</code><em class="property"> = 'REQUIRED'</em><a class="headerlink" href="#bfgn.architectures.config_sections.BaseArchitectureConfigSection.filters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of filters to use for initial convolutions, may increase in architectures that support the use_growth
+option.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)">int</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.architectures.config_sections.BaseArchitectureConfigSection.kernel_size">
+<code class="sig-name descname">kernel_size</code><em class="property"> = (3, 3)</em><a class="headerlink" href="#bfgn.architectures.config_sections.BaseArchitectureConfigSection.kernel_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>The kernel size used for convolutions. Most often (3, 3) for a 3x3 kernel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.architectures.config_sections.BaseArchitectureConfigSection.n_classes">
+<code class="sig-name descname">n_classes</code><em class="property"> = 'REQUIRED'</em><a class="headerlink" href="#bfgn.architectures.config_sections.BaseArchitectureConfigSection.n_classes" title="Permalink to this definition">¶</a></dt>
+<dd><p>if the network is being trained
+to predict a single continuous variable, this should be 1. Example 2:  if the network is being trained to classify
+pixels into five classes, this should be 5.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)">int</a></p>
+</dd>
+<dt class="field-even">Type</dt>
+<dd class="field-even"><p>The number of classes (filters) used in the final network layer. Example 1</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.architectures.config_sections.BaseArchitectureConfigSection.internal_activation">
+<code class="sig-name descname">internal_activation</code><em class="property"> = 'relu'</em><a class="headerlink" href="#bfgn.architectures.config_sections.BaseArchitectureConfigSection.internal_activation" title="Permalink to this definition">¶</a></dt>
+<dd><p>The internal activation function used between layers. See Keras documentation for more details and available
+options.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.architectures.config_sections.BaseArchitectureConfigSection.output_activation">
+<code class="sig-name descname">output_activation</code><em class="property"> = 'REQUIRED'</em><a class="headerlink" href="#bfgn.architectures.config_sections.BaseArchitectureConfigSection.output_activation" title="Permalink to this definition">¶</a></dt>
+<dd><p>The activation type for the final output layer. See Keras documentation for more details and available
+options.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.architectures.config_sections.BaseArchitectureConfigSection.padding">
+<code class="sig-name descname">padding</code><em class="property"> = 'same'</em><a class="headerlink" href="#bfgn.architectures.config_sections.BaseArchitectureConfigSection.padding" title="Permalink to this definition">¶</a></dt>
+<dd><p>See Keras documentation for more details and available options.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.architectures.config_sections.BaseArchitectureConfigSection.use_batch_norm">
+<code class="sig-name descname">use_batch_norm</code><em class="property"> = False</em><a class="headerlink" href="#bfgn.architectures.config_sections.BaseArchitectureConfigSection.use_batch_norm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether to use batch normalization layers. Currently only implemented after convolutions, but there’s
+evidence that it may be useful before convolutions in at least some architectures or applications, and we plan on
+supporting both options in the near future.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.architectures.config_sections.BaseArchitectureConfigSection.use_initial_colorspace_transformation_layer">
+<code class="sig-name descname">use_initial_colorspace_transformation_layer</code><em class="property"> = False</em><a class="headerlink" href="#bfgn.architectures.config_sections.BaseArchitectureConfigSection.use_initial_colorspace_transformation_layer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether to use an initial colorspace transformation layer. There is evidence that model-learned color
+transformations can be more effective than other types of transformations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="bfgn.architectures.config_sections.BaseArchitectureConfigSection.get_option_keys">
+<code class="sig-name descname">get_option_keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/architectures/config_sections.html#BaseArchitectureConfigSection.get_option_keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.config_sections.BaseArchitectureConfigSection.get_option_keys" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="bfgn.architectures.config_sections.AutoencoderMixin">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.architectures.config_sections.</code><code class="sig-name descname">AutoencoderMixin</code><a class="reference internal" href="_modules/bfgn/architectures/config_sections.html#AutoencoderMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.config_sections.AutoencoderMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/2/library/functions.html#object" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Mixin for architectures with autoencoder downsampling/upsampling characteristics.</p>
+<dl class="attribute">
+<dt id="bfgn.architectures.config_sections.AutoencoderMixin.pool_size">
+<code class="sig-name descname">pool_size</code><em class="property"> = (2, 2)</em><a class="headerlink" href="#bfgn.architectures.config_sections.AutoencoderMixin.pool_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pooling and upsampling size during each downsampling/upsampling step.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="bfgn.architectures.config_sections.BlockMixin">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.architectures.config_sections.</code><code class="sig-name descname">BlockMixin</code><a class="reference internal" href="_modules/bfgn/architectures/config_sections.html#BlockMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.config_sections.BlockMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/2/library/functions.html#object" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Mixin for architectures with block / layer patterns.</p>
+<dl class="attribute">
+<dt id="bfgn.architectures.config_sections.BlockMixin.block_structure">
+<code class="sig-name descname">block_structure</code><em class="property"> = (2, 2, 2, 2)</em><a class="headerlink" href="#bfgn.architectures.config_sections.BlockMixin.block_structure" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of layers in each network block. The length of the tuple is the number of network blocks and
+the value at each index i is the number of layers in block i. Example: (2, 3, 4) configures a network where
+the first block has two layers, the second block has three layers, and the third block has four layers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="bfgn.architectures.config_sections.DilationMixin">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.architectures.config_sections.</code><code class="sig-name descname">DilationMixin</code><a class="reference internal" href="_modules/bfgn/architectures/config_sections.html#DilationMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.config_sections.DilationMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/2/library/functions.html#object" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Mixin for architectures with dilated convolutions.</p>
+<dl class="attribute">
+<dt id="bfgn.architectures.config_sections.DilationMixin.dilation_rate">
+<code class="sig-name descname">dilation_rate</code><em class="property"> = 2</em><a class="headerlink" href="#bfgn.architectures.config_sections.DilationMixin.dilation_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>The dilation rate for dilated convolutions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)">int</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="bfgn.architectures.config_sections.FlatMixin">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.architectures.config_sections.</code><code class="sig-name descname">FlatMixin</code><a class="reference internal" href="_modules/bfgn/architectures/config_sections.html#FlatMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.config_sections.FlatMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/2/library/functions.html#object" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Mixin for flat architectures.</p>
+<dl class="attribute">
+<dt id="bfgn.architectures.config_sections.FlatMixin.num_layers">
+<code class="sig-name descname">num_layers</code><em class="property"> = 8</em><a class="headerlink" href="#bfgn.architectures.config_sections.FlatMixin.num_layers" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of layers in the network.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)">int</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="bfgn.architectures.config_sections.GrowthMixin">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.architectures.config_sections.</code><code class="sig-name descname">GrowthMixin</code><a class="reference internal" href="_modules/bfgn/architectures/config_sections.html#GrowthMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.config_sections.GrowthMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/2/library/functions.html#object" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Mixin for architectures where growth in the number of filters could be useful.</p>
+<dl class="attribute">
+<dt id="bfgn.architectures.config_sections.GrowthMixin.use_growth">
+<code class="sig-name descname">use_growth</code><em class="property"> = False</em><a class="headerlink" href="#bfgn.architectures.config_sections.GrowthMixin.use_growth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether to increase the number of filters at each layer in the network.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.architectures.config_sections.create_model_from_architecture_config_section">
+<code class="sig-prename descclassname">bfgn.architectures.config_sections.</code><code class="sig-name descname">create_model_from_architecture_config_section</code><span class="sig-paren">(</span><em class="sig-param">architecture_name</em>, <em class="sig-param">architecture_config_section</em>, <em class="sig-param">inshape</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/architectures/config_sections.html#create_model_from_architecture_config_section"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.config_sections.create_model_from_architecture_config_section" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a Keras model for a specific architecture using the provided options.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>architecture_name</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Architecture to create. Get a list of currently available architectures using</p></li>
+<li><p><strong>bfgn.architectures.get_available_architectures</strong><strong>(</strong><strong>)</strong><strong></strong> – </p></li>
+<li><p><strong>architecture_config_section</strong> (<a class="reference internal" href="#bfgn.architectures.config_sections.BaseArchitectureConfigSection" title="bfgn.architectures.config_sections.BaseArchitectureConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseArchitectureConfigSection</span></code></a>) – Options for the specified architecture.</p></li>
+<li><p><strong>inshape</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>) – Inshape for input data.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Keras model object.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.architectures.config_sections.get_architecture_config_section">
+<code class="sig-prename descclassname">bfgn.architectures.config_sections.</code><code class="sig-name descname">get_architecture_config_section</code><span class="sig-paren">(</span><em class="sig-param">architecture_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/architectures/config_sections.html#get_architecture_config_section"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.config_sections.get_architecture_config_section" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets architecture options for the specified architecture.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>architecture_name</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Architecture to create. Get a list of currently available architectures using</p></li>
+<li><p><strong>bfgn.architectures.get_available_architectures</strong><strong>(</strong><strong>)</strong><strong></strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#bfgn.architectures.config_sections.BaseArchitectureConfigSection" title="bfgn.architectures.config_sections.BaseArchitectureConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseArchitectureConfigSection</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Options for the specified architecture.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.architectures.dense_flat_net">
+<span id="bfgn-architectures-dense-flat-net-module"></span><h2>bfgn.architectures.dense_flat_net module<a class="headerlink" href="#module-bfgn.architectures.dense_flat_net" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bfgn.architectures.dense_flat_net.ArchitectureConfigSection">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.architectures.dense_flat_net.</code><code class="sig-name descname">ArchitectureConfigSection</code><a class="reference internal" href="_modules/bfgn/architectures/dense_flat_net.html#ArchitectureConfigSection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.dense_flat_net.ArchitectureConfigSection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bfgn.architectures.config_sections.BlockMixin" title="bfgn.architectures.config_sections.BlockMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.BlockMixin</span></code></a>, <a class="reference internal" href="#bfgn.architectures.config_sections.GrowthMixin" title="bfgn.architectures.config_sections.GrowthMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.GrowthMixin</span></code></a>, <a class="reference internal" href="#bfgn.architectures.config_sections.BaseArchitectureConfigSection" title="bfgn.architectures.config_sections.BaseArchitectureConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.BaseArchitectureConfigSection</span></code></a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.architectures.dense_flat_net.create_model">
+<code class="sig-prename descclassname">bfgn.architectures.dense_flat_net.</code><code class="sig-name descname">create_model</code><span class="sig-paren">(</span><em class="sig-param">inshape</em>, <em class="sig-param">n_classes</em>, <em class="sig-param">output_activation</em>, <em class="sig-param">block_structure=(2</em>, <em class="sig-param">2</em>, <em class="sig-param">2</em>, <em class="sig-param">2)</em>, <em class="sig-param">filters=64</em>, <em class="sig-param">kernel_size=(3</em>, <em class="sig-param">3)</em>, <em class="sig-param">padding='same'</em>, <em class="sig-param">use_batch_norm=False</em>, <em class="sig-param">use_growth=False</em>, <em class="sig-param">use_initial_colorspace_transformation_layer=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/architectures/dense_flat_net.html#create_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.dense_flat_net.create_model" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.architectures.dense_unet">
+<span id="bfgn-architectures-dense-unet-module"></span><h2>bfgn.architectures.dense_unet module<a class="headerlink" href="#module-bfgn.architectures.dense_unet" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bfgn.architectures.dense_unet.ArchitectureConfigSection">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.architectures.dense_unet.</code><code class="sig-name descname">ArchitectureConfigSection</code><a class="reference internal" href="_modules/bfgn/architectures/dense_unet.html#ArchitectureConfigSection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.dense_unet.ArchitectureConfigSection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bfgn.architectures.config_sections.AutoencoderMixin" title="bfgn.architectures.config_sections.AutoencoderMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.AutoencoderMixin</span></code></a>, <a class="reference internal" href="#bfgn.architectures.config_sections.BlockMixin" title="bfgn.architectures.config_sections.BlockMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.BlockMixin</span></code></a>, <a class="reference internal" href="#bfgn.architectures.config_sections.GrowthMixin" title="bfgn.architectures.config_sections.GrowthMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.GrowthMixin</span></code></a>, <a class="reference internal" href="#bfgn.architectures.config_sections.BaseArchitectureConfigSection" title="bfgn.architectures.config_sections.BaseArchitectureConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.BaseArchitectureConfigSection</span></code></a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.architectures.dense_unet.create_model">
+<code class="sig-prename descclassname">bfgn.architectures.dense_unet.</code><code class="sig-name descname">create_model</code><span class="sig-paren">(</span><em class="sig-param">inshape</em>, <em class="sig-param">n_classes</em>, <em class="sig-param">output_activation</em>, <em class="sig-param">block_structure=(2</em>, <em class="sig-param">2</em>, <em class="sig-param">2</em>, <em class="sig-param">2)</em>, <em class="sig-param">filters=64</em>, <em class="sig-param">internal_activation='relu'</em>, <em class="sig-param">kernel_size=(3</em>, <em class="sig-param">3)</em>, <em class="sig-param">padding='same'</em>, <em class="sig-param">pool_size=(2</em>, <em class="sig-param">2)</em>, <em class="sig-param">use_batch_norm=False</em>, <em class="sig-param">use_growth=False</em>, <em class="sig-param">use_initial_colorspace_transformation_layer=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/architectures/dense_unet.html#create_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.dense_unet.create_model" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.architectures.dilation_net">
+<span id="bfgn-architectures-dilation-net-module"></span><h2>bfgn.architectures.dilation_net module<a class="headerlink" href="#module-bfgn.architectures.dilation_net" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bfgn.architectures.dilation_net.ArchitectureConfigSection">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.architectures.dilation_net.</code><code class="sig-name descname">ArchitectureConfigSection</code><a class="reference internal" href="_modules/bfgn/architectures/dilation_net.html#ArchitectureConfigSection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.dilation_net.ArchitectureConfigSection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bfgn.architectures.config_sections.DilationMixin" title="bfgn.architectures.config_sections.DilationMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.DilationMixin</span></code></a>, <a class="reference internal" href="#bfgn.architectures.config_sections.FlatMixin" title="bfgn.architectures.config_sections.FlatMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.FlatMixin</span></code></a>, <a class="reference internal" href="#bfgn.architectures.config_sections.BaseArchitectureConfigSection" title="bfgn.architectures.config_sections.BaseArchitectureConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.BaseArchitectureConfigSection</span></code></a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.architectures.dilation_net.create_model">
+<code class="sig-prename descclassname">bfgn.architectures.dilation_net.</code><code class="sig-name descname">create_model</code><span class="sig-paren">(</span><em class="sig-param">inshape</em>, <em class="sig-param">n_classes</em>, <em class="sig-param">output_activation</em>, <em class="sig-param">dilation_rate=2</em>, <em class="sig-param">filters=64</em>, <em class="sig-param">kernel_size=(3</em>, <em class="sig-param">3)</em>, <em class="sig-param">num_layers=8</em>, <em class="sig-param">padding='same'</em>, <em class="sig-param">use_batch_norm=False</em>, <em class="sig-param">use_initial_colorspace_transformation_layer=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/architectures/dilation_net.html#create_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.dilation_net.create_model" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.architectures.flat_net">
+<span id="bfgn-architectures-flat-net-module"></span><h2>bfgn.architectures.flat_net module<a class="headerlink" href="#module-bfgn.architectures.flat_net" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bfgn.architectures.flat_net.ArchitectureConfigSection">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.architectures.flat_net.</code><code class="sig-name descname">ArchitectureConfigSection</code><a class="reference internal" href="_modules/bfgn/architectures/flat_net.html#ArchitectureConfigSection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.flat_net.ArchitectureConfigSection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bfgn.architectures.config_sections.FlatMixin" title="bfgn.architectures.config_sections.FlatMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.FlatMixin</span></code></a>, <a class="reference internal" href="#bfgn.architectures.config_sections.BaseArchitectureConfigSection" title="bfgn.architectures.config_sections.BaseArchitectureConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.BaseArchitectureConfigSection</span></code></a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.architectures.flat_net.create_model">
+<code class="sig-prename descclassname">bfgn.architectures.flat_net.</code><code class="sig-name descname">create_model</code><span class="sig-paren">(</span><em class="sig-param">inshape</em>, <em class="sig-param">n_classes</em>, <em class="sig-param">output_activation</em>, <em class="sig-param">filters=64</em>, <em class="sig-param">kernel_size=(3</em>, <em class="sig-param">3)</em>, <em class="sig-param">num_layers=8</em>, <em class="sig-param">padding='same'</em>, <em class="sig-param">use_batch_norm=False</em>, <em class="sig-param">use_initial_colorspace_transformation_layer=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/architectures/flat_net.html#create_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.flat_net.create_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a flat style network with flexible shape</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.architectures.network_sections">
+<span id="bfgn-architectures-network-sections-module"></span><h2>bfgn.architectures.network_sections module<a class="headerlink" href="#module-bfgn.architectures.network_sections" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bfgn.architectures.network_sections.colorspace_transformation">
+<code class="sig-prename descclassname">bfgn.architectures.network_sections.</code><code class="sig-name descname">colorspace_transformation</code><span class="sig-paren">(</span><em class="sig-param">inshape</em>, <em class="sig-param">inlayer</em>, <em class="sig-param">batch_normalization=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/architectures/network_sections.html#colorspace_transformation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.network_sections.colorspace_transformation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a series of layer transformations prior to the start of the main network.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inshape</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – Shape of the incoming layer.</p></li>
+<li><p><strong>inlayer</strong> (<em>&lt;module 'keras.layers' from '/Users/pbrodrick/miniconda3/envs/cnn/lib/python3.7/site-packages/keras/layers/__init__.py'&gt;</em>) – Input layer to the transformation.</p></li>
+<li><p><strong>batch_normalization</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Whether or not to use batch normalization.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Keras layer ready to start the main network</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>output_layer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.architectures.network_sections.Conv2D_Options">
+<code class="sig-prename descclassname">bfgn.architectures.network_sections.</code><code class="sig-name descname">Conv2D_Options</code><span class="sig-paren">(</span><em class="sig-param">inlayer</em>, <em class="sig-param">options</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/architectures/network_sections.html#Conv2D_Options"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.network_sections.Conv2D_Options" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a keras 2D convolution with the specified options.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inlayer</strong> (<em>&lt;module 'keras.layers' from '/Users/pbrodrick/miniconda3/envs/cnn/lib/python3.7/site-packages/keras/layers/__init__.py'&gt;</em>) – Input layer to the convolution.</p></li>
+<li><p><strong>options</strong> (<a class="reference external" href="https://docs.python.org/2/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>) – All options to pass into the input layer.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Keras layer ready to start the main network</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>output_layer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.architectures.network_sections.dense_2d_block">
+<code class="sig-prename descclassname">bfgn.architectures.network_sections.</code><code class="sig-name descname">dense_2d_block</code><span class="sig-paren">(</span><em class="sig-param">inlayer</em>, <em class="sig-param">conv_options</em>, <em class="sig-param">block_depth</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/architectures/network_sections.html#dense_2d_block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.network_sections.dense_2d_block" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a single, dense block.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inlayer</strong> (<em>&lt;module 'keras.layers' from '/Users/pbrodrick/miniconda3/envs/cnn/lib/python3.7/site-packages/keras/layers/__init__.py'&gt;</em>) – Input layer to the convolution.</p></li>
+<li><p><strong>conv_options</strong> (<a class="reference external" href="https://docs.python.org/2/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>) – All options to pass into the input convolution layer.</p></li>
+<li><p><strong>block_depth</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – How deep (many layers) is the dense block.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Keras layer ready to start the main network</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>output_layer</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.architectures.residual_dilation_net">
+<span id="bfgn-architectures-residual-dilation-net-module"></span><h2>bfgn.architectures.residual_dilation_net module<a class="headerlink" href="#module-bfgn.architectures.residual_dilation_net" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bfgn.architectures.residual_dilation_net.ArchitectureConfigSection">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.architectures.residual_dilation_net.</code><code class="sig-name descname">ArchitectureConfigSection</code><a class="reference internal" href="_modules/bfgn/architectures/residual_dilation_net.html#ArchitectureConfigSection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.residual_dilation_net.ArchitectureConfigSection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bfgn.architectures.config_sections.BlockMixin" title="bfgn.architectures.config_sections.BlockMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.BlockMixin</span></code></a>, <a class="reference internal" href="#bfgn.architectures.config_sections.DilationMixin" title="bfgn.architectures.config_sections.DilationMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.DilationMixin</span></code></a>, <a class="reference internal" href="#bfgn.architectures.config_sections.BaseArchitectureConfigSection" title="bfgn.architectures.config_sections.BaseArchitectureConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.BaseArchitectureConfigSection</span></code></a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.architectures.residual_dilation_net.create_model">
+<code class="sig-prename descclassname">bfgn.architectures.residual_dilation_net.</code><code class="sig-name descname">create_model</code><span class="sig-paren">(</span><em class="sig-param">inshape</em>, <em class="sig-param">n_classes</em>, <em class="sig-param">output_activation</em>, <em class="sig-param">block_structure=(2</em>, <em class="sig-param">2</em>, <em class="sig-param">2</em>, <em class="sig-param">2)</em>, <em class="sig-param">dilation_rate=2</em>, <em class="sig-param">filters=64</em>, <em class="sig-param">kernel_size=(3</em>, <em class="sig-param">3)</em>, <em class="sig-param">padding='same'</em>, <em class="sig-param">use_batch_norm=False</em>, <em class="sig-param">use_initial_colorspace_transformation_layer=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/architectures/residual_dilation_net.html#create_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.residual_dilation_net.create_model" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.architectures.residual_flat_net">
+<span id="bfgn-architectures-residual-flat-net-module"></span><h2>bfgn.architectures.residual_flat_net module<a class="headerlink" href="#module-bfgn.architectures.residual_flat_net" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bfgn.architectures.residual_flat_net.ArchitectureConfigSection">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.architectures.residual_flat_net.</code><code class="sig-name descname">ArchitectureConfigSection</code><a class="reference internal" href="_modules/bfgn/architectures/residual_flat_net.html#ArchitectureConfigSection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.residual_flat_net.ArchitectureConfigSection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bfgn.architectures.config_sections.BlockMixin" title="bfgn.architectures.config_sections.BlockMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.BlockMixin</span></code></a>, <a class="reference internal" href="#bfgn.architectures.config_sections.BaseArchitectureConfigSection" title="bfgn.architectures.config_sections.BaseArchitectureConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.BaseArchitectureConfigSection</span></code></a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.architectures.residual_flat_net.create_model">
+<code class="sig-prename descclassname">bfgn.architectures.residual_flat_net.</code><code class="sig-name descname">create_model</code><span class="sig-paren">(</span><em class="sig-param">inshape</em>, <em class="sig-param">n_classes</em>, <em class="sig-param">output_activation</em>, <em class="sig-param">block_structure=(2</em>, <em class="sig-param">2</em>, <em class="sig-param">2</em>, <em class="sig-param">2)</em>, <em class="sig-param">filters=64</em>, <em class="sig-param">kernel_size=(3</em>, <em class="sig-param">3)</em>, <em class="sig-param">padding='same'</em>, <em class="sig-param">use_batch_norm=False</em>, <em class="sig-param">use_initial_colorspace_transformation_layer=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/architectures/residual_flat_net.html#create_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.residual_flat_net.create_model" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.architectures.residual_unet">
+<span id="bfgn-architectures-residual-unet-module"></span><h2>bfgn.architectures.residual_unet module<a class="headerlink" href="#module-bfgn.architectures.residual_unet" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bfgn.architectures.residual_unet.ArchitectureConfigSection">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.architectures.residual_unet.</code><code class="sig-name descname">ArchitectureConfigSection</code><a class="reference internal" href="_modules/bfgn/architectures/residual_unet.html#ArchitectureConfigSection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.residual_unet.ArchitectureConfigSection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bfgn.architectures.config_sections.AutoencoderMixin" title="bfgn.architectures.config_sections.AutoencoderMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.AutoencoderMixin</span></code></a>, <a class="reference internal" href="#bfgn.architectures.config_sections.BlockMixin" title="bfgn.architectures.config_sections.BlockMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.BlockMixin</span></code></a>, <a class="reference internal" href="#bfgn.architectures.config_sections.GrowthMixin" title="bfgn.architectures.config_sections.GrowthMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.GrowthMixin</span></code></a>, <a class="reference internal" href="#bfgn.architectures.config_sections.BaseArchitectureConfigSection" title="bfgn.architectures.config_sections.BaseArchitectureConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.BaseArchitectureConfigSection</span></code></a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.architectures.residual_unet.create_model">
+<code class="sig-prename descclassname">bfgn.architectures.residual_unet.</code><code class="sig-name descname">create_model</code><span class="sig-paren">(</span><em class="sig-param">inshape</em>, <em class="sig-param">n_classes</em>, <em class="sig-param">output_activation</em>, <em class="sig-param">block_structure=(2</em>, <em class="sig-param">2</em>, <em class="sig-param">2</em>, <em class="sig-param">2)</em>, <em class="sig-param">filters=64</em>, <em class="sig-param">kernel_size=(3</em>, <em class="sig-param">3)</em>, <em class="sig-param">padding='same'</em>, <em class="sig-param">pool_size=(2</em>, <em class="sig-param">2)</em>, <em class="sig-param">use_batch_norm=False</em>, <em class="sig-param">use_growth=False</em>, <em class="sig-param">use_initial_colorspace_transformation_layer=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/architectures/residual_unet.html#create_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.residual_unet.create_model" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.architectures.unet">
+<span id="bfgn-architectures-unet-module"></span><h2>bfgn.architectures.unet module<a class="headerlink" href="#module-bfgn.architectures.unet" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bfgn.architectures.unet.ArchitectureConfigSection">
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.architectures.unet.</code><code class="sig-name descname">ArchitectureConfigSection</code><a class="reference internal" href="_modules/bfgn/architectures/unet.html#ArchitectureConfigSection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.unet.ArchitectureConfigSection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bfgn.architectures.config_sections.AutoencoderMixin" title="bfgn.architectures.config_sections.AutoencoderMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.AutoencoderMixin</span></code></a>, <a class="reference internal" href="#bfgn.architectures.config_sections.BlockMixin" title="bfgn.architectures.config_sections.BlockMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.BlockMixin</span></code></a>, <a class="reference internal" href="#bfgn.architectures.config_sections.GrowthMixin" title="bfgn.architectures.config_sections.GrowthMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.GrowthMixin</span></code></a>, <a class="reference internal" href="#bfgn.architectures.config_sections.BaseArchitectureConfigSection" title="bfgn.architectures.config_sections.BaseArchitectureConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">bfgn.architectures.config_sections.BaseArchitectureConfigSection</span></code></a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.architectures.unet.create_model">
+<code class="sig-prename descclassname">bfgn.architectures.unet.</code><code class="sig-name descname">create_model</code><span class="sig-paren">(</span><em class="sig-param">inshape</em>, <em class="sig-param">n_classes</em>, <em class="sig-param">output_activation</em>, <em class="sig-param">block_structure=(2</em>, <em class="sig-param">2</em>, <em class="sig-param">2</em>, <em class="sig-param">2)</em>, <em class="sig-param">filters=64</em>, <em class="sig-param">internal_activation='relu'</em>, <em class="sig-param">kernel_size=(3</em>, <em class="sig-param">3)</em>, <em class="sig-param">padding='same'</em>, <em class="sig-param">pool_size=(2</em>, <em class="sig-param">2)</em>, <em class="sig-param">use_batch_norm=False</em>, <em class="sig-param">use_growth=False</em>, <em class="sig-param">use_initial_colorspace_transformation_layer=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/architectures/unet.html#create_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.unet.create_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a U-net style network with flexible shape</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bfgn.architectures">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-bfgn.architectures" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bfgn.architectures.get_available_architectures">
+<code class="sig-prename descclassname">bfgn.architectures.</code><code class="sig-name descname">get_available_architectures</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/architectures.html#get_available_architectures"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.architectures.get_available_architectures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets a list of available architectures.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>List of available architectures.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Philip G. Brodrick and Nicholas S. Fabina
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
