@@ -1,4 +1,4 @@
-name: rsCNN
+name: bfgn
 channels:
   - defaults
   - conda-forge
