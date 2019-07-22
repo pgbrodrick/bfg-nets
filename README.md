@@ -1,4 +1,4 @@
-# bfgn
+# Big Friendly Geospatial Networks (bfgn)
 
 ## Motivation
 
