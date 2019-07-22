@@ -120,6 +120,46 @@ class Experiment(object):
             }
         self.is_model_trained = self.history[_KEY_HISTORY_IS_MODEL_TRAINED]
 
+    def copy_model_from_experiment(self, reference_config: configs.Config) -> None:
+        _logger.info('Loading external model')
+
+        loss_function = losses.get_cropped_loss_function(
+            self.config.model_training.loss_metric,
+            2 * self.config.data_build.window_radius,
+            2 * self.config.data_build.loss_window_radius,
+            self.config.model_training.weighted
+        )
+
+        if os.path.exists(get_model_filepath(reference_config)):
+            _logger.debug('Loading existing model from model training directory at {}'.format(
+                get_model_filepath(reference_config)))
+            self.loaded_existing_model = True
+            self.model = models.load_model(
+                get_model_filepath(reference_config),
+                custom_objects={'_cropped_loss': loss_function}
+            )
+        else:
+            _logger.error('No model exists at {}'.format(
+                get_model_filepath(reference_config)))
+
+        if os.path.exists(get_history_filepath(reference_config)):
+            self.loaded_existing_history = True
+            self.history = histories.load_history(get_history_filepath(reference_config))
+            self.history['model_name'] = self.config.model_training.dir_out
+            self.history[_KEY_HISTORY_IS_MODEL_TRAINED] = False
+            if 'lr' in self.history:
+                learning_rate = self.history['lr'][-1]
+                _logger.debug('Setting learning rate to value from last training epoch: {}'.format(learning_rate))
+                K.set_value(self.model.optimizer.lr, learning_rate)
+
+        else:
+            _logger.warning('No history file found in directory: {}'.format(reference_config.model_training.dir_out))
+            self.history = {
+                'model_name': self.config.model_training.dir_out,
+                _KEY_HISTORY_IS_MODEL_TRAINED: False
+            }
+        self.is_model_trained = False
+
     def fit_model_with_data_container(self, data_container: DataContainer, resume_training: bool = False) -> None:
         return self.fit_model_with_sequences(
             data_container.training_sequence, data_container.validation_sequence, resume_training

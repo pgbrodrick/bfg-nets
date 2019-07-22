@@ -106,7 +106,7 @@ def apply_model_to_raster(
         _logger.debug('Data tiled to shape: {}'.format(tile_dat.shape))
 
         tile_dat = ooc_functions.one_hot_encode_array(data_container.feature_raw_band_types, tile_dat,
-                                                      data_container.feature_per_band_encoded_values)
+                                                      per_band_encoding=data_container.feature_per_band_encoded_values)
         _logger.debug('Data one_hot_encoded.  New shape: {}'.format(tile_dat.shape))
 
         if (config.data_build.feature_mean_centering is True):
@@ -154,7 +154,7 @@ def apply_model_to_raster(
         options = ''
         for co in creation_options:
             options += ' -co {}'.format(co)
-        gdal.Translate(gdal.Open(temporary_outname,gdal.GA_ReadOnly),final_outname, options=options)
+        gdal.Translate(final_outname, gdal.Open(temporary_outname,gdal.GA_ReadOnly), options=options)
 
         test_outdataset = gdal.Open(final_outname, gdal.GA_ReadOnly)
         if (test_outdataset is not None):
