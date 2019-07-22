@@ -30,7 +30,6 @@ def one_hot_encode_array(raw_band_types: List[str], array: np.array, memmap_file
         return_band_encoding: the encoding used on a per-categorical-band basis, if per_band_encoding was None when
                               provided, otherwise None
     """
-
     cat_band_locations = [idx for idx, val in enumerate(raw_band_types) if val == 'C']
     band_types = raw_band_types.copy()
 

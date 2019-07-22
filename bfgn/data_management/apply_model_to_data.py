@@ -105,8 +105,8 @@ def apply_model_to_raster(
             col_dat, config.data_build.loss_window_radius, config.data_build.window_radius)
         _logger.debug('Data tiled to shape: {}'.format(tile_dat.shape))
 
-        tile_dat = ooc_functions.one_hot_encode_array(data_container.feature_raw_band_types, tile_dat, None,
-                                                      data_container.feature_per_band_encoded_values)
+        tile_dat = ooc_functions.one_hot_encode_array(data_container.feature_raw_band_types, tile_dat,
+                                                      per_band_encoding=data_container.feature_per_band_encoded_values)
         _logger.debug('Data one_hot_encoded.  New shape: {}'.format(tile_dat.shape))
 
         if (config.data_build.feature_mean_centering is True):
