@@ -1,0 +1,157 @@
+<!DOCTYPE HTML>
+<!--
+	Based on Stellar by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>BFGN</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header" class="alt">
+						<h1>Big Friendly Geospatial Networks</h1>
+					</header>
+
+				<!-- Nav -->
+					<nav id="nav">
+						<ul>
+							<li><a href="#welcome" class="active">Welcome</a></li>
+							<li><a href="#documentation">Documentation</a></li>
+							<li><a href="#getting_started">Getting Started</a></li>
+							<li><a href="#about">About</a></li>
+						</ul>
+					</nav>
+
+				<!-- Main -->
+					<div id="main">
+
+							<section id="welcome" class="main">
+								<header class="major">
+									<h2>Welcome to bfgn</h2>
+								</header>
+								<p>Hello there!  You've found bfgn, a package for using convolutional neural
+									networks (CNNs) in remote sensing research.  If you're using remotely sensed
+									imagery (or even large lab images) and want to use a context-based model
+									(where multiple pixels used to make decisions), and you're looking for a way to
+									test, compare, and deploy architectures, you're in the right place.
+								</p>
+
+								<p>bfgn is an extension of <a href="https://github.com/pgbrodrick/ecoCNN"> ecoCNN</a>,
+									which was published with the paper <a href="https://doi.org/10.1016/j.tree.2019.03.006">
+									"Uncovering ecological patterns with convolutional neural networks"</a>.
+								</p>
+
+								<h2 align="left">What it is</h2>
+								<div align="left">
+									bfgn was designed as an internal research tool, one that we've now opened up in
+									the event that others want to use it.  It's a package that manages several
+									common components of the cnn development pipeline in the geospatial research
+									context, including converting raw raster/shape files into training data,
+									training models (with a series of customizable templates of common network types),
+									the application of those models over large areas, and the generation of error reports
+									to assess and compare models.
+								</div>
+								<br>
+								<h2 align="left">What it isn't</h2>
+                                <div align="left">
+									This is not a perfected package to solve all of your geospatial CNN needs.
+									It is a by-product of our existing research commitments and is not guaranteed to
+									be bug-free, nor have extensive test coverage or exhaustive best practices.
+									We're working to continue and improve things, and welcome any help.  See something
+									you think should be improved?  Contribute!
+								</div>
+							</section>
+
+
+							<section id="documentation" class="main special" align="center">
+								<header class="major">
+									<h2>Documentation</h2>
+								</header>
+								<div align="center">
+									Our documentation is a work in progress, but has a solid start.
+									Check out the link below for a ReadTheDocs style documentation page.
+								</div>
+
+								<br>
+
+								<div align="center"><a href="docs/html/index.html" class="button primary">Docs</a></div>
+							</section>
+
+						<!-- Second Section -->
+							<section id="getting_started" class="main special">
+								<header class="major">
+									<h2>Getting Started</h2>
+								</header>
+
+
+								<div align="left">All code is available on the main
+									<a href="https://github.com/pgbrodrick/bfg-nets">repository</a>, along with several
+									examples (more examples and tutorials to come soon).
+									The examples are a good way to get a handle on the workflow of bfgn.
+								</div>
+
+								<br>
+
+								<div align="left"> To get going with the package, clone and install the repository -
+									we recommend using the provided conda environment
+									files (available for both gpu and cpu environments).  Installation details are on
+									the repository home page.</div>
+                                <br>
+								<div align="center"><a href="https://github.com/pgbrodrick/bfg-nets" class="button primary">
+									GitHub Repo</a></div>
+
+								<br>
+								<div align="left">We're academics, and citations help us keep this work going.  If you use this code
+									in your academic work, please cite us!  When the package develops a bit further,
+									we'll add version-specific citations, but for now, please use:
+								</div>
+								<br>
+								<div align="left"> Philip G. Brodrick, Andrew B. Davies, and Gregory P. Asner. "Uncovering
+									Ecological Patterns with Convolutional Neural Networks." Trends in ecology
+									& evolution (2019). </div>
+
+							</section>
+
+						<section id="about" class="main special">
+							<header class="about">
+								<h2>About Us</h2>
+							</header>
+							<div align="left">
+							This code base was initially developed by a joint effort between
+							<a href="https://www.philbrodrick.com"> Phil Brodrick </a> and
+							<a href="https://nsfabina.github.io"> Nick Fabina</a>, working out of the
+							<a href="https://gdcs.asu.edu"> Center for Global Discovery and Conservation Science </a>
+								at ASU.
+							</div>
+						</section>
+
+					</div>
+
+				<!-- Footer -->
+					<footer id="footer">
+						<p class="copyright">This work is licensed as open source under
+							<a href="https://opensource.org/licenses/MIT">The MIT License</a>;
+							Web design built off: <a href="https://html5up.net">HTML5 UP</a>.</p>
+					</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
