@@ -151,10 +151,11 @@ def apply_model_to_raster(
         _logger.debug('Output format {}.  Converting ENVI file to output data with creation options {}'.
                       format(output_format, creation_options))
 
-        cmd_str = 'gdal_translate {} {} -of {}'.format(temporary_outname, final_outname, output_format)
+        options = ''
         for co in creation_options:
-            cmd_str += ' -co {}'.format(co)
-        subprocess.call(cmd_str, shell=True)
+            options += ' -co {}'.format(co)
+        gdal.Translate(gdal.Open(temporary_outname,gdal.GA_ReadOnly),final_outname, options=options)
+
         test_outdataset = gdal.Open(final_outname, gdal.GA_ReadOnly)
         if (test_outdataset is not None):
             _logger.debug('Format transform successfull, cleanup ENVI files {}, {}, {}'.
