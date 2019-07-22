@@ -10,7 +10,7 @@ Welcome to bfgn's documentation!
    :maxdepth: 3
    :caption: Contents:
 
-
+   bfgn
 
 Indices and tables
 ==================
