@@ -61,6 +61,7 @@ def get_overlapping_extent(dataset_list_of_lists: List[List[gdal.Dataset]]):
         return_ul_list.append(local_list)
     return return_ul_list, x_len, y_len
 
+
 def get_overlapping_extent_coordinates(dataset_list_of_lists: List[List[gdal.Dataset]]):
 
     # Convert list of lists or list for interior convenience
@@ -75,11 +76,12 @@ def get_overlapping_extent_coordinates(dataset_list_of_lists: List[List[gdal.Dat
     interior_x = np.nanmax([x[0] for x in trans_list])
     interior_y = np.nanmin([x[3] for x in trans_list])
 
-    exterior_x = np.nanmin([trans_list[x][0]+dataset_list[x].RasterXSize*trans_list[x][1] for x in range(len(trans_list))])
-    exterior_y = np.nanmax([trans_list[x][3]+dataset_list[x].RasterYSize*trans_list[x][5] for x in range(len(trans_list))])
+    exterior_x = np.nanmin([trans_list[x][0]+dataset_list[x].RasterXSize*trans_list[x][1]
+                            for x in range(len(trans_list))])
+    exterior_y = np.nanmax([trans_list[x][3]+dataset_list[x].RasterYSize*trans_list[x][5]
+                            for x in range(len(trans_list))])
 
-    return [interior_x,interior_y], [exterior_x, exterior_y]
-
+    return [interior_x, interior_y], [exterior_x, exterior_y]
 
 
 def get_all_interior_extent_subset_pixel_locations(gdal_datasets: List[List[gdal.Dataset]], window_radius: int, inner_window_radius: int = None, shuffle: bool = True):
@@ -111,7 +113,7 @@ def get_all_interior_extent_subset_pixel_locations(gdal_datasets: List[List[gdal
 
 
 def read_map_subset(datafiles: List[str], upper_lefts: List[List[int]], window_diameter: int, mask=None,
-                    nodata_value: float = None, lower_bound: float = None, upper_bound:float = None,
+                    nodata_value: float = None, lower_bound: float = None, upper_bound: float = None,
                     reference_geotransform=None):
 
     raster_count = 0

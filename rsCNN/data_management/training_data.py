@@ -3,7 +3,8 @@ import fiona
 import gdal
 import logging
 import numpy as np
-import ogr, osr
+import ogr
+import osr
 import os
 from tqdm import tqdm
 from typing import List, Tuple
@@ -37,12 +38,14 @@ def build_training_data_ordered(
     feature_memmap_size_gb = n_features*4*config.data_build.max_samples * \
         (config.data_build.window_radius*2)**2 / 1024.**3
     assert feature_memmap_size_gb < config.data_build.max_built_data_gb,\
-           'Expected feature memmap size: {} Gb, limit: {}'.format(feature_memmap_size_gb , config.data_build.max_built_data_gb)
+        'Expected feature memmap size: {} Gb, limit: {}'.format(
+            feature_memmap_size_gb, config.data_build.max_built_data_gb)
 
     response_memmap_size_gb = n_responses*4*config.data_build.max_samples * \
         (config.data_build.window_radius*2)**2 / 1024.**3
     assert response_memmap_size_gb < config.data_build.max_built_data_gb,\
-           'Expected feature memmap size: {} Gb, limit: {}'.format(response_memmap_size_gb , config.data_build.max_built_data_gb)
+        'Expected feature memmap size: {} Gb, limit: {}'.format(
+            response_memmap_size_gb, config.data_build.max_built_data_gb)
 
     features, responses = _open_temporary_features_responses_data_files(config, n_features, n_responses)
     _log_munged_data_information(features, responses)
@@ -58,7 +61,8 @@ def build_training_data_ordered(
         boundary_set = common_io.get_site_boundary_set(config, _site)
 
         all_set_upper_lefts, xy_sample_locations = common_io.get_all_interior_extent_subset_pixel_locations(
-            gdal_datasets=[feature_sets, [rs for rs in response_sets if rs is not None], [bs for bs in [boundary_set] if bs is not None]],
+            gdal_datasets=[feature_sets, [rs for rs in response_sets if rs is not None],
+                           [bs for bs in [boundary_set] if bs is not None]],
             window_radius=config.data_build.window_radius,
             inner_window_radius=config.data_build.loss_window_radius,
             shuffle=True)
@@ -176,7 +180,7 @@ def build_training_data_ordered(
     _save_built_data_config_sections_to_verify_successful(config)
     features, responses, weights = load_built_data_files(config, writeable=False)
     return features, responses, weights, feature_band_types, response_band_types, feature_per_band_encoded_values, \
-           response_per_band_encoded_values
+        response_per_band_encoded_values
 
 
 def build_training_data_from_response_points(
@@ -192,9 +196,10 @@ def build_training_data_from_response_points(
     num_features = np.sum([len(feat_type) for feat_type in feature_raw_band_types])
 
     feature_memmap_size_gb = num_features*4*config.data_build.max_samples * \
-                             (config.data_build.window_radius*2)**2 / 1024.**3
+        (config.data_build.window_radius*2)**2 / 1024.**3
     assert feature_memmap_size_gb < config.data_build.max_built_data_gb, \
-        'Expected feature memmap size: {} Gb, limit: {}'.format(feature_memmap_size_gb, config.data_build.max_built_data_gb)
+        'Expected feature memmap size: {} Gb, limit: {}'.format(
+            feature_memmap_size_gb, config.data_build.max_built_data_gb)
 
     xy_sample_points_per_site = []
     responses_per_site = []
@@ -212,13 +217,13 @@ def build_training_data_from_response_points(
             lower_coord, upper_coord = common_io.get_overlapping_extent_coordinates(
                 [feature_sets, [], [bs for bs in [boundary_set] if bs is not None]])
 
-            resolution = np.squeeze(np.array(feature_sets[0].GetGeoTransform()))[np.array([1,5])]
+            resolution = np.squeeze(np.array(feature_sets[0].GetGeoTransform()))[np.array([1, 5])]
 
             vector = fiona.open(config.raw_files.response_files[_site][0])
             x_sample_points = []
             y_sample_points = []
             band_responses = []
-            for _sample in tqdm(range(len(vector)),ncols=80, desc='Reading responses'):
+            for _sample in tqdm(range(len(vector)), ncols=80, desc='Reading responses'):
                 if (vector[_sample]['geometry']['type'] == 'Point'):
                     x_sample_points.append(vector[_sample]['geometry']['coordinates'][0])
                     y_sample_points.append(vector[_sample]['geometry']['coordinates'][1])
@@ -227,22 +232,23 @@ def build_training_data_from_response_points(
                     if (x_sample_points[-1] < lower_coord[0] + resolution[0]*config.data_build.window_radius or
                         x_sample_points[-1] > upper_coord[0] - resolution[0]*config.data_build.window_radius or
                         y_sample_points[-1] < upper_coord[1] + resolution[1]*config.data_build.window_radius or
-                        y_sample_points[-1] > lower_coord[1] - resolution[1]*config.data_build.window_radius ):
+                            y_sample_points[-1] > lower_coord[1] - resolution[1]*config.data_build.window_radius):
 
                         x_sample_points.pop(-1)
                         y_sample_points.pop(-1)
                         band_responses.pop(-1)
                 else:
-                    _logger.info('WARNING: Non point gemoetry ignored in file {}'.format(config.raw_files.response_files[_site][0]))
+                    _logger.info('WARNING: Non point gemoetry ignored in file {}'.format(
+                        config.raw_files.response_files[_site][0]))
             vector.close()
 
             xy_sample_points = np.vstack([np.array(x_sample_points), np.array(y_sample_points)]).T
-            responses_per_file = np.array(np.array(band_responses).reshape(-1,1))
+            responses_per_file = np.array(np.array(band_responses).reshape(-1, 1))
 
             reference_subset_geotransforms.append(list(feature_sets[0].GetGeoTransform()))
 
         else:
-            ## TODO: Needs completion
+            # TODO: Needs completion
             assert False, 'Mode not yet supported'
 
         xy_sample_points_per_site.append(xy_sample_points)
@@ -271,7 +277,6 @@ def build_training_data_from_response_points(
         total_samples = sum([site_responses.shape[0] for site_responses in responses_per_site])
         _logger.debug('Kept {} total samples across {} sites after discarding'.format(
             total_samples, len(responses_per_site)))
-
 
     unique_responses = []
     for _site in range(len(responses_per_site)):
@@ -304,12 +309,12 @@ def build_training_data_from_response_points(
         lower_coord, upper_coord = common_io.get_overlapping_extent_coordinates(
             [feature_sets, [], [bs for bs in [boundary_set] if bs is not None]])
 
-        resolution = np.squeeze(np.array(feature_sets[0].GetGeoTransform()))[np.array([1,5])]
+        resolution = np.squeeze(np.array(feature_sets[0].GetGeoTransform()))[np.array([1, 5])]
 
         # xy_sample_locations is current the response centers, but we need to use the pixel ULs.  So subtract
         # out the corresponding feature radius
-        #xy_sample_locations = (xy_sample_points_per_site[_site] - np.array(lower_coord))*resolution - \
-                              #config.data_build.window_radius
+        # xy_sample_locations = (xy_sample_points_per_site[_site] - np.array(lower_coord))*resolution - \
+        # config.data_build.window_radius
         xy_sample_locations = xy_sample_points_per_site[_site]
 
         ref_trans = feature_sets[0].GetGeoTransform()
@@ -326,19 +331,20 @@ def build_training_data_from_response_points(
             local_xy_px_locations = []
             if (boundary_set is not None):
                 gt = boundary_set.GetGeoTransform()
-                local_xy_px_locations.append([int((xy_sample_locations[_cr,0] - gt[0])/gt[1]), int((xy_sample_locations[_cr,1] - gt[3])/gt[5])])
+                local_xy_px_locations.append([int((xy_sample_locations[_cr, 0] - gt[0])/gt[1]),
+                                              int((xy_sample_locations[_cr, 1] - gt[3])/gt[5])])
             else:
-                local_xy_px_locations.append([0,0])  # doesn't matter the value, won't get used
+                local_xy_px_locations.append([0, 0])  # doesn't matter the value, won't get used
 
             for _file in range(len(feature_sets)):
                 gt = feature_sets[_site].GetGeoTransform()
-                local_xy_px_locations.append([int((xy_sample_locations[_cr,0] - gt[0])/gt[1]), int((xy_sample_locations[_cr,1] - gt[3])/gt[5])])
+                local_xy_px_locations.append([int((xy_sample_locations[_cr, 0] - gt[0])/gt[1]),
+                                              int((xy_sample_locations[_cr, 1] - gt[3])/gt[5])])
 
             local_feature = read_labeling_chunk(_site,
                                                 local_xy_px_locations,
                                                 config,
                                                 reference_subset_geotransforms[_site])
-
 
             # Make sure that the feature space also has data - the fact that the response space had valid data is no
             # guarantee that the feature space does.
@@ -357,7 +363,7 @@ def build_training_data_from_response_points(
     del responses_per_site
     responses = np.memmap(
         data_core.get_temporary_responses_filepath(config), dtype=np.float32, mode='w+',
-        shape=(sample_index,1)
+        shape=(sample_index, 1)
     )
     responses[:] = responses_raw[:]
     del responses_raw
@@ -444,7 +450,6 @@ def get_proj(fname: str) -> str:
             return srs.GetAttrValue('projcs')
 
 
-
 def check_projections(f_files: List[List[str]], r_files: List[List[str]], b_files: List[str] = None) -> List[str]:
 
     # f = feature, r = response, b = boundary
@@ -479,13 +484,16 @@ def check_projections(f_files: List[List[str]], r_files: List[List[str]], b_file
             errors.append('Response projection mismatch at site {}, projections: {}'.format(_site, un_r_proj))
 
         if (un_f_proj[0] != un_r_proj[0]):
-            errors.append('Feature/Response projection mismatch at site {}\nFeature proj: {}\nResponse proj: {}'.format(_site,un_f_proj[0],un_r_proj[0]))
+            errors.append(
+                'Feature/Response projection mismatch at site {}\nFeature proj: {}\nResponse proj: {}'.format(_site, un_f_proj[0], un_r_proj[0]))
 
         if (b_proj is not None):
             if (un_f_proj[0] != b_proj):
-                errors.append('Feature/Boundary projection mismatch at site {}\nFeature proj: {}\nBoundary proj: {}'.format(_site,un_f_proj[0],b_proj))
+                errors.append(
+                    'Feature/Boundary projection mismatch at site {}\nFeature proj: {}\nBoundary proj: {}'.format(_site, un_f_proj[0], b_proj))
             if (un_r_proj[0] != b_proj):
-                errors.append('Response/Boundary projection mismatch at site {}\nFeature proj: {}\nBoundary proj: {}'.format(_site,un_r_proj[0],b_proj))
+                errors.append(
+                    'Response/Boundary projection mismatch at site {}\nFeature proj: {}\nBoundary proj: {}'.format(_site, un_r_proj[0], b_proj))
 
         site_f_proj.append(un_f_proj[0])
         site_r_proj.append(un_r_proj[0])
@@ -530,14 +538,14 @@ def check_resolutions(f_files: List[List[str]], r_files: List[List[str]], b_file
         un_f_res = []
         if (len(f_res) > 0):
             f_res = np.vstack(f_res)
-            un_f_res = [np.unique(f_res[:,0]), np.unique(f_res[:,1])]
+            un_f_res = [np.unique(f_res[:, 0]), np.unique(f_res[:, 1])]
             if (len(un_f_res[0]) > 1 or len(un_f_res[1]) > 1):
                 errors.append('Feature resolution mismatch at site {}, resolutions: {}'.format(_site, un_f_res))
 
         un_r_res = []
         if (len(r_res) > 0):
             r_res = np.vstack(r_res)
-            un_r_res = [np.unique(r_res[:,0]), np.unique(r_res[:,1])]
+            un_r_res = [np.unique(r_res[:, 0]), np.unique(r_res[:, 1])]
             if (len(un_r_res[0]) > 1 or len(un_r_res[1]) > 1):
                 errors.append('Response resolution mismatch at site {}, resolutions: {}'.format(_site, un_r_res))
 
@@ -561,7 +569,6 @@ def check_resolutions(f_files: List[List[str]], r_files: List[List[str]], b_file
     if (len(np.unique(site_b_res)) > 1):
         _logger.info('Warning, different resolutions at different features sites: {}'.format(site_b_res))
     return errors
-
 
 
 # Calculates categorical weights for a single response
@@ -617,13 +624,11 @@ def calculate_categorical_weights(
     return weights
 
 
-
-
 def read_labeling_chunk(_site: int,
                         offset_from_ul: List[List[int]],
                         config: configs.Config,
                         reference_geotransform: List[float]
-                        ) ->np.array:
+                        ) -> np.array:
 
     window_diameter = config.data_build.window_radius * 2
 
@@ -631,7 +636,7 @@ def read_labeling_chunk(_site: int,
     geotransform[0] += offset_from_ul[0][0] * geotransform[1]
     geotransform[3] += offset_from_ul[0][1] * geotransform[5]
 
-    #for _f in range(len(offset_from_ul)):
+    # for _f in range(len(offset_from_ul)):
     #    print(f_ul[_f])
     #    if (np.any(np.array(offset_from_ul[_f]) < config.data_build.window_radius)):
     #        _logger.debug('Feature read OOB')
@@ -648,10 +653,9 @@ def read_labeling_chunk(_site: int,
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         return False
 
-    local_feature, mask = common_io.read_map_subset(config.raw_files.feature_files[_site], 
+    local_feature, mask = common_io.read_map_subset(config.raw_files.feature_files[_site],
                                                     offset_from_ul, window_diameter, mask,
                                                     config.raw_files.feature_nodata_value)
-
 
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         _logger.debug('Insufficient feature data')

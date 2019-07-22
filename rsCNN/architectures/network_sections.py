@@ -37,7 +37,7 @@ def Conv2D_Options(inlayer: keras.layers, options: dict) -> keras.layers.Conv2D:
         output_layer: Keras layer ready to start the main network
     """
 
-    use_batch_norm = options.pop('use_batch_norm',False)
+    use_batch_norm = options.pop('use_batch_norm', False)
     output_layer = Conv2D(**options)(inlayer)
     if use_batch_norm:
         output_layer = BatchNormalization()(output_layer)
@@ -64,6 +64,3 @@ def dense_2d_block(inlayer: keras.layers, conv_options: dict, block_depth: int) 
         dense_layer = Concatenate(axis=-1)([dense_layer, intermediate_layer])
 
     return dense_layer
-
-
-

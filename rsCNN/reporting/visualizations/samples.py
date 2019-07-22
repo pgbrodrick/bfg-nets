@@ -199,7 +199,7 @@ def plot_single_sequence_prediction_histogram(
             if sampled.raw_predictions is not None:
                 b, h = _get_lhist(sampled.raw_predictions[..., _r])
                 ax.plot(h, b, color='green')
-                plt.legend(['Response','Prediction'])
+                plt.legend(['Response', 'Prediction'])
             else:
                 plt.legend(['Response'])
 

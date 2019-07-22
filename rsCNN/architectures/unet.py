@@ -35,7 +35,7 @@ def create_model(
 
     input_width = inshape[0]
 
-    #TODO: Move assertion to configs check
+    # TODO: Move assertion to configs check
     minimum_width = input_width / 2 ** len(block_structure)
     assert minimum_width >= 2, \
         'The convolution width in the last encoding block ({}) is less than 2.' + \
@@ -90,6 +90,6 @@ def create_model(
     # Output convolutions
     output_layer = decoder
     output_layer = network_sections.Conv2D_Options(output_layer, conv2d_options)
-    output_layer = Conv2D(filters=n_classes, kernel_size=(1, 1), padding='same', activation=output_activation)(output_layer)
+    output_layer = Conv2D(filters=n_classes, kernel_size=(1, 1), padding='same',
+                          activation=output_activation)(output_layer)
     return keras.models.Model(inputs=[inlayer], outputs=[output_layer])
-

@@ -18,6 +18,7 @@ plt.switch_backend('Agg')  # Needed for remote server plotting
 
 _logger = logging.getLogger(__name__)
 
+
 def apply_model_to_raster(
         cnn: keras.Model,
         data_container: DataContainer,
@@ -55,7 +56,7 @@ def apply_model_to_raster(
 
     assert type(feature_files) is list, 'Feature files for given site must be provided as a list'
 
-    valid_output_formats = ['GTiff','ENVI']
+    valid_output_formats = ['GTiff', 'ENVI']
     err_str = 'Not a viable output format, options are: {}'.format(valid_output_formats)
     assert output_format in valid_output_formats, err_str
 
@@ -94,13 +95,14 @@ def apply_model_to_raster(
     outDataset.SetGeoTransform(out_trans)
     del outDataset
 
-    for _row in tqdm(range(0,y_len, config.data_build.loss_window_radius*2),ncols=80):
+    for _row in tqdm(range(0, y_len, config.data_build.loss_window_radius*2), ncols=80):
         _row = min(_row, y_len - 2*config.data_build.window_radius)
         col_dat = _read_chunk_by_row(feature_sets, internal_ul_list, x_len, config.data_build.window_radius*2, _row,
-                             data_container.feature_raw_band_types)
+                                     data_container.feature_raw_band_types)
         _logger.debug('Read data chunk of shape: {}'.format(col_dat.shape))
 
-        tile_dat, x_index = _convert_chunk_to_tiles(col_dat, config.data_build.loss_window_radius, config.data_build.window_radius)
+        tile_dat, x_index = _convert_chunk_to_tiles(
+            col_dat, config.data_build.loss_window_radius, config.data_build.window_radius)
         _logger.debug('Data tiled to shape: {}'.format(tile_dat.shape))
 
         tile_dat = ooc_functions.one_hot_encode_array(data_container.feature_raw_band_types, tile_dat,
@@ -127,17 +129,19 @@ def apply_model_to_raster(
         window_radius_difference = config.data_build.window_radius - config.data_build.loss_window_radius
         _logger.debug('Creating output dataset, using window_radius_difference {}'.format(window_radius_difference))
         if (window_radius_difference > 0):
-            pred_y = pred_y[:,window_radius_difference:-window_radius_difference,window_radius_difference:-window_radius_difference,:]
+            pred_y = pred_y[:, window_radius_difference:-window_radius_difference,
+                            window_radius_difference:-window_radius_difference, :]
         output = np.zeros((config.data_build.loss_window_radius*2, x_len, pred_y.shape[-1]))
         for _c in range(len(x_index)):
-            output[:,x_index[_c]+window_radius_difference:x_index[_c]+window_radius_difference+config.data_build.loss_window_radius*2,:] = pred_y[_c,...]
+            output[:, x_index[_c]+window_radius_difference:x_index[_c]+window_radius_difference +
+                   config.data_build.loss_window_radius*2, :] = pred_y[_c, ...]
 
         _logger.debug('Convert output shape from (y,x,b) to (b,y,x)')
-        output = np.moveaxis(output,[0,1,2],[1,2,0])
+        output = np.moveaxis(output, [0, 1, 2], [1, 2, 0])
 
-        output_memmap = np.memmap(temporary_outname, mode='r+', shape=(n_classes,y_len,x_len), dtype=np.float32)
+        output_memmap = np.memmap(temporary_outname, mode='r+', shape=(n_classes, y_len, x_len), dtype=np.float32)
         outrow = _row + window_radius_difference
-        output_memmap[:,outrow:outrow+config.data_build.loss_window_radius*2,:] = output
+        output_memmap[:, outrow:outrow+config.data_build.loss_window_radius*2, :] = output
         del output_memmap
 
     if (output_format != 'ENVI'):
@@ -151,7 +155,7 @@ def apply_model_to_raster(
         for co in creation_options:
             cmd_str += ' -co {}'.format(co)
         subprocess.call(cmd_str, shell=True)
-        test_outdataset = gdal.Open(final_outname,gdal.GA_ReadOnly)
+        test_outdataset = gdal.Open(final_outname, gdal.GA_ReadOnly)
         if (test_outdataset is not None):
             _logger.debug('Format transform successfull, cleanup ENVI files {}, {}, {}'.
                           format(temporary_outname, temporary_outname + '.hdr', temporary_outname + '.aux.xml'))
@@ -180,11 +184,12 @@ def _convert_chunk_to_tiles(feature_data: np.array, loss_window_radius: int, win
 
     output_array = []
     col_index = []
-    for _col in range(0,feature_data.shape[1],loss_window_radius*2):
+    for _col in range(0, feature_data.shape[1], loss_window_radius*2):
         col_index.append(min(_col, feature_data.shape[1]-window_radius*2))
-        output_array.append(feature_data[:,col_index[-1]:col_index[-1]+window_radius*2,:])
+        output_array.append(feature_data[:, col_index[-1]:col_index[-1]+window_radius*2, :])
     output_array = np.stack(output_array)
-    output_array = np.reshape(output_array,(output_array.shape[0],output_array.shape[1],output_array.shape[2],feature_data.shape[-1]))
+    output_array = np.reshape(
+        output_array, (output_array.shape[0], output_array.shape[1], output_array.shape[2], feature_data.shape[-1]))
 
     col_index = np.array(col_index)
 
@@ -192,7 +197,7 @@ def _convert_chunk_to_tiles(feature_data: np.array, loss_window_radius: int, win
 
 
 def _read_chunk_by_row(feature_sets: List[gdal.Dataset], pixel_upper_lefts: List[List[int]], x_size: int, y_size: int,
-              line_offset: int, raw_band_types: List[str]) -> np.array:
+                       line_offset: int, raw_band_types: List[str]) -> np.array:
     """
     Read a chunk of feature data line-by-line.
 
@@ -210,18 +215,18 @@ def _read_chunk_by_row(feature_sets: List[gdal.Dataset], pixel_upper_lefts: List
     """
 
     total_features = len(raw_band_types)
-    output_array = np.zeros((y_size, x_size,total_features))
+    output_array = np.zeros((y_size, x_size, total_features))
 
     feat_ind = 0
     for _feat in range(len(feature_sets)):
-        dat = np.zeros((feature_sets[_feat].RasterCount,y_size,x_size))
+        dat = np.zeros((feature_sets[_feat].RasterCount, y_size, x_size))
         for _line in range(y_size):
-            dat[:,_line:_line+1,:] = feature_sets[_feat].ReadAsArray(pixel_upper_lefts[_feat][0],
-                                     pixel_upper_lefts[_feat][1] + line_offset + _line,x_size,1).astype(np.float32)
+            dat[:, _line:_line+1, :] = feature_sets[_feat].ReadAsArray(pixel_upper_lefts[_feat][0],
+                                                                       pixel_upper_lefts[_feat][1] + line_offset + _line, x_size, 1).astype(np.float32)
         # Swap dat from (b,y,x) to (y,x,b)
-        dat = np.moveaxis(dat, [0,1,2], [2,0,1])
+        dat = np.moveaxis(dat, [0, 1, 2], [2, 0, 1])
 
-        output_array[...,feat_ind:feat_ind+dat.shape[-1]] = dat
+        output_array[..., feat_ind:feat_ind+dat.shape[-1]] = dat
         feat_ind += dat.shape[-1]
 
     return output_array
@@ -289,5 +294,3 @@ def maximum_likelihood_classification(
         plt.axis('off')
         plt.savefig(output_png_file, dpi=png_dpi, bbox_inches='tight')
         plt.clf()
-
-

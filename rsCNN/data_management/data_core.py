@@ -121,11 +121,11 @@ class DataContainer:
 
             if (self.config.data_build.network_category == 'FCN'):
                 features, responses, weights, feature_band_types, response_band_types, feature_per_band_encoded_values,\
-                response_per_band_encoded_values = training_data.build_training_data_ordered(
-                    self.config, self.feature_raw_band_types, self.response_raw_band_types)
+                    response_per_band_encoded_values = training_data.build_training_data_ordered(
+                        self.config, self.feature_raw_band_types, self.response_raw_band_types)
             elif (self.config.data_build.network_category == 'CNN'):
                 features, responses, weights, feature_band_types, response_band_types, feature_per_band_encoded_values,\
-                response_per_band_encoded_values = training_data.build_training_data_from_response_points(
+                    response_per_band_encoded_values = training_data.build_training_data_from_response_points(
                         self.config, self.feature_raw_band_types, self.response_raw_band_types)
             else:
                 raise NotImplementedError('Unknown response data format')
@@ -269,7 +269,8 @@ class DataContainer:
 
             else:
                 if (len(band_types) != len(file_list[0])):
-                    errors.append('Length of band_types ({}) is not equal to length of file list ({}).  Incorrect input format'.format(len(band_types),len(file_list)))
+                    errors.append('Length of band_types ({}) is not equal to length of file list ({}).  Incorrect input format'.format(
+                        len(band_types), len(file_list)))
                 for _file in range(len(band_types)):
                     if (band_types[_file] not in valid_band_types):
                         errors.append('Invalid band type at File {}'.format(_file))
@@ -296,7 +297,8 @@ class DataContainer:
         # 3) band_types is list of lists (of strings, contained in valid_band_types), with the outer list referring to
         #    files and the inner list referring to bands
 
-        num_bands_per_file = [None if common_io.noerror_open(x) is None else gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in file_list[0]]
+        num_bands_per_file = [None if common_io.noerror_open(x) is None else gdal.Open(
+            x, gdal.GA_ReadOnly).RasterCount for x in file_list[0]]
 
         # Nonetype, option 1 from above, auto-generate
         if (band_types is None):
@@ -337,20 +339,20 @@ class DataContainer:
                  )
 
     def _load_data_core(self):
-        npzf = np.load(get_built_data_container_filepath(self.config),allow_pickle=True)
+        npzf = np.load(get_built_data_container_filepath(self.config), allow_pickle=True)
         self.feature_band_types = npzf['feature_band_types']
         self.response_band_types = npzf['response_band_types']
         self.feature_raw_band_types = npzf['feature_raw_band_types']
         self.response_raw_band_types = npzf['response_raw_band_types']
         self.train_folds = npzf['train_folds']
 
-        ### Support deprecated data containers, if no errors thrown
+        # Support deprecated data containers, if no errors thrown
         if 'feature_per_band_encoded_values' in list(npzf):
-            self.feature_per_band_encoded_values= npzf['feature_per_band_encoded_values']
-            self.response_per_band_encoded_values= npzf['response_per_band_encoded_values']
+            self.feature_per_band_encoded_values = npzf['feature_per_band_encoded_values']
+            self.response_per_band_encoded_values = npzf['response_per_band_encoded_values']
         else:
             if ('C' not in list(self.response_band_types) and 'C' not in list(self.feature_band_types)):
-                _logger.error('Error, deprecated form of data container that does not container feature encodings ' + \
+                _logger.error('Error, deprecated form of data container that does not container feature encodings ' +
                               'detected, and response or features include categorical variables.  Please rebuild data.')
                 assert False, 'Bad data container'
             else:
