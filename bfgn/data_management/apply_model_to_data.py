@@ -65,7 +65,7 @@ def apply_model_to_raster(
 
     _logger.debug('Check file validity')
     invalid_files = ''
-    for _f in range(feature_sets):
+    for _f in range(len(feature_sets)):
         if feature_sets[_f] is None:
             invalid_files += 'Invalid file: {}\n'.format(feature_files[_f])
     assert invalid_files == '', invalid_files
@@ -221,8 +221,8 @@ def _read_chunk_by_row(feature_sets: List[gdal.Dataset], pixel_upper_lefts: List
     for _feat in range(len(feature_sets)):
         dat = np.zeros((feature_sets[_feat].RasterCount, y_size, x_size))
         for _line in range(y_size):
-            dat[:, _line:_line+1, :] = feature_sets[_feat].ReadAsArray(pixel_upper_lefts[_feat][0],
-                                                                       pixel_upper_lefts[_feat][1] + line_offset + _line, x_size, 1).astype(np.float32)
+            dat[:, _line:_line+1, :] = feature_sets[_feat].ReadAsArray(int(pixel_upper_lefts[_feat][0]),
+                                                                       int(pixel_upper_lefts[_feat][1] + line_offset + _line), x_size, 1).astype(np.float32)
         # Swap dat from (b,y,x) to (y,x,b)
         dat = np.moveaxis(dat, [0, 1, 2], [2, 0, 1])
 
