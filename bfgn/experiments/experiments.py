@@ -120,8 +120,7 @@ class Experiment(object):
             }
         self.is_model_trained = self.history[_KEY_HISTORY_IS_MODEL_TRAINED]
 
-    def copy_model_from_experiment(self, reference_config) -> None:
-        # TODO: fix experiment typing
+    def copy_model_from_experiment(self, reference_config: configs.Config) -> None:
         _logger.info('Loading external model')
 
         loss_function = losses.get_cropped_loss_function(
