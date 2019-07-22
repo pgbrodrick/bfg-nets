@@ -59,8 +59,17 @@ def apply_model_to_raster(
     err_str = 'Not a viable output format, options are: {}'.format(valid_output_formats)
     assert output_format in valid_output_formats, err_str
 
-    # Open feature dataset and establish n_classes
+    _logger.debug('Open feature datasets')
     feature_sets = [gdal.Open(f, gdal.GA_ReadOnly) for f in feature_files]
+
+    _logger.debug('Check file validity')
+    invalid_files = ''
+    for _f in range(feature_sets):
+        if feature_sets[_f] is None:
+            invalid_files += 'Invalid file: {}\n'.format(feature_files[_f])
+    assert invalid_files == '', invalid_files
+
+    _logger.debug('Get common feature file interior')
     [internal_ul_list], x_len, y_len = common_io.get_overlapping_extent([feature_sets])
 
     assert x_len > 0 and y_len > 0, 'No common feature file interior'
@@ -74,6 +83,9 @@ def apply_model_to_raster(
     temporary_outname = destination_basename
     if (output_format != 'ENVI'):
         temporary_outname = temporary_outname + '_temporary_ENVI_file'
+        _logger.debug('Creating output envi file: {}'.format(temporary_outname))
+    else:
+        _logger.debug('Creating temporary output envi file: {}'.format(temporary_outname))
     outDataset = driver.Create(temporary_outname, x_len, y_len, n_classes, gdal.GDT_Float32)
     out_trans = list(feature_sets[0].GetGeoTransform())
     out_trans[0] = out_trans[0] + internal_ul_list[0][0]*out_trans[1]
@@ -86,10 +98,14 @@ def apply_model_to_raster(
         _row = min(_row, y_len - 2*config.data_build.window_radius)
         col_dat = _read_chunk_by_row(feature_sets, internal_ul_list, x_len, config.data_build.window_radius*2, _row,
                              data_container.feature_raw_band_types)
+        _logger.debug('Read data chunk of shape: {}'.format(col_dat.shape))
 
         tile_dat, x_index = _convert_chunk_to_tiles(col_dat, config.data_build.loss_window_radius, config.data_build.window_radius)
+        _logger.debug('Data tiled to shape: {}'.format(tile_dat.shape))
+
         tile_dat = ooc_functions.one_hot_encode_array(data_container.feature_raw_band_types, tile_dat,
                                                       data_container.feature_per_band_encoded_values)
+        _logger.debug('Data one_hot_encoded.  New shape: {}'.format(tile_dat.shape))
 
         if (config.data_build.feature_mean_centering is True):
             tile_dat -= np.nanmean(tile_dat, axis=(1, 2))[:, np.newaxis, np.newaxis, :]
@@ -109,6 +125,7 @@ def apply_model_to_raster(
         del tile_dat
 
         window_radius_difference = config.data_build.window_radius - config.data_build.loss_window_radius
+        _logger.debug('Creating output dataset, using window_radius_difference {}'.format(window_radius_difference))
         if (window_radius_difference > 0):
             pred_y = pred_y[:,window_radius_difference:-window_radius_difference,window_radius_difference:-window_radius_difference,:]
         output = np.zeros((config.data_build.loss_window_radius*2, x_len, pred_y.shape[-1]))
@@ -127,13 +144,17 @@ def apply_model_to_raster(
         final_outname = destination_basename
         if (output_format == 'GTiff'):
             final_outname += '.tif'
+        _logger.debug('Output format {}.  Converting ENVI file to output data with creation options {}'.
+                      format(output_format, creation_options))
 
         cmd_str = 'gdal_translate {} {} -of {}'.format(temporary_outname, final_outname, output_format)
         for co in creation_options:
             cmd_str += ' -co {}'.format(co)
         subprocess.call(cmd_str, shell=True)
-        test_outds = gdal.Open(final_outname,gdal.GA_ReadOnly)
-        if (test_outds is not None):
+        test_outdataset = gdal.Open(final_outname,gdal.GA_ReadOnly)
+        if (test_outdataset is not None):
+            _logger.debug('Format transform successfull, cleanup ENVI files {}, {}, {}'.
+                          format(temporary_outname, temporary_outname + '.hdr', temporary_outname + '.aux.xml'))
             os.remove(temporary_outname)
             os.remove(temporary_outname + '.hdr')
             try:
