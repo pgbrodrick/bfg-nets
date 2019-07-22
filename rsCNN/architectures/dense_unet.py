@@ -34,7 +34,6 @@ def create_model(
         config_sections.DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
 ) -> keras.models.Model:
 
-
     conv2d_options = {'filters': filters,
                       'kernel_size': kernel_size,
                       'padding': padding,
@@ -42,7 +41,7 @@ def create_model(
                       'use_batch_norm': use_batch_norm}
 
     transition_options = conv2d_options.copy()
-    transition_options['kernel_size'] = (1,1)
+    transition_options['kernel_size'] = (1, 1)
 
     # Initial convolution
     inlayer = keras.layers.Input(shape=inshape)
@@ -94,5 +93,6 @@ def create_model(
     # Output convolutions
     output_layer = decoder
     output_layer = network_sections.Conv2D_Options(output_layer, conv2d_options)
-    output_layer = Conv2D(filters=n_classes, kernel_size=(1, 1), padding='same', activation=output_activation)(output_layer)
+    output_layer = Conv2D(filters=n_classes, kernel_size=(1, 1), padding='same',
+                          activation=output_activation)(output_layer)
     return keras.models.Model(inputs=[inlayer], outputs=[output_layer])
