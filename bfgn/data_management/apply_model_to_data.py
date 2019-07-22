@@ -154,7 +154,7 @@ def apply_model_to_raster(
         options = ''
         for co in creation_options:
             options += ' -co {}'.format(co)
-        gdal.Translate(gdal.Open(final_outname, temporary_outname,gdal.GA_ReadOnly), options=options)
+        gdal.Translate(final_outname, gdal.Open(temporary_outname,gdal.GA_ReadOnly), options=options)
 
         test_outdataset = gdal.Open(final_outname, gdal.GA_ReadOnly)
         if (test_outdataset is not None):
