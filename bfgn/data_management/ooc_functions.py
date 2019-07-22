@@ -43,7 +43,7 @@ def one_hot_encode_array(raw_band_types: List[str], array: np.array, memmap_file
 
     for _c in reversed(range(len(cat_band_locations))):
 
-        if (per_band_encoding is not None):
+        if (per_band_encoding is None):
             un_array = array[..., cat_band_locations[_c]]
             un_array = np.unique(un_array[np.isfinite(un_array)])
             return_band_encoding.append(un_array)
