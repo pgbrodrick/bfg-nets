@@ -271,9 +271,9 @@ class DataBuild(BaseConfigSection):
     response_max_value = DEFAULT_OPTIONAL_VALUE
     """float: Response values above this maximum are converted to missing data. Currently applied to all response values 
     uniformly."""
-    _response_background_value_type = int
-    response_background_value = DEFAULT_OPTIONAL_VALUE
-    """int: Built data samples containing only this response are discarded and not included in the final built data 
+    _response_background_values_type = list
+    response_background_values = DEFAULT_OPTIONAL_VALUE
+    """int: Built data samples containing only these responses are discarded and not included in the final built data 
     files."""
 
     def _check_config_validity(self) -> List[str]:
