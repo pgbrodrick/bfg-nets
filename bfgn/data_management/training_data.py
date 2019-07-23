@@ -711,6 +711,10 @@ def read_segmentation_chunk(_site: int,
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         return False
 
+    if config.data_build.response_background_values:
+        if np.all(np.in1d(local_response, config.data_build.response_background_values)):
+            return False
+
     # Final check (propogate mask forward), and return
     local_feature[mask, :] = np.nan
     local_response[mask, :] = np.nan
