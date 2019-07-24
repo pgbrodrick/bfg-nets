@@ -25,7 +25,7 @@ def apply_model_to_raster(
         feature_files: List[str],
         destination_basename: str,
         output_format: str = 'GTiff',
-        creation_options: List[str] = None,
+        creation_options: List[str] = [],
         CNN_MODE: bool = False,
         exclude_feature_nodata: bool = False
 ) -> None:
@@ -47,8 +47,6 @@ def apply_model_to_raster(
     """
 
     assert CNN_MODE is False, 'CNN mode application not yet supported'
-    if creation_options is None:
-        creation_options = []
 
     config = data_container.config
 
@@ -151,7 +149,7 @@ def maximum_likelihood_classification(
         data_container: DataContainer,
         destination_basename: str,
         output_format: str = 'GTiff',
-        creation_options: List[str] = None,
+        creation_options: List[str] = [],
 ) -> None:
     """ Convert a n-band map of probabilities to a classified image using maximum likelihood.
 
@@ -193,6 +191,7 @@ def maximum_likelihood_classification(
         out_dat = np.zeros(col_dat.shape) + data_container.config.raw_files.response_nodata_value
         for _encoded_value in data_container.response_per_band_encoded_values[0]:
             out_dat[col_dat == _encoded_value] = data_container.response_per_band_encoded_values[0][_encoded_value]
+        out_dat = np.reshape(out_dat,(out_dat.shape[0],out_dat.shape[1],1))
 
         _logger.debug('Convert output shape from (y,x,b) to (b,y,x)')
         out_dat = np.moveaxis(out_dat, [0, 1, 2], [1, 2, 0])

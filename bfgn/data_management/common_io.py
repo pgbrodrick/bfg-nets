@@ -271,6 +271,10 @@ def convert_envi_file(original_file:str, destination_basename: str, output_forma
     final_outname = destination_basename
     if (output_format == 'GTiff'):
         final_outname += '.tif'
+    elif (output_format == 'JPEG'):
+        final_outname += '.jpg'
+    elif (output_format == 'PNG'):
+        final_outname += '.png'
     _logger.debug('Output format {}.  Converting ENVI file to output data with creation options {}'.
                   format(output_format, creation_options))
 
