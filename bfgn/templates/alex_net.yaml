@@ -25,7 +25,7 @@ data_build:
   feature_nodata_maximum_fraction: 0.0
   response_min_value: OPTIONAL
   response_max_value: OPTIONAL
-  response_background_value: OPTIONAL
+  response_background_values: OPTIONAL
 data_samples:
   apply_random_transformations: false
   batch_size: 100

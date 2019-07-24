@@ -1,3 +1,4 @@
+import os
 import copy
 import fiona
 import gdal
@@ -252,3 +253,47 @@ def noerror_open(filename: str, file_handle=gdal.GA_ReadOnly) -> gdal.Dataset:
     dataset = gdal.Open(filename, file_handle)
     gdal.PopErrorHandler()
     return dataset
+
+
+def convert_envi_file(original_file:str, destination_basename: str, output_format: str, cleanup:bool =False, creation_options: List= []) -> None:
+    """
+    Convert an ENVI file to another output format with a gdal_translate call
+
+    Args:
+        original_file: Source envi file
+        destination_basename: Base of the output file (will get appropriate extension)
+        output_format: A viable gdal output data format.
+        cleanup: boolean indicating whether or not to cleanup original envi files
+        creation_options: GDAL creation options to pass for output file, e.g.: ['TILED=YES', 'COMPRESS=DEFLATE']
+    Returns:
+         None
+    """
+    final_outname = destination_basename
+    if (output_format == 'GTiff'):
+        final_outname += '.tif'
+    elif (output_format == 'JPEG'):
+        final_outname += '.jpg'
+    elif (output_format == 'PNG'):
+        final_outname += '.png'
+    _logger.debug('Output format {}.  Converting ENVI file to output data with creation options {}'.
+                  format(output_format, creation_options))
+
+    options = ''
+    for co in creation_options:
+        options += ' -co {}'.format(co)
+    gdal.Translate(final_outname, gdal.Open(original_file,gdal.GA_ReadOnly), options=options)
+
+    test_outdataset = gdal.Open(final_outname, gdal.GA_ReadOnly)
+    if (cleanup):
+        if (test_outdataset is not None):
+            _logger.debug('Format transform successfull, cleanup ENVI files {}, {}, {}'.
+                          format(original_file, original_file + '.hdr', original_file + '.aux.xml'))
+            os.remove(original_file)
+            os.remove(original_file + '.hdr')
+            try:
+                os.remove(original_file + '.aux.xml')
+            except OSError:
+                pass
+        else:
+            _logger.error('Failed to successfully convert output ENVI file to {}.  ENVI file available at: {}'.
+                          format(output_format, original_file))

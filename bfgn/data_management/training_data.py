@@ -17,8 +17,8 @@ _logger = logging.getLogger(__name__)
 
 def build_training_data_ordered(
         config: configs.Config,
-        feature_raw_band_types: List[List[str]],
-        response_raw_band_types: List[List[str]]
+        feature_raw_band_types: List[str],
+        response_raw_band_types: List[str]
 ) -> Tuple[List[np.array], List[np.array], List[np.array], List[str], List[str], List[np.array], List[np.array]]:
 
     # TODO:  check default, and set it to a standard value
@@ -185,8 +185,8 @@ def build_training_data_ordered(
 
 def build_training_data_from_response_points(
         config: configs.Config,
-        feature_raw_band_types: List[List[str]],
-        response_raw_band_types: List[List[str]]
+        feature_raw_band_types: List[str],
+        response_raw_band_types: List[str]
 ) -> Tuple[List[np.array], List[np.array], List[np.array], List[str], List[str], List[np.array], List[np.array]]:
 
     _logger.info('Build training data from response points')
@@ -710,6 +710,10 @@ def read_segmentation_chunk(_site: int,
 
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         return False
+
+    if config.data_build.response_background_values:
+        if np.all(np.in1d(local_response, config.data_build.response_background_values)):
+            return False
 
     # Final check (propogate mask forward), and return
     local_feature[mask, :] = np.nan

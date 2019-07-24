@@ -1,6 +1,7 @@
 import logging
 import os
 
+import keras
 import keras.backend as K
 import numpy as np
 
@@ -120,6 +121,37 @@ class Experiment(object):
             }
         self.is_model_trained = self.history[_KEY_HISTORY_IS_MODEL_TRAINED]
 
+    def copy_model_from_experiment(self, reference_config: configs.Config) -> None:
+        _logger.info('Loading external model')
+
+        loss_function = losses.get_cropped_loss_function(
+            self.config.model_training.loss_metric,
+            2 * self.config.data_build.window_radius,
+            2 * self.config.data_build.loss_window_radius,
+            self.config.model_training.weighted
+        )
+
+        err_str = 'No model exists at {}'.format(get_model_filepath(reference_config))
+        assert os.path.exists(get_model_filepath(reference_config)), err_str
+
+        _logger.debug('Loading existing model from model training directory at {}'.format(
+            get_model_filepath(reference_config)))
+        self.loaded_existing_model = True
+
+        prev_model = models.load_model(
+            get_model_filepath(reference_config),
+            custom_objects={'_cropped_loss': loss_function}
+        )
+        self.model = keras.models.clone_model(prev_model)
+        self.model.set_weights(prev_model.get_weights())
+
+        self.loaded_existing_history = False
+        self.history = {
+            'model_name': self.config.model_training.dir_out,
+             _KEY_HISTORY_IS_MODEL_TRAINED: False
+            }
+        self.is_model_trained = False
+
     def fit_model_with_data_container(self, data_container: DataContainer, resume_training: bool = False) -> None:
         return self.fit_model_with_sequences(
             data_container.training_sequence, data_container.validation_sequence, resume_training
@@ -138,15 +170,21 @@ class Experiment(object):
 
         model_callbacks = callbacks.get_model_callbacks(self.config, self.history)
 
+        init_epoch = 0
+        if (len(self.history.get('lr', list())) > 0):
+            init_epoch = np.argmin(np.array(self.history.get('lr')))
+
         new_history = self.model.fit_generator(
             training_sequence,
             epochs=self.config.model_training.max_epochs,
             verbose=self.config.model_training.verbosity,
             callbacks=model_callbacks,
             validation_data=validation_sequence,
-            max_queue_size=2,
+            max_queue_size=min(10,2*compute_access.get_count_available_cpus()),
+            use_multiprocessing=compute_access.get_count_available_cpus() > 1,
+            workers=compute_access.get_count_available_cpus(),
             shuffle=False,
-            initial_epoch=len(self.history.get('lr', list())),
+            initial_epoch=init_epoch,
         )
         self.history = histories.combine_histories(self.history, new_history.history)
         self.history[_KEY_HISTORY_IS_MODEL_TRAINED] = True

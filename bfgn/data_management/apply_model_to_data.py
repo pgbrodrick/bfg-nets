@@ -25,7 +25,7 @@ def apply_model_to_raster(
         feature_files: List[str],
         destination_basename: str,
         output_format: str = 'GTiff',
-        creation_options: List[str] = None,
+        creation_options: List[str] = [],
         CNN_MODE: bool = False,
         exclude_feature_nodata: bool = False
 ) -> None:
@@ -47,8 +47,6 @@ def apply_model_to_raster(
     """
 
     assert CNN_MODE is False, 'CNN mode application not yet supported'
-    if creation_options is None:
-        creation_options = []
 
     config = data_container.config
 
@@ -65,7 +63,7 @@ def apply_model_to_raster(
 
     _logger.debug('Check file validity')
     invalid_files = ''
-    for _f in range(feature_sets):
+    for _f in range(len(feature_sets)):
         if feature_sets[_f] is None:
             invalid_files += 'Invalid file: {}\n'.format(feature_files[_f])
     assert invalid_files == '', invalid_files
@@ -97,8 +95,7 @@ def apply_model_to_raster(
 
     for _row in tqdm(range(0, y_len, config.data_build.loss_window_radius*2), ncols=80):
         _row = min(_row, y_len - 2*config.data_build.window_radius)
-        col_dat = _read_chunk_by_row(feature_sets, internal_ul_list, x_len, config.data_build.window_radius*2, _row,
-                                     data_container.feature_raw_band_types)
+        col_dat = _read_chunk_by_row(feature_sets, internal_ul_list, x_len, config.data_build.window_radius*2, _row)
         _logger.debug('Read data chunk of shape: {}'.format(col_dat.shape))
 
         tile_dat, x_index = _convert_chunk_to_tiles(
@@ -106,7 +103,7 @@ def apply_model_to_raster(
         _logger.debug('Data tiled to shape: {}'.format(tile_dat.shape))
 
         tile_dat = ooc_functions.one_hot_encode_array(data_container.feature_raw_band_types, tile_dat,
-                                                      data_container.feature_per_band_encoded_values)
+                                                      per_band_encoding=data_container.feature_per_band_encoded_values)
         _logger.debug('Data one_hot_encoded.  New shape: {}'.format(tile_dat.shape))
 
         if (config.data_build.feature_mean_centering is True):
@@ -144,30 +141,66 @@ def apply_model_to_raster(
         output_memmap[:, outrow:outrow+config.data_build.loss_window_radius*2, :] = output
         del output_memmap
 
-    if (output_format != 'ENVI'):
-        final_outname = destination_basename
-        if (output_format == 'GTiff'):
-            final_outname += '.tif'
-        _logger.debug('Output format {}.  Converting ENVI file to output data with creation options {}'.
-                      format(output_format, creation_options))
+    common_io.convert_envi_file(temporary_outname, destination_basename, output_format, True, creation_options)
 
-        cmd_str = 'gdal_translate {} {} -of {}'.format(temporary_outname, final_outname, output_format)
-        for co in creation_options:
-            cmd_str += ' -co {}'.format(co)
-        subprocess.call(cmd_str, shell=True)
-        test_outdataset = gdal.Open(final_outname, gdal.GA_ReadOnly)
-        if (test_outdataset is not None):
-            _logger.debug('Format transform successfull, cleanup ENVI files {}, {}, {}'.
-                          format(temporary_outname, temporary_outname + '.hdr', temporary_outname + '.aux.xml'))
-            os.remove(temporary_outname)
-            os.remove(temporary_outname + '.hdr')
-            try:
-                os.remove(temporary_outname + '.aux.xml')
-            except OSError:
-                pass
-        else:
-            _logger.error('Failed to successfully convert output ENVI file to {}.  ENVI file available at: {}'.
-                          format(output_format, temporary_outname))
+
+def maximum_likelihood_classification(
+        likelihood_file: str,
+        data_container: DataContainer,
+        destination_basename: str,
+        output_format: str = 'GTiff',
+        creation_options: List[str] = [],
+) -> None:
+    """ Convert a n-band map of probabilities to a classified image using maximum likelihood.
+
+    Args:
+        likelihood_file: File with per-class likelihoods
+        data_container: Holds info like scalers
+        destination_basename: Base of the output file (will get appropriate extension)
+        creation_options: GDAL creation options to pass for output file, e.g.: ['TILED=YES', 'COMPRESS=DEFLATE']
+
+    :Returns
+        None
+    """
+
+
+    dataset = gdal.Open(likelihood_file, gdal.GA_ReadOnly)
+    assert dataset is not None, 'Invalid liklihood_file'
+
+    # Initialize Output Dataset
+    driver = gdal.GetDriverByName('ENVI')
+    driver.Register()
+
+    temporary_outname = destination_basename
+    if (output_format != 'ENVI'):
+        temporary_outname = temporary_outname + '_temporary_ENVI_file'
+        _logger.debug('Creating output envi file: {}'.format(temporary_outname))
+    else:
+        _logger.debug('Creating temporary output envi file: {}'.format(temporary_outname))
+
+    outDataset = driver.Create(temporary_outname, dataset.RasterXSize, dataset.RasterYSize, 1, gdal.GDT_Int16)
+    outDataset.SetProjection(dataset.GetProjection())
+    outDataset.SetGeoTransform(dataset.GetGeoTransform())
+    del outDataset
+
+    for _row in tqdm(range(0, dataset.RasterYSize), ncols=80):
+        col_dat = _read_chunk_by_row([dataset], [[0,0]], dataset.RasterXSize, 1, _row)
+        _logger.debug('Read data chunk of shape: {}'.format(col_dat.shape))
+
+        col_dat = np.argmax(col_dat, axis=-1)
+        out_dat = np.zeros(col_dat.shape) + data_container.config.raw_files.response_nodata_value
+        for _encoded_value in data_container.response_per_band_encoded_values[0]:
+            out_dat[col_dat == _encoded_value] = data_container.response_per_band_encoded_values[0][_encoded_value]
+        out_dat = np.reshape(out_dat,(out_dat.shape[0],out_dat.shape[1],1))
+
+        _logger.debug('Convert output shape from (y,x,b) to (b,y,x)')
+        out_dat = np.moveaxis(out_dat, [0, 1, 2], [1, 2, 0])
+
+        output_memmap = np.memmap(temporary_outname, mode='r+', shape=(1, dataset.RasterYSize, dataset.RasterXSize),dtype=np.int16)
+        output_memmap[:, _row:_row+1, :] = out_dat
+        del output_memmap
+
+    common_io.convert_envi_file(temporary_outname, destination_basename, output_format, True, creation_options)
 
 
 def _convert_chunk_to_tiles(feature_data: np.array, loss_window_radius: int, window_radius: int) -> \
@@ -197,7 +230,7 @@ def _convert_chunk_to_tiles(feature_data: np.array, loss_window_radius: int, win
 
 
 def _read_chunk_by_row(feature_sets: List[gdal.Dataset], pixel_upper_lefts: List[List[int]], x_size: int, y_size: int,
-                       line_offset: int, raw_band_types: List[str]) -> np.array:
+                       line_offset: int) -> np.array:
     """
     Read a chunk of feature data line-by-line.
 
@@ -207,22 +240,20 @@ def _read_chunk_by_row(feature_sets: List[gdal.Dataset], pixel_upper_lefts: List
         x_size: size of x data to read
         y_size: size of y data to read
         line_offset: line offset from UL of each set to start reading at
-        raw_band_types: band types before encoding
-        categorical_encodings: encodings of each categorical band type
 
     Returns:
         feature_array: feature array
     """
 
-    total_features = len(raw_band_types)
+    total_features = np.sum([f.RasterCount for f in feature_sets])
     output_array = np.zeros((y_size, x_size, total_features))
 
     feat_ind = 0
     for _feat in range(len(feature_sets)):
         dat = np.zeros((feature_sets[_feat].RasterCount, y_size, x_size))
         for _line in range(y_size):
-            dat[:, _line:_line+1, :] = feature_sets[_feat].ReadAsArray(pixel_upper_lefts[_feat][0],
-                                                                       pixel_upper_lefts[_feat][1] + line_offset + _line, x_size, 1).astype(np.float32)
+            dat[:, _line:_line+1, :] = feature_sets[_feat].ReadAsArray(int(pixel_upper_lefts[_feat][0]),
+                                                                       int(pixel_upper_lefts[_feat][1] + line_offset + _line), x_size, 1).astype(np.float32)
         # Swap dat from (b,y,x) to (y,x,b)
         dat = np.moveaxis(dat, [0, 1, 2], [2, 0, 1])
 
@@ -232,65 +263,5 @@ def _read_chunk_by_row(feature_sets: List[gdal.Dataset], pixel_upper_lefts: List
     return output_array
 
 
-def maximum_likelihood_classification(
-        likelihood_file: str,
-        output_file_base: str,
-        make_png: bool = True,
-        make_tif: bool = False,
-        png_dpi: int = 200,
-        output_nodata_value: int = -1
-) -> None:
-    """ Convert a n-band map of probabilities to a classified image using maximum likelihood.
 
-    Args:
-        cnn:  Pre-trained keras CNN model
-        data_container: Holds info like scalers
-        feature_file: File with feature data to apply the model to
-        destination_basename: Base of the output file (will get a .tif or .png extention)
 
-        make_png: Should an output be created in PNG format?
-        make_tif: Should an output be created in TIF format?
-        CNN_MODE: Should the model be applied in CNN mode?
-        exclude_feature_nodata: Flag to remove all pixels in features without data from applied model
-
-    :Returns
-        None
-    """
-
-    output_tif_file = output_file_base + '.tif'
-    output_png_file = output_file_base + '.png'
-
-    dataset = gdal.Open(likelihood_file, gdal.GA_ReadOnly)
-
-    output = np.zeros((dataset.RasterYSize, dataset.RasterXSize))
-    output[dataset.GetRasterBand(1).ReadAsArray() == dataset.GetRasterBand(1).GetNoDataValue()] = output_nodata_value
-
-    for line in tqdm(np.arange(0, dataset.RasterYSize).astype(int), ncols=80, desc='Calculating max likelihood'):
-        prob = dataset.ReadAsArray(0, line, dataset.RasterXSize, 1)
-        output[line, :] = np.argmax(prob)
-        output[np.any(prob == output_nodata_value, axis=0)] = output_nodata_value
-
-    if (make_tif):
-        driver = gdal.GetDriverByName('GTiff')
-        driver.Register()
-
-        outDataset = driver.Create(output_tif_file,
-                                   output.shape[1],
-                                   output.shape[0],
-                                   1,
-                                   gdal.GDT_Float32,
-                                   options=['COMPRESS=LZW'])
-
-        outDataset.SetProjection(dataset.GetProjection())
-        outDataset.SetGeoTransform(dataset.GetGeoTransform())
-        outDataset.GetRasterBand(1).WriteArray(output, 0, 0)
-        del outDataset
-    if (make_png):
-
-        output[output == output_nodata_value] = np.nan
-        cmap = mpl.cm.Set1_r
-        cmap.set_bad('black', 1.)
-        plt.imshow(output, cmap=cmap)
-        plt.axis('off')
-        plt.savefig(output_png_file, dpi=png_dpi, bbox_inches='tight')
-        plt.clf()
