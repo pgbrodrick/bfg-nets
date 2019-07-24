@@ -180,7 +180,7 @@ def maximum_likelihood_classification(
     else:
         _logger.debug('Creating temporary output envi file: {}'.format(temporary_outname))
 
-    outDataset = driver.Create(temporary_outname, dataset.RasterXSize, dataset.RasterYSize, 1, gdal.Int16)
+    outDataset = driver.Create(temporary_outname, dataset.RasterXSize, dataset.RasterYSize, 1, gdal.GDT_Int16)
     outDataset.SetProjection(dataset.GetProjection())
     outDataset.SetGeoTransform(dataset.GetGeoTransform())
     del outDataset
