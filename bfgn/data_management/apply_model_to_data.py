@@ -97,8 +97,7 @@ def apply_model_to_raster(
 
     for _row in tqdm(range(0, y_len, config.data_build.loss_window_radius*2), ncols=80):
         _row = min(_row, y_len - 2*config.data_build.window_radius)
-        col_dat = _read_chunk_by_row(feature_sets, internal_ul_list, x_len, config.data_build.window_radius*2, _row,
-                                     data_container.feature_raw_band_types)
+        col_dat = _read_chunk_by_row(feature_sets, internal_ul_list, x_len, config.data_build.window_radius*2, _row)
         _logger.debug('Read data chunk of shape: {}'.format(col_dat.shape))
 
         tile_dat, x_index = _convert_chunk_to_tiles(
@@ -142,6 +141,64 @@ def apply_model_to_raster(
         output_memmap = np.memmap(temporary_outname, mode='r+', shape=(n_classes, y_len, x_len), dtype=np.float32)
         outrow = _row + window_radius_difference
         output_memmap[:, outrow:outrow+config.data_build.loss_window_radius*2, :] = output
+        del output_memmap
+
+    common_io.convert_envi_file(temporary_outname, destination_basename, output_format, True, creation_options)
+
+
+def maximum_likelihood_classification(
+        likelihood_file: str,
+        data_container: DataContainer,
+        destination_basename: str,
+        output_format: str = 'GTiff',
+        creation_options: List[str] = None,
+) -> None:
+    """ Convert a n-band map of probabilities to a classified image using maximum likelihood.
+
+    Args:
+        likelihood_file: File with per-class likelihoods
+        data_container: Holds info like scalers
+        destination_basename: Base of the output file (will get appropriate extension)
+        creation_options: GDAL creation options to pass for output file, e.g.: ['TILED=YES', 'COMPRESS=DEFLATE']
+
+    :Returns
+        None
+    """
+
+
+    dataset = gdal.Open(likelihood_file, gdal.GA_ReadOnly)
+    assert dataset is not None, 'Invalid liklihood_file'
+
+    # Initialize Output Dataset
+    driver = gdal.GetDriverByName('ENVI')
+    driver.Register()
+
+    temporary_outname = destination_basename
+    if (output_format != 'ENVI'):
+        temporary_outname = temporary_outname + '_temporary_ENVI_file'
+        _logger.debug('Creating output envi file: {}'.format(temporary_outname))
+    else:
+        _logger.debug('Creating temporary output envi file: {}'.format(temporary_outname))
+
+    outDataset = driver.Create(temporary_outname, dataset.RasterXSize, dataset.RasterYSize, 1, gdal.Int16)
+    outDataset.SetProjection(dataset.GetProjection())
+    outDataset.SetGeoTransform(dataset.GetGeoTransform())
+    del outDataset
+
+    for _row in tqdm(range(0, dataset.RasterYSize), ncols=80):
+        col_dat = _read_chunk_by_row([dataset], [[0,0]], dataset.RasterXSize, 1, _row)
+        _logger.debug('Read data chunk of shape: {}'.format(col_dat.shape))
+
+        col_dat = np.argmax(col_dat, axis=-1)
+        out_dat = np.zeros(col_dat.shape) + data_container.config.raw_files.response_nodata_value
+        for _encoded_value in data_container.response_per_band_encoded_values[0]:
+            out_dat[col_dat == _encoded_value] = data_container.response_per_band_encoded_values[0][_encoded_value]
+
+        _logger.debug('Convert output shape from (y,x,b) to (b,y,x)')
+        out_dat = np.moveaxis(out_dat, [0, 1, 2], [1, 2, 0])
+
+        output_memmap = np.memmap(temporary_outname, mode='r+', shape=(1, dataset.RasterYSize, dataset.RasterXSize),dtype=np.int16)
+        output_memmap[:, _row:_row+1, :] = out_dat
         del output_memmap
 
     common_io.convert_envi_file(temporary_outname, destination_basename, output_format, True, creation_options)
@@ -207,61 +264,5 @@ def _read_chunk_by_row(feature_sets: List[gdal.Dataset], pixel_upper_lefts: List
     return output_array
 
 
-def maximum_likelihood_classification(
-        likelihood_file: str,
-        data_container: DataContainer,
-        destination_basename: str,
-        output_format: str = 'GTiff',
-        creation_options: List[str] = None,
-) -> None:
-    """ Convert a n-band map of probabilities to a classified image using maximum likelihood.
-
-    Args:
-        likelihood_file: File with per-class likelihoods
-        data_container: Holds info like scalers
-        destination_basename: Base of the output file (will get appropriate extension)
-        creation_options: GDAL creation options to pass for output file, e.g.: ['TILED=YES', 'COMPRESS=DEFLATE']
-
-    :Returns
-        None
-    """
-
-
-    dataset = gdal.Open(likelihood_file, gdal.GA_ReadOnly)
-    assert dataset is not None, 'Invalid liklihood_file'
-
-    # Initialize Output Dataset
-    driver = gdal.GetDriverByName('ENVI')
-    driver.Register()
-
-    temporary_outname = destination_basename
-    if (output_format != 'ENVI'):
-        temporary_outname = temporary_outname + '_temporary_ENVI_file'
-        _logger.debug('Creating output envi file: {}'.format(temporary_outname))
-    else:
-        _logger.debug('Creating temporary output envi file: {}'.format(temporary_outname))
-
-    outDataset = driver.Create(temporary_outname, dataset.RasterXSize, dataset.RasterYSize, 1, gdal.Int16)
-    outDataset.SetProjection(dataset.GetProjection())
-    outDataset.SetGeoTransform(dataset.GetGeoTransform())
-    del outDataset
-
-    for _row in tqdm(range(0, dataset.RasterYSize), ncols=80):
-        col_dat = _read_chunk_by_row([dataset], [[0,0]], dataset.RasterXSize, 1, _row)
-        _logger.debug('Read data chunk of shape: {}'.format(col_dat.shape))
-
-        col_dat = np.argmax(col_dat, axis=-1)
-        out_dat = np.zeros(col_dat.shape) + data_container.config.raw_files.response_nodata_value
-        for _encoded_value in data_container.response_per_band_encoded_values[0]:
-            out_dat[col_dat == _encoded_value] = data_container.response_per_band_encoded_values[0][_encoded_value]
-
-        _logger.debug('Convert output shape from (y,x,b) to (b,y,x)')
-        out_dat = np.moveaxis(out_dat, [0, 1, 2], [1, 2, 0])
-
-        output_memmap = np.memmap(temporary_outname, mode='r+', shape=(1, dataset.RasterYSize, dataset.RasterXSize),dtype=np.int16)
-        output_memmap[:, _row:_row+1, :] = out_dat
-        del output_memmap
-
-    common_io.convert_envi_file(temporary_outname, destination_basename, output_format, True, creation_options)
 
 
