@@ -149,7 +149,7 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">shutil</span>
 
@@ -158,7 +158,8 @@
 <span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="one_hot_encode_array"><a class="viewcode-back" href="../../../bfgn.data_management.html#bfgn.data_management.ooc_functions.one_hot_encode_array">[docs]</a><span class="k">def</span> <span class="nf">one_hot_encode_array</span><span class="p">(</span><span class="n">raw_band_types</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">array</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span> <span class="n">memmap_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">per_band_encoding</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="one_hot_encode_array"><a class="viewcode-back" href="../../../bfgn.data_management.html#bfgn.data_management.ooc_functions.one_hot_encode_array">[docs]</a><span class="k">def</span> <span class="nf">one_hot_encode_array</span><span class="p">(</span><span class="n">raw_band_types</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">array</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span> <span class="n">memmap_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                         <span class="n">per_band_encoding</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">]]:</span>
     <span class="sd">&quot;&quot;&quot;One hot encode an array of mixed real and categorical variables.</span>
 
 <span class="sd">    Args:</span>
@@ -175,7 +176,6 @@
 <span class="sd">        return_band_encoding: the encoding used on a per-categorical-band basis, if per_band_encoding was None when</span>
 <span class="sd">                              provided, otherwise None</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">cat_band_locations</span> <span class="o">=</span> <span class="p">[</span><span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">raw_band_types</span><span class="p">)</span> <span class="k">if</span> <span class="n">val</span> <span class="o">==</span> <span class="s1">&#39;C&#39;</span><span class="p">]</span>
     <span class="n">band_types</span> <span class="o">=</span> <span class="n">raw_band_types</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
@@ -188,7 +188,7 @@
 
     <span class="k">for</span> <span class="n">_c</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cat_band_locations</span><span class="p">))):</span>
 
-        <span class="k">if</span> <span class="p">(</span><span class="n">per_band_encoding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">per_band_encoding</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
             <span class="n">un_array</span> <span class="o">=</span> <span class="n">array</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">cat_band_locations</span><span class="p">[</span><span class="n">_c</span><span class="p">]]</span>
             <span class="n">un_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">un_array</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">un_array</span><span class="p">)])</span>
             <span class="n">return_band_encoding</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">un_array</span><span class="p">)</span>
@@ -237,7 +237,7 @@
         <span class="k">for</span> <span class="n">_r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">un_array</span><span class="p">)):</span>
             <span class="n">band_types</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">cat_band_locations</span><span class="p">[</span><span class="n">_c</span><span class="p">],</span> <span class="s1">&#39;B&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">_c</span><span class="p">)))</span>
 
-    <span class="k">if</span> <span class="p">(</span><span class="n">per_band_encoding</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">per_band_encoding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">array</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">array</span><span class="p">,</span> <span class="n">band_types</span><span class="p">,</span> <span class="n">return_band_encoding</span></div>

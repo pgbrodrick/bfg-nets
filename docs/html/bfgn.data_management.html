@@ -182,7 +182,7 @@
 <span id="bfgn-data-management-apply-model-to-data-module"></span><h2>bfgn.data_management.apply_model_to_data module<a class="headerlink" href="#module-bfgn.data_management.apply_model_to_data" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="bfgn.data_management.apply_model_to_data.apply_model_to_raster">
-<code class="sig-prename descclassname">bfgn.data_management.apply_model_to_data.</code><code class="sig-name descname">apply_model_to_raster</code><span class="sig-paren">(</span><em class="sig-param">cnn</em>, <em class="sig-param">data_container</em>, <em class="sig-param">feature_files</em>, <em class="sig-param">destination_basename</em>, <em class="sig-param">output_format='GTiff'</em>, <em class="sig-param">creation_options=None</em>, <em class="sig-param">CNN_MODE=False</em>, <em class="sig-param">exclude_feature_nodata=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/apply_model_to_data.html#apply_model_to_raster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.apply_model_to_data.apply_model_to_raster" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">bfgn.data_management.apply_model_to_data.</code><code class="sig-name descname">apply_model_to_raster</code><span class="sig-paren">(</span><em class="sig-param">cnn</em>, <em class="sig-param">data_container</em>, <em class="sig-param">feature_files</em>, <em class="sig-param">destination_basename</em>, <em class="sig-param">output_format='GTiff'</em>, <em class="sig-param">creation_options=[]</em>, <em class="sig-param">CNN_MODE=False</em>, <em class="sig-param">exclude_feature_nodata=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/apply_model_to_data.html#apply_model_to_raster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.apply_model_to_data.apply_model_to_raster" title="Permalink to this definition">¶</a></dt>
 <dd><p>Apply a trained model to a raster file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -192,7 +192,7 @@
 <li><p><strong>feature_files</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]) – Per-site feature files to apply the model to</p></li>
 <li><p><strong>destination_basename</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Base of the output file (will get appropriate extension)</p></li>
 <li><p><strong>output_format</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – A viable gdal output data format.</p></li>
-<li><p><strong>creation_options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]) – GDAL creation options to pass for output file, e.g.: [‘TILED=YES’, ‘COMPRESS=DEFLATE’]</p></li>
+<li><p><strong>creation_options</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]) – GDAL creation options to pass for output file, e.g.: [‘TILED=YES’, ‘COMPRESS=DEFLATE’]</p></li>
 <li><p><strong>CNN_MODE</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Should the model be applied in CNN mode?</p></li>
 <li><p><strong>exclude_feature_nodata</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Flag to remove all pixels in features without data from applied model</p></li>
 </ul>
@@ -211,19 +211,15 @@
 
 <dl class="function">
 <dt id="bfgn.data_management.apply_model_to_data.maximum_likelihood_classification">
-<code class="sig-prename descclassname">bfgn.data_management.apply_model_to_data.</code><code class="sig-name descname">maximum_likelihood_classification</code><span class="sig-paren">(</span><em class="sig-param">likelihood_file</em>, <em class="sig-param">output_file_base</em>, <em class="sig-param">make_png=True</em>, <em class="sig-param">make_tif=False</em>, <em class="sig-param">png_dpi=200</em>, <em class="sig-param">output_nodata_value=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/apply_model_to_data.html#maximum_likelihood_classification"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.apply_model_to_data.maximum_likelihood_classification" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">bfgn.data_management.apply_model_to_data.</code><code class="sig-name descname">maximum_likelihood_classification</code><span class="sig-paren">(</span><em class="sig-param">likelihood_file</em>, <em class="sig-param">data_container</em>, <em class="sig-param">destination_basename</em>, <em class="sig-param">output_format='GTiff'</em>, <em class="sig-param">creation_options=[]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/apply_model_to_data.html#maximum_likelihood_classification"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.apply_model_to_data.maximum_likelihood_classification" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a n-band map of probabilities to a classified image using maximum likelihood.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>cnn</strong> – Pre-trained keras CNN model</p></li>
-<li><p><strong>data_container</strong> – Holds info like scalers</p></li>
-<li><p><strong>feature_file</strong> – File with feature data to apply the model to</p></li>
-<li><p><strong>destination_basename</strong> – Base of the output file (will get a .tif or .png extention)</p></li>
-<li><p><strong>make_png</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Should an output be created in PNG format?</p></li>
-<li><p><strong>make_tif</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Should an output be created in TIF format?</p></li>
-<li><p><strong>CNN_MODE</strong> – Should the model be applied in CNN mode?</p></li>
-<li><p><strong>exclude_feature_nodata</strong> – Flag to remove all pixels in features without data from applied model</p></li>
+<li><p><strong>likelihood_file</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – File with per-class likelihoods</p></li>
+<li><p><strong>data_container</strong> (<a class="reference internal" href="#bfgn.data_management.data_core.DataContainer" title="bfgn.data_management.data_core.DataContainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataContainer</span></code></a>) – Holds info like scalers</p></li>
+<li><p><strong>destination_basename</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Base of the output file (will get appropriate extension)</p></li>
+<li><p><strong>creation_options</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]) – GDAL creation options to pass for output file, e.g.: [‘TILED=YES’, ‘COMPRESS=DEFLATE’]</p></li>
 </ul>
 </dd>
 </dl>
@@ -333,6 +329,29 @@
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dataset</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="bfgn.data_management.common_io.convert_envi_file">
+<code class="sig-prename descclassname">bfgn.data_management.common_io.</code><code class="sig-name descname">convert_envi_file</code><span class="sig-paren">(</span><em class="sig-param">original_file</em>, <em class="sig-param">destination_basename</em>, <em class="sig-param">output_format</em>, <em class="sig-param">cleanup=False</em>, <em class="sig-param">creation_options=[]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/data_management/common_io.html#convert_envi_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.data_management.common_io.convert_envi_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert an ENVI file to another output format with a gdal_translate call</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>original_file</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Source envi file</p></li>
+<li><p><strong>destination_basename</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Base of the output file (will get appropriate extension)</p></li>
+<li><p><strong>output_format</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – A viable gdal output data format.</p></li>
+<li><p><strong>cleanup</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – boolean indicating whether or not to cleanup original envi files</p></li>
+<li><p><strong>creation_options</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[~T]) – GDAL creation options to pass for output file, e.g.: [‘TILED=YES’, ‘COMPRESS=DEFLATE’]</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>

@@ -171,7 +171,7 @@
         <span class="n">feature_files</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
         <span class="n">destination_basename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">output_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;GTiff&#39;</span><span class="p">,</span>
-        <span class="n">creation_options</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">creation_options</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
         <span class="n">CNN_MODE</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">exclude_feature_nodata</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -193,8 +193,6 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">assert</span> <span class="n">CNN_MODE</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;CNN mode application not yet supported&#39;</span>
-    <span class="k">if</span> <span class="n">creation_options</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">creation_options</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="n">config</span> <span class="o">=</span> <span class="n">data_container</span><span class="o">.</span><span class="n">config</span>
 
@@ -211,7 +209,7 @@
 
     <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Check file validity&#39;</span><span class="p">)</span>
     <span class="n">invalid_files</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
-    <span class="k">for</span> <span class="n">_f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">feature_sets</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">_f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">feature_sets</span><span class="p">)):</span>
         <span class="k">if</span> <span class="n">feature_sets</span><span class="p">[</span><span class="n">_f</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">invalid_files</span> <span class="o">+=</span> <span class="s1">&#39;Invalid file: </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">feature_files</span><span class="p">[</span><span class="n">_f</span><span class="p">])</span>
     <span class="k">assert</span> <span class="n">invalid_files</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">invalid_files</span>
@@ -243,8 +241,7 @@
 
     <span class="k">for</span> <span class="n">_row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">y_len</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">data_build</span><span class="o">.</span><span class="n">loss_window_radius</span><span class="o">*</span><span class="mi">2</span><span class="p">),</span> <span class="n">ncols</span><span class="o">=</span><span class="mi">80</span><span class="p">):</span>
         <span class="n">_row</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">_row</span><span class="p">,</span> <span class="n">y_len</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">config</span><span class="o">.</span><span class="n">data_build</span><span class="o">.</span><span class="n">window_radius</span><span class="p">)</span>
-        <span class="n">col_dat</span> <span class="o">=</span> <span class="n">_read_chunk_by_row</span><span class="p">(</span><span class="n">feature_sets</span><span class="p">,</span> <span class="n">internal_ul_list</span><span class="p">,</span> <span class="n">x_len</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">data_build</span><span class="o">.</span><span class="n">window_radius</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="n">_row</span><span class="p">,</span>
-                                     <span class="n">data_container</span><span class="o">.</span><span class="n">feature_raw_band_types</span><span class="p">)</span>
+        <span class="n">col_dat</span> <span class="o">=</span> <span class="n">_read_chunk_by_row</span><span class="p">(</span><span class="n">feature_sets</span><span class="p">,</span> <span class="n">internal_ul_list</span><span class="p">,</span> <span class="n">x_len</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">data_build</span><span class="o">.</span><span class="n">window_radius</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="n">_row</span><span class="p">)</span>
         <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Read data chunk of shape: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">col_dat</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
 
         <span class="n">tile_dat</span><span class="p">,</span> <span class="n">x_index</span> <span class="o">=</span> <span class="n">_convert_chunk_to_tiles</span><span class="p">(</span>
@@ -252,7 +249,7 @@
         <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Data tiled to shape: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tile_dat</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
 
         <span class="n">tile_dat</span> <span class="o">=</span> <span class="n">ooc_functions</span><span class="o">.</span><span class="n">one_hot_encode_array</span><span class="p">(</span><span class="n">data_container</span><span class="o">.</span><span class="n">feature_raw_band_types</span><span class="p">,</span> <span class="n">tile_dat</span><span class="p">,</span>
-                                                      <span class="n">data_container</span><span class="o">.</span><span class="n">feature_per_band_encoded_values</span><span class="p">)</span>
+                                                      <span class="n">per_band_encoding</span><span class="o">=</span><span class="n">data_container</span><span class="o">.</span><span class="n">feature_per_band_encoded_values</span><span class="p">)</span>
         <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Data one_hot_encoded.  New shape: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tile_dat</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
 
         <span class="k">if</span> <span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">data_build</span><span class="o">.</span><span class="n">feature_mean_centering</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">):</span>
@@ -290,30 +287,66 @@
         <span class="n">output_memmap</span><span class="p">[:,</span> <span class="n">outrow</span><span class="p">:</span><span class="n">outrow</span><span class="o">+</span><span class="n">config</span><span class="o">.</span><span class="n">data_build</span><span class="o">.</span><span class="n">loss_window_radius</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">output</span>
         <span class="k">del</span> <span class="n">output_memmap</span>
 
-    <span class="k">if</span> <span class="p">(</span><span class="n">output_format</span> <span class="o">!=</span> <span class="s1">&#39;ENVI&#39;</span><span class="p">):</span>
-        <span class="n">final_outname</span> <span class="o">=</span> <span class="n">destination_basename</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">output_format</span> <span class="o">==</span> <span class="s1">&#39;GTiff&#39;</span><span class="p">):</span>
-            <span class="n">final_outname</span> <span class="o">+=</span> <span class="s1">&#39;.tif&#39;</span>
-        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Output format </span><span class="si">{}</span><span class="s1">.  Converting ENVI file to output data with creation options </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span>
-                      <span class="nb">format</span><span class="p">(</span><span class="n">output_format</span><span class="p">,</span> <span class="n">creation_options</span><span class="p">))</span>
+    <span class="n">common_io</span><span class="o">.</span><span class="n">convert_envi_file</span><span class="p">(</span><span class="n">temporary_outname</span><span class="p">,</span> <span class="n">destination_basename</span><span class="p">,</span> <span class="n">output_format</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">creation_options</span><span class="p">)</span></div>
 
-        <span class="n">cmd_str</span> <span class="o">=</span> <span class="s1">&#39;gdal_translate </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1"> -of </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">temporary_outname</span><span class="p">,</span> <span class="n">final_outname</span><span class="p">,</span> <span class="n">output_format</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">co</span> <span class="ow">in</span> <span class="n">creation_options</span><span class="p">:</span>
-            <span class="n">cmd_str</span> <span class="o">+=</span> <span class="s1">&#39; -co </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">co</span><span class="p">)</span>
-        <span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">cmd_str</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">test_outdataset</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">final_outname</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GA_ReadOnly</span><span class="p">)</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">test_outdataset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
-            <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Format transform successfull, cleanup ENVI files </span><span class="si">{}</span><span class="s1">, </span><span class="si">{}</span><span class="s1">, </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span>
-                          <span class="nb">format</span><span class="p">(</span><span class="n">temporary_outname</span><span class="p">,</span> <span class="n">temporary_outname</span> <span class="o">+</span> <span class="s1">&#39;.hdr&#39;</span><span class="p">,</span> <span class="n">temporary_outname</span> <span class="o">+</span> <span class="s1">&#39;.aux.xml&#39;</span><span class="p">))</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">temporary_outname</span><span class="p">)</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">temporary_outname</span> <span class="o">+</span> <span class="s1">&#39;.hdr&#39;</span><span class="p">)</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">temporary_outname</span> <span class="o">+</span> <span class="s1">&#39;.aux.xml&#39;</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
-                <span class="k">pass</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Failed to successfully convert output ENVI file to </span><span class="si">{}</span><span class="s1">.  ENVI file available at: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span>
-                          <span class="nb">format</span><span class="p">(</span><span class="n">output_format</span><span class="p">,</span> <span class="n">temporary_outname</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="maximum_likelihood_classification"><a class="viewcode-back" href="../../../bfgn.data_management.html#bfgn.data_management.apply_model_to_data.maximum_likelihood_classification">[docs]</a><span class="k">def</span> <span class="nf">maximum_likelihood_classification</span><span class="p">(</span>
+        <span class="n">likelihood_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">data_container</span><span class="p">:</span> <span class="n">DataContainer</span><span class="p">,</span>
+        <span class="n">destination_basename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">output_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;GTiff&#39;</span><span class="p">,</span>
+        <span class="n">creation_options</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; Convert a n-band map of probabilities to a classified image using maximum likelihood.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        likelihood_file: File with per-class likelihoods</span>
+<span class="sd">        data_container: Holds info like scalers</span>
+<span class="sd">        destination_basename: Base of the output file (will get appropriate extension)</span>
+<span class="sd">        creation_options: GDAL creation options to pass for output file, e.g.: [&#39;TILED=YES&#39;, &#39;COMPRESS=DEFLATE&#39;]</span>
+
+<span class="sd">    :Returns</span>
+<span class="sd">        None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">likelihood_file</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GA_ReadOnly</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">dataset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;Invalid liklihood_file&#39;</span>
+
+    <span class="c1"># Initialize Output Dataset</span>
+    <span class="n">driver</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GetDriverByName</span><span class="p">(</span><span class="s1">&#39;ENVI&#39;</span><span class="p">)</span>
+    <span class="n">driver</span><span class="o">.</span><span class="n">Register</span><span class="p">()</span>
+
+    <span class="n">temporary_outname</span> <span class="o">=</span> <span class="n">destination_basename</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">output_format</span> <span class="o">!=</span> <span class="s1">&#39;ENVI&#39;</span><span class="p">):</span>
+        <span class="n">temporary_outname</span> <span class="o">=</span> <span class="n">temporary_outname</span> <span class="o">+</span> <span class="s1">&#39;_temporary_ENVI_file&#39;</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Creating output envi file: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">temporary_outname</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Creating temporary output envi file: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">temporary_outname</span><span class="p">))</span>
+
+    <span class="n">outDataset</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">Create</span><span class="p">(</span><span class="n">temporary_outname</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">RasterXSize</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">RasterYSize</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GDT_Int16</span><span class="p">)</span>
+    <span class="n">outDataset</span><span class="o">.</span><span class="n">SetProjection</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetProjection</span><span class="p">())</span>
+    <span class="n">outDataset</span><span class="o">.</span><span class="n">SetGeoTransform</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetGeoTransform</span><span class="p">())</span>
+    <span class="k">del</span> <span class="n">outDataset</span>
+
+    <span class="k">for</span> <span class="n">_row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">RasterYSize</span><span class="p">),</span> <span class="n">ncols</span><span class="o">=</span><span class="mi">80</span><span class="p">):</span>
+        <span class="n">col_dat</span> <span class="o">=</span> <span class="n">_read_chunk_by_row</span><span class="p">([</span><span class="n">dataset</span><span class="p">],</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]],</span> <span class="n">dataset</span><span class="o">.</span><span class="n">RasterXSize</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">_row</span><span class="p">)</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Read data chunk of shape: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">col_dat</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+
+        <span class="n">col_dat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">col_dat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">out_dat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">col_dat</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">+</span> <span class="n">data_container</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">raw_files</span><span class="o">.</span><span class="n">response_nodata_value</span>
+        <span class="k">for</span> <span class="n">_encoded_value</span> <span class="ow">in</span> <span class="n">data_container</span><span class="o">.</span><span class="n">response_per_band_encoded_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">out_dat</span><span class="p">[</span><span class="n">col_dat</span> <span class="o">==</span> <span class="n">_encoded_value</span><span class="p">]</span> <span class="o">=</span> <span class="n">data_container</span><span class="o">.</span><span class="n">response_per_band_encoded_values</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">_encoded_value</span><span class="p">]</span>
+        <span class="n">out_dat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">out_dat</span><span class="p">,(</span><span class="n">out_dat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">out_dat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Convert output shape from (y,x,b) to (b,y,x)&#39;</span><span class="p">)</span>
+        <span class="n">out_dat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">moveaxis</span><span class="p">(</span><span class="n">out_dat</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">output_memmap</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">memmap</span><span class="p">(</span><span class="n">temporary_outname</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r+&#39;</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">RasterYSize</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">RasterXSize</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">)</span>
+        <span class="n">output_memmap</span><span class="p">[:,</span> <span class="n">_row</span><span class="p">:</span><span class="n">_row</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">out_dat</span>
+        <span class="k">del</span> <span class="n">output_memmap</span>
+
+    <span class="n">common_io</span><span class="o">.</span><span class="n">convert_envi_file</span><span class="p">(</span><span class="n">temporary_outname</span><span class="p">,</span> <span class="n">destination_basename</span><span class="p">,</span> <span class="n">output_format</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">creation_options</span><span class="p">)</span></div>
 
 
 <span class="k">def</span> <span class="nf">_convert_chunk_to_tiles</span><span class="p">(</span><span class="n">feature_data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span> <span class="n">loss_window_radius</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">window_radius</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> \
@@ -343,7 +376,7 @@
 
 
 <span class="k">def</span> <span class="nf">_read_chunk_by_row</span><span class="p">(</span><span class="n">feature_sets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">],</span> <span class="n">pixel_upper_lefts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="n">x_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">y_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-                       <span class="n">line_offset</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">raw_band_types</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
+                       <span class="n">line_offset</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Read a chunk of feature data line-by-line.</span>
 
@@ -353,22 +386,20 @@
 <span class="sd">        x_size: size of x data to read</span>
 <span class="sd">        y_size: size of y data to read</span>
 <span class="sd">        line_offset: line offset from UL of each set to start reading at</span>
-<span class="sd">        raw_band_types: band types before encoding</span>
-<span class="sd">        categorical_encodings: encodings of each categorical band type</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        feature_array: feature array</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">total_features</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">raw_band_types</span><span class="p">)</span>
+    <span class="n">total_features</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">([</span><span class="n">f</span><span class="o">.</span><span class="n">RasterCount</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">feature_sets</span><span class="p">])</span>
     <span class="n">output_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">y_size</span><span class="p">,</span> <span class="n">x_size</span><span class="p">,</span> <span class="n">total_features</span><span class="p">))</span>
 
     <span class="n">feat_ind</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">for</span> <span class="n">_feat</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">feature_sets</span><span class="p">)):</span>
         <span class="n">dat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">feature_sets</span><span class="p">[</span><span class="n">_feat</span><span class="p">]</span><span class="o">.</span><span class="n">RasterCount</span><span class="p">,</span> <span class="n">y_size</span><span class="p">,</span> <span class="n">x_size</span><span class="p">))</span>
         <span class="k">for</span> <span class="n">_line</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">y_size</span><span class="p">):</span>
-            <span class="n">dat</span><span class="p">[:,</span> <span class="n">_line</span><span class="p">:</span><span class="n">_line</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">feature_sets</span><span class="p">[</span><span class="n">_feat</span><span class="p">]</span><span class="o">.</span><span class="n">ReadAsArray</span><span class="p">(</span><span class="n">pixel_upper_lefts</span><span class="p">[</span><span class="n">_feat</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
-                                                                       <span class="n">pixel_upper_lefts</span><span class="p">[</span><span class="n">_feat</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">line_offset</span> <span class="o">+</span> <span class="n">_line</span><span class="p">,</span> <span class="n">x_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+            <span class="n">dat</span><span class="p">[:,</span> <span class="n">_line</span><span class="p">:</span><span class="n">_line</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">feature_sets</span><span class="p">[</span><span class="n">_feat</span><span class="p">]</span><span class="o">.</span><span class="n">ReadAsArray</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">pixel_upper_lefts</span><span class="p">[</span><span class="n">_feat</span><span class="p">][</span><span class="mi">0</span><span class="p">]),</span>
+                                                                       <span class="nb">int</span><span class="p">(</span><span class="n">pixel_upper_lefts</span><span class="p">[</span><span class="n">_feat</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">line_offset</span> <span class="o">+</span> <span class="n">_line</span><span class="p">),</span> <span class="n">x_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
         <span class="c1"># Swap dat from (b,y,x) to (y,x,b)</span>
         <span class="n">dat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">moveaxis</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
 
@@ -378,68 +409,8 @@
     <span class="k">return</span> <span class="n">output_array</span>
 
 
-<div class="viewcode-block" id="maximum_likelihood_classification"><a class="viewcode-back" href="../../../bfgn.data_management.html#bfgn.data_management.apply_model_to_data.maximum_likelihood_classification">[docs]</a><span class="k">def</span> <span class="nf">maximum_likelihood_classification</span><span class="p">(</span>
-        <span class="n">likelihood_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">output_file_base</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">make_png</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">make_tif</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">png_dpi</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
-        <span class="n">output_nodata_value</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot; Convert a n-band map of probabilities to a classified image using maximum likelihood.</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        cnn:  Pre-trained keras CNN model</span>
-<span class="sd">        data_container: Holds info like scalers</span>
-<span class="sd">        feature_file: File with feature data to apply the model to</span>
-<span class="sd">        destination_basename: Base of the output file (will get a .tif or .png extention)</span>
 
-<span class="sd">        make_png: Should an output be created in PNG format?</span>
-<span class="sd">        make_tif: Should an output be created in TIF format?</span>
-<span class="sd">        CNN_MODE: Should the model be applied in CNN mode?</span>
-<span class="sd">        exclude_feature_nodata: Flag to remove all pixels in features without data from applied model</span>
-
-<span class="sd">    :Returns</span>
-<span class="sd">        None</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">output_tif_file</span> <span class="o">=</span> <span class="n">output_file_base</span> <span class="o">+</span> <span class="s1">&#39;.tif&#39;</span>
-    <span class="n">output_png_file</span> <span class="o">=</span> <span class="n">output_file_base</span> <span class="o">+</span> <span class="s1">&#39;.png&#39;</span>
-
-    <span class="n">dataset</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">likelihood_file</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GA_ReadOnly</span><span class="p">)</span>
-
-    <span class="n">output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">dataset</span><span class="o">.</span><span class="n">RasterYSize</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">RasterXSize</span><span class="p">))</span>
-    <span class="n">output</span><span class="p">[</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">ReadAsArray</span><span class="p">()</span> <span class="o">==</span> <span class="n">dataset</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">GetNoDataValue</span><span class="p">()]</span> <span class="o">=</span> <span class="n">output_nodata_value</span>
-
-    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">RasterYSize</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span> <span class="n">ncols</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Calculating max likelihood&#39;</span><span class="p">):</span>
-        <span class="n">prob</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">ReadAsArray</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">RasterXSize</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="n">output</span><span class="p">[</span><span class="n">line</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">prob</span><span class="p">)</span>
-        <span class="n">output</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">prob</span> <span class="o">==</span> <span class="n">output_nodata_value</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)]</span> <span class="o">=</span> <span class="n">output_nodata_value</span>
-
-    <span class="k">if</span> <span class="p">(</span><span class="n">make_tif</span><span class="p">):</span>
-        <span class="n">driver</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GetDriverByName</span><span class="p">(</span><span class="s1">&#39;GTiff&#39;</span><span class="p">)</span>
-        <span class="n">driver</span><span class="o">.</span><span class="n">Register</span><span class="p">()</span>
-
-        <span class="n">outDataset</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">Create</span><span class="p">(</span><span class="n">output_tif_file</span><span class="p">,</span>
-                                   <span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
-                                   <span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-                                   <span class="mi">1</span><span class="p">,</span>
-                                   <span class="n">gdal</span><span class="o">.</span><span class="n">GDT_Float32</span><span class="p">,</span>
-                                   <span class="n">options</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;COMPRESS=LZW&#39;</span><span class="p">])</span>
-
-        <span class="n">outDataset</span><span class="o">.</span><span class="n">SetProjection</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetProjection</span><span class="p">())</span>
-        <span class="n">outDataset</span><span class="o">.</span><span class="n">SetGeoTransform</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetGeoTransform</span><span class="p">())</span>
-        <span class="n">outDataset</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">WriteArray</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="k">del</span> <span class="n">outDataset</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">make_png</span><span class="p">):</span>
-
-        <span class="n">output</span><span class="p">[</span><span class="n">output</span> <span class="o">==</span> <span class="n">output_nodata_value</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
-        <span class="n">cmap</span> <span class="o">=</span> <span class="n">mpl</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">Set1_r</span>
-        <span class="n">cmap</span><span class="o">.</span><span class="n">set_bad</span><span class="p">(</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">)</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">output_png_file</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">png_dpi</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">clf</span><span class="p">()</span></div>
 </pre></div>
 
            </div>

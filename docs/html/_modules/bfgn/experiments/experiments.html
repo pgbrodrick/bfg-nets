@@ -147,6 +147,7 @@
 <span></span><span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">os</span>
 
+<span class="kn">import</span> <span class="nn">keras</span>
 <span class="kn">import</span> <span class="nn">keras.backend</span> <span class="k">as</span> <span class="nn">K</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
@@ -266,6 +267,37 @@
             <span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">is_model_trained</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="n">_KEY_HISTORY_IS_MODEL_TRAINED</span><span class="p">]</span></div>
 
+<div class="viewcode-block" id="Experiment.copy_model_from_experiment"><a class="viewcode-back" href="../../../bfgn.experiments.html#bfgn.experiments.experiments.Experiment.copy_model_from_experiment">[docs]</a>    <span class="k">def</span> <span class="nf">copy_model_from_experiment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reference_config</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Loading external model&#39;</span><span class="p">)</span>
+
+        <span class="n">loss_function</span> <span class="o">=</span> <span class="n">losses</span><span class="o">.</span><span class="n">get_cropped_loss_function</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">loss_metric</span><span class="p">,</span>
+            <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">data_build</span><span class="o">.</span><span class="n">window_radius</span><span class="p">,</span>
+            <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">data_build</span><span class="o">.</span><span class="n">loss_window_radius</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">weighted</span>
+        <span class="p">)</span>
+
+        <span class="n">err_str</span> <span class="o">=</span> <span class="s1">&#39;No model exists at </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">get_model_filepath</span><span class="p">(</span><span class="n">reference_config</span><span class="p">))</span>
+        <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">get_model_filepath</span><span class="p">(</span><span class="n">reference_config</span><span class="p">)),</span> <span class="n">err_str</span>
+
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Loading existing model from model training directory at </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">get_model_filepath</span><span class="p">(</span><span class="n">reference_config</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loaded_existing_model</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="n">prev_model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span>
+            <span class="n">get_model_filepath</span><span class="p">(</span><span class="n">reference_config</span><span class="p">),</span>
+            <span class="n">custom_objects</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_cropped_loss&#39;</span><span class="p">:</span> <span class="n">loss_function</span><span class="p">}</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">clone_model</span><span class="p">(</span><span class="n">prev_model</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">set_weights</span><span class="p">(</span><span class="n">prev_model</span><span class="o">.</span><span class="n">get_weights</span><span class="p">())</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">loaded_existing_history</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;model_name&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">,</span>
+             <span class="n">_KEY_HISTORY_IS_MODEL_TRAINED</span><span class="p">:</span> <span class="kc">False</span>
+            <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_model_trained</span> <span class="o">=</span> <span class="kc">False</span></div>
+
 <div class="viewcode-block" id="Experiment.fit_model_with_data_container"><a class="viewcode-back" href="../../../bfgn.experiments.html#bfgn.experiments.experiments.Experiment.fit_model_with_data_container">[docs]</a>    <span class="k">def</span> <span class="nf">fit_model_with_data_container</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_container</span><span class="p">:</span> <span class="n">DataContainer</span><span class="p">,</span> <span class="n">resume_training</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_model_with_sequences</span><span class="p">(</span>
             <span class="n">data_container</span><span class="o">.</span><span class="n">training_sequence</span><span class="p">,</span> <span class="n">data_container</span><span class="o">.</span><span class="n">validation_sequence</span><span class="p">,</span> <span class="n">resume_training</span>
@@ -284,15 +316,21 @@
 
         <span class="n">model_callbacks</span> <span class="o">=</span> <span class="n">callbacks</span><span class="o">.</span><span class="n">get_model_callbacks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span>
 
+        <span class="n">init_epoch</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lr&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">()))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">init_epoch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lr&#39;</span><span class="p">)))</span>
+
         <span class="n">new_history</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">fit_generator</span><span class="p">(</span>
             <span class="n">training_sequence</span><span class="p">,</span>
             <span class="n">epochs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">max_epochs</span><span class="p">,</span>
             <span class="n">verbose</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">verbosity</span><span class="p">,</span>
             <span class="n">callbacks</span><span class="o">=</span><span class="n">model_callbacks</span><span class="p">,</span>
             <span class="n">validation_data</span><span class="o">=</span><span class="n">validation_sequence</span><span class="p">,</span>
-            <span class="n">max_queue_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">max_queue_size</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="n">compute_access</span><span class="o">.</span><span class="n">get_count_available_cpus</span><span class="p">()),</span>
+            <span class="n">use_multiprocessing</span><span class="o">=</span><span class="n">compute_access</span><span class="o">.</span><span class="n">get_count_available_cpus</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">workers</span><span class="o">=</span><span class="n">compute_access</span><span class="o">.</span><span class="n">get_count_available_cpus</span><span class="p">(),</span>
             <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="n">initial_epoch</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lr&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">())),</span>
+            <span class="n">initial_epoch</span><span class="o">=</span><span class="n">init_epoch</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="n">histories</span><span class="o">.</span><span class="n">combine_histories</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">,</span> <span class="n">new_history</span><span class="o">.</span><span class="n">history</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="n">_KEY_HISTORY_IS_MODEL_TRAINED</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
