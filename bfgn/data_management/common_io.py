@@ -85,20 +85,19 @@ def get_overlapping_extent_coordinates(dataset_list_of_lists: List[List[gdal.Dat
     return [interior_x, interior_y], [exterior_x, exterior_y]
 
 
-def get_all_interior_extent_subset_pixel_locations(gdal_datasets: List[List[gdal.Dataset]], window_radius: int, inner_window_radius: int = None, shuffle: bool = True):
+def get_all_interior_extent_subset_pixel_locations(gdal_datasets: List[List[gdal.Dataset]], window_radius: int,
+            sample_spacing, shuffle: bool = True) -> Tuple[List[List[int]], np.array]:
 
-    if (inner_window_radius is None):
-        inner_window_radius = window_radius
 
     all_upper_lefts, x_px_size, y_px_size = get_overlapping_extent(gdal_datasets)
 
     _logger.debug('Calculate pixel-based interior offsets for data acquisition')
     x_sample_locations = [x for x in range(0,
                                            int(x_px_size - 2*window_radius)-1,
-                                           int(inner_window_radius*2))]
+                                           int(sample_spacing*2))]
     y_sample_locations = [y for y in range(0,
                                            int(y_px_size - 2*window_radius)-1,
-                                           int(inner_window_radius*2))]
+                                           int(sample_spacing*2))]
 
     xy_sample_locations = np.zeros((len(x_sample_locations)*len(y_sample_locations), 2)).astype(int)
     xy_sample_locations[:, 0] = np.matlib.repmat(

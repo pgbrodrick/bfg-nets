@@ -21,31 +21,21 @@ def build_training_data_ordered(
         response_raw_band_types: List[str]
 ) -> Tuple[List[np.array], List[np.array], List[np.array], List[str], List[str], List[np.array], List[np.array]]:
 
-    # TODO:  check default, and set it to a standard value
+
+    _logger.warning('Data build mode is dense.  This means validation data may overlap with training data.  Typically'+\
+                    ' used when overfitting is somehow not an issue, or is intentional (fine tuning).  Also assumes'+\
+                    ' data are densely packed - if sparse, will be very slow.')
+
+
     if config.data_build.random_seed:
         _logger.debug('Setting random seed to {}'.format(config.data_build.random_seed))
         np.random.seed(config.data_build.random_seed)
 
-    # TODO:  move to config checks
-    if (isinstance(config.data_build.max_samples, list)):
-        if (len(config.data_build.max_samples) != len(config.raw_files.feature_files)):
-            raise Exception('max_samples must equal feature_files length, or be an integer.')
-
     n_features = int(np.sum([len(feat_type) for feat_type in feature_raw_band_types]))
     n_responses = int(np.sum([len(resp_type) for resp_type in response_raw_band_types]))
 
-    # TODO:  move to checks
-    feature_memmap_size_gb = n_features*4*config.data_build.max_samples * \
-        (config.data_build.window_radius*2)**2 / 1024.**3
-    assert feature_memmap_size_gb < config.data_build.max_built_data_gb,\
-        'Expected feature memmap size: {} Gb, limit: {}'.format(
-            feature_memmap_size_gb, config.data_build.max_built_data_gb)
-
-    response_memmap_size_gb = n_responses*4*config.data_build.max_samples * \
-        (config.data_build.window_radius*2)**2 / 1024.**3
-    assert response_memmap_size_gb < config.data_build.max_built_data_gb,\
-        'Expected feature memmap size: {} Gb, limit: {}'.format(
-            response_memmap_size_gb, config.data_build.max_built_data_gb)
+    _check_max_file_size(config, n_features, 'feature')
+    _check_max_file_size(config, n_responses, 'response')
 
     features, responses = _open_temporary_features_responses_data_files(config, n_features, n_responses)
     _log_munged_data_information(features, responses)
@@ -64,7 +54,7 @@ def build_training_data_ordered(
             gdal_datasets=[feature_sets, [rs for rs in response_sets if rs is not None],
                            [bs for bs in [boundary_set] if bs is not None]],
             window_radius=config.data_build.window_radius,
-            inner_window_radius=config.data_build.loss_window_radius,
+            sample_spacing=config.data_build.loss_window_radius,
             shuffle=True)
 
         all_site_upper_lefts.append(all_set_upper_lefts)
@@ -895,6 +885,24 @@ def check_built_data_files_exist(config: configs.Config) -> bool:
         _logger.info('Built data files were not found at paths: {}'.format(', '.join(missing_files)))
     return not missing_files
 
+def _check_max_file_size(config: configs.Config, depth: int, type: str = '') -> None:
+    """
+    Check to make sure max file size is not too large
+    Args:
+        config: Current configuration
+        depth: how deep the feature/response space is
+        type: additional info for the assertion print (typically feature or response)
+    Returns:
+        None
+    """
+    memmap_size_gb = depth*4*config.data_build.max_samples * \
+        (config.data_build.window_radius*2)**2 / 1024.**3
+
+    outstr = 'Expected {} memmap size: {} Gb, limit: {}'.format(type,
+              memmap_size_gb, config.data_build.max_built_data_gb)
+
+    assert memmap_size_gb < config.data_build.max_built_data_gb, outstr
+
 
 ################### Logging Functions ##############################
 
@@ -910,3 +918,6 @@ def _log_munged_data_information(
         _logger.info('Munged responses shape: {}'.format(responses_munged.shape))
     if weights_munged is not None:
         _logger.info('Munged weights shape: {}'.format(weights_munged.shape))
+
+
+

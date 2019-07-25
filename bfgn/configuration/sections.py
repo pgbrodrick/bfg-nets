@@ -283,6 +283,7 @@ class DataBuild(BaseConfigSection):
             errors.append('response_data_format is invalid option ({}), must be one of the following:  {}'.format(
                 self.network_category, ','.join(response_data_format_options)
             ))
+
         return errors
 
 
