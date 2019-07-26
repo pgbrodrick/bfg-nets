@@ -26,6 +26,7 @@ data_build:
   response_min_value: OPTIONAL
   response_max_value: OPTIONAL
   response_background_values: OPTIONAL
+  sample_spacing: OPTIONAL
 data_samples:
   apply_random_transformations: false
   batch_size: 100

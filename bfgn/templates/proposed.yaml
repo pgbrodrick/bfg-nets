@@ -42,6 +42,7 @@ data_build:
   feature_mean_centering: false
   feature_nodata_maximum_fraction: 0.0
   response_background_value: REQUIRED
+  sample_spacing: OPTIONAL
 data_samples:
   apply_random_transformations: false
   batch_size: 100

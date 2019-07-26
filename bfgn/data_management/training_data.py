@@ -22,9 +22,13 @@ def build_training_data_ordered(
 ) -> Tuple[List[np.array], List[np.array], List[np.array], List[str], List[str], List[np.array], List[np.array]]:
 
 
-    _logger.warning('Data build mode is dense.  This means validation data may overlap with training data.  Typically'+\
-                    ' used when overfitting is somehow not an issue, or is intentional (fine tuning).  Also assumes'+\
-                    ' data are densely packed - if sparse, will be very slow.')
+    if (config.data_build.sample_spacing < config.data_build.loss_window_radius):
+        _logger.warning('The config parameter sample_spacing, {}, is less than the parameter loss_window_radius, {},'+\
+            'resulting in a dense data sampling.  This means validation data may overlap with training '+\
+            'data, and that not all samples are independent.  Typically used when overfitting likelihood is'+\
+            'very low, or more likely intentional (fine tuning).  Also assumes data are densely packed - '+\
+            'if data are sparse, this will be very slow.'.format(config.data_build.sample_spacing,
+                                                                 config.data_build.loss_window_radius))
 
 
     if config.data_build.random_seed:
@@ -54,7 +58,7 @@ def build_training_data_ordered(
             gdal_datasets=[feature_sets, [rs for rs in response_sets if rs is not None],
                            [bs for bs in [boundary_set] if bs is not None]],
             window_radius=config.data_build.window_radius,
-            sample_spacing=config.data_build.loss_window_radius,
+            sample_spacing=config.data_build.sample_spacing,
             shuffle=True)
 
         all_site_upper_lefts.append(all_set_upper_lefts)

@@ -275,6 +275,14 @@ class DataBuild(BaseConfigSection):
     response_background_values = DEFAULT_OPTIONAL_VALUE
     """int: Built data samples containing only these responses are discarded and not included in the final built data 
     files."""
+    _sample_spacing = int
+    sample_spacing = DEFAULT_OPTIONAL_VALUE
+    """int: Determines the minimum distance (in pixels) between each sample during an ordered data build (the default sampling style).  If unspecified,
+    the value will default to the loss_window_size, which will produce the maximum number of samples where the loss
+    window does not overlap (all samples are independent).  However, in some cases it useful to force this value to be
+    larger (if there is reason to provide extra spacing between samples), or smaller (in the case of fine-tuning or
+    in certain limited data situations).  If sample_spacing is smaller than the loss_window_radius, a warning will be
+    thrown, as all samples are not necessarily independent, and overfitting is a distinct possibility."""
 
     def _check_config_validity(self) -> List[str]:
         errors = list()
