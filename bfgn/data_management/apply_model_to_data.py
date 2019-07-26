@@ -19,7 +19,7 @@ plt.switch_backend('Agg')  # Needed for remote server plotting
 _logger = logging.getLogger(__name__)
 
 
-def apply_model_to_raster(
+def apply_model_to_site(
         cnn: keras.Model,
         data_container: DataContainer,
         feature_files: List[str],
