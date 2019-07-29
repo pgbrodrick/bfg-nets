@@ -120,7 +120,7 @@ def apply_model_to_site(
 
         if (exclude_feature_nodata):
             nd_set = np.all(np.isnan(tile_dat), axis=-1)
-            pred_y[nd_set, ...] = config.data_build.raw_files.response_nodata_value
+            pred_y[nd_set, ...] = config.raw_files.response_nodata_value
         del tile_dat
 
         window_radius_difference = config.data_build.window_radius - config.data_build.loss_window_radius
