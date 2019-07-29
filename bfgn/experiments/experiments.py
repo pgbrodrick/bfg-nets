@@ -181,8 +181,7 @@ class Experiment(object):
             callbacks=model_callbacks,
             validation_data=validation_sequence,
             max_queue_size=min(10,2*compute_access.get_count_available_cpus()),
-            use_multiprocessing=compute_access.get_count_available_cpus() > 1,
-            workers=compute_access.get_count_available_cpus(),
+            use_multiprocessing=False,
             shuffle=False,
             initial_epoch=init_epoch,
         )
