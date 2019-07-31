@@ -227,7 +227,7 @@ def build_training_data_from_response_points(
                 if (vector[_sample]['geometry']['type'] == 'Point'):
                     x_sample_points.append(vector[_sample]['geometry']['coordinates'][0])
                     y_sample_points.append(vector[_sample]['geometry']['coordinates'][1])
-                    band_responses.append(vector[_sample]['properties'][config.raw_files.response_vector_property_name_type])
+                    band_responses.append(vector[_sample]['properties'][config.raw_files.response_vector_property_name])
 
                     if (x_sample_points[-1] < lower_coord[0] + resolution[0]*config.data_build.window_radius or
                         x_sample_points[-1] > upper_coord[0] - resolution[0]*config.data_build.window_radius or

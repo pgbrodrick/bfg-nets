@@ -192,7 +192,7 @@ class RawFiles(BaseConfigSection):
     """bool: Should projection differences between feature and response files be ignored? This option
     should only be true if the user is confident that projections are identical despite encodings."""
     _response_vector_property_name_type = str
-    response_vector_property_name_type = 'Class'
+    response_vector_property_name = 'Class'
     """str: This is the property (or column) of the response vector to use for categorization or regression.  This value
     is only used if the response file(s) is/are in vector format."""
 
