@@ -337,7 +337,7 @@ def build_training_data_from_response_points(
                 local_xy_px_locations.append([0, 0])  # doesn't matter the value, won't get used
 
             for _file in range(len(feature_sets)):
-                gt = feature_sets[_site].GetGeoTransform()
+                gt = feature_sets[_file].GetGeoTransform()
                 local_xy_px_locations.append([int((xy_sample_locations[_cr, 0] - gt[0])/gt[1]),
                                               int((xy_sample_locations[_cr, 1] - gt[3])/gt[5])])
 
