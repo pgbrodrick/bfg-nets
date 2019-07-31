@@ -257,7 +257,7 @@ def build_training_data_from_response_points(
     total_samples = sum([site_responses.shape[0] for site_responses in responses_per_site])
     _logger.debug('Found {} total samples across {} sites'.format(total_samples, len(responses_per_site)))
 
-    assert config.data_build.max_samples > 0, 'need at least 1 valid sample...'
+    assert total_samples > 0, 'need at least 1 valid sample...'
 
     if total_samples > config.data_build.max_samples:
         _logger.debug('Discard samples because the number of valid samples ({}) exceeds the max samples requested ({})'
