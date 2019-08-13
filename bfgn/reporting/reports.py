@@ -45,13 +45,15 @@ class Reporter(object):
             _logger.info('Plot Training Sequence Figures')
             sampled = samples.Samples(
                 self.data_container.training_sequence, self.experiment.model, self.experiment.config,
-                self.experiment.is_model_trained, data_sequence_label='Training'
+                self.experiment.is_model_trained, self.data_container.feature_band_types, 
+                self.data_container.response_band_types, data_sequence_label='Training'
             )
             self._create_model_report_for_sequence(sampled, pdf)
             _logger.info('Plot Validation Sequence Figures')
             sampled = samples.Samples(
                 self.data_container.validation_sequence, self.experiment.model, self.experiment.config,
-                self.experiment.is_model_trained, data_sequence_label='Validation'
+                self.experiment.is_model_trained, self.data_container.feature_band_types, 
+                self.data_container.response_band_types, data_sequence_label='Validation'
             )
             self._create_model_report_for_sequence(sampled, pdf)
             _logger.info('Plot Model History')
@@ -62,7 +64,7 @@ class Reporter(object):
         if self.experiment.is_model_trained and self._get_response_data_types() is _LABEL_CATEGORICAL:
             self._add_figures(self.plot_classification_report(sampled), pdf)
             self._add_figures(self.plot_confusion_matrix(sampled), pdf, tight=False)
-        self._add_figures(self.plot_single_sequence_prediction_histogram(sampled), pdf)
+        self._add_figures(self.plot_sample_histograms(sampled), pdf)
         self._add_figures(self.plot_samples(sampled), pdf)
         if self.experiment.config.model_reporting.network_progression_show_full:
             self._add_figures(self.plot_network_feature_progression(sampled, compact=False), pdf)
@@ -121,11 +123,11 @@ class Reporter(object):
             max_responses_per_page=max_responses_per_page
         )
 
-    def plot_single_sequence_prediction_histogram(
+    def plot_sample_histograms(
             self, sampled: samples.Samples, max_responses_per_page: int = None
     ) -> List[plt.Figure]:
         max_responses_per_page = max_responses_per_page or self.experiment.config.model_reporting.max_responses_per_page
-        return samples_viz.plot_single_sequence_prediction_histogram(
+        return samples_viz.plot_sample_histograms(
             sampled,
             max_responses_per_page=max_responses_per_page
         )

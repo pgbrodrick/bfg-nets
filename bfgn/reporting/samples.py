@@ -1,5 +1,6 @@
 import keras
 import numpy as np
+from typing import List
 
 from bfgn.configuration import configs
 from bfgn.data_management import scalers, sequences
@@ -30,6 +31,8 @@ class Samples(object):
     trans_predictions_range = None
     weights = None
     weights_range = None
+    feature_band_types = None
+    response_band_types = None
 
     def __init__(
             self,
@@ -37,6 +40,8 @@ class Samples(object):
             model: keras.Model,
             config: configs.Config,
             is_model_trained: bool,
+            feature_band_types: List[str],
+            response_band_types: List[str],
             data_sequence_label: str = None
     ) -> None:
         self.data_sequence = data_sequence
@@ -44,6 +49,8 @@ class Samples(object):
         self.is_model_trained = is_model_trained
         self.config = config
         self.data_sequence_label = data_sequence_label
+        self.feature_band_types = feature_band_types
+        self.response_band_types = response_band_types
         self._get_sampled_features_responses_and_set_metadata_and_weights()
         if is_model_trained:
             self.trans_predictions = model.predict(self.trans_features)
