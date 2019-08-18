@@ -110,7 +110,9 @@ def build_training_data_ordered(
                             x_loc = all_site_xy_locations[_site][subset[_x_loc],0]
                             if (np.any(np.isnan(col_dat[x_loc:x_loc+config.data_build.loss_window_radius*2]))):
                                 valid_locations[subset[_x_loc]] = False
-                            
+            _logger.debug('Filtering {} points from sprasity check.'.format(len(valid_locations) - np.sum(valid_locations)))
+            all_site_xy_locations[_site] = all_site_xy_locations[_site][valid_locations,:]
+
 
 
 
