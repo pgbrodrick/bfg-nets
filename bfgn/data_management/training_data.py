@@ -85,9 +85,9 @@ def build_training_data_ordered(
             response_sets = [common_io.noerror_open(loc_file) for loc_file in config.raw_files.response_files[_site]]
             
             valid_locations = np.ones(all_site_xy_locations[_site].shape[0]).astype(bool)
-            for _row in tqdm(range(0, all_site_xy_sizes[_site][1], config.data_build.loss_window_radius*2), ncols=80):
+            for _row in tqdm(range(0, all_site_xy_sizes[_site][1], config.data_build.loss_window_radius*2), ncols=80, desc='Sparse-data filter'):
 
-                subset = np.where(all_site_xy_locations[_site][:,1] == _row)
+                subset = np.squeeze(np.where(all_site_xy_locations[_site][:,1] == _row))
                 if (len(subset) > 0):
                     col_dat = common_io.read_chunk_by_row(response_sets, 
                         all_site_upper_lefts[_site][len(config.raw_files.feature_files[_site])], all_site_xy_sizes[_site][0],
