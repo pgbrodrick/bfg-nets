@@ -86,9 +86,9 @@ def build_training_data_ordered(
             boundary_set = common_io.get_site_boundary_set(config, _site)
 
             valid_locations = np.ones(all_site_xy_locations[_site].shape[0]).astype(bool)
-            for _row in tqdm(range(0, all_site_xy_sizes[_site][1], config.data_build.loss_window_radius*2), ncols=80):
+            for _row in tqdm(range(0, all_site_xy_sizes[_site][1], config.data_build.loss_window_radius*2), ncols=80, desc='Sparse-data filter'):
 
-                subset = np.where(all_site_xy_locations[_site][:,1] == _row)
+                subset = np.squeeze(np.where(all_site_xy_locations[_site][:,1] == _row))
                 if (len(subset) > 0):
 
                     if (boundary_set is not None):
