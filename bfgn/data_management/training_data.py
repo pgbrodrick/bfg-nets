@@ -61,7 +61,7 @@ def build_training_data_ordered(
         response_sets = [common_io.noerror_open(loc_file) for loc_file in config.raw_files.response_files[_site]]
         boundary_set = common_io.get_site_boundary_set(config, _site)
 
-        all_set_upper_lefts, xy_sample_locations, xy_max_size = 
+        all_set_upper_lefts, xy_sample_locations, xy_max_size = \
             common_io.get_all_interior_extent_subset_pixel_locations(
             gdal_datasets=[feature_sets, [rs for rs in response_sets if rs is not None],
                            [bs for bs in [boundary_set] if bs is not None]],
@@ -127,11 +127,10 @@ def build_training_data_ordered(
                                               _sample_index)
 
             _site_xy_index[_site] += 1
-            popped = None
             if (_site_xy_index[_site] >= len(all_site_xy_locations[_site])):
                 _logger.debug('All locations in site {} have been checked.'.format(
                     config.raw_files.feature_files[_site][0]))
-                popped = remaining_sites.pop(_rs_index)
+                remaining_sites.pop(_rs_index)
 
                 _rs_index += 1
                 if (_rs_index >= len(remaining_sites)):
