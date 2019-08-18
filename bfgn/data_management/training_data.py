@@ -80,17 +80,16 @@ def build_training_data_ordered(
         reference_subset_geotransforms.append(ref_subset_geotransform)
 
     if (config.data_build.sparse_read is True):
-        _logger.debug('Sparse read is on, so use a pass the response file to thin down the training points to read')
+        _logger.info('Sparse read is on, so use a pass the response file to thin down the training points to read')
         for _site in range(0, len(config.raw_files.feature_files)):
             response_sets = [common_io.noerror_open(loc_file) for loc_file in config.raw_files.response_files[_site]]
             boundary_set = common_io.get_site_boundary_set(config, _site)
 
             valid_locations = np.ones(all_site_xy_locations[_site].shape[0]).astype(bool)
-            for _row in tqdm(range(0, all_site_xy_sizes[_site][1], config.data_build.loss_window_radius*2), ncols=80, desc='Sparse-data filter'):
+            for _row in tqdm(range(0, all_site_xy_sizes[_site][1]), ncols=80, desc='Sparse-data filter'):
 
                 subset = np.squeeze(np.where(all_site_xy_locations[_site][:, 1] == _row))
                 if (len(subset) > 0):
-
                     if (boundary_set is not None):
                         bound_dat = common_io.read_chunk_by_row(boundary_set,
                                                                 all_site_upper_lefts[_site][-1], all_site_xy_sizes[_site][0],
@@ -100,7 +99,7 @@ def build_training_data_ordered(
                         for _x_loc in range(len(subset)):
                             x_loc = all_site_xy_locations[_site][subset[_x_loc], 0]
                             boundary_fraction = np.sum(np.isnan(
-                                bound_dat[x_loc:x_loc+config.data_build.loss_window_radius*2])) / float(config.data_build.loss_window_radius**2)
+                                bound_dat[:,x_loc:x_loc+config.data_build.loss_window_radius*2])) / float(config.data_build.loss_window_radius**2)
                             _logger.debug('Sparsity check boundary fraction: {}'.format(boundary_fraction))
                             if (boundary_fraction > config.data_build.response_nodata_maximum_fraction):
                                 valid_locations[subset[_x_loc]] = False
@@ -110,16 +109,16 @@ def build_training_data_ordered(
                         col_dat = common_io.read_chunk_by_row(response_sets,
                                                               all_site_upper_lefts[_site][len(
                                                                   config.raw_files.feature_files[_site])], all_site_xy_sizes[_site][0],
-                                                              config.data_build.loss_window_radius*2, _row, nodata_value=config.raw_files.feature_nodata_value)
+                                                              config.data_build.loss_window_radius*2, _row, nodata_value=config.raw_files.response_nodata_value)
 
                         for _x_loc in range(len(subset)):
                             x_loc = all_site_xy_locations[_site][subset[_x_loc], 0]
-                            response_fraction = np.sum(
-                                np.isnan(col_dat[x_loc:x_loc+config.data_build.loss_window_radius*2])) / float(config.data_build.loss_window_radius**2)
-                            _logger.debug('Sparsity check response fraction: {}'.format(response_fraction))
-                            if (response_fraction > config.data_build.response_nodata_maximum_fraction):
+                            response_fractions = np.sum(
+                                np.isnan(col_dat[:,x_loc:x_loc+config.data_build.loss_window_radius*2]),axis=(0,1)) / float(config.data_build.loss_window_radius**2)
+                            _logger.debug('Sparsity check response fraction: {}'.format(response_fractions))
+                            if (np.any(response_fractions > config.data_build.response_nodata_maximum_fraction)):
                                 valid_locations[subset[_x_loc]] = False
-            _logger.debug('Filtering {} out of {} points from sprasity check.'.format(
+            _logger.info('Filtering {} out of {} points from sprasity check.'.format(
                 len(valid_locations) - np.sum(valid_locations), len(valid_locations)))
             all_site_xy_locations[_site] = all_site_xy_locations[_site][valid_locations, :]
 
