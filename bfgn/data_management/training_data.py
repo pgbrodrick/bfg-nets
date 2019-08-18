@@ -90,7 +90,7 @@ def build_training_data_ordered(
                 subset = np.where(all_site_xy_locations[_site][:,1] == _row)
                 if (len(subset) > 0):
                     col_dat = common_io.read_chunk_by_row(response_sets, 
-                        all_site_upper_lefts[_site], all_site_xy_sizes[_site][0], 
+                        all_site_upper_lefts[_site][len(config.raw_files.feature_files[_site])], all_site_xy_sizes[_site][0],
                         config.data_build.window_radius*2, _row,nodata_value=config.raw_files.feature_nodata_value)
 
                     for _x_loc in range(len(subset)):
