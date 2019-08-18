@@ -85,7 +85,6 @@ def build_training_data_ordered(
             response_sets = [common_io.noerror_open(loc_file) for loc_file in config.raw_files.response_files[_site]]
             
             valid_locations = np.ones(all_site_xy_locations[_site].shape[0]).astype(bool)
-            un_y_locations = np.unique(all_site_xy_locations[_site][:,1])
             for _row in tqdm(range(0, all_site_xy_sizes[_site][1], config.data_build.loss_window_radius*2), ncols=80):
 
                 subset = np.where(all_site_xy_locations[_site][:,1] == _row)
