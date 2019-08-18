@@ -97,10 +97,11 @@ def build_training_data_ordered(
                                                           config.data_build.window_radius*2, _row,nodata_value=config.raw_files.boundary_bad_value)
 
                         for _x_loc in range(len(subset)):
+                            x_loc = all_site_xy_locations[_site][subset[_x_loc],0]
                             if (np.any(np.isnan(bound_dat[x_loc:x_loc+config.data_build.loss_window_radius*2]))):
                                 valid_locations[subset[_x_loc]] = False
 
-                    if (np.any(valid_locations[subset[_x_loc]])):
+                    if (np.any(valid_locations[subset])):
 
                         col_dat = common_io.read_chunk_by_row(response_sets,
                             all_site_upper_lefts[_site][len(config.raw_files.feature_files[_site])], all_site_xy_sizes[_site][0],
