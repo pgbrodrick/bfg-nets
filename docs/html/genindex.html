@@ -177,7 +177,7 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="bfgn.reporting.visualizations.html#bfgn.reporting.visualizations.subplots.add_internal_window_to_subplot">add_internal_window_to_subplot() (in module bfgn.reporting.visualizations.subplots)</a>
 </li>
-      <li><a href="bfgn.data_management.html#bfgn.data_management.apply_model_to_data.apply_model_to_raster">apply_model_to_raster() (in module bfgn.data_management.apply_model_to_data)</a>
+      <li><a href="bfgn.data_management.html#bfgn.data_management.apply_model_to_data.apply_model_to_site">apply_model_to_site() (in module bfgn.data_management.apply_model_to_data)</a>
 </li>
       <li><a href="bfgn.configuration.html#bfgn.configuration.sections.DataSamples.apply_random_transformations">apply_random_transformations (bfgn.configuration.sections.DataSamples attribute)</a>
 </li>
@@ -516,7 +516,11 @@
       <li><a href="bfgn.configuration.html#bfgn.configuration.sections.CallbackReducedLearningRate.factor">factor (bfgn.configuration.sections.CallbackReducedLearningRate attribute)</a>
 </li>
       <li><a href="bfgn.data_management.html#bfgn.data_management.data_core.DataContainer.feature_band_types">feature_band_types (bfgn.data_management.data_core.DataContainer attribute)</a>
+
+      <ul>
+        <li><a href="bfgn.reporting.html#bfgn.reporting.samples.Samples.feature_band_types">(bfgn.reporting.samples.Samples attribute)</a>
 </li>
+      </ul></li>
       <li><a href="bfgn.configuration.html#bfgn.configuration.sections.RawFiles.feature_data_type">feature_data_type (bfgn.configuration.sections.RawFiles attribute)</a>
 </li>
       <li><a href="bfgn.configuration.html#bfgn.configuration.sections.RawFiles.feature_files">feature_files (bfgn.configuration.sections.RawFiles attribute)</a>
@@ -533,14 +537,14 @@
 </li>
       <li><a href="bfgn.data_management.html#bfgn.data_management.data_core.DataContainer.feature_raw_band_types">feature_raw_band_types (bfgn.data_management.data_core.DataContainer attribute)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="bfgn.data_management.html#bfgn.data_management.data_core.DataContainer.feature_scaler">feature_scaler (bfgn.data_management.data_core.DataContainer attribute)</a>
 
       <ul>
         <li><a href="bfgn.data_management.html#bfgn.data_management.sequences.BaseSequence.feature_scaler">(bfgn.data_management.sequences.BaseSequence attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="bfgn.configuration.html#bfgn.configuration.sections.DataSamples.feature_scaler_names">feature_scaler_names (bfgn.configuration.sections.DataSamples attribute)</a>
 </li>
       <li><a href="bfgn.data_management.html#bfgn.data_management.data_core.DataContainer.features">features (bfgn.data_management.data_core.DataContainer attribute)</a>
@@ -883,6 +887,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="bfgn.architectures.html#bfgn.architectures.config_sections.BaseArchitectureConfigSection.padding">padding (bfgn.architectures.config_sections.BaseArchitectureConfigSection attribute)</a>
 </li>
+      <li><a href="bfgn.reporting.html#bfgn.reporting.reports.Reporter.parity_plot">parity_plot() (bfgn.reporting.reports.Reporter method)</a>
+</li>
       <li><a href="bfgn.configuration.html#bfgn.configuration.sections.CallbackEarlyStopping.patience">patience (bfgn.configuration.sections.CallbackEarlyStopping attribute)</a>
 
       <ul>
@@ -949,16 +955,18 @@
 </li>
       <li><a href="bfgn.reporting.visualizations.html#bfgn.reporting.visualizations.subplots.plot_raw_responses">plot_raw_responses() (in module bfgn.reporting.visualizations.subplots)</a>
 </li>
+      <li><a href="bfgn.reporting.html#bfgn.reporting.reports.Reporter.plot_regression_deviation">plot_regression_deviation() (bfgn.reporting.reports.Reporter method)</a>
+</li>
       <li><a href="bfgn.reporting.visualizations.html#bfgn.reporting.visualizations.samples.plot_regression_samples">plot_regression_samples() (in module bfgn.reporting.visualizations.samples)</a>
 </li>
-      <li><a href="bfgn.reporting.html#bfgn.reporting.reports.Reporter.plot_samples">plot_samples() (bfgn.reporting.reports.Reporter method)</a>
-</li>
-      <li><a href="bfgn.reporting.html#bfgn.reporting.reports.Reporter.plot_single_sequence_prediction_histogram">plot_single_sequence_prediction_histogram() (bfgn.reporting.reports.Reporter method)</a>
+      <li><a href="bfgn.reporting.html#bfgn.reporting.reports.Reporter.plot_sample_histograms">plot_sample_histograms() (bfgn.reporting.reports.Reporter method)</a>
 
       <ul>
-        <li><a href="bfgn.reporting.visualizations.html#bfgn.reporting.visualizations.samples.plot_single_sequence_prediction_histogram">(in module bfgn.reporting.visualizations.samples)</a>
+        <li><a href="bfgn.reporting.visualizations.html#bfgn.reporting.visualizations.samples.plot_sample_histograms">(in module bfgn.reporting.visualizations.samples)</a>
 </li>
       </ul></li>
+      <li><a href="bfgn.reporting.html#bfgn.reporting.reports.Reporter.plot_samples">plot_samples() (bfgn.reporting.reports.Reporter method)</a>
+</li>
       <li><a href="bfgn.reporting.visualizations.html#bfgn.reporting.visualizations.model_performance.plot_spatial_classification_error">plot_spatial_classification_error() (in module bfgn.reporting.visualizations.model_performance)</a>
 </li>
       <li><a href="bfgn.reporting.html#bfgn.reporting.reports.Reporter.plot_spatial_error">plot_spatial_error() (bfgn.reporting.reports.Reporter method)</a>
@@ -1013,6 +1021,8 @@
 </li>
       <li><a href="bfgn.configuration.html#bfgn.configuration.sections.RawFiles">RawFiles (class in bfgn.configuration.sections)</a>
 </li>
+      <li><a href="bfgn.data_management.html#bfgn.data_management.common_io.read_chunk_by_row">read_chunk_by_row() (in module bfgn.data_management.common_io)</a>
+</li>
       <li><a href="bfgn.data_management.html#bfgn.data_management.training_data.read_labeling_chunk">read_labeling_chunk() (in module bfgn.data_management.training_data)</a>
 </li>
       <li><a href="bfgn.data_management.html#bfgn.data_management.common_io.read_map_subset">read_map_subset() (in module bfgn.data_management.common_io)</a>
@@ -1021,14 +1031,18 @@
 </li>
       <li><a href="bfgn.data_management.html#bfgn.data_management.training_data.read_segmentation_chunk">read_segmentation_chunk() (in module bfgn.data_management.training_data)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="bfgn.reporting.html#bfgn.reporting.reports.Reporter">Reporter (class in bfgn.reporting.reports)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="bfgn.configuration.html#bfgn.configuration.sections.DataBuild.response_background_values">response_background_values (bfgn.configuration.sections.DataBuild attribute)</a>
 </li>
       <li><a href="bfgn.data_management.html#bfgn.data_management.data_core.DataContainer.response_band_types">response_band_types (bfgn.data_management.data_core.DataContainer attribute)</a>
+
+      <ul>
+        <li><a href="bfgn.reporting.html#bfgn.reporting.samples.Samples.response_band_types">(bfgn.reporting.samples.Samples attribute)</a>
 </li>
+      </ul></li>
       <li><a href="bfgn.configuration.html#bfgn.configuration.sections.RawFiles.response_data_type">response_data_type (bfgn.configuration.sections.RawFiles attribute)</a>
 </li>
       <li><a href="bfgn.configuration.html#bfgn.configuration.sections.RawFiles.response_files">response_files (bfgn.configuration.sections.RawFiles attribute)</a>
@@ -1036,6 +1050,8 @@
       <li><a href="bfgn.configuration.html#bfgn.configuration.sections.DataBuild.response_max_value">response_max_value (bfgn.configuration.sections.DataBuild attribute)</a>
 </li>
       <li><a href="bfgn.configuration.html#bfgn.configuration.sections.DataBuild.response_min_value">response_min_value (bfgn.configuration.sections.DataBuild attribute)</a>
+</li>
+      <li><a href="bfgn.configuration.html#bfgn.configuration.sections.DataBuild.response_nodata_maximum_fraction">response_nodata_maximum_fraction (bfgn.configuration.sections.DataBuild attribute)</a>
 </li>
       <li><a href="bfgn.configuration.html#bfgn.configuration.sections.RawFiles.response_nodata_value">response_nodata_value (bfgn.configuration.sections.RawFiles attribute)</a>
 </li>
@@ -1050,6 +1066,8 @@
 </li>
       </ul></li>
       <li><a href="bfgn.configuration.html#bfgn.configuration.sections.DataSamples.response_scaler_names">response_scaler_names (bfgn.configuration.sections.DataSamples attribute)</a>
+</li>
+      <li><a href="bfgn.configuration.html#bfgn.configuration.sections.RawFiles.response_vector_property_name">response_vector_property_name (bfgn.configuration.sections.RawFiles attribute)</a>
 </li>
       <li><a href="bfgn.data_management.html#bfgn.data_management.data_core.DataContainer.responses">responses (bfgn.data_management.data_core.DataContainer attribute)</a>
 </li>
@@ -1098,6 +1116,8 @@
       <li><a href="bfgn.data_management.html#bfgn.data_management.scalers.BaseGlobalScaler.scaler_name">scaler_name (bfgn.data_management.scalers.BaseGlobalScaler attribute)</a>
 </li>
       <li><a href="bfgn.configuration.html#bfgn.configuration.sections.BaseConfigSection.set_config_options">set_config_options() (bfgn.configuration.sections.BaseConfigSection method)</a>
+</li>
+      <li><a href="bfgn.configuration.html#bfgn.configuration.sections.DataBuild.sparse_read">sparse_read (bfgn.configuration.sections.DataBuild attribute)</a>
 </li>
       <li><a href="bfgn.data_management.html#bfgn.data_management.scalers.StandardScaler">StandardScaler (class in bfgn.data_management.scalers)</a>
 </li>

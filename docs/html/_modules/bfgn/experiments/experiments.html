@@ -294,8 +294,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">loaded_existing_history</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s1">&#39;model_name&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">dir_out</span><span class="p">,</span>
-             <span class="n">_KEY_HISTORY_IS_MODEL_TRAINED</span><span class="p">:</span> <span class="kc">False</span>
-            <span class="p">}</span>
+            <span class="n">_KEY_HISTORY_IS_MODEL_TRAINED</span><span class="p">:</span> <span class="kc">False</span>
+        <span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">is_model_trained</span> <span class="o">=</span> <span class="kc">False</span></div>
 
 <div class="viewcode-block" id="Experiment.fit_model_with_data_container"><a class="viewcode-back" href="../../../bfgn.experiments.html#bfgn.experiments.experiments.Experiment.fit_model_with_data_container">[docs]</a>    <span class="k">def</span> <span class="nf">fit_model_with_data_container</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_container</span><span class="p">:</span> <span class="n">DataContainer</span><span class="p">,</span> <span class="n">resume_training</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -326,9 +326,8 @@
             <span class="n">verbose</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_training</span><span class="o">.</span><span class="n">verbosity</span><span class="p">,</span>
             <span class="n">callbacks</span><span class="o">=</span><span class="n">model_callbacks</span><span class="p">,</span>
             <span class="n">validation_data</span><span class="o">=</span><span class="n">validation_sequence</span><span class="p">,</span>
-            <span class="n">max_queue_size</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="n">compute_access</span><span class="o">.</span><span class="n">get_count_available_cpus</span><span class="p">()),</span>
-            <span class="n">use_multiprocessing</span><span class="o">=</span><span class="n">compute_access</span><span class="o">.</span><span class="n">get_count_available_cpus</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span>
-            <span class="n">workers</span><span class="o">=</span><span class="n">compute_access</span><span class="o">.</span><span class="n">get_count_available_cpus</span><span class="p">(),</span>
+            <span class="n">max_queue_size</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">compute_access</span><span class="o">.</span><span class="n">get_count_available_cpus</span><span class="p">()),</span>
+            <span class="n">use_multiprocessing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="n">initial_epoch</span><span class="o">=</span><span class="n">init_epoch</span><span class="p">,</span>
         <span class="p">)</span>

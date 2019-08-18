@@ -323,14 +323,29 @@
 </dd></dl>
 
 <dl class="method">
-<dt id="bfgn.reporting.reports.Reporter.plot_single_sequence_prediction_histogram">
-<code class="sig-name descname">plot_single_sequence_prediction_histogram</code><span class="sig-paren">(</span><em class="sig-param">sampled</em>, <em class="sig-param">max_responses_per_page=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/reports.html#Reporter.plot_single_sequence_prediction_histogram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.reports.Reporter.plot_single_sequence_prediction_histogram" title="Permalink to this definition">¶</a></dt>
+<dt id="bfgn.reporting.reports.Reporter.plot_sample_histograms">
+<code class="sig-name descname">plot_sample_histograms</code><span class="sig-paren">(</span><em class="sig-param">sampled</em>, <em class="sig-param">max_responses_per_page=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/reports.html#Reporter.plot_sample_histograms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.reports.Reporter.plot_sample_histograms" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Figure</span></code>]</p>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="method">
+<dt id="bfgn.reporting.reports.Reporter.plot_regression_deviation">
+<code class="sig-name descname">plot_regression_deviation</code><span class="sig-paren">(</span><em class="sig-param">train_sampled</em>, <em class="sig-param">val_sampled=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/reports.html#Reporter.plot_regression_deviation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.reports.Reporter.plot_regression_deviation" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Figure</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="bfgn.reporting.reports.Reporter.parity_plot">
+<code class="sig-name descname">parity_plot</code><span class="sig-paren">(</span><em class="sig-param">pred_Y</em>, <em class="sig-param">test_Y</em>, <em class="sig-param">ax</em>, <em class="sig-param">response_ind</em>, <em class="sig-param">bins=200</em>, <em class="sig-param">bounds=[]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/reports.html#Reporter.parity_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.reports.Reporter.parity_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="bfgn.reporting.reports.Reporter.plot_spatial_error">
@@ -359,7 +374,7 @@
 <span id="bfgn-reporting-samples-module"></span><h2>bfgn.reporting.samples module<a class="headerlink" href="#module-bfgn.reporting.samples" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="bfgn.reporting.samples.Samples">
-<em class="property">class </em><code class="sig-prename descclassname">bfgn.reporting.samples.</code><code class="sig-name descname">Samples</code><span class="sig-paren">(</span><em class="sig-param">data_sequence</em>, <em class="sig-param">model</em>, <em class="sig-param">config</em>, <em class="sig-param">is_model_trained</em>, <em class="sig-param">data_sequence_label=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/samples.html#Samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.samples.Samples" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">bfgn.reporting.samples.</code><code class="sig-name descname">Samples</code><span class="sig-paren">(</span><em class="sig-param">data_sequence</em>, <em class="sig-param">model</em>, <em class="sig-param">config</em>, <em class="sig-param">is_model_trained</em>, <em class="sig-param">feature_band_types</em>, <em class="sig-param">response_band_types</em>, <em class="sig-param">data_sequence_label=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bfgn/reporting/samples.html#Samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bfgn.reporting.samples.Samples" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/2/library/functions.html#object" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <dl class="attribute">
 <dt id="bfgn.reporting.samples.Samples.num_samples">
@@ -469,6 +484,16 @@
 <dl class="attribute">
 <dt id="bfgn.reporting.samples.Samples.data_sequence_label">
 <code class="sig-name descname">data_sequence_label</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.reporting.samples.Samples.data_sequence_label" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.reporting.samples.Samples.feature_band_types">
+<code class="sig-name descname">feature_band_types</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.reporting.samples.Samples.feature_band_types" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="bfgn.reporting.samples.Samples.response_band_types">
+<code class="sig-name descname">response_band_types</code><em class="property"> = None</em><a class="headerlink" href="#bfgn.reporting.samples.Samples.response_band_types" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">

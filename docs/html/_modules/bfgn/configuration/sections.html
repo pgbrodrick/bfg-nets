@@ -337,6 +337,10 @@
     <span class="n">ignore_projections</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="sd">&quot;&quot;&quot;bool: Should projection differences between feature and response files be ignored? This option</span>
 <span class="sd">    should only be true if the user is confident that projections are identical despite encodings.&quot;&quot;&quot;</span>
+    <span class="n">_response_vector_property_name_type</span> <span class="o">=</span> <span class="nb">str</span>
+    <span class="n">response_vector_property_name</span> <span class="o">=</span> <span class="s1">&#39;Class&#39;</span>
+    <span class="sd">&quot;&quot;&quot;str: This is the property (or column) of the response vector to use for categorization or regression.  This value</span>
+<span class="sd">    is only used if the response file(s) is/are in vector format.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">_check_config_validity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
         <span class="n">errors</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
@@ -407,6 +411,9 @@
     <span class="n">_feature_nodata_maximum_fraction_type</span> <span class="o">=</span> <span class="nb">float</span>
     <span class="n">feature_nodata_maximum_fraction</span> <span class="o">=</span> <span class="mf">0.0</span>
     <span class="sd">&quot;&quot;&quot;float: Only include built data samples with a lower proportion of missing feature data values.&quot;&quot;&quot;</span>
+    <span class="n">_response_nodata_maximum_fraction_type</span> <span class="o">=</span> <span class="nb">float</span>
+    <span class="n">response_nodata_maximum_fraction</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="sd">&quot;&quot;&quot;float: Only include built data samples with a lower proportion of missing response data values.&quot;&quot;&quot;</span>
     <span class="c1"># TODO: Phil:  expand to multiple response values per file?</span>
     <span class="n">_response_min_value_type</span> <span class="o">=</span> <span class="nb">float</span>
     <span class="n">response_min_value</span> <span class="o">=</span> <span class="n">DEFAULT_OPTIONAL_VALUE</span>
@@ -421,6 +428,12 @@
     <span class="n">response_background_values</span> <span class="o">=</span> <span class="n">DEFAULT_OPTIONAL_VALUE</span>
     <span class="sd">&quot;&quot;&quot;int: Built data samples containing only these responses are discarded and not included in the final built data </span>
 <span class="sd">    files.&quot;&quot;&quot;</span>
+    <span class="n">_sparse_read_type</span> <span class="o">=</span> <span class="nb">bool</span>
+    <span class="n">sparse_read</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="sd">&quot;&quot;&quot;bool: Flag indicating if data should be read in &#39;sparse&#39; mode.  If the response input data is sparse within a</span>
+<span class="sd">    large raster, this will dramatically speed up the data build.  This is facilitated through an initial pass through</span>
+<span class="sd">    the response and boundary files.  If file is large and densely populated, this in unecessary and slows down the</span>
+<span class="sd">    read.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">_check_config_validity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
         <span class="n">errors</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
