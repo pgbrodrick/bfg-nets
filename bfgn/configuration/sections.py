@@ -265,6 +265,9 @@ class DataBuild(BaseConfigSection):
     _feature_nodata_maximum_fraction_type = float
     feature_nodata_maximum_fraction = 0.0
     """float: Only include built data samples with a lower proportion of missing feature data values."""
+    _response_nodata_maximum_fraction_type = float
+    response_nodata_maximum_fraction = 0.0
+    """float: Only include built data samples with a lower proportion of missing response data values."""
     # TODO: Phil:  expand to multiple response values per file?
     _response_min_value_type = float
     response_min_value = DEFAULT_OPTIONAL_VALUE

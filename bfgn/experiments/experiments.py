@@ -148,8 +148,8 @@ class Experiment(object):
         self.loaded_existing_history = False
         self.history = {
             'model_name': self.config.model_training.dir_out,
-             _KEY_HISTORY_IS_MODEL_TRAINED: False
-            }
+            _KEY_HISTORY_IS_MODEL_TRAINED: False
+        }
         self.is_model_trained = False
 
     def fit_model_with_data_container(self, data_container: DataContainer, resume_training: bool = False) -> None:
@@ -180,7 +180,7 @@ class Experiment(object):
             verbose=self.config.model_training.verbosity,
             callbacks=model_callbacks,
             validation_data=validation_sequence,
-            max_queue_size=min(10,2*compute_access.get_count_available_cpus()),
+            max_queue_size=min(10, 2*compute_access.get_count_available_cpus()),
             use_multiprocessing=False,
             shuffle=False,
             initial_epoch=init_epoch,

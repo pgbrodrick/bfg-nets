@@ -63,11 +63,11 @@ def build_training_data_ordered(
 
         all_set_upper_lefts, xy_sample_locations, xy_max_size = \
             common_io.get_all_interior_extent_subset_pixel_locations(
-            gdal_datasets=[feature_sets, [rs for rs in response_sets if rs is not None],
-                           [bs for bs in [boundary_set] if bs is not None]],
-            window_radius=config.data_build.window_radius,
-            inner_window_radius=config.data_build.loss_window_radius,
-            shuffle=True, return_xy_size = True)
+                gdal_datasets=[feature_sets, [rs for rs in response_sets if rs is not None],
+                               [bs for bs in [boundary_set] if bs is not None]],
+                window_radius=config.data_build.window_radius,
+                inner_window_radius=config.data_build.loss_window_radius,
+                shuffle=True, return_xy_size=True)
 
         all_site_upper_lefts.append(all_set_upper_lefts)
         all_site_xy_locations.append(xy_sample_locations)
@@ -88,34 +88,40 @@ def build_training_data_ordered(
             valid_locations = np.ones(all_site_xy_locations[_site].shape[0]).astype(bool)
             for _row in tqdm(range(0, all_site_xy_sizes[_site][1], config.data_build.loss_window_radius*2), ncols=80, desc='Sparse-data filter'):
 
-                subset = np.squeeze(np.where(all_site_xy_locations[_site][:,1] == _row))
+                subset = np.squeeze(np.where(all_site_xy_locations[_site][:, 1] == _row))
                 if (len(subset) > 0):
 
                     if (boundary_set is not None):
                         bound_dat = common_io.read_chunk_by_row(boundary_set,
-                                                          all_site_upper_lefts[_site][-1], all_site_xy_sizes[_site][0],
-                                                          config.data_build.window_radius*2, _row,nodata_value=config.raw_files.boundary_bad_value)
+                                                                all_site_upper_lefts[_site][-1], all_site_xy_sizes[_site][0],
+                                                                config.data_build.loss_window_radius*2, _row,
+                                                                nodata_value=config.raw_files.boundary_bad_value)
 
                         for _x_loc in range(len(subset)):
-                            x_loc = all_site_xy_locations[_site][subset[_x_loc],0]
-                            if (np.any(np.isnan(bound_dat[x_loc:x_loc+config.data_build.loss_window_radius*2]))):
+                            x_loc = all_site_xy_locations[_site][subset[_x_loc], 0]
+                            boundary_fraction = np.sum(np.isnan(
+                                bound_dat[x_loc:x_loc+config.data_build.loss_window_radius*2])) / float(config.data_build.loss_window_radius**2)
+                            _logger.debug('Sparsity check boundary fraction: {}'.format(boundary_fraction))
+                            if (boundary_fraction > config.data_build.response_nodata_maximum_fraction):
                                 valid_locations[subset[_x_loc]] = False
 
                     if (np.any(valid_locations[subset])):
 
                         col_dat = common_io.read_chunk_by_row(response_sets,
-                            all_site_upper_lefts[_site][len(config.raw_files.feature_files[_site])], all_site_xy_sizes[_site][0],
-                            config.data_build.window_radius*2, _row,nodata_value=config.raw_files.feature_nodata_value)
+                                                              all_site_upper_lefts[_site][len(
+                                                                  config.raw_files.feature_files[_site])], all_site_xy_sizes[_site][0],
+                                                              config.data_build.loss_window_radius*2, _row, nodata_value=config.raw_files.feature_nodata_value)
 
                         for _x_loc in range(len(subset)):
-                            x_loc = all_site_xy_locations[_site][subset[_x_loc],0]
-                            if (np.any(np.isnan(col_dat[x_loc:x_loc+config.data_build.loss_window_radius*2]))):
+                            x_loc = all_site_xy_locations[_site][subset[_x_loc], 0]
+                            response_fraction = np.sum(
+                                np.isnan(col_dat[x_loc:x_loc+config.data_build.loss_window_radius*2])) / float(config.data_build.loss_window_radius**2)
+                            _logger.debug('Sparsity check response fraction: {}'.format(response_fraction))
+                            if (response_fraction > config.data_build.response_nodata_maximum_fraction):
                                 valid_locations[subset[_x_loc]] = False
-            _logger.debug('Filtering {} points from sprasity check.'.format(len(valid_locations) - np.sum(valid_locations)))
-            all_site_xy_locations[_site] = all_site_xy_locations[_site][valid_locations,:]
-
-
-
+            _logger.debug('Filtering {} out of {} points from sprasity check.'.format(
+                len(valid_locations) - np.sum(valid_locations), len(valid_locations)))
+            all_site_xy_locations[_site] = all_site_xy_locations[_site][valid_locations, :]
 
     num_reads_per_site = int(np.floor(config.data_build.max_samples / len(config.raw_files.feature_files)))
 
@@ -735,20 +741,22 @@ def read_segmentation_chunk(_site: int,
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         return False
 
-    local_response, mask = common_io.read_map_subset(config.raw_files.response_files[_site],
-                                                     r_ul, window_diameter, mask,
-                                                     config.raw_files.response_nodata_value,
-                                                     lower_bound=config.data_build.response_min_value,
-                                                     upper_bound=config.data_build.response_max_value,
-                                                     reference_geotransform=geotransform)
+    response_mask = mask.copy()
+    local_response, response_mask = common_io.read_map_subset(config.raw_files.response_files[_site],
+                                                              r_ul, window_diameter, response_mask,
+                                                              config.raw_files.response_nodata_value,
+                                                              lower_bound=config.data_build.response_min_value,
+                                                              upper_bound=config.data_build.response_max_value,
+                                                              reference_geotransform=geotransform)
 
-    if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
+    if not _check_mask_data_sufficient(response_mask, config.data_build.response_nodata_maximum_fraction):
         return False
 
-    local_feature, mask = common_io.read_map_subset(config.raw_files.feature_files[_site], f_ul, window_diameter, mask,
-                                                    config.raw_files.feature_nodata_value)
+    feature_mask = mask.copy()
+    local_feature, feature_mask = common_io.read_map_subset(config.raw_files.feature_files[_site], f_ul, window_diameter, feature_mask,
+                                                            config.raw_files.feature_nodata_value)
 
-    if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
+    if not _check_mask_data_sufficient(feature_mask, config.data_build.feature_nodata_maximum_fraction):
         return False
 
     if config.data_build.response_background_values:
@@ -756,8 +764,8 @@ def read_segmentation_chunk(_site: int,
             return False
 
     # Final check (propogate mask forward), and return
-    local_feature[mask, :] = np.nan
-    local_response[mask, :] = np.nan
+    local_feature[feature_mask, :] = np.nan
+    local_response[response_mask, :] = np.nan
 
     features, responses = _open_temporary_features_responses_data_files(
         config, local_feature.shape[-1], local_response.shape[-1], read_type='r+')

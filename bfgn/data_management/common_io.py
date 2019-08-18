@@ -258,7 +258,7 @@ def noerror_open(filename: str, file_handle=gdal.GA_ReadOnly) -> gdal.Dataset:
     return dataset
 
 
-def convert_envi_file(original_file:str, destination_basename: str, output_format: str, cleanup:bool =False, creation_options: List= []) -> None:
+def convert_envi_file(original_file: str, destination_basename: str, output_format: str, cleanup: bool = False, creation_options: List = []) -> None:
     """
     Convert an ENVI file to another output format with a gdal_translate call
 
@@ -284,7 +284,7 @@ def convert_envi_file(original_file:str, destination_basename: str, output_forma
     options = ''
     for co in creation_options:
         options += ' -co {}'.format(co)
-    gdal.Translate(final_outname, gdal.Open(original_file,gdal.GA_ReadOnly), options=options)
+    gdal.Translate(final_outname, gdal.Open(original_file, gdal.GA_ReadOnly), options=options)
 
     test_outdataset = gdal.Open(final_outname, gdal.GA_ReadOnly)
     if (cleanup):
@@ -302,9 +302,8 @@ def convert_envi_file(original_file:str, destination_basename: str, output_forma
                           format(output_format, original_file))
 
 
-
 def read_chunk_by_row(datasets: List[gdal.Dataset], pixel_upper_lefts: List[List[int]], x_size: int, y_size: int,
-                       line_offset: int, nodata_value: float = None) -> np.array:
+                      line_offset: int, nodata_value: float = None) -> np.array:
     """
     Read a chunk of multiple datasets line-by-line.
 
@@ -328,7 +327,7 @@ def read_chunk_by_row(datasets: List[gdal.Dataset], pixel_upper_lefts: List[List
         dat = np.zeros((datasets[_feat].RasterCount, y_size, x_size))
         for _line in range(y_size):
             dat[:, _line:_line+1, :] = datasets[_feat].ReadAsArray(int(pixel_upper_lefts[_feat][0]),
-                                                                       int(pixel_upper_lefts[_feat][1] + line_offset + _line), x_size, 1).astype(np.float32)
+                                                                   int(pixel_upper_lefts[_feat][1] + line_offset + _line), x_size, 1).astype(np.float32)
         # Swap dat from (b,y,x) to (y,x,b)
         dat = np.moveaxis(dat, [0, 1, 2], [2, 0, 1])
 
@@ -338,7 +337,3 @@ def read_chunk_by_row(datasets: List[gdal.Dataset], pixel_upper_lefts: List[List
             output_array[output_array == nodata_value] = np.nan
 
     return output_array
-
-
-
-

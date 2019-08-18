@@ -95,7 +95,8 @@ def apply_model_to_site(
 
     for _row in tqdm(range(0, y_len, config.data_build.loss_window_radius*2), ncols=80):
         _row = min(_row, y_len - 2*config.data_build.window_radius)
-        col_dat = common_io.read_chunk_by_row(feature_sets, internal_ul_list, x_len, config.data_build.window_radius*2, _row)
+        col_dat = common_io.read_chunk_by_row(feature_sets, internal_ul_list, x_len,
+                                              config.data_build.window_radius*2, _row)
         _logger.debug('Read data chunk of shape: {}'.format(col_dat.shape))
 
         tile_dat, x_index = _convert_chunk_to_tiles(
@@ -163,7 +164,6 @@ def maximum_likelihood_classification(
         None
     """
 
-
     dataset = gdal.Open(likelihood_file, gdal.GA_ReadOnly)
     assert dataset is not None, 'Invalid liklihood_file'
 
@@ -184,19 +184,20 @@ def maximum_likelihood_classification(
     del outDataset
 
     for _row in tqdm(range(0, dataset.RasterYSize), ncols=80):
-        col_dat = common_io.read_chunk_by_row([dataset], [[0,0]], dataset.RasterXSize, 1, _row)
+        col_dat = common_io.read_chunk_by_row([dataset], [[0, 0]], dataset.RasterXSize, 1, _row)
         _logger.debug('Read data chunk of shape: {}'.format(col_dat.shape))
 
         col_dat = np.argmax(col_dat, axis=-1)
         out_dat = np.zeros(col_dat.shape) + data_container.config.raw_files.response_nodata_value
         for _encoded_value in data_container.response_per_band_encoded_values[0]:
             out_dat[col_dat == _encoded_value] = data_container.response_per_band_encoded_values[0][int(_encoded_value)]
-        out_dat = np.reshape(out_dat,(out_dat.shape[0],out_dat.shape[1],1))
+        out_dat = np.reshape(out_dat, (out_dat.shape[0], out_dat.shape[1], 1))
 
         _logger.debug('Convert output shape from (y,x,b) to (b,y,x)')
         out_dat = np.moveaxis(out_dat, [0, 1, 2], [1, 2, 0])
 
-        output_memmap = np.memmap(temporary_outname, mode='r+', shape=(1, dataset.RasterYSize, dataset.RasterXSize),dtype=np.int16)
+        output_memmap = np.memmap(temporary_outname, mode='r+',
+                                  shape=(1, dataset.RasterYSize, dataset.RasterXSize), dtype=np.int16)
         output_memmap[:, _row:_row+1, :] = out_dat
         del output_memmap
 
@@ -227,6 +228,3 @@ def _convert_chunk_to_tiles(feature_data: np.array, loss_window_radius: int, win
     col_index = np.array(col_index)
 
     return output_array, col_index
-
-
-
