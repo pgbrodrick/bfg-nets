@@ -265,6 +265,9 @@ class DataBuild(BaseConfigSection):
     _feature_nodata_maximum_fraction_type = float
     feature_nodata_maximum_fraction = 0.0
     """float: Only include built data samples with a lower proportion of missing feature data values."""
+    _response_nodata_maximum_fraction_type = float
+    response_nodata_maximum_fraction = 0.0
+    """float: Only include built data samples with a lower proportion of missing response data values."""
     # TODO: Phil:  expand to multiple response values per file?
     _response_min_value_type = float
     response_min_value = DEFAULT_OPTIONAL_VALUE
@@ -279,6 +282,12 @@ class DataBuild(BaseConfigSection):
     response_background_values = DEFAULT_OPTIONAL_VALUE
     """int: Built data samples containing only these responses are discarded and not included in the final built data 
     files."""
+    _sparse_read_type = bool
+    sparse_read = False
+    """bool: Flag indicating if data should be read in 'sparse' mode.  If the response input data is sparse within a
+    large raster, this will dramatically speed up the data build.  This is facilitated through an initial pass through
+    the response and boundary files.  If file is large and densely populated, this in unecessary and slows down the
+    read."""
 
     def _check_config_validity(self) -> List[str]:
         errors = list()

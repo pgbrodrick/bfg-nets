@@ -85,7 +85,7 @@ def get_overlapping_extent_coordinates(dataset_list_of_lists: List[List[gdal.Dat
     return [interior_x, interior_y], [exterior_x, exterior_y]
 
 
-def get_all_interior_extent_subset_pixel_locations(gdal_datasets: List[List[gdal.Dataset]], window_radius: int, inner_window_radius: int = None, shuffle: bool = True):
+def get_all_interior_extent_subset_pixel_locations(gdal_datasets: List[List[gdal.Dataset]], window_radius: int, inner_window_radius: int = None, shuffle: bool = True, return_xy_size: bool = False):
 
     if (inner_window_radius is None):
         inner_window_radius = window_radius
@@ -110,7 +110,10 @@ def get_all_interior_extent_subset_pixel_locations(gdal_datasets: List[List[gdal
     if (shuffle):
         xy_sample_locations = xy_sample_locations[np.random.permutation(xy_sample_locations.shape[0]), :]
 
-    return all_upper_lefts, xy_sample_locations
+    if return_xy_size:
+        return all_upper_lefts, xy_sample_locations, [x_px_size, y_px_size]
+    else:
+        return all_upper_lefts, xy_sample_locations
 
 
 def read_map_subset(datafiles: List[str], upper_lefts: List[List[int]], window_diameter: int, mask=None,
@@ -255,7 +258,7 @@ def noerror_open(filename: str, file_handle=gdal.GA_ReadOnly) -> gdal.Dataset:
     return dataset
 
 
-def convert_envi_file(original_file:str, destination_basename: str, output_format: str, cleanup:bool =False, creation_options: List= []) -> None:
+def convert_envi_file(original_file: str, destination_basename: str, output_format: str, cleanup: bool = False, creation_options: List = []) -> None:
     """
     Convert an ENVI file to another output format with a gdal_translate call
 
@@ -281,7 +284,7 @@ def convert_envi_file(original_file:str, destination_basename: str, output_forma
     options = ''
     for co in creation_options:
         options += ' -co {}'.format(co)
-    gdal.Translate(final_outname, gdal.Open(original_file,gdal.GA_ReadOnly), options=options)
+    gdal.Translate(final_outname, gdal.Open(original_file, gdal.GA_ReadOnly), options=options)
 
     test_outdataset = gdal.Open(final_outname, gdal.GA_ReadOnly)
     if (cleanup):
@@ -297,3 +300,40 @@ def convert_envi_file(original_file:str, destination_basename: str, output_forma
         else:
             _logger.error('Failed to successfully convert output ENVI file to {}.  ENVI file available at: {}'.
                           format(output_format, original_file))
+
+
+def read_chunk_by_row(datasets: List[gdal.Dataset], pixel_upper_lefts: List[List[int]], x_size: int, y_size: int,
+                      line_offset: int, nodata_value: float = None) -> np.array:
+    """
+    Read a chunk of multiple datasets line-by-line.
+
+    Args:
+        datasets: each feature dataset to read
+        pixel_upper_lefts: upper left hand pixel of each dataset
+        x_size: size of x data to read
+        y_size: size of y data to read
+        line_offset: line offset from UL of each set to start reading at
+        nodata_value: value to encode to np.nan
+
+    Returns:
+        feature_array: feature array
+    """
+
+    total_features = np.sum([f.RasterCount for f in datasets])
+    output_array = np.zeros((y_size, x_size, total_features))
+
+    feat_ind = 0
+    for _feat in range(len(datasets)):
+        dat = np.zeros((datasets[_feat].RasterCount, y_size, x_size))
+        for _line in range(y_size):
+            dat[:, _line:_line+1, :] = datasets[_feat].ReadAsArray(int(pixel_upper_lefts[_feat][0]),
+                                                                   int(pixel_upper_lefts[_feat][1] + line_offset + _line), x_size, 1).astype(np.float32)
+        # Swap dat from (b,y,x) to (y,x,b)
+        dat = np.moveaxis(dat, [0, 1, 2], [2, 0, 1])
+
+        output_array[..., feat_ind:feat_ind+dat.shape[-1]] = dat
+        feat_ind += dat.shape[-1]
+        if (output_array is not None):
+            output_array[output_array == nodata_value] = np.nan
+
+    return output_array

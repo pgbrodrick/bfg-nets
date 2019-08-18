@@ -28,11 +28,15 @@ DATA_DIR = 'scratch'
 if (os.path.isdir(DATA_DIR) is False):
     os.mkdir(DATA_DIR)
 
-dem_data = ['https://github.com/pgbrodrick/ecoCNN/blob/master/data/landscape7_dem_subset.tif', os.path.join(DATA_DIR, 'dem.tif')]
-boundary_data = ['https://github.com/pgbrodrick/ecoCNN/raw/master/data/training_boundary_utm.shp', os.path.join(DATA_DIR, 'training_boundary.shp')]
-mound_data = ['https://github.com/pgbrodrick/ecoCNN/raw/master/data/mounds_utm.shp', os.path.join(DATA_DIR, 'mounds_utm.shp')]
+dem_data = ['https://github.com/pgbrodrick/ecoCNN/blob/master/data/landscape7_dem_subset.tif',
+            os.path.join(DATA_DIR, 'dem.tif')]
+boundary_data = ['https://github.com/pgbrodrick/ecoCNN/raw/master/data/training_boundary_utm.shp',
+                 os.path.join(DATA_DIR, 'training_boundary.shp')]
+mound_data = ['https://github.com/pgbrodrick/ecoCNN/raw/master/data/mounds_utm.shp',
+              os.path.join(DATA_DIR, 'mounds_utm.shp')]
 
-shp_associates = ['.shp','.shx','.dbf','.prj']
+shp_associates = ['.shp', '.shx', '.dbf', '.prj']
+
 
 def get_data_from_url(url, destination):
     print('fetching {}'.format(destination))
@@ -40,6 +44,7 @@ def get_data_from_url(url, destination):
         r = requests.get(url + '?raw=true')
         with open(destination, 'wb') as outfile:
             outfile.write(r.content)
+
 
 get_data_from_url(dem_data[0], dem_data[1])
 for ext in shp_associates:
@@ -64,7 +69,8 @@ if (args.run_as_raster):
     subprocess.call(cmd_str, shell=True)
 
 
-config = configs.create_config_from_file(os.path.join(os.path.dirname(sys.argv[0]), 'settings_termite_mound_example.yaml'))
+config = configs.create_config_from_file(os.path.join(
+    os.path.dirname(sys.argv[0]), 'settings_termite_mound_example.yaml'))
 if (args.run_as_raster):
     config.raw_files.boundary_files = [os.path.splitext(x)[0] + '.tif' for x in config.raw_files.boundary_files]
     config.raw_files.response_files = [[os.path.splitext(x)[0] + '.tif' for x in config.raw_files.response_files[0]]]
