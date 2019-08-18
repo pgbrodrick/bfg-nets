@@ -167,7 +167,7 @@ def _plot_regression_sample(
     return num_subplots
 
 
-def plot_single_sequence_prediction_histogram(
+def plot_sample_histograms(
         sampled: samples.Samples,
         max_responses_per_page: int = 15
 ):
@@ -181,12 +181,39 @@ def plot_single_sequence_prediction_histogram(
         fig = plt.figure(figsize=(6 * max_responses_per_page, 10))
         gs1 = gridspec.GridSpec(4, max_responses_per_page)
         for _r in range(_response_ind, min(_response_ind+max_responses_per_page, sampled.num_responses)):
+
+            hist_range = [None, None]
+            hist_range[0] = np.nanmin(sampled.trans_responses[..., _r])
+            hist_range[1] = np.nanmax(sampled.trans_responses[..., _r])
+
             ax = plt.subplot(gs1[0, _r])
-            b, h = _get_lhist(sampled.trans_responses[..., _r])
-            ax.plot(h, b, color='black')
+            b, h = _get_lhist(sampled.trans_responses[..., _r], hist_range=hist_range)
+            ax.plot(h, b, color='green')
             if sampled.trans_predictions is not None:
-                b, h = _get_lhist(sampled.trans_predictions[..., _r])
-                ax.plot(h, b, color='green')
+                b, h = _get_lhist(sampled.trans_predictions[..., _r], hist_range=hist_range)
+                ax.plot(h + (h[1]-h[0])/20., b, color='black')
+
+                raw_max = np.max(sampled.trans_predictions[..., _r])
+                if (raw_max > hist_range[1]):
+                    plt.ylim([-0.02*np.max(b), np.max(b)*1.2])
+                    plt.annotate('Max pred.: ' + str(np.round(raw_max, 4)),
+                                 xy=(1.0, 0.92), xytext=(0.90, 0.92),
+                                 xycoords='axes fraction',
+                                 horizontalalignment='right',
+                                 verticalalignment='center',
+                                 fontsize=8,
+                                 arrowprops=dict(arrowstyle="->"))
+
+                raw_min = np.min(sampled.trans_predictions[..., _r])
+                if (raw_min < hist_range[0]):
+                    plt.ylim([-0.02*np.max(b), np.max(b)*1.2])
+                    plt.annotate('Min pred.: ' + str(np.round(raw_min, 4)),
+                                 xy=(0.00, 0.92), xytext=(0.10, 0.92),
+                                 xycoords='axes fraction',
+                                 horizontalalignment='left',
+                                 verticalalignment='center',
+                                 fontsize=8,
+                                 arrowprops=dict(arrowstyle="->"))
 
             if (_r == _response_ind):
                 plt.ylabel('Transformed')
@@ -194,14 +221,41 @@ def plot_single_sequence_prediction_histogram(
 
             ax = plt.subplot(gs1[1, _r])
 
-            b, h = _get_lhist(sampled.raw_responses[..., _r])
-            ax.plot(h, b, color='black')
+            hist_range = [None, None]
+            hist_range[0] = np.nanmin(sampled.raw_responses[..., _r])
+            hist_range[1] = np.nanmax(sampled.raw_responses[..., _r])
+
+            b, h = _get_lhist(sampled.raw_responses[..., _r], hist_range=hist_range)
+            ax.plot(h, b, color='green')
             if sampled.raw_predictions is not None:
-                b, h = _get_lhist(sampled.raw_predictions[..., _r])
-                ax.plot(h, b, color='green')
-                plt.legend(['Response', 'Prediction'])
+                b, h = _get_lhist(sampled.raw_predictions[..., _r], hist_range=hist_range)
+                ax.plot(h + (h[1]-h[0])/20., b, color='black')
+
+                raw_max = np.max(sampled.raw_predictions[..., _r])
+                if (raw_max > hist_range[1]):
+                    plt.ylim([-0.02*np.max(b), np.max(b)*1.2])
+                    plt.annotate('Max pred.: ' + str(np.round(raw_max, 4)),
+                                 xy=(1.0, 0.92), xytext=(0.90, 0.92),
+                                 xycoords='axes fraction',
+                                 horizontalalignment='right',
+                                 verticalalignment='center',
+                                 fontsize=8,
+                                 arrowprops=dict(arrowstyle="->"))
+
+                raw_min = np.min(sampled.raw_predictions[..., _r])
+                if (raw_min < hist_range[0]):
+                    plt.ylim([-0.02*np.max(b), np.max(b)*1.2])
+                    plt.annotate('Min pred.: ' + str(np.round(raw_min, 4)),
+                                 xy=(0.00, 0.92), xytext=(0.10, 0.92),
+                                 xycoords='axes fraction',
+                                 horizontalalignment='left',
+                                 verticalalignment='center',
+                                 fontsize=8,
+                                 arrowprops=dict(arrowstyle="->"))
+                plt.legend(['Response', 'Prediction'], loc='center right')
+
             else:
-                plt.legend(['Response'])
+                plt.legend(['Response'], loc='center right')
 
             if (_r == _response_ind):
                 plt.ylabel('Raw')
@@ -212,8 +266,13 @@ def plot_single_sequence_prediction_histogram(
     return fig_list
 
 
-def _get_lhist(data, bins=10):
-    hist, edge = np.histogram(data, bins=bins, range=(np.nanmin(data), np.nanmax(data)))
+def _get_lhist(data, bins=20, hist_range=[None, None]):
+
+    for _i in range(len(hist_range)):
+        if (hist_range[_i] is None):
+            hist_range[_i] = np.nanmin(data)
+
+    hist, edge = np.histogram(data, bins=bins, range=hist_range)
     hist = hist.tolist()
     edge = edge.tolist()
     phist = [0]

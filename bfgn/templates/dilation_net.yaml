@@ -23,9 +23,11 @@ data_build:
   loss_window_radius: REQUIRED
   feature_mean_centering: false
   feature_nodata_maximum_fraction: 0.0
+  response_nodata_maximum_fraction: 0.0
   response_min_value: OPTIONAL
   response_max_value: OPTIONAL
   response_background_values: OPTIONAL
+  sparse_read: False
 data_samples:
   apply_random_transformations: false
   batch_size: 100

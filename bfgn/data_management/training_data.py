@@ -53,6 +53,7 @@ def build_training_data_ordered(
     _logger.debug('Pre-compute all subset locations')
     all_site_upper_lefts = []
     all_site_xy_locations = []
+    all_site_xy_sizes = []
     reference_subset_geotransforms = []
     for _site in range(0, len(config.raw_files.feature_files)):
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
@@ -60,21 +61,66 @@ def build_training_data_ordered(
         response_sets = [common_io.noerror_open(loc_file) for loc_file in config.raw_files.response_files[_site]]
         boundary_set = common_io.get_site_boundary_set(config, _site)
 
-        all_set_upper_lefts, xy_sample_locations = common_io.get_all_interior_extent_subset_pixel_locations(
-            gdal_datasets=[feature_sets, [rs for rs in response_sets if rs is not None],
-                           [bs for bs in [boundary_set] if bs is not None]],
-            window_radius=config.data_build.window_radius,
-            inner_window_radius=config.data_build.loss_window_radius,
-            shuffle=True)
+        all_set_upper_lefts, xy_sample_locations, xy_max_size = \
+            common_io.get_all_interior_extent_subset_pixel_locations(
+                gdal_datasets=[feature_sets, [rs for rs in response_sets if rs is not None],
+                               [bs for bs in [boundary_set] if bs is not None]],
+                window_radius=config.data_build.window_radius,
+                inner_window_radius=config.data_build.loss_window_radius,
+                shuffle=True, return_xy_size=True)
 
         all_site_upper_lefts.append(all_set_upper_lefts)
         all_site_xy_locations.append(xy_sample_locations)
+        all_site_xy_sizes.append(xy_max_size)
 
         ref_trans = feature_sets[0].GetGeoTransform()
         ref_subset_geotransform = [ref_trans[0]+all_set_upper_lefts[0][0][0]*ref_trans[1],
                                    ref_trans[1], 0, ref_trans[3]+all_set_upper_lefts[0][0][1]*ref_trans[5],
                                    0, ref_trans[5]]
         reference_subset_geotransforms.append(ref_subset_geotransform)
+
+    if (config.data_build.sparse_read is True):
+        _logger.info('Sparse read is on, so use a pass the response file to thin down the training points to read')
+        for _site in range(0, len(config.raw_files.feature_files)):
+            response_sets = [common_io.noerror_open(loc_file) for loc_file in config.raw_files.response_files[_site]]
+            boundary_set = common_io.get_site_boundary_set(config, _site)
+
+            valid_locations = np.ones(all_site_xy_locations[_site].shape[0]).astype(bool)
+            for _row in tqdm(range(0, all_site_xy_sizes[_site][1]), ncols=80, desc='Sparse-data filter'):
+
+                subset = np.squeeze(np.where(all_site_xy_locations[_site][:, 1] == _row))
+                if (len(subset) > 0):
+                    if (boundary_set is not None):
+                        bound_dat = common_io.read_chunk_by_row(boundary_set,
+                                                                all_site_upper_lefts[_site][-1], all_site_xy_sizes[_site][0],
+                                                                config.data_build.loss_window_radius*2, _row,
+                                                                nodata_value=config.raw_files.boundary_bad_value)
+
+                        for _x_loc in range(len(subset)):
+                            x_loc = all_site_xy_locations[_site][subset[_x_loc], 0]
+                            boundary_fraction = np.sum(np.isnan(
+                                bound_dat[:,x_loc:x_loc+config.data_build.loss_window_radius*2])) / float(config.data_build.loss_window_radius**2)
+                            _logger.debug('Sparsity check boundary fraction: {}'.format(boundary_fraction))
+                            if (boundary_fraction > config.data_build.response_nodata_maximum_fraction):
+                                valid_locations[subset[_x_loc]] = False
+
+                    if (np.any(valid_locations[subset])):
+
+                        col_dat = common_io.read_chunk_by_row(response_sets,
+                                                              all_site_upper_lefts[_site][len(
+                                                                  config.raw_files.feature_files[_site])], all_site_xy_sizes[_site][0],
+                                                              config.data_build.loss_window_radius*2, _row, nodata_value=config.raw_files.response_nodata_value)
+
+                        for _x_loc in range(len(subset)):
+                            x_loc = all_site_xy_locations[_site][subset[_x_loc], 0]
+                            response_fractions = np.sum(
+                                np.isnan(col_dat[:,x_loc:x_loc+config.data_build.loss_window_radius*2]),axis=(0,1)) / float(config.data_build.loss_window_radius**2)
+                            _logger.debug('Sparsity check response fraction: {}'.format(response_fractions))
+                            if (np.any(response_fractions > config.data_build.response_nodata_maximum_fraction)):
+                                valid_locations[subset[_x_loc]] = False
+            _logger.info('Filtering {} out of {} points from sprasity check.'.format(
+                len(valid_locations) - np.sum(valid_locations), len(valid_locations)))
+            all_site_xy_locations[_site] = all_site_xy_locations[_site][valid_locations, :]
 
     num_reads_per_site = int(np.floor(config.data_build.max_samples / len(config.raw_files.feature_files)))
 
@@ -101,11 +147,10 @@ def build_training_data_ordered(
                                               _sample_index)
 
             _site_xy_index[_site] += 1
-            popped = None
             if (_site_xy_index[_site] >= len(all_site_xy_locations[_site])):
                 _logger.debug('All locations in site {} have been checked.'.format(
                     config.raw_files.feature_files[_site][0]))
-                popped = remaining_sites.pop(_rs_index)
+                remaining_sites.pop(_rs_index)
 
                 _rs_index += 1
                 if (_rs_index >= len(remaining_sites)):
@@ -227,7 +272,7 @@ def build_training_data_from_response_points(
                 if (vector[_sample]['geometry']['type'] == 'Point'):
                     x_sample_points.append(vector[_sample]['geometry']['coordinates'][0])
                     y_sample_points.append(vector[_sample]['geometry']['coordinates'][1])
-                    band_responses.append(vector[_sample]['properties']['Class'])
+                    band_responses.append(vector[_sample]['properties'][config.raw_files.response_vector_property_name])
 
                     if (x_sample_points[-1] < lower_coord[0] + resolution[0]*config.data_build.window_radius or
                         x_sample_points[-1] > upper_coord[0] - resolution[0]*config.data_build.window_radius or
@@ -257,7 +302,7 @@ def build_training_data_from_response_points(
     total_samples = sum([site_responses.shape[0] for site_responses in responses_per_site])
     _logger.debug('Found {} total samples across {} sites'.format(total_samples, len(responses_per_site)))
 
-    assert config.data_build.max_samples > 0, 'need at least 1 valid sample...'
+    assert total_samples > 0, 'need at least 1 valid sample...'
 
     if total_samples > config.data_build.max_samples:
         _logger.debug('Discard samples because the number of valid samples ({}) exceeds the max samples requested ({})'
@@ -337,7 +382,7 @@ def build_training_data_from_response_points(
                 local_xy_px_locations.append([0, 0])  # doesn't matter the value, won't get used
 
             for _file in range(len(feature_sets)):
-                gt = feature_sets[_site].GetGeoTransform()
+                gt = feature_sets[_file].GetGeoTransform()
                 local_xy_px_locations.append([int((xy_sample_locations[_cr, 0] - gt[0])/gt[1]),
                                               int((xy_sample_locations[_cr, 1] - gt[3])/gt[5])])
 
@@ -695,20 +740,22 @@ def read_segmentation_chunk(_site: int,
     if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
         return False
 
-    local_response, mask = common_io.read_map_subset(config.raw_files.response_files[_site],
-                                                     r_ul, window_diameter, mask,
-                                                     config.raw_files.response_nodata_value,
-                                                     lower_bound=config.data_build.response_min_value,
-                                                     upper_bound=config.data_build.response_max_value,
-                                                     reference_geotransform=geotransform)
+    response_mask = mask.copy()
+    local_response, response_mask = common_io.read_map_subset(config.raw_files.response_files[_site],
+                                                              r_ul, window_diameter, response_mask,
+                                                              config.raw_files.response_nodata_value,
+                                                              lower_bound=config.data_build.response_min_value,
+                                                              upper_bound=config.data_build.response_max_value,
+                                                              reference_geotransform=geotransform)
 
-    if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
+    if not _check_mask_data_sufficient(response_mask, config.data_build.response_nodata_maximum_fraction):
         return False
 
-    local_feature, mask = common_io.read_map_subset(config.raw_files.feature_files[_site], f_ul, window_diameter, mask,
-                                                    config.raw_files.feature_nodata_value)
+    feature_mask = mask.copy()
+    local_feature, feature_mask = common_io.read_map_subset(config.raw_files.feature_files[_site], f_ul, window_diameter, feature_mask,
+                                                            config.raw_files.feature_nodata_value)
 
-    if not _check_mask_data_sufficient(mask, config.data_build.feature_nodata_maximum_fraction):
+    if not _check_mask_data_sufficient(feature_mask, config.data_build.feature_nodata_maximum_fraction):
         return False
 
     if config.data_build.response_background_values:
@@ -716,8 +763,8 @@ def read_segmentation_chunk(_site: int,
             return False
 
     # Final check (propogate mask forward), and return
-    local_feature[mask, :] = np.nan
-    local_response[mask, :] = np.nan
+    local_feature[feature_mask, :] = np.nan
+    local_response[response_mask, :] = np.nan
 
     features, responses = _open_temporary_features_responses_data_files(
         config, local_feature.shape[-1], local_response.shape[-1], read_type='r+')

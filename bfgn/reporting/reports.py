@@ -4,6 +4,10 @@ from typing import List
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
+import matplotlib.gridspec as gridspec
+import matplotlib.cm as cm
+from scipy import stats
+import numpy as np
 
 from bfgn.configuration import configs
 from bfgn.data_management import data_core
@@ -45,15 +49,21 @@ class Reporter(object):
             _logger.info('Plot Training Sequence Figures')
             sampled = samples.Samples(
                 self.data_container.training_sequence, self.experiment.model, self.experiment.config,
-                self.experiment.is_model_trained, data_sequence_label='Training'
+                self.experiment.is_model_trained, self.data_container.feature_band_types,
+                self.data_container.response_band_types, data_sequence_label='Training'
             )
             self._create_model_report_for_sequence(sampled, pdf)
             _logger.info('Plot Validation Sequence Figures')
-            sampled = samples.Samples(
+            validation_sampled = samples.Samples(
                 self.data_container.validation_sequence, self.experiment.model, self.experiment.config,
-                self.experiment.is_model_trained, data_sequence_label='Validation'
+                self.experiment.is_model_trained, self.data_container.feature_band_types,
+                self.data_container.response_band_types, data_sequence_label='Validation'
             )
-            self._create_model_report_for_sequence(sampled, pdf)
+            self._create_model_report_for_sequence(validation_sampled, pdf)
+
+            if ('R' in self.data_container.response_band_types):
+                self._add_figures(self.plot_regression_deviation(sampled, validation_sampled), pdf)
+
             _logger.info('Plot Model History')
             self._add_figures(self.plot_model_history(), pdf)
             self._add_figures(self.plot_log_warnings_and_errors(), pdf)
@@ -62,7 +72,7 @@ class Reporter(object):
         if self.experiment.is_model_trained and self._get_response_data_types() is _LABEL_CATEGORICAL:
             self._add_figures(self.plot_classification_report(sampled), pdf)
             self._add_figures(self.plot_confusion_matrix(sampled), pdf, tight=False)
-        self._add_figures(self.plot_single_sequence_prediction_histogram(sampled), pdf)
+        self._add_figures(self.plot_sample_histograms(sampled), pdf)
         self._add_figures(self.plot_samples(sampled), pdf)
         if self.experiment.config.model_reporting.network_progression_show_full:
             self._add_figures(self.plot_network_feature_progression(sampled, compact=False), pdf)
@@ -121,14 +131,78 @@ class Reporter(object):
             max_responses_per_page=max_responses_per_page
         )
 
-    def plot_single_sequence_prediction_histogram(
+    def plot_sample_histograms(
             self, sampled: samples.Samples, max_responses_per_page: int = None
     ) -> List[plt.Figure]:
         max_responses_per_page = max_responses_per_page or self.experiment.config.model_reporting.max_responses_per_page
-        return samples_viz.plot_single_sequence_prediction_histogram(
+        return samples_viz.plot_sample_histograms(
             sampled,
             max_responses_per_page=max_responses_per_page
         )
+
+    def plot_regression_deviation(
+            self, train_sampled: samples.Samples, val_sampled: samples.Samples = None
+    ) -> List[plt.Figure]:
+
+        return_figs = []
+
+        for _r in range(len(self.data_container.response_band_types)):
+            fig = plt.figure(figsize=(5*(1+int(val_sampled is not None)), 4.5))
+            gs1 = gridspec.GridSpec(1, 1 + int(val_sampled is not None))
+            if (self.data_container.response_band_types[_r] == 'R'):
+                bounds = self.parity_plot(train_sampled.raw_predictions,
+                                          train_sampled.raw_responses, plt.subplot(gs1[0, 0]), _r)
+                plt.subplot(gs1[0, 0]).set_title('Training')
+                if (val_sampled is not None):
+                    self.parity_plot(val_sampled.raw_predictions, val_sampled.raw_responses,
+                                     plt.subplot(gs1[0, 1]), _r, bounds=bounds)
+                    plt.subplot(gs1[0, 1]).set_title('Validation')
+            fig.suptitle('Response ' + str(_r))
+            return_figs.append(fig)
+
+        return return_figs
+
+    def parity_plot(self, pred_Y: np.array, test_Y: np.array, ax: plt.Axes, response_ind: int, bins: int = 200, bounds=[]):
+
+        loss_window_radius = self.experiment.config.data_build.loss_window_radius
+        window_radius = self.experiment.config.data_build.window_radius
+        buffer = int(window_radius - loss_window_radius)
+
+        if buffer == 0:
+            test_Y = test_Y[..., response_ind].flatten()
+            pred_Y = pred_Y[..., response_ind].flatten()
+        else:
+            test_Y = test_Y[:, buffer:-buffer, buffer:-buffer, response_ind].flatten()
+            pred_Y = pred_Y[:, buffer:-buffer, buffer:-buffer, response_ind].flatten()
+
+        slope, intercept, r_value, p_value, std_err = stats.linregress(np.squeeze(test_Y), np.squeeze(pred_Y))
+        mad = str(round(np.mean(np.abs(pred_Y-test_Y)), 3))
+        rmse = str(round(np.sqrt(np.mean(np.power(pred_Y-test_Y, 2))), 3))
+        r2o = str(round(1 - np.sum(np.power(test_Y - pred_Y, 2)) / (np.sum(np.power(test_Y - np.mean(pred_Y), 2))), 3))
+        r2 = str(round(r_value**2, 3))
+
+        if (len(bounds) == 0):
+            pmin = np.min(test_Y)
+            pmax = np.max(test_Y)
+        else:
+            pmin = bounds[0]
+            pmax = bounds[1]
+        z, xrange, yrange = np.histogram2d(test_Y, pred_Y, bins=bins, range=[[pmin, pmax], [pmin, pmax]])
+        ax.patch.set_facecolor('white')
+        ax.imshow(np.log(z.T), extent=(pmin, pmax, pmin, pmax), cmap=cm.hot, origin='lower', interpolation='nearest')
+        ax.plot([pmin, pmax], [pmin, pmax], color='blue', lw=2, ls='--')
+        fs = 8
+        ax.text(pmin+(pmax-pmin)*0.05, pmin+(pmax-pmin)*0.95, 'MAD: ' + mad, fontsize=fs)
+        ax.text(pmin+(pmax-pmin)*0.05, pmin+(pmax-pmin)*0.90, 'RMSE: ' + rmse, fontsize=fs)
+        ax.text(pmin+(pmax-pmin)*0.05, pmin+(pmax-pmin)*0.85, 'R${^2}$${_\mathrm{o}}$: ' + r2o, fontsize=fs)
+
+        ax.set_xlabel('Actual')
+        ax.set_ylabel('Predicted')
+
+        ax.set_xlim([pmin, pmax])
+        ax.set_ylim([pmin, pmax])
+
+        return [pmin, pmax]
 
     def plot_spatial_error(
             self,
