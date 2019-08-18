@@ -53,6 +53,7 @@ def build_training_data_ordered(
     _logger.debug('Pre-compute all subset locations')
     all_site_upper_lefts = []
     all_site_xy_locations = []
+    all_site_xy_sizes = []
     reference_subset_geotransforms = []
     for _site in range(0, len(config.raw_files.feature_files)):
         feature_sets = [gdal.Open(loc_file, gdal.GA_ReadOnly)
@@ -60,21 +61,46 @@ def build_training_data_ordered(
         response_sets = [common_io.noerror_open(loc_file) for loc_file in config.raw_files.response_files[_site]]
         boundary_set = common_io.get_site_boundary_set(config, _site)
 
-        all_set_upper_lefts, xy_sample_locations = common_io.get_all_interior_extent_subset_pixel_locations(
+        all_set_upper_lefts, xy_sample_locations, xy_max_size = 
+            common_io.get_all_interior_extent_subset_pixel_locations(
             gdal_datasets=[feature_sets, [rs for rs in response_sets if rs is not None],
                            [bs for bs in [boundary_set] if bs is not None]],
             window_radius=config.data_build.window_radius,
             inner_window_radius=config.data_build.loss_window_radius,
-            shuffle=True)
+            shuffle=True, return_xy_size = True)
 
         all_site_upper_lefts.append(all_set_upper_lefts)
         all_site_xy_locations.append(xy_sample_locations)
+        all_site_xy_sizes.append(xy_max_size)
 
         ref_trans = feature_sets[0].GetGeoTransform()
         ref_subset_geotransform = [ref_trans[0]+all_set_upper_lefts[0][0][0]*ref_trans[1],
                                    ref_trans[1], 0, ref_trans[3]+all_set_upper_lefts[0][0][1]*ref_trans[5],
                                    0, ref_trans[5]]
         reference_subset_geotransforms.append(ref_subset_geotransform)
+
+    if (config.data_build.sparse_read is True):
+        _logger.debug('Sparse read is on, so use a pass the response file to thin down the training points to read')
+        for _site in range(0, len(config.raw_files.feature_files)):
+            response_sets = [common_io.noerror_open(loc_file) for loc_file in config.raw_files.response_files[_site]]
+            
+            valid_locations = np.ones(all_site_xy_locations[_site].shape[0]).astype(bool)
+            un_y_locations = np.unique(all_site_xy_locations[_site][:,1])
+            for _row in tqdm(range(0, all_site_xy_sizes[_site][1], config.data_build.loss_window_radius*2), ncols=80):
+
+                subset = np.where(all_site_xy_locations[_site][:,1] == _row)
+                if (len(subset) > 0):
+                    col_dat = common_io.read_chunk_by_row(response_sets, 
+                        all_site_upper_lefts[_site], all_site_xy_sizes[_site][0], 
+                        config.data_build.window_radius*2, _row,nodata_value=config.raw_files.feature_nodata_value)
+
+                    for _x_loc in range(len(subset)):
+                        x_loc = all_site_xy_locations[_site][subset[_x_loc],0]
+                        if (not np.all(col_dat[x_loc:x_loc+config.data_build.loss_window_radius*2] != config.raw_files.response_nodata_value)):
+                            valid_locations[subset[_x_loc]] = False
+                            
+
+
 
     num_reads_per_site = int(np.floor(config.data_build.max_samples / len(config.raw_files.feature_files)))
 

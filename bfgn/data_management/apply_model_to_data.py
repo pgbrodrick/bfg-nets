@@ -95,7 +95,7 @@ def apply_model_to_site(
 
     for _row in tqdm(range(0, y_len, config.data_build.loss_window_radius*2), ncols=80):
         _row = min(_row, y_len - 2*config.data_build.window_radius)
-        col_dat = _read_chunk_by_row(feature_sets, internal_ul_list, x_len, config.data_build.window_radius*2, _row)
+        col_dat = common_io.read_chunk_by_row(feature_sets, internal_ul_list, x_len, config.data_build.window_radius*2, _row)
         _logger.debug('Read data chunk of shape: {}'.format(col_dat.shape))
 
         tile_dat, x_index = _convert_chunk_to_tiles(
@@ -184,7 +184,7 @@ def maximum_likelihood_classification(
     del outDataset
 
     for _row in tqdm(range(0, dataset.RasterYSize), ncols=80):
-        col_dat = _read_chunk_by_row([dataset], [[0,0]], dataset.RasterXSize, 1, _row)
+        col_dat = common_io.read_chunk_by_row([dataset], [[0,0]], dataset.RasterXSize, 1, _row)
         _logger.debug('Read data chunk of shape: {}'.format(col_dat.shape))
 
         col_dat = np.argmax(col_dat, axis=-1)
@@ -227,41 +227,6 @@ def _convert_chunk_to_tiles(feature_data: np.array, loss_window_radius: int, win
     col_index = np.array(col_index)
 
     return output_array, col_index
-
-
-def _read_chunk_by_row(feature_sets: List[gdal.Dataset], pixel_upper_lefts: List[List[int]], x_size: int, y_size: int,
-                       line_offset: int) -> np.array:
-    """
-    Read a chunk of feature data line-by-line.
-
-    Args:
-        feature_sets: each feature dataset to read
-        pixel_upper_lefts: upper left hand pixel of each dataset
-        x_size: size of x data to read
-        y_size: size of y data to read
-        line_offset: line offset from UL of each set to start reading at
-
-    Returns:
-        feature_array: feature array
-    """
-
-    total_features = np.sum([f.RasterCount for f in feature_sets])
-    output_array = np.zeros((y_size, x_size, total_features))
-
-    feat_ind = 0
-    for _feat in range(len(feature_sets)):
-        dat = np.zeros((feature_sets[_feat].RasterCount, y_size, x_size))
-        for _line in range(y_size):
-            dat[:, _line:_line+1, :] = feature_sets[_feat].ReadAsArray(int(pixel_upper_lefts[_feat][0]),
-                                                                       int(pixel_upper_lefts[_feat][1] + line_offset + _line), x_size, 1).astype(np.float32)
-        # Swap dat from (b,y,x) to (y,x,b)
-        dat = np.moveaxis(dat, [0, 1, 2], [2, 0, 1])
-
-        output_array[..., feat_ind:feat_ind+dat.shape[-1]] = dat
-        feat_ind += dat.shape[-1]
-
-    return output_array
-
 
 
 
