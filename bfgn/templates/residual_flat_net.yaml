@@ -8,6 +8,7 @@ raw_files:
   response_nodata_value: -9999.0
   boundary_bad_value: OPTIONAL
   ignore_projections: false
+  response_vector_property_name: Class
 data_build:
   dir_out: .
   log_level: INFO
@@ -27,7 +28,7 @@ data_build:
   response_min_value: OPTIONAL
   response_max_value: OPTIONAL
   response_background_values: OPTIONAL
-  sparse_read: False
+  sparse_read: false
 data_samples:
   apply_random_transformations: false
   batch_size: 100
