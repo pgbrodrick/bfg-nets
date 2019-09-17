@@ -125,7 +125,7 @@ def build_training_data_ordered(
     num_reads_per_site = int(np.floor(config.data_build.max_samples / len(config.raw_files.feature_files)))
 
     _logger.debug('Step through sites in order and grab {} sample from each until max samples'.format(num_reads_per_site))
-    progress_bar = tqdm(total=config.data_build.max_samples, ncols=80, desc='Reading data chunks')
+    progress_bar = tqdm(desc='Reading data chunks', total=config.data_build.max_samples, ncols=80, mininterval=1)
 
     _sample_index = 0
     _rs_index = 0
@@ -136,6 +136,7 @@ def build_training_data_ordered(
         _logger.debug('Reading loop: Site {}'.format(_site))
 
         while _site_xy_index[_site] < len(all_site_xy_locations[_site]):
+            progress_bar.refresh()
             site_read_count = 0
             _logger.debug('Site index: {}'.format(_site_xy_index[_site]))
 
