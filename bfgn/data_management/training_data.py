@@ -127,43 +127,39 @@ def build_training_data_ordered(
     _logger.debug('Step through sites in order and grab {} sample from each until max samples'.format(num_reads_per_site))
     progress_bar = tqdm(desc='Reading data chunks', total=config.data_build.max_samples, ncols=80, mininterval=1)
 
-    _sample_index = 0
-    _rs_index = 0
-    remaining_sites = list(range(len(config.raw_files.feature_files)))
-    _site_xy_index = np.zeros(len(remaining_sites)).astype(int).tolist()
-    while (_sample_index < config.data_build.max_samples and len(remaining_sites) > 0):
-        _site = remaining_sites[_rs_index]
-        _logger.debug('Reading loop: Site {}'.format(_site))
+    _num_samples_total = 0
 
-        while _site_xy_index[_site] < len(all_site_xy_locations[_site]):
+    for idx_site in range(len(config.raw_files.feature_files)):
+        _logger.debug('Reading loop: Site {}'.format(idx_site))
+        _num_samples_site = 0
+
+        for idx_xy in all_site_xy_locations[idx_site]:
+            _logger.debug('Site index: {}'.format(idx_xy))
+
+            success = read_segmentation_chunk(
+                idx_site,
+                all_site_upper_lefts[idx_site],
+                all_site_xy_locations[idx_site][idx_xy, :].copy(),
+                config,
+                reference_subset_geotransforms[idx_site],
+                _num_samples_total
+            )
+
             progress_bar.refresh()
-            site_read_count = 0
-            _logger.debug('Site index: {}'.format(_site_xy_index[_site]))
-
-            success = read_segmentation_chunk(_site,
-                                              all_site_upper_lefts[_site],
-                                              all_site_xy_locations[_site][_site_xy_index[_site], :].copy(),
-                                              config,
-                                              reference_subset_geotransforms[_site],
-                                              _sample_index)
-
-            _site_xy_index[_site] += 1
-            if (_site_xy_index[_site] >= len(all_site_xy_locations[_site])):
-                _logger.debug('All locations in site {} have been checked.'.format(
-                    config.raw_files.feature_files[_site][0]))
-                remaining_sites.pop(_rs_index)
-
-                _rs_index += 1
-                if (_rs_index >= len(remaining_sites)):
-                    _rs_index = 0
-
             if success is True:
-                _sample_index += 1
                 progress_bar.update(1)
+                _num_samples_site += 1
+                _num_samples_total += 1
 
-                site_read_count += 1
-                if (site_read_count > num_reads_per_site or _sample_index >= config.data_build.max_samples):
-                    break
+            is_site_sampling_complete = _num_samples_site == num_reads_per_site
+            is_total_sampling_complete = _num_samples_total == config.data_build.max_samples
+            if is_site_sampling_complete or is_total_sampling_complete:
+                break
+
+        if is_total_sampling_complete:
+            break
+
+        _logger.debug('All locations in site {} have been checked.'.format(idx_site))
 
     progress_bar.close()
     del all_site_upper_lefts
