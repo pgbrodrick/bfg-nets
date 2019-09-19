@@ -2,6 +2,7 @@ import logging
 import os
 from typing import List
 
+import albumentations
 import gdal
 import numpy as np
 
@@ -178,17 +179,35 @@ class DataContainer:
         self.feature_scaler = feature_scaler
         self.response_scaler = response_scaler
 
-    def load_sequences(self):
-        """ Create and attach sequences to self.  Requires data to 
-        already be built and any scalers to have been fit.
+    def load_sequences(self, custom_augmentations: albumentations.Compose = None) -> None:
+        """
+        Create and attach sequences to self.  Requires data to already be built and any scalers to have been fit.
+
+        Args:
+            custom_augmentations:  Compose object from albumentations library. Please note that the Compose should be
+            configured such that it accepts additional_targets for each feature beyond the first, with a naming
+            convention being image_x for feature_x. We follow this convention and assume additional_targets is
+            configured properly, automatically formatting data for the Compose like so:
+               `{'image': feature_0, 'mask': response, 'image_1': feature_1, 'image_2': feature_2, ...}`.
+            Thus, the custom Compose must have additional_targets = ['image_1', 'image_2', ...] with length dependent
+            on the number of features.
+
+            Please see sample_custom_augmentations_constructor in sequences.py for an example of how this would work.
+
+        Returns:
+            None
         """
         train_folds = [idx for idx in range(self.config.data_build.number_folds)
                        if idx not in (self.config.data_build.validation_fold, self.config.data_build.test_fold)]
 
-        self.training_sequence = self._build_memmapped_sequence(train_folds)
+        self.training_sequence = self._build_memmapped_sequence(train_folds, custom_augmentations)
         self.validation_sequence = self._build_memmapped_sequence([self.config.data_build.validation_fold])
 
-    def _build_memmapped_sequence(self, fold_indices: List[int]) -> MemmappedSequence:
+    def _build_memmapped_sequence(
+            self,
+            fold_indices: List[int],
+            custom_augmentations: albumentations.Compose = None
+    ) -> MemmappedSequence:
         errors = []
         if (self.features is None):
             errors.append('data_container must have loaded feature numpy files')
@@ -216,7 +235,7 @@ class DataContainer:
             self.feature_scaler,
             self.response_scaler,
             self.config.data_samples.batch_size,
-            apply_random_transforms=self.config.data_samples.apply_random_transformations,
+            custom_augmentations=custom_augmentations,
             feature_mean_centering=self.config.data_build.feature_mean_centering,
             nan_replacement_value=self.config.data_samples.feature_nodata_encoding
         )

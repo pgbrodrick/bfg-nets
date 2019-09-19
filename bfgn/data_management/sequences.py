@@ -1,7 +1,7 @@
 import logging
-import random
 from typing import List, Tuple
 
+import albumentations
 import keras
 import numpy as np
 
@@ -11,23 +11,26 @@ from bfgn.data_management.scalers import BaseGlobalScaler
 _logger = logging.getLogger(__name__)
 
 
+ADDITIONAL_TARGETS_KEY = 'image_{}'
+
+
 class BaseSequence(keras.utils.Sequence):
     feature_scaler = None
     response_scaler = None
-    apply_random_transforms = None
+    custom_augmentations = None
 
     def __init__(
             self,
             feature_scaler: BaseGlobalScaler,
             response_scaler: BaseGlobalScaler,
             batch_size: int,
-            apply_random_transforms: bool = False,
+            custom_augmentations: albumentations.Compose = None,
             nan_replacement_value: float = None
     ) -> None:
         self.feature_scaler = feature_scaler
         self.response_scaler = response_scaler
         self.batch_size = batch_size
-        self.apply_random_transforms = apply_random_transforms
+        self.custom_augmentations = custom_augmentations
         self.nan_replacement_value = nan_replacement_value
 
     def __len__(self) -> int:
@@ -42,7 +45,6 @@ class BaseSequence(keras.utils.Sequence):
     def get_raw_and_transformed_sample(self, index: int) -> \
             Tuple[Tuple[List[np.array], List[np.array]], Tuple[List[np.array], List[np.array]]]:
         _logger.debug('Get batch {} with {} items via sequence'.format(index, self.batch_size))
-        _logger.debug('Get features, responses, and weights')
         raw_features, raw_responses, raw_weights = self._get_features_responses_weights(index)
         trans_features, trans_responses = self._get_transformed_sample(
             raw_features.copy(), raw_responses.copy(), raw_weights.copy()
@@ -56,14 +58,12 @@ class BaseSequence(keras.utils.Sequence):
         # Reusing names to avoid creating new, large objects
         raw_features, raw_responses, raw_weights = \
             self._modify_features_responses_weights_before_scaling(raw_features, raw_responses, raw_weights)
-        _logger.debug('Scale features')
+        self._apply_augmentations(raw_features, raw_responses, raw_weights)
         raw_features = self._scale_features(raw_features)
-        _logger.debug('Scale responses')
         raw_responses = self._scale_responses(raw_responses)
         if self.nan_replacement_value is not None:
-            _logger.debug('Convert nan features to {}'.format(self.nan_replacement_value))
+            _logger.debug('Convert nan features and responses to {}'.format(self.nan_replacement_value))
             raw_features = self._replace_nan_data_values(raw_features, self.nan_replacement_value)
-            _logger.debug('Convert nan responses to {}'.format(self.nan_replacement_value))
             raw_responses = self._replace_nan_data_values(raw_responses, self.nan_replacement_value)
         else:
             assert np.all(np.isfinite(raw_features)), \
@@ -71,11 +71,6 @@ class BaseSequence(keras.utils.Sequence):
                 'a nan_replacement_value to transform features correctly.'
         _logger.debug('Append weights to responses for loss function calculations')
         raw_responses = [np.append(response, weight, axis=-1) for response, weight in zip(raw_responses, raw_weights)]
-        if self.apply_random_transforms is True:
-            _logger.debug('Apply random transformations to features and responses')
-            self._apply_random_transformations(raw_features, raw_responses)
-        else:
-            _logger.debug('Random transformations not applied to features and responses')
         return raw_features, raw_responses
 
     def _get_features_responses_weights(self, index: int) -> Tuple[List[np.array], List[np.array], List[np.array]]:
@@ -98,30 +93,47 @@ class BaseSequence(keras.utils.Sequence):
         _logger.debug('No preliminary modifications applied to features, responses, or weights')
         return features, responses, weights
 
+    def _apply_augmentations(
+        self,
+        features: List[np.array],
+        responses: List[np.array],
+        weights: List[np.array]
+    ) -> Tuple[List[np.array], List[np.array], List[np.array]]:
+        assert len(responses) == 1, \
+            'Custom augmentations have not been tested on multiple responses. Please feel free to handle this ' + \
+            'case, test your code, and submit a pull request.'
+        # Loop through samples, augmenting each
+        num_samples = features[0].shape[0]
+        for idx_sample in range(num_samples):
+            # Get sample data
+            sample_features = [feature[idx_sample] for feature in features]
+            sample_responses = responses[0][idx_sample]  # Assume single response
+            sample_weights = weights[0][idx_sample]
+            mask_loss_window = (sample_weights > 0)[..., 0]
+            # Format for albumentations.Compose
+            data_to_augment = {'image': sample_features.pop(0), 'mask': np.dstack([sample_responses, sample_weights])}
+            target_keys = ['image']
+            for idx, feature in enumerate(sample_features):
+                key_feature = ADDITIONAL_TARGETS_KEY.format(idx+1)
+                data_to_augment[key_feature] = feature
+                target_keys.append(key_feature)
+            # Augment data and parse results
+            augmented = self.custom_augmentations(**data_to_augment)
+            sample_features = list()  # For creating a weights mask
+            for idx_feature, key_feature in enumerate(target_keys):
+                features[idx_feature][idx_sample] = augmented[key_feature]
+                sample_features.append(augmented[key_feature])
+            responses[0][idx_sample] = augmented['mask'][..., :-1]
+            mask_features = np.isfinite(np.dstack(sample_features)).all(axis=-1)
+            mask = np.logical_and(mask_features, mask_loss_window)
+            weights[0][idx_sample] = np.expand_dims(mask * augmented['mask'][..., -1], axis=-1)
+        return features, responses, weights
+
     def _scale_features(self, features: List[np.array]) -> List[np.array]:
         return [self.feature_scaler.transform(feature) for feature in features]
 
     def _scale_responses(self, responses: List[np.array]) -> List[np.array]:
         return [self.response_scaler.transform(response) for response in responses]
-
-    def _apply_random_transformations(
-            self,
-            features: List[np.array],
-            responses: [np.array]
-    ) -> Tuple[np.array, np.array]:
-        # Flip top to bottom
-        if random.random() > 0.5:
-            features = np.flip(features, axis=0)
-            responses = np.flip(responses, axis=0)
-        # Flip side to side
-        if random.random() > 0.5:
-            features = np.flip(features, axis=1)
-            responses = np.flip(responses, axis=1)
-        # Rotate 0, 1, 2, or 3 times
-        num_rotations = np.floor(4 * random.random())
-        features = np.rot90(features, k=num_rotations, axes=(0, 1))
-        responses = np.rot90(responses, k=num_rotations, axes=(0, 1))
-        return features, responses
 
 
 class MemmappedSequence(BaseSequence):
@@ -134,15 +146,17 @@ class MemmappedSequence(BaseSequence):
             feature_scaler: BaseGlobalScaler,
             response_scaler: BaseGlobalScaler,
             batch_size: int,
-            apply_random_transforms: bool,
             feature_mean_centering: False,
             nan_replacement_value: None,
+            custom_augmentations: albumentations.Compose = None,
     ) -> None:
         self.features = features  # a list of numpy arrays, each of which is (n,y,x,f)
         self.responses = responses  # a list of numpy arrays, each of which is (n,y,x,r)
         self.weights = weights  # a list of numpy arrays, each of which is (n,y,x,1)
-        super().__init__(feature_scaler=feature_scaler, response_scaler=response_scaler, batch_size=batch_size,
-                         apply_random_transforms=apply_random_transforms, nan_replacement_value=nan_replacement_value)
+        super().__init__(
+            feature_scaler=feature_scaler, response_scaler=response_scaler, batch_size=batch_size,
+            custom_augmentations=custom_augmentations, nan_replacement_value=nan_replacement_value
+        )
 
         # Determine the cumulative number of total samples across arrays - we're going to use
         # it to roll between files when extracting samples
@@ -194,3 +208,69 @@ class MemmappedSequence(BaseSequence):
         if (self.feature_mean_centering is True):
             batch_features = self._mean_center(batch_features)
         return [batch_features], [batch_responses], [batch_weights]
+
+
+def sample_custom_augmentations_constructor(num_features: int, window_radius: int) -> albumentations.Compose:
+    """
+    This function returns a custom augmentations object for use with sequences via the load_sequences function in
+    data_core.py. Please note that these augmentations have only been tested with RGB data between 0 and 1 and that
+    order of operations is critical. e.g., blurs don't like missing data so shouldn't be applied before dropout, noise
+    probably shouldn't be applied before color changes or blurs... of course, this is all dependent on your specific
+    problem.
+
+    Args:
+        num_features:  number of features used in the model
+        window_size:  window_size from the data configs
+
+    Returns:
+        custom augmentations function for use with sequences
+    """
+    max_kernel = int(round(0.1 * window_radius))
+    max_hole_size = int(round(0.1 * window_radius))
+    additional_targets = [ADDITIONAL_TARGETS_KEY.format(idx) for idx in range(1, num_features)]
+
+    return albumentations.Compose([
+        # The augmentations assume an image is RGB between 0 and 1
+        albumentations.ToFloat(max_value=255, always_apply=True, p=1.0),
+
+        # These augmentations should be order independent, toss 'em up front
+        albumentations.Flip(p=0.5),
+        albumentations.Transpose(p=0.5),
+        albumentations.Rotate(limit=90, p=0.5),
+
+        # Fogging as it's quite similar to top-down cloud effects, seems reasonable to apply up front
+        albumentations.RandomFog(fog_coef_lower=0.2, fog_coef_upper=0.8, alpha_coef=0.08, p=0.5),
+
+        # Color modifications
+        albumentations.OneOf([
+            albumentations.RandomBrightnessContrast(
+                brightness_limit=0.2, contrast_limit=0.6, brightness_by_max=True, p=1.0),
+            albumentations.RGBShift(r_shift_limit=0.2, g_shift_limit=0.2, b_shift_limit=0.2, p=1.0),
+        ], p=0.25),
+
+        # Distortions
+        albumentations.OneOf([
+            albumentations.ElasticTransform(alpha=1, sigma=50, alpha_affine=50, p=1.0),
+            albumentations.GridDistortion(num_steps=5, distort_limit=0.4, p=1.0),
+            albumentations.OpticalDistortion(distort_limit=0.1, shift_limit=0.1, p=1.0),
+        ], p=0.25),
+        albumentations.GaussianBlur(blur_limit=max_kernel, p=0.25),
+
+        # Noise
+        albumentations.OneOf([
+            albumentations.CoarseDropout(
+                max_holes=8, max_height=max_hole_size, max_width=max_hole_size, fill_value=np.nan, p=1.0),
+            albumentations.GaussNoise(var_limit=0.05, mean=0, p=1.0),
+        ], p=0.25),
+
+        # Scaling, adding last so that other augmentations are applied at a consistent resolution
+        albumentations.RandomScale(scale_limit=0.05, p=0.25),
+
+        # Augmentations may not return images of the same size, images can be both smaller and larger than expected, so
+        # these two augmentations are added to keep things consistent
+        albumentations.PadIfNeeded(2*window_radius, 2*window_radius, always_apply=True, p=1.0),
+        albumentations.CenterCrop(2*window_radius, 2*window_radius, always_apply=True, p=1.0),
+
+        # Return the data to its original scale
+        albumentations.FromFloat(max_value=255, always_apply=True, p=1.0),
+    ], p=1.0, additional_targets={target: 'image' for target in additional_targets})

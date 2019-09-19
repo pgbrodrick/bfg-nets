@@ -30,7 +30,6 @@ data_build:
   response_background_values: OPTIONAL
   sparse_read: false
 data_samples:
-  apply_random_transformations: false
   batch_size: 100
   feature_scaler_names: REQUIRED
   response_scaler_names: REQUIRED

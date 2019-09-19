@@ -303,9 +303,6 @@ class DataSamples(BaseConfigSection):
     """
     Data sample configuration, information necessary to parse built data files and pass data to models during training.
     """
-    _apply_random_transformations_type = bool
-    apply_random_transformations = False
-    """bool: Should random transformations, including rotations and flips, be applied to sample images."""
     _batch_size_type = int
     batch_size = 100
     """int: The sample batch size for images passed to the model."""
