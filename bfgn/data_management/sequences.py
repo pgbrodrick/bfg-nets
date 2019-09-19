@@ -58,7 +58,8 @@ class BaseSequence(keras.utils.Sequence):
         # Reusing names to avoid creating new, large objects
         raw_features, raw_responses, raw_weights = \
             self._modify_features_responses_weights_before_scaling(raw_features, raw_responses, raw_weights)
-        self._apply_augmentations(raw_features, raw_responses, raw_weights)
+        if self.custom_augmentations is not None:
+            self._apply_augmentations(raw_features, raw_responses, raw_weights)
         raw_features = self._scale_features(raw_features)
         raw_responses = self._scale_responses(raw_responses)
         if self.nan_replacement_value is not None:
