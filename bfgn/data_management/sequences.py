@@ -1,5 +1,5 @@
 import logging
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import albumentations
 import keras
@@ -36,43 +36,49 @@ class BaseSequence(keras.utils.Sequence):
     def __len__(self) -> int:
         raise NotImplementedError('Method is required for Keras functionality. Should return steps_per_epoch.')
 
-    def __getitem__(self, index: int) -> Tuple[List[np.array], List[np.array]]:
-        # Method is required for Keras functionality
-        _logger.debug('Get batch {} with {} items via sequence'.format(index, self.batch_size))
-        features, responses, weights = self._get_features_responses_weights(index)
-        return self._get_transformed_sample(features, responses, weights)
-
-    def get_raw_and_transformed_sample(self, index: int) -> \
-            Tuple[Tuple[List[np.array], List[np.array]], Tuple[List[np.array], List[np.array]]]:
+    def __getitem__(self, index: int, return_raw_sample: bool = False) -> \
+            Union[
+                Tuple[List[np.array], List[np.array]],
+                Tuple[Tuple[List[np.array], List[np.array]], Tuple[List[np.array], List[np.array]]],
+            ]:
+        # Method is required for Keras functionality, reuse names to avoid creating many new, potentially large objects
         _logger.debug('Get batch {} with {} items via sequence'.format(index, self.batch_size))
         raw_features, raw_responses, raw_weights = self._get_features_responses_weights(index)
-        trans_features, trans_responses = self._get_transformed_sample(
-            raw_features.copy(), raw_responses.copy(), raw_weights.copy()
-        )
-        raw_responses = [np.append(response, weight, axis=-1) for response, weight in zip(raw_responses, raw_weights)]
-        return ((raw_features, raw_responses), (trans_features, trans_responses))
 
-    def _get_transformed_sample(self, raw_features, raw_responses, raw_weights) -> \
-            Tuple[List[np.array], List[np.array]]:
-        _logger.debug('Optionally modify features, responses, and weights prior to scaling')
-        # Reusing names to avoid creating new, large objects
-        raw_features, raw_responses, raw_weights = \
-            self._modify_features_responses_weights_before_scaling(raw_features, raw_responses, raw_weights)
+        trans_features = [raw_feature.copy() for raw_feature in raw_features]
+        trans_responses = [raw_response.copy() for raw_response in raw_responses]
+        trans_weights = [raw_weight.copy() for raw_weight in raw_weights]
+
         if self.custom_augmentations is not None:
-            self._apply_augmentations(raw_features, raw_responses, raw_weights)
-        raw_features = self._scale_features(raw_features)
-        raw_responses = self._scale_responses(raw_responses)
+            trans_features, trans_responses, trans_weights = \
+                self._apply_augmentations(trans_features, trans_responses, trans_weights)
+
+        trans_features = self._scale_features(trans_features)
+        trans_responses = self._scale_responses(trans_responses)
+
         if self.nan_replacement_value is not None:
-            _logger.debug('Convert nan features and responses to {}'.format(self.nan_replacement_value))
             raw_features = self._replace_nan_data_values(raw_features, self.nan_replacement_value)
             raw_responses = self._replace_nan_data_values(raw_responses, self.nan_replacement_value)
         else:
             assert np.all(np.isfinite(raw_features)), \
                 'Some feature values are nan but nan_replacement_value not provided in data config. Please provide ' + \
                 'a nan_replacement_value to transform features correctly.'
-        _logger.debug('Append weights to responses for loss function calculations')
+
+        # Append weights to responses for loss function calculations
         raw_responses = [np.append(response, weight, axis=-1) for response, weight in zip(raw_responses, raw_weights)]
-        return raw_features, raw_responses
+        trans_responses = [np.append(resp, weight, axis=-1) for resp, weight in zip(trans_responses, trans_weights)]
+
+        if return_raw_sample is True:
+            # This is for BGFN reporting and other functionality
+            return_value = ((raw_features, raw_responses), (trans_features, trans_responses))
+        else:
+            # This is for Keras sequence generator behavior
+            return_value = (trans_features, trans_responses)
+        return return_value
+
+    def get_raw_and_transformed_sample(self, index: int) -> \
+            Tuple[Tuple[List[np.array], List[np.array]], Tuple[List[np.array], List[np.array]]]:
+        return self.__getitem__(index, return_raw_sample=True)
 
     def _get_features_responses_weights(self, index: int) -> Tuple[List[np.array], List[np.array], List[np.array]]:
         raise NotImplementedError(
@@ -84,15 +90,6 @@ class BaseSequence(keras.utils.Sequence):
         for idx_array in range(len(data)):
             data[idx_array][np.isnan(data[idx_array])] = replacement_value
         return data
-
-    def _modify_features_responses_weights_before_scaling(
-            self,
-            features: List[np.array],
-            responses: List[np.array],
-            weights: List[np.array]
-    ) -> Tuple[List[np.array], List[np.array], List[np.array]]:
-        _logger.debug('No preliminary modifications applied to features, responses, or weights')
-        return features, responses, weights
 
     def _apply_augmentations(
         self,
