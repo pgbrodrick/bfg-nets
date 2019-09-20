@@ -189,8 +189,9 @@ def maximum_likelihood_classification(
 
         col_dat = np.argmax(col_dat, axis=-1)
         out_dat = np.zeros(col_dat.shape) + data_container.config.raw_files.response_nodata_value
-        for _encoded_value in data_container.response_per_band_encoded_values[0]:
-            out_dat[col_dat == _encoded_value] = data_container.response_per_band_encoded_values[0][int(_encoded_value)]
+        for idx_band, _encoded_value in enumerate(data_container.response_per_band_encoded_values[0]):
+            out_dat[col_dat == idx_band] = _encoded_value
+
         out_dat = np.reshape(out_dat, (out_dat.shape[0], out_dat.shape[1], 1))
 
         _logger.debug('Convert output shape from (y,x,b) to (b,y,x)')
