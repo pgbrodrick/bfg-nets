@@ -57,10 +57,10 @@ class BaseSequence(keras.utils.Sequence):
         trans_responses = self._scale_responses(trans_responses)
 
         if self.nan_replacement_value is not None:
-            raw_features = self._replace_nan_data_values(raw_features, self.nan_replacement_value)
-            raw_responses = self._replace_nan_data_values(raw_responses, self.nan_replacement_value)
+            trans_features = self._replace_nan_data_values(trans_features, self.nan_replacement_value)
+            trans_responses = self._replace_nan_data_values(trans_responses, self.nan_replacement_value)
         else:
-            assert np.all(np.isfinite(raw_features)), \
+            assert np.all(np.isfinite(trans_features)), \
                 'Some feature values are nan but nan_replacement_value not provided in data config. Please provide ' + \
                 'a nan_replacement_value to transform features correctly.'
 
