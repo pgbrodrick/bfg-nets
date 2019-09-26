@@ -110,6 +110,8 @@ def apply_model_to_site(
         if (config.data_build.feature_mean_centering is True):
             tile_dat -= np.nanmean(tile_dat, axis=(1, 2))[:, np.newaxis, np.newaxis, :]
 
+        is_nodata = tile_dat == config.raw_files.feature_nodata_value
+
         if (data_container.feature_scaler is not None):
             tile_dat = data_container.feature_scaler.transform(tile_dat)
 
@@ -120,7 +122,7 @@ def apply_model_to_site(
             pred_y = data_container.response_scaler.inverse_transform(pred_y)
 
         if exclude_feature_nodata:
-            is_nan_or_nodata = np.logical_or(np.isnan(tile_dat), tile_dat == config.raw_files.feature_nodata_value)
+            is_nan_or_nodata = np.logical_or(np.isnan(tile_dat), is_nodata)
             is_excluded = np.all(is_nan_or_nodata, axis=-1)
             pred_y[is_excluded, ...] = config.raw_files.response_nodata_value
         del tile_dat
