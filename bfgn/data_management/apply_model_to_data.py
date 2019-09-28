@@ -190,10 +190,19 @@ def maximum_likelihood_classification(
         col_dat = common_io.read_chunk_by_row([dataset], [[0, 0]], dataset.RasterXSize, 1, _row)
         _logger.debug('Read data chunk of shape: {}'.format(col_dat.shape))
 
+        # Necessary because apply_model_to_site will set (0, 0, ..., 0) to pixels with nodata, and argmax will predict
+        # the first class in case of a tie
+        is_null = np.all(col_dat == 0, axis=-1)
+        is_nan = np.all(np.isnan(col_dat), axis=-1)
+        is_masked = np.logical_or(is_null, is_nan)
+
         col_dat = np.argmax(col_dat, axis=-1)
+
         out_dat = np.zeros(col_dat.shape) + data_container.config.raw_files.response_nodata_value
         for idx_band, _encoded_value in enumerate(data_container.response_per_band_encoded_values[0]):
             out_dat[col_dat == idx_band] = _encoded_value
+
+        col_dat[is_masked] = data_container.config.raw_files.response_nodata_value
 
         out_dat = np.reshape(out_dat, (out_dat.shape[0], out_dat.shape[1], 1))
 
