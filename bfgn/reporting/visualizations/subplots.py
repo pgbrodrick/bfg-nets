@@ -222,7 +222,7 @@ def plot_binary_error_classification(
     if ax is None:
         return
     if sampled.raw_responses is None or sampled.raw_predictions is None:
-        _logger.debug('Not plotting classification errors; ' +
+        _logger.debug('Not plotting binary misclassifications; ' +
                       'raw_responses and/or raw_predictions attributes are not available')
         return
 
@@ -256,7 +256,7 @@ def plot_raw_error_regression(
     if ax is None:
         return
     if sampled.raw_responses is None or sampled.raw_predictions is None:
-        _logger.debug('Not plotting raw regression errors; ' +
+        _logger.debug('Not plotting raw regression residuals; ' +
                       'raw_responses and/or raw_predictions attributes are not available')
         return
 
@@ -286,7 +286,7 @@ def plot_transformed_error_regression(
     if ax is None:
         return
     if sampled.raw_responses is None or sampled.raw_predictions is None:
-        _logger.debug('Not plotting transformed regression errors; ' +
+        _logger.debug('Not plotting transformed regression residuals; ' +
                       'raw_responses and/or raw_predictions attributes are not available')
         return
 
