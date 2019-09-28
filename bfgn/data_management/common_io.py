@@ -284,6 +284,8 @@ def convert_envi_file(original_file: str, destination_basename: str, output_form
     options = ''
     for co in creation_options:
         options += ' -co {}'.format(co)
+    if output_format == 'GTiff':
+        options += ' -co BIGTIFF=IF_SAFER'
     gdal.Translate(final_outname, gdal.Open(original_file, gdal.GA_ReadOnly), options=options)
 
     test_outdataset = gdal.Open(final_outname, gdal.GA_ReadOnly)

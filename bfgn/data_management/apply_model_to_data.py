@@ -168,7 +168,7 @@ def maximum_likelihood_classification(
     """
 
     dataset = gdal.Open(likelihood_file, gdal.GA_ReadOnly)
-    assert dataset is not None, 'Invalid liklihood_file'
+    assert dataset is not None, 'Invalid likelihood_file'
 
     # Initialize Output Dataset
     driver = gdal.GetDriverByName('ENVI')
