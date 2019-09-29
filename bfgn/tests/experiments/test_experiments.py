@@ -9,7 +9,7 @@ from bfgn.experiments import experiments, histories, models
 
 @pytest.fixture()
 def config_new(tmp_path) -> configs.Config:
-    config = configs.create_config_from_file('./test_config.yaml')
+    config = configs.create_config_from_file(os.path.join(os.path.dirname(__file__), 'test_config.yaml'))
     config.data_build.dir_out = str(tmp_path)
     config.model_training.dir_out = str(tmp_path)
     return config
