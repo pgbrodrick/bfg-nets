@@ -1,5 +1,4 @@
 import logging
-import os
 import re
 from collections import OrderedDict
 from typing import Dict, List, Type
