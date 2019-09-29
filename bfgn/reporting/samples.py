@@ -35,14 +35,14 @@ class Samples(object):
     response_band_types = None
 
     def __init__(
-            self,
-            data_sequence: sequences.BaseSequence,
-            model: keras.Model,
-            config: configs.Config,
-            is_model_trained: bool,
-            feature_band_types: List[str],
-            response_band_types: List[str],
-            data_sequence_label: str = None
+        self,
+        data_sequence: sequences.BaseSequence,
+        model: keras.Model,
+        config: configs.Config,
+        is_model_trained: bool,
+        feature_band_types: List[str],
+        response_band_types: List[str],
+        data_sequence_label: str = None,
     ) -> None:
         self.data_sequence = data_sequence
         self.model = model
@@ -54,13 +54,17 @@ class Samples(object):
         self._get_sampled_features_responses_and_set_metadata_and_weights()
         if is_model_trained:
             self.trans_predictions = model.predict(self.trans_features)
-            self.raw_predictions = self.data_sequence.response_scaler.inverse_transform(self.trans_predictions)
+            self.raw_predictions = self.data_sequence.response_scaler.inverse_transform(
+                self.trans_predictions
+            )
         self._set_has_transforms()
         self._set_raw_and_transformed_ranges()
 
     def _get_sampled_features_responses_and_set_metadata_and_weights(self) -> None:
-        (raw_features, raw_responses), (trans_features, trans_responses) = \
-            self.data_sequence.get_raw_and_transformed_sample(0)
+        (raw_features, raw_responses), (
+            trans_features,
+            trans_responses,
+        ) = self.data_sequence.get_raw_and_transformed_sample(0)
         # We expect weights to be the last element in the responses array
         self.weights = trans_responses[0][..., -1]
         # Unpack features and responses, inverse transform to get raw values
@@ -93,13 +97,17 @@ class Samples(object):
 
         self.raw_responses_range = self._get_range(self.raw_responses)
         tmp_responses = self.trans_responses.copy()
-        tmp_responses[tmp_responses == self.data_sequence.nan_replacement_value] = np.nan
+        tmp_responses[
+            tmp_responses == self.data_sequence.nan_replacement_value
+        ] = np.nan
         self.trans_responses_range = self._get_range(tmp_responses)
 
         if self.raw_predictions is not None and self.trans_predictions is not None:
             self.raw_predictions_range = self._get_range(self.raw_predictions)
             tmp_predictions = self.trans_predictions.copy()
-            tmp_predictions[tmp_predictions == self.data_sequence.nan_replacement_value] = np.nan
+            tmp_predictions[
+                tmp_predictions == self.data_sequence.nan_replacement_value
+            ] = np.nan
             self.trans_predictions_range = self._get_range(tmp_predictions)
 
         tmp_weights = self.weights.copy()

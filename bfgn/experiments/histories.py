@@ -6,7 +6,7 @@ from typing import Union
 _logger = logging.getLogger(__name__)
 
 
-DEFAULT_FILENAME_HISTORY = 'model_history.pkl'
+DEFAULT_FILENAME_HISTORY = "model_history.pkl"
 
 
 def load_history(filepath: str) -> Union[dict, None]:
@@ -18,8 +18,8 @@ def load_history(filepath: str) -> Union[dict, None]:
     Returns:
         History object if it exists at path.
     """
-    _logger.debug('Load history from {}'.format(filepath))
-    with open(filepath, 'rb') as file_:
+    _logger.debug("Load history from {}".format(filepath))
+    with open(filepath, "rb") as file_:
         history = pickle.load(file_)
     return history
 
@@ -34,8 +34,8 @@ def save_history(history: dict, filepath: str) -> None:
     Returns:
         None.
     """
-    _logger.debug('Save history to {}'.format(filepath))
-    with open(filepath, 'wb') as file_:
+    _logger.debug("Save history to {}".format(filepath))
+    with open(filepath, "wb") as file_:
         pickle.dump(history, file_)
 
 

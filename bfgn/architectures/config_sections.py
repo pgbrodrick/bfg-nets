@@ -9,9 +9,9 @@ from bfgn.configuration import DEFAULT_REQUIRED_VALUE, sections
 # Global parameters
 DEFAULT_FILTERS = 64
 DEFAULT_KERNEL_SIZE = (3, 3)
-DEFAULT_PADDING = 'same'
+DEFAULT_PADDING = "same"
 DEFAULT_USE_BATCH_NORM = False
-DEFAULT_INTERNAL_ACTIVATION = 'relu'
+DEFAULT_INTERNAL_ACTIVATION = "relu"
 DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER = False
 
 # Architecture-specific parameters
@@ -26,6 +26,7 @@ DEFAULT_USE_GROWTH = False
 class BaseArchitectureConfigSection(sections.BaseConfigSection):
     """Base class for architecture config section, includes options that are generic to all architectures.
     """
+
     _filters_type = int
     filters = DEFAULT_REQUIRED_VALUE
     """int: Number of filters to use for initial convolutions, may increase in architectures that support the use_growth
@@ -55,19 +56,26 @@ class BaseArchitectureConfigSection(sections.BaseConfigSection):
     evidence that it may be useful before convolutions in at least some architectures or applications, and we plan on 
     supporting both options in the near future."""
     _use_initial_colorspace_transformation_layer_type = bool
-    use_initial_colorspace_transformation_layer = DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
+    use_initial_colorspace_transformation_layer = (
+        DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
+    )
     """bool: Whether to use an initial colorspace transformation layer. There is evidence that model-learned color
     transformations can be more effective than other types of transformations."""
 
     def get_option_keys(self):
         # TODO:  figure out why the inherited get_option_keys is not returning anything. Maybe because of mixins?
-        return [key for key in dir(self) if not key.startswith('_') and not callable(getattr(self, key))]
+        return [
+            key
+            for key in dir(self)
+            if not key.startswith("_") and not callable(getattr(self, key))
+        ]
 
 
 class AutoencoderMixin(object):
     """
     Mixin for architectures with autoencoder downsampling/upsampling characteristics.
     """
+
     _pool_size_type = tuple
     pool_size = DEFAULT_POOL_SIZE
     """tuple: Pooling and upsampling size during each downsampling/upsampling step."""
@@ -77,6 +85,7 @@ class BlockMixin(object):
     """
     Mixin for architectures with block / layer patterns.
     """
+
     _block_structure_type = tuple
     block_structure = DEFAULT_BLOCK_STRUCTURE
     """tuple: The number of layers in each network block. The length of the tuple is the number of network blocks and
@@ -88,6 +97,7 @@ class DilationMixin(object):
     """
     Mixin for architectures with dilated convolutions.
     """
+
     _dilation_rate_type = int
     dilation_rate = DEFAULT_DILATION_RATE
     """int: The dilation rate for dilated convolutions."""
@@ -97,6 +107,7 @@ class FlatMixin(object):
     """
     Mixin for flat architectures.
     """
+
     _num_layers_type = int
     num_layers = DEFAULT_NUM_LAYERS
     """int: The number of layers in the network."""
@@ -106,15 +117,16 @@ class GrowthMixin(object):
     """
     Mixin for architectures where growth in the number of filters could be useful.
     """
+
     _use_growth_type = bool
     use_growth = DEFAULT_USE_GROWTH
     """bool: Whether to increase the number of filters at each layer in the network."""
 
 
 def create_model_from_architecture_config_section(
-        architecture_name: str,
-        architecture_config_section: BaseArchitectureConfigSection,
-        inshape: tuple
+    architecture_name: str,
+    architecture_config_section: BaseArchitectureConfigSection,
+    inshape: tuple,
 ) -> keras.models.Model:
     """Creates a Keras model for a specific architecture using the provided options.
 
@@ -128,12 +140,17 @@ def create_model_from_architecture_config_section(
         Keras model object.
     """
     architecture_module = _import_architecture_module(architecture_name)
-    kwargs = {key: getattr(architecture_config_section, key) for key in architecture_config_section.get_option_keys()}
-    kwargs['inshape'] = inshape
+    kwargs = {
+        key: getattr(architecture_config_section, key)
+        for key in architecture_config_section.get_option_keys()
+    }
+    kwargs["inshape"] = inshape
     return architecture_module.create_model(**kwargs)
 
 
-def get_architecture_config_section(architecture_name: str) -> BaseArchitectureConfigSection:
+def get_architecture_config_section(
+    architecture_name: str
+) -> BaseArchitectureConfigSection:
     """Gets architecture options for the specified architecture.
 
     Args:
@@ -149,7 +166,11 @@ def get_architecture_config_section(architecture_name: str) -> BaseArchitectureC
 
 def _import_architecture_module(architecture_name: str) -> ModuleType:
     try:
-        architecture_module = importlib.import_module('bfgn.architectures.{}'.format(architecture_name))
+        architecture_module = importlib.import_module(
+            "bfgn.architectures.{}".format(architecture_name)
+        )
     except ModuleNotFoundError:
-        raise ModuleNotFoundError('Architecture {} is not a valid architecture'.format(architecture_name))
+        raise ModuleNotFoundError(
+            "Architecture {} is not a valid architecture".format(architecture_name)
+        )
     return architecture_module

@@ -22,9 +22,11 @@ def get_root_logger(log_outfile: str = None) -> logging.Logger:
         >>> logger.info('This log message will be in logfile.out')
         >>> logger.debug('This log message will not appear because the log level is set to info.')
     """
-    logger = logging.getLogger('bfgn')
+    logger = logging.getLogger("bfgn")
     logger.setLevel(logging.INFO)
-    formatter = logging.Formatter(fmt='%(asctime)s - %(processName)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter(
+        fmt="%(asctime)s - %(processName)s - %(name)s - %(levelname)s - %(message)s"
+    )
     # Stream handler
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(formatter)

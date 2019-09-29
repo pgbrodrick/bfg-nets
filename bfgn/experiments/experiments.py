@@ -15,8 +15,8 @@ from bfgn.utils import compute_access, logging as root_logging
 
 _logger = logging.getLogger(__name__)
 
-_DEFAULT_FILENAME_LOG = 'log.out'
-KEY_HISTORY_IS_MODEL_TRAINED = 'is_model_trained'
+_DEFAULT_FILENAME_LOG = "log.out"
+KEY_HISTORY_IS_MODEL_TRAINED = "is_model_trained"
 
 
 class Experiment(object):
@@ -48,7 +48,9 @@ class Experiment(object):
     """int: Initial epoch for model training"""
 
     def __init__(self, config: configs.Config) -> None:
-        errors = config.get_human_readable_config_errors(exclude_sections=['raw_files', 'model_reporting'])
+        errors = config.get_human_readable_config_errors(
+            exclude_sections=["raw_files", "model_reporting"]
+        )
         assert not errors, errors
         self.config = config
         self.filepath_config = get_config_filepath(config)
@@ -69,17 +71,28 @@ class Experiment(object):
             configs.save_config_to_file(self.config, self.filepath_config)
         else:
             config_existing = configs.create_config_from_file(self.filepath_config)
-            config_differences = configs.get_config_differences(self.config, config_existing)
-            assert not config_differences, \
-                'Provided configuration differs from existing configuration at {}; differing values: {}'.format(
-                    self.filepath_config, config_differences)
+            config_differences = configs.get_config_differences(
+                self.config, config_existing
+            )
+            assert (
+                not config_differences
+            ), "Provided configuration differs from existing configuration at {}; differing values: {}".format(
+                self.filepath_config, config_differences
+            )
 
-    def build_or_load_model(self, data_container: DataContainer = None, num_features: int = None) -> None:
-        assert bool(data_container) != bool(num_features), \
-            'Model building requires either DataContainer or num_features, not both.'
+    def build_or_load_model(
+        self, data_container: DataContainer = None, num_features: int = None
+    ) -> None:
+        assert bool(data_container) != bool(
+            num_features
+        ), "Model building requires either DataContainer or num_features, not both."
         if data_container:
             num_features = len(data_container.feature_band_types)
-        input_shape = (self.config.data_build.window_radius * 2, self.config.data_build.window_radius * 2, num_features)
+        input_shape = (
+            self.config.data_build.window_radius * 2,
+            self.config.data_build.window_radius * 2,
+            num_features,
+        )
         if not os.path.exists(self.filepath_model):
             self._build_new_model(input_shape)
             self._build_new_history()
@@ -89,24 +102,37 @@ class Experiment(object):
 
     def _build_new_model(self, input_shape: Tuple[int, int, int]) -> None:
         self.model = config_sections.create_model_from_architecture_config_section(
-            self.config.model_training.architecture_name, self.config.architecture, input_shape)
-        self.model.compile(loss=self._create_loss_function(), optimizer=self.config.model_training.optimizer)
+            self.config.model_training.architecture_name,
+            self.config.architecture,
+            input_shape,
+        )
+        self.model.compile(
+            loss=self._create_loss_function(),
+            optimizer=self.config.model_training.optimizer,
+        )
         models.save_model(self.model, self.filepath_model)
         self.loaded_existing_model = False
 
     def _build_new_history(self) -> None:
-        self.history = {'model_name': self.config.model_training.dir_out, KEY_HISTORY_IS_MODEL_TRAINED: False}
+        self.history = {
+            "model_name": self.config.model_training.dir_out,
+            KEY_HISTORY_IS_MODEL_TRAINED: False,
+        }
         histories.save_history(self.history, self.filepath_history)
         self.is_model_trained = False
         self.loaded_existing_history = False
 
     def _load_existing_model(self, input_shape: Tuple[int, int, int]) -> None:
         self.model = models.load_model(
-            self.filepath_model, custom_objects={'_cropped_loss': self._create_loss_function()})
+            self.filepath_model,
+            custom_objects={"_cropped_loss": self._create_loss_function()},
+        )
         existing_shape = self.model.layers[0].input_shape[1:]
-        assert existing_shape == input_shape, \
-            'Existing model\'s input shape ({}) does not match provided input shape ({})'.format(
-                existing_shape, input_shape)
+        assert (
+            existing_shape == input_shape
+        ), "Existing model's input shape ({}) does not match provided input shape ({})".format(
+            existing_shape, input_shape
+        )
         self.loaded_existing_model = True
 
     def _load_existing_history(self):
@@ -114,15 +140,17 @@ class Experiment(object):
         self.history = histories.load_history(get_history_filepath(self.config))
         self.is_model_trained = self.history[KEY_HISTORY_IS_MODEL_TRAINED]
         self.loaded_existing_history = True
-        _logger.debug('Setting initial epoch and learning rate from best model epoch, if possible, otherwise from ' +
-                      'most recent model epoch')
-        if 'val_loss' not in self.history and 'lr' not in self.history:
+        _logger.debug(
+            "Setting initial epoch and learning rate from best model epoch, if possible, otherwise from "
+            + "most recent model epoch"
+        )
+        if "val_loss" not in self.history and "lr" not in self.history:
             return
-        if 'val_loss' in self.history:
-            self._init_epoch = 1 + np.argmin(self.history['val_loss'])
-        elif 'lr' in self.history:
-            self._init_epoch = len(self.history['lr'])
-        init_learning_rate = self.history['lr'][self._init_epoch - 1]
+        if "val_loss" in self.history:
+            self._init_epoch = 1 + np.argmin(self.history["val_loss"])
+        elif "lr" in self.history:
+            self._init_epoch = len(self.history["lr"])
+        init_learning_rate = self.history["lr"][self._init_epoch - 1]
         K.set_value(self.model.optimizer.lr, init_learning_rate)
 
     def _create_loss_function(self) -> Callable:
@@ -130,22 +158,28 @@ class Experiment(object):
             self.config.model_training.loss_metric,
             2 * self.config.data_build.window_radius,
             2 * self.config.data_build.loss_window_radius,
-            self.config.model_training.weighted
+            self.config.model_training.weighted,
         )
 
-    def fit_model_with_data_container(self, data_container: DataContainer, resume_training: bool = False) -> None:
+    def fit_model_with_data_container(
+        self, data_container: DataContainer, resume_training: bool = False
+    ) -> None:
         return self.fit_model_with_sequences(
-            data_container.training_sequence, data_container.validation_sequence, resume_training
+            data_container.training_sequence,
+            data_container.validation_sequence,
+            resume_training,
         )
 
     def fit_model_with_sequences(
-            self,
-            training_sequence: BaseSequence,
-            validation_sequence: BaseSequence = None,
-            resume_training: bool = False
+        self,
+        training_sequence: BaseSequence,
+        validation_sequence: BaseSequence = None,
+        resume_training: bool = False,
     ) -> None:
         if self.loaded_existing_model:
-            assert resume_training, 'Resume must be true to continue training an existing model'
+            assert (
+                resume_training
+            ), "Resume must be true to continue training an existing model"
         if self.config.model_training.assert_gpu:
             compute_access.assert_gpu_available()
 
@@ -157,7 +191,7 @@ class Experiment(object):
             verbose=self.config.model_training.verbosity,
             callbacks=model_callbacks,
             validation_data=validation_sequence,
-            max_queue_size=min(10, 2*compute_access.get_count_available_cpus()),
+            max_queue_size=min(10, 2 * compute_access.get_count_available_cpus()),
             use_multiprocessing=False,
             shuffle=False,
             initial_epoch=self._init_epoch,
@@ -186,24 +220,32 @@ class Experiment(object):
                 single_layer_mem *= s
             shapes_mem_count += single_layer_mem
 
-        trainable_count = np.sum([K.count_params(p) for p in set(self.model.trainable_weights)])
-        non_trainable_count = np.sum([K.count_params(p) for p in set(self.model.non_trainable_weights)])
+        trainable_count = np.sum(
+            [K.count_params(p) for p in set(self.model.trainable_weights)]
+        )
+        non_trainable_count = np.sum(
+            [K.count_params(p) for p in set(self.model.non_trainable_weights)]
+        )
 
-        if K.floatx() == 'float16':
+        if K.floatx() == "float16":
             number_size = 2.0
-        elif K.floatx() == 'float32':
+        elif K.floatx() == "float32":
             number_size = 4.0
-        if K.floatx() == 'float64':
+        if K.floatx() == "float64":
             number_size = 8.0
 
-        total_memory = number_size*(batch_size*shapes_mem_count + trainable_count + non_trainable_count)
+        total_memory = number_size * (
+            batch_size * shapes_mem_count + trainable_count + non_trainable_count
+        )
         gbytes = np.round(total_memory / (1024.0 ** 3), 3)
         return gbytes
 
 
 def load_experiment_from_directory(dir_experiment: str) -> Experiment:
     filepath_config = os.path.join(dir_experiment, configs.DEFAULT_FILENAME_CONFIG)
-    assert os.path.exists(filepath_config), 'Experiment directory must contain a config file.'
+    assert os.path.exists(
+        filepath_config
+    ), "Experiment directory must contain a config file."
     config = configs.create_config_from_file(filepath_config)
     config.model_training.dir_out = dir_experiment
     return Experiment(config)
@@ -230,7 +272,9 @@ def get_history_filepath(config: configs.Config) -> str:
     Returns:
         Filepath to model training history.
     """
-    return os.path.join(config.model_training.dir_out, histories.DEFAULT_FILENAME_HISTORY)
+    return os.path.join(
+        config.model_training.dir_out, histories.DEFAULT_FILENAME_HISTORY
+    )
 
 
 def get_log_filepath(config: configs.Config) -> str:

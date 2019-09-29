@@ -6,10 +6,10 @@ import keras
 
 _logger = logging.getLogger(__name__)
 
-_LOSS_TYPE_CC = ('cc', 'categorical_crossentropy')
-_LOSS_TYPE_MAE = ('mae', 'mean_absolute_error')
-_LOSS_TYPE_MSE = ('mse', 'mean_squared_error')
-_LOSS_TYPE_RSME = ('rmse', 'root_mean_squared_error')
+_LOSS_TYPE_CC = ("cc", "categorical_crossentropy")
+_LOSS_TYPE_MAE = ("mae", "mean_absolute_error")
+_LOSS_TYPE_MSE = ("mse", "mean_squared_error")
+_LOSS_TYPE_RSME = ("rmse", "root_mean_squared_error")
 
 
 def get_available_loss_methods():
@@ -18,10 +18,16 @@ def get_available_loss_methods():
     Returns:
         List of available loss methods.
     """
-    return [lm for lms in (_LOSS_TYPE_CC, _LOSS_TYPE_MAE, _LOSS_TYPE_MSE, _LOSS_TYPE_RSME) for lm in lms]
+    return [
+        lm
+        for lms in (_LOSS_TYPE_CC, _LOSS_TYPE_MAE, _LOSS_TYPE_MSE, _LOSS_TYPE_RSME)
+        for lm in lms
+    ]
 
 
-def get_cropped_loss_function(loss_method: str, outer_width: int, inner_width: int, weighted: bool = True) -> Callable:
+def get_cropped_loss_function(
+    loss_method: str, outer_width: int, inner_width: int, weighted: bool = True
+) -> Callable:
     """ Creates a loss function callable with optional per-pixel weighting and edge-trimming.
 
     Arguments:
@@ -40,13 +46,15 @@ def get_cropped_loss_function(loss_method: str, outer_width: int, inner_width: i
     Returns:
         Loss function callable to be passed to a Keras model.
     """
-    _logger.debug('Creating {}weighted {} loss function with outer and inner window of {} and {}'.format(
-        '' if weighted else 'un', loss_method, outer_width, inner_width
-    ))
+    _logger.debug(
+        "Creating {}weighted {} loss function with outer and inner window of {} and {}".format(
+            "" if weighted else "un", loss_method, outer_width, inner_width
+        )
+    )
 
     def _cropped_loss(y_true, y_pred):
         if outer_width != inner_width:
-            buffer = int(round((outer_width-inner_width) / 2))
+            buffer = int(round((outer_width - inner_width) / 2))
             y_true = y_true[:, buffer:-buffer, buffer:-buffer, :]
             y_pred = y_pred[:, buffer:-buffer, buffer:-buffer, :]
 
@@ -61,10 +69,13 @@ def get_cropped_loss_function(loss_method: str, outer_width: int, inner_width: i
         elif loss_method in _LOSS_TYPE_MSE:
             loss = keras.backend.mean(keras.backend.pow(y_true - y_pred, 2))
         elif loss_method in _LOSS_TYPE_RSME:
-            loss = keras.backend.pow(keras.backend.mean(keras.backend.pow(y_true - y_pred, 2)), 0.5)
+            loss = keras.backend.pow(
+                keras.backend.mean(keras.backend.pow(y_true - y_pred, 2)), 0.5
+            )
 
         if weighted:
             loss = loss * weights
 
         return loss
+
     return _cropped_loss

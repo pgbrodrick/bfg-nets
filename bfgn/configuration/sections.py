@@ -47,7 +47,7 @@ def _check_config_validity(self) -> List[str]:
 
 _logger = logging.getLogger(__name__)
 
-VECTORIZED_FILENAMES = ('kml', 'shp')
+VECTORIZED_FILENAMES = ("kml", "shp")
 
 
 class BaseConfigSection(object):
@@ -55,51 +55,78 @@ class BaseConfigSection(object):
     Base Configuration Section from which all Configuration Sections inherit. Handles shared functionality like getting,
     setting, and cleaning configuration options.
     """
+
     _config_options = NotImplemented
     _options_required = None
     _options_optional = None
 
     def __init__(self) -> None:
-        self._options_required = [key for key in self.get_option_keys() if getattr(self, key) == DEFAULT_REQUIRED_VALUE]
-        self._options_optional = [key for key in self.get_option_keys() if getattr(self, key) == DEFAULT_OPTIONAL_VALUE]
+        self._options_required = [
+            key
+            for key in self.get_option_keys()
+            if getattr(self, key) == DEFAULT_REQUIRED_VALUE
+        ]
+        self._options_optional = [
+            key
+            for key in self.get_option_keys()
+            if getattr(self, key) == DEFAULT_OPTIONAL_VALUE
+        ]
 
     @classmethod
     def get_config_name_as_snake_case(cls) -> str:
-        snake_case_converter = re.compile('((?<=[a-z0-9])[A-Z]|(?!^)[A-Z](?=[a-z]))')
-        return snake_case_converter.sub(r'_\1', cls.__name__).lower()
+        snake_case_converter = re.compile("((?<=[a-z0-9])[A-Z]|(?!^)[A-Z](?=[a-z]))")
+        return snake_case_converter.sub(r"_\1", cls.__name__).lower()
 
     def get_config_options_as_dict(self) -> Dict[str, Dict[str, any]]:
         config_options = OrderedDict()
         for key in self.get_option_keys():
             value = getattr(self, key)
             if type(value) is tuple:
-                value = list(value)  # Lists look nicer in config files and seem friendlier
+                value = list(
+                    value
+                )  # Lists look nicer in config files and seem friendlier
             config_options[key] = value
         return config_options
 
     def get_option_keys(self) -> List[str]:
-        return [key for key in self.__class__.__dict__.keys()
-                if not key.startswith('_') and not callable(getattr(self, key))]
+        return [
+            key
+            for key in self.__class__.__dict__.keys()
+            if not key.startswith("_") and not callable(getattr(self, key))
+        ]
 
-    def set_config_options(self, config_options: dict, highlight_required: bool) -> None:
-        _logger.debug('Setting config options for section {} from {}'.format(self.__class__.__name__, config_options))
+    def set_config_options(
+        self, config_options: dict, highlight_required: bool
+    ) -> None:
+        _logger.debug(
+            "Setting config options for section {} from {}".format(
+                self.__class__.__name__, config_options
+            )
+        )
         for key in self.get_option_keys():
             if key in config_options:
                 value = config_options.pop(key)
-                _logger.debug('Setting option "{}" to provided value "{}"'.format(key, value))
+                _logger.debug(
+                    'Setting option "{}" to provided value "{}"'.format(key, value)
+                )
             else:
                 value = getattr(self, key)
                 # We leave the labels for required and optional values as-is for templates, i.e., when highlights are
                 # required, otherwise we convert those labels to None
-                if not highlight_required and value in (DEFAULT_REQUIRED_VALUE, DEFAULT_OPTIONAL_VALUE):
+                if not highlight_required and value in (
+                    DEFAULT_REQUIRED_VALUE,
+                    DEFAULT_OPTIONAL_VALUE,
+                ):
                     value = None
-                _logger.debug('Setting option "{}" to default value "{}"'.format(key, value))
+                _logger.debug(
+                    'Setting option "{}" to default value "{}"'.format(key, value)
+                )
             setattr(self, key, self._clean_config_option_value(key, value))
         return
 
     def _clean_config_option_value(self, option_key: str, value: any) -> any:
         # PyYAML reads None as a string so we need to convert to the None type
-        if value in ('None', 'none'):
+        if value in ("None", "none"):
             value = None
         # Some parameters are treated as floats, but ints are acceptable input formats
         # Treating ints as floats is more flexible and requires fewer assumptions / accomodations in the code
@@ -117,10 +144,14 @@ class BaseConfigSection(object):
 
     def check_config_validity(self) -> List[str]:
         errors = list()
-        message_required = '{} in config section {} is required, but either 1) None was provided or 2) no value ' + \
-                           'was provided. The expected type is {}.'
-        message_type = 'Invalid type for config option {} in config section {}. The provided value {} is a {}, ' + \
-                       'but the required value should be a {}.'
+        message_required = (
+            "{} in config section {} is required, but either 1) None was provided or 2) no value "
+            + "was provided. The expected type is {}."
+        )
+        message_type = (
+            "Invalid type for config option {} in config section {}. The provided value {} is a {}, "
+            + "but the required value should be a {}."
+        )
         for key in self.get_option_keys():
             value = getattr(self, key)
             # No further checking is necessary if the provided type matches to expected type
@@ -133,9 +164,15 @@ class BaseConfigSection(object):
             # At this point, we know there's an issue with this key
             # Either we have a required option that can never be None, or we have a type mismatch
             if value is None and key in self._options_required:
-                errors.append(message_required.format(key, self.__class__.__name__, type_expected))
+                errors.append(
+                    message_required.format(key, self.__class__.__name__, type_expected)
+                )
             else:
-                errors.append(message_type.format(key, self.__class__.__name__, value, type(value), type_expected))
+                errors.append(
+                    message_type.format(
+                        key, self.__class__.__name__, value, type(value), type_expected
+                    )
+                )
         errors.extend(self._check_config_validity())
         return errors
 
@@ -143,13 +180,14 @@ class BaseConfigSection(object):
         return list()
 
     def _get_expected_type_for_option_key(self, option_key: str) -> type:
-        return getattr(self, '_{}_type'.format(option_key))
+        return getattr(self, "_{}_type".format(option_key))
 
 
 class RawFiles(BaseConfigSection):
     """
     Raw file configuration, information necessary to locate and parse the raw files.
     """
+
     _feature_files_type = list
     feature_files = DEFAULT_REQUIRED_VALUE
     """list: List of filepaths to raw feature rasters.  Format is a list of lists, where the outer
@@ -192,7 +230,7 @@ class RawFiles(BaseConfigSection):
     """bool: Should projection differences between feature and response files be ignored? This option
     should only be true if the user is confident that projections are identical despite encodings."""
     _response_vector_property_name_type = str
-    response_vector_property_name = 'Class'
+    response_vector_property_name = "Class"
     """str: This is the property (or column) of the response vector to use for categorization or regression.  This value
     is only used if the response file(s) is/are in vector format."""
 
@@ -200,17 +238,25 @@ class RawFiles(BaseConfigSection):
         errors = list()
         if type(self.feature_files) is list and type(self.response_files) is list:
             if len(self.feature_files) == 0:
-                errors.append('feature_files must have more than one file')
+                errors.append("feature_files must have more than one file")
             if len(self.response_files) == 0:
-                errors.append('response_files must have more than one file')
+                errors.append("response_files must have more than one file")
             if len(self.feature_files) != len(self.response_files):
-                errors.append('feature_files and response_files must have corresponding files and ' +
-                              'be the same length')
+                errors.append(
+                    "feature_files and response_files must have corresponding files and "
+                    + "be the same length"
+                )
         if type(self.boundary_files) is list:
             if self.boundary_bad_value is None:
-                errors.append('boundary_bad_value must be provided if boundary_files is provided')
+                errors.append(
+                    "boundary_bad_value must be provided if boundary_files is provided"
+                )
 
-        errors.extend(_check_input_file_formats(self.feature_files, self.response_files, self.boundary_files))
+        errors.extend(
+            _check_input_file_formats(
+                self.feature_files, self.response_files, self.boundary_files
+            )
+        )
 
         return errors
 
@@ -219,18 +265,19 @@ class DataBuild(BaseConfigSection):
     """
     Data build configuration, information necessary to structure and format the built data files.
     """
+
     _dir_out_type = str
-    dir_out = '.'
+    dir_out = "."
     """str: Directory to which built data files are saved."""
     _log_level_type = str
-    log_level = 'INFO'
+    log_level = "INFO"
     """str: Experiment log level. One of ERROR, WARNING, INFO, or DEBUG."""
     _filename_prefix_out_type = str
-    filename_prefix_out = ''
+    filename_prefix_out = ""
     """str: Optional prefix for built data filenames, useful for organizing or tracking built data files
     from different build strategies."""
     _network_category_type = str
-    network_category = 'FCN'
+    network_category = "FCN"
     """str: Either CNN for convolutional neural network or FCN for fully convolutional network."""
     _random_seed_type = int
     random_seed = 1
@@ -291,11 +338,13 @@ class DataBuild(BaseConfigSection):
 
     def _check_config_validity(self) -> List[str]:
         errors = list()
-        response_data_format_options = ('FCN', 'CNN')
+        response_data_format_options = ("FCN", "CNN")
         if self.network_category not in response_data_format_options:
-            errors.append('response_data_format is invalid option ({}), must be one of the following:  {}'.format(
-                self.network_category, ','.join(response_data_format_options)
-            ))
+            errors.append(
+                "response_data_format is invalid option ({}), must be one of the following:  {}".format(
+                    self.network_category, ",".join(response_data_format_options)
+                )
+            )
         return errors
 
 
@@ -303,6 +352,7 @@ class DataSamples(BaseConfigSection):
     """
     Data sample configuration, information necessary to parse built data files and pass data to models during training.
     """
+
     _batch_size_type = int
     batch_size = 100
     """int: The sample batch size for images passed to the model."""
@@ -320,16 +370,22 @@ class DataSamples(BaseConfigSection):
     def _check_config_validity(self) -> List[str]:
         errors = list()
         available_scalers = scalers.get_available_scalers()
-        if (self.feature_scaler_names is list):
+        if self.feature_scaler_names is list:
             for scaler_name in self.feature_scaler_names:
                 if scaler_name not in available_scalers:
-                    errors.append('feature_scaler_names contains a scaler name that does not exist:  {}'.format(
-                        scaler_name))
-        if (self.response_scaler_names is list):
+                    errors.append(
+                        "feature_scaler_names contains a scaler name that does not exist:  {}".format(
+                            scaler_name
+                        )
+                    )
+        if self.response_scaler_names is list:
             for scaler_name in self.response_scaler_names:
                 if scaler_name not in available_scalers:
-                    errors.append('response_scaler_names contains a scaler name that does not exist:  {}'.format(
-                        scaler_name))
+                    errors.append(
+                        "response_scaler_names contains a scaler name that does not exist:  {}".format(
+                            scaler_name
+                        )
+                    )
         return errors
 
 
@@ -337,11 +393,12 @@ class ModelTraining(BaseConfigSection):
     """
     Model training configuration, information necessary to train models from start to finish.
     """
+
     _dir_out_type = str
-    dir_out = '.'
+    dir_out = "."
     """str: Directory to which new model files are saved and from which existing model files are loaded."""
     _log_level_type = str
-    log_level = 'INFO'
+    log_level = "INFO"
     """str: Experiment log level. One of ERROR, WARNING, INFO, or DEBUG."""
     _verbosity_type = int
     verbosity = 1
@@ -359,7 +416,7 @@ class ModelTraining(BaseConfigSection):
     max_epochs = 100
     """int: Maximum number of epochs to run model training."""
     _optimizer_type = str
-    optimizer = 'adam'
+    optimizer = "adam"
     """str: Optimizer to use during model training. See Keras documentation for more information."""
     _weighted_type = bool
     weighted = False
@@ -369,11 +426,18 @@ class ModelTraining(BaseConfigSection):
         errors = list()
         available_architectures = architectures.get_available_architectures()
         if self.architecture_name not in available_architectures:
-            errors.append('architecture_name {} not in available architectures: {}'.format(
-                self.architecture_name, available_architectures))
+            errors.append(
+                "architecture_name {} not in available architectures: {}".format(
+                    self.architecture_name, available_architectures
+                )
+            )
         available_losses = losses.get_available_loss_methods()
         if self.loss_metric not in available_losses:
-            errors.append('loss_metric {} not in available loss metrics: {}'.format(self.loss_metric, available_losses))
+            errors.append(
+                "loss_metric {} not in available loss metrics: {}".format(
+                    self.loss_metric, available_losses
+                )
+            )
         return errors
 
 
@@ -381,6 +445,7 @@ class ModelReporting(BaseConfigSection):
     """
     Model reporting configuration, information necessary to generate reports for evaluating model performance.
     """
+
     _max_pages_per_figure_type = int
     max_pages_per_figure = 1
     """int: The max number of pages per figure in the model report."""
@@ -444,7 +509,7 @@ class CallbackEarlyStopping(BaseConfigSection):
     use_callback = True
     """bool: See Keras documentation."""
     _loss_metric_type = str
-    loss_metric = 'val_loss'
+    loss_metric = "val_loss"
     """str: Loss metric to monitor for early stopping. See Keras documentation."""
     _min_delta_type = float
     min_delta = 0.0001
@@ -462,7 +527,7 @@ class CallbackReducedLearningRate(BaseConfigSection):
     factor = 0.5
     """float: See Keras documentation."""
     _loss_metric_type = str
-    loss_metric = 'val_loss'
+    loss_metric = "val_loss"
     """str: Loss metric to monitor for reducing learning rate. See Keras documentation."""
     _min_delta_type = float
     min_delta = 0.0001
@@ -474,8 +539,15 @@ class CallbackReducedLearningRate(BaseConfigSection):
 
 def get_config_sections() -> List[Type[BaseConfigSection]]:
     return [
-        RawFiles, DataBuild, DataSamples, ModelTraining, ModelReporting, CallbackGeneral, CallbackTensorboard,
-        CallbackEarlyStopping, CallbackReducedLearningRate
+        RawFiles,
+        DataBuild,
+        DataSamples,
+        ModelTraining,
+        ModelReporting,
+        CallbackGeneral,
+        CallbackTensorboard,
+        CallbackEarlyStopping,
+        CallbackReducedLearningRate,
     ]
 
 
@@ -484,52 +556,82 @@ def check_input_file_validity(f_file_list, r_file_list, b_file_list) -> List[str
     # Checks that all files can be opened by gdal
     for _site in range(len(f_file_list)):
         for _band in range(len(f_file_list[_site])):
-            if (gdal.Open(f_file_list[_site][_band], gdal.GA_ReadOnly) is None):
-                errors.append('Could not open feature site {}, file {}'.format(_site, _band))
+            if gdal.Open(f_file_list[_site][_band], gdal.GA_ReadOnly) is None:
+                errors.append(
+                    "Could not open feature site {}, file {}".format(_site, _band)
+                )
 
     for _site in range(len(r_file_list)):
         for _band in range(len(r_file_list[_site])):
-            if(_noerror_open(r_file_list[_site][_band]) is None and
-                    r_file_list[_site][_band].split('.')[-1] not in VECTORIZED_FILENAMES):
-                errors.append('Could not open response site {}, file {}'.format(_site, _band))
+            if (
+                _noerror_open(r_file_list[_site][_band]) is None
+                and r_file_list[_site][_band].split(".")[-1] not in VECTORIZED_FILENAMES
+            ):
+                errors.append(
+                    "Could not open response site {}, file {}".format(_site, _band)
+                )
 
     # Checks on the number of bands per file
-    num_f_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in f_file_list[0]]
+    num_f_bands_per_file = [
+        gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in f_file_list[0]
+    ]
     for _site in range(len(f_file_list)):
         for _file in range(len(f_file_list[_site])):
-            if(gdal.Open(f_file_list[_site][_file], gdal.GA_ReadOnly).RasterCount != num_f_bands_per_file[_file]):
-                errors.append('Inconsistent number of feature bands in site {}, file {}'.format(_site, _file))
+            if (
+                gdal.Open(f_file_list[_site][_file], gdal.GA_ReadOnly).RasterCount
+                != num_f_bands_per_file[_file]
+            ):
+                errors.append(
+                    "Inconsistent number of feature bands in site {}, file {}".format(
+                        _site, _file
+                    )
+                )
 
     file_type = []
     for _site in range(len(r_file_list)):
-        if (r_file_list[_site][0].split('.')[-1] in VECTORIZED_FILENAMES):
-            file_type.append('V')
+        if r_file_list[_site][0].split(".")[-1] in VECTORIZED_FILENAMES:
+            file_type.append("V")
         else:
-            file_type.append('R')
+            file_type.append("R")
 
         for _file in range(1, len(r_file_list[0])):
-            if (r_file_list[_site][_file].split('.')[-1] in VECTORIZED_FILENAMES):
-                if (file_type[-1] == 'R'):
-                    file_type[-1] = 'M'
+            if r_file_list[_site][_file].split(".")[-1] in VECTORIZED_FILENAMES:
+                if file_type[-1] == "R":
+                    file_type[-1] = "M"
                     break
             else:
-                if (file_type[-1] == 'V'):
-                    file_type[-1] = 'M'
+                if file_type[-1] == "V":
+                    file_type[-1] = "M"
                     break
 
     un_file_types = np.unique(file_type)
-    if (len(un_file_types) > 1):
-        errors.append('Response file types mixed, found per-site order:\n{}\nR=Raster\nV=Vector\nM=Mixed')
+    if len(un_file_types) > 1:
+        errors.append(
+            "Response file types mixed, found per-site order:\n{}\nR=Raster\nV=Vector\nM=Mixed"
+        )
 
-    if (np.all(un_file_types == 'R')):
+    if np.all(un_file_types == "R"):
 
-        is_vector = any([x.split('.')[-1] in VECTORIZED_FILENAMES for x in r_file_list[0]])
+        is_vector = any(
+            [x.split(".")[-1] in VECTORIZED_FILENAMES for x in r_file_list[0]]
+        )
         if not is_vector:
-            num_r_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in r_file_list[0]]
+            num_r_bands_per_file = [
+                gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in r_file_list[0]
+            ]
             for _site in range(len(r_file_list)):
                 for _file in range(len(r_file_list[_site])):
-                    if(gdal.Open(r_file_list[_site][_file], gdal.GA_ReadOnly).RasterCount != num_r_bands_per_file[_file]):
-                        errors.append('Inconsistent number of response bands in site {}, file {}'.format(_site, _file))
+                    if (
+                        gdal.Open(
+                            r_file_list[_site][_file], gdal.GA_ReadOnly
+                        ).RasterCount
+                        != num_r_bands_per_file[_file]
+                    ):
+                        errors.append(
+                            "Inconsistent number of response bands in site {}, file {}".format(
+                                _site, _file
+                            )
+                        )
 
     return errors
 
@@ -545,51 +647,59 @@ def _check_input_file_formats(f_file_list, r_file_list, b_file_list) -> List[str
     # bands.
 
     # Check that feature and response files are lists
-    if (type(f_file_list) is not list):
-        errors.append('Feature files must be a list of lists')
-    if (type(r_file_list) is not list):
-        errors.append('Response files must be a list of lists')
+    if type(f_file_list) is not list:
+        errors.append("Feature files must be a list of lists")
+    if type(r_file_list) is not list:
+        errors.append("Response files must be a list of lists")
 
-    if (len(errors) > 0):
-        errors.append('Feature or response files not in correct format...all checks cannot be completed')
+    if len(errors) > 0:
+        errors.append(
+            "Feature or response files not in correct format...all checks cannot be completed"
+        )
         return errors
 
     # Checks on the matching numbers of sites
-    if (len(f_file_list) != len(r_file_list)):
-        errors.append('Feature and response site lists must be the same length')
-    if (len(f_file_list) <= 0):
-        errors.append('At least one feature and response site is required')
+    if len(f_file_list) != len(r_file_list):
+        errors.append("Feature and response site lists must be the same length")
+    if len(f_file_list) <= 0:
+        errors.append("At least one feature and response site is required")
     if b_file_list is not None:
-        if (len(b_file_list) != len(f_file_list)):
+        if len(b_file_list) != len(f_file_list):
             errors.append(
-                'Boundary and feature file lists must be the same length. Boundary list: {}. Feature list: {}.'.format(
-                    b_file_list, f_file_list))
+                "Boundary and feature file lists must be the same length. Boundary list: {}. Feature list: {}.".format(
+                    b_file_list, f_file_list
+                )
+            )
 
     # Checks that we have lists of lists for f and r
     for _site in range(len(f_file_list)):
-        if(type(f_file_list[_site]) is not list):
-            errors.append('Features at site {} are not as a list'.format(_site))
+        if type(f_file_list[_site]) is not list:
+            errors.append("Features at site {} are not as a list".format(_site))
 
     for _site in range(len(r_file_list)):
-        if(type(r_file_list[_site]) is not list):
-            errors.append('Responses at site {} are not as a list'.format(_site))
+        if type(r_file_list[_site]) is not list:
+            errors.append("Responses at site {} are not as a list".format(_site))
 
     # Checks on the number of files per site
     num_f_files_per_site = len(f_file_list[0])
     num_r_files_per_site = len(r_file_list[0])
     for _site in range(len(f_file_list)):
-        if(len(f_file_list[_site]) != num_f_files_per_site):
-            errors.append('Inconsistent number of feature files at site {}'.format(_site))
+        if len(f_file_list[_site]) != num_f_files_per_site:
+            errors.append(
+                "Inconsistent number of feature files at site {}".format(_site)
+            )
 
     for _site in range(len(r_file_list)):
-        if(len(r_file_list[_site]) != num_r_files_per_site):
-            errors.append('Inconsistent number of response files at site {}'.format(_site))
+        if len(r_file_list[_site]) != num_r_files_per_site:
+            errors.append(
+                "Inconsistent number of response files at site {}".format(_site)
+            )
 
     return errors
 
 
 def _noerror_open(filename: str, file_handle=gdal.GA_ReadOnly) -> gdal.Dataset:
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    gdal.PushErrorHandler("CPLQuietErrorHandler")
     dataset = gdal.Open(filename, file_handle)
     gdal.PopErrorHandler()
     return dataset

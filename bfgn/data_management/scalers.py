@@ -17,11 +17,16 @@ def get_available_scalers() -> List[str]:
     Returns:
         List of available scaler names.
     """
-    return sorted([attr for attr in sys.modules[__name__].__dict__.keys()
-                   if not attr.startswith('Base') and attr.endswith('Scaler')])
+    return sorted(
+        [
+            attr
+            for attr in sys.modules[__name__].__dict__.keys()
+            if not attr.startswith("Base") and attr.endswith("Scaler")
+        ]
+    )
 
 
-def get_scaler(scaler_name: str, scaler_options: dict) -> 'BaseGlobalScaler':
+def get_scaler(scaler_name: str, scaler_options: dict) -> "BaseGlobalScaler":
     """Gets scaler matching the provided name.
 
     Args:
@@ -32,8 +37,9 @@ def get_scaler(scaler_name: str, scaler_options: dict) -> 'BaseGlobalScaler':
         Scaler matching the provided name.
     """
     available_scalers = get_available_scalers()
-    assert scaler_name in available_scalers, \
-        'Scaler {} not in available scalers: {}'.format(scaler_name, available_scalers)
+    assert (
+        scaler_name in available_scalers
+    ), "Scaler {} not in available scalers: {}".format(scaler_name, available_scalers)
     return getattr(sys.modules[__name__], scaler_name)(**scaler_options)
 
 
@@ -44,6 +50,7 @@ class BaseGlobalScaler(object):
     scalers from the scikit-learn package to handle the nitty-gritty of the transform and inverse transform, and we use
     the Scaler class to handle the nitty-gritty of reshaping and otherwise handling the image arrays.
     """
+
     savename = None
     scaler_name = None
 
@@ -51,13 +58,13 @@ class BaseGlobalScaler(object):
         """
         :param savename_base: the directory and optionally filename prefix for saving data
         """
-        if (savename_base is not None):
+        if savename_base is not None:
             self.savename = savename_base + self.scaler_name
         self.is_fitted = False
 
     # TODO: In all of the below, handle (IE ignore) transformations on categorical data
     def fit(self, image_array):
-        assert self.is_fitted is False, 'Scaler has already been fit to data'
+        assert self.is_fitted is False, "Scaler has already been fit to data"
         self._fit(image_array)
         self.is_fitted = True
 
@@ -85,7 +92,7 @@ class BaseSklearnScaler(BaseGlobalScaler):
     scaler = None
 
     def __init__(self, savename_base):
-        self.scaler_name = 'sklearn_' + self.scaler.__class__.__name__
+        self.scaler_name = "sklearn_" + self.scaler.__class__.__name__
         super().__init__(savename_base)
 
     def _fit(self, image_array):
@@ -110,7 +117,7 @@ class BaseSklearnScaler(BaseGlobalScaler):
     def _reshape_image_array(self, image_array):
         # The second dimension is image_array.shape[-1] which is the num_channels, so the first dimension is
         # image width x image height
-        if (len(image_array.shape) > 2):
+        if len(image_array.shape) > 2:
             return image_array.reshape(-1, image_array.shape[-1])
         else:
             return image_array
@@ -119,15 +126,14 @@ class BaseSklearnScaler(BaseGlobalScaler):
         joblib.dump(self.scaler, self.savename)
 
     def load(self):
-        if (os.path.isfile(self.savename)):
+        if os.path.isfile(self.savename):
             self.scaler = joblib.load(self.savename)
             self.is_fitted = True
 
 
 class NullScaler(BaseGlobalScaler):
-
     def __init__(self, savename_base):
-        self.scaler_name = 'NullScaler'
+        self.scaler_name = "NullScaler"
         super().__init__(savename_base)
 
     def _fit(self, image_array):
@@ -154,7 +160,7 @@ class ConstantScaler(BaseGlobalScaler):
         self.constant_scaler = constant_scaler
         self.constant_offset = constant_offset
 
-        self.scaler_name = 'ConstantScaler'
+        self.scaler_name = "ConstantScaler"
         super().__init__(savename_base)
 
     def _fit(self, image_array):
@@ -169,46 +175,51 @@ class ConstantScaler(BaseGlobalScaler):
         return image_array
 
     def save(self):
-        np.savez(self.savename + '.npz', constant_scaler=self.constant_scaler, constant_offset=self.constant_offset)
+        np.savez(
+            self.savename + ".npz",
+            constant_scaler=self.constant_scaler,
+            constant_offset=self.constant_offset,
+        )
 
     def load(self):
-        if (os.path.isfile(self.savename + '.npz')):
-            npzf = np.load(self.savename + '.npz')
-            self.constant_scaler = npzf['constant_scaler']
-            self.constant_offset = npzf['constant_offset']
+        if os.path.isfile(self.savename + ".npz"):
+            npzf = np.load(self.savename + ".npz")
+            self.constant_scaler = npzf["constant_scaler"]
+            self.constant_offset = npzf["constant_offset"]
             self.is_fitted = True
 
 
 class StandardScaler(BaseSklearnScaler):
-
     def __init__(self, savename_base):
         self.scaler = sklearn.preprocessing.StandardScaler(copy=True)
         super().__init__(savename_base)
 
 
 class MinMaxScaler(BaseSklearnScaler):
-
     def __init__(self, savename_base, feature_range=(0, 1)):
-        self.scaler = sklearn.preprocessing.MinMaxScaler(feature_range=feature_range, copy=True)
+        self.scaler = sklearn.preprocessing.MinMaxScaler(
+            feature_range=feature_range, copy=True
+        )
         super().__init__(savename_base)
 
 
 class RobustScaler(BaseSklearnScaler):
-
     def __init__(self, savename_base, quantile_range=(10.0, 90.0)):
-        self.scaler = sklearn.preprocessing.RobustScaler(quantile_range=quantile_range, copy=True)
+        self.scaler = sklearn.preprocessing.RobustScaler(
+            quantile_range=quantile_range, copy=True
+        )
         super().__init__(savename_base)
 
 
 class PowerScaler(BaseSklearnScaler):
-
-    def __init__(self, savename_base, method='box-cox'):
+    def __init__(self, savename_base, method="box-cox"):
         self.scaler = sklearn.preprocessing.PowerTransformer(method=method, copy=True)
         super().__init__(savename_base)
 
 
 class QuantileUniformScaler(BaseSklearnScaler):
-
-    def __init__(self, savename_base, output_distribution='uniform'):
-        self.scaler = sklearn.preprocessing.QuantileTransformer(output_distribution=output_distribution, copy=True)
+    def __init__(self, savename_base, output_distribution="uniform"):
+        self.scaler = sklearn.preprocessing.QuantileTransformer(
+            output_distribution=output_distribution, copy=True
+        )
         super().__init__(savename_base)

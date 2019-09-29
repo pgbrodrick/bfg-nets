@@ -7,10 +7,12 @@ import keras
 _logger = logging.getLogger(__name__)
 
 
-DEFAULT_FILENAME_MODEL = 'model.h5'
+DEFAULT_FILENAME_MODEL = "model.h5"
 
 
-def load_model(filepath: str, custom_objects: dict = None) -> Union[keras.models.Model, None]:
+def load_model(
+    filepath: str, custom_objects: dict = None
+) -> Union[keras.models.Model, None]:
     """Loads model from serialized file.
 
     Args:
@@ -20,7 +22,7 @@ def load_model(filepath: str, custom_objects: dict = None) -> Union[keras.models
     Returns:
         Keras model object if it exists at path.
     """
-    _logger.debug('Load model from {}'.format(filepath))
+    _logger.debug("Load model from {}".format(filepath))
     return keras.models.load_model(filepath, custom_objects=custom_objects)
 
 
@@ -34,5 +36,5 @@ def save_model(model: keras.models.Model, filepath: str) -> None:
     Returns:
         None.
     """
-    _logger.debug('Save model to {}'.format(filepath))
+    _logger.debug("Save model to {}".format(filepath))
     model.save(filepath, overwrite=True)
