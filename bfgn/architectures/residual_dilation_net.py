@@ -21,6 +21,7 @@ def create_model(
         block_structure: Tuple[int, ...] = config_sections.DEFAULT_BLOCK_STRUCTURE,
         dilation_rate: int = config_sections.DEFAULT_DILATION_RATE,
         filters: int = config_sections.DEFAULT_FILTERS,
+        internal_activation: str = config_sections.DEFAULT_INTERNAL_ACTIVATION,
         kernel_size: Tuple[int, int] = config_sections.DEFAULT_KERNEL_SIZE,
         padding: str = config_sections.DEFAULT_PADDING,
         use_batch_norm: bool = config_sections.DEFAULT_USE_BATCH_NORM,

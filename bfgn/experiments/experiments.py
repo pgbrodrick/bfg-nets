@@ -1,7 +1,7 @@
 import logging
 import os
+from typing import Callable, Tuple
 
-import keras
 import keras.backend as K
 import numpy as np
 
@@ -16,16 +16,22 @@ from bfgn.utils import compute_access, logging as root_logging
 _logger = logging.getLogger(__name__)
 
 _DEFAULT_FILENAME_LOG = 'log.out'
-_KEY_HISTORY_IS_MODEL_TRAINED = 'is_model_trained'
+KEY_HISTORY_IS_MODEL_TRAINED = 'is_model_trained'
 
 
 class Experiment(object):
     config = None
     """configs.Config: bfgn configuration object."""
+    filepath_config = None
+    """str: Filepath to which model config is saved."""
     model = None
     """keras.models.Model: Keras model object."""
+    filepath_model = None
+    """str: Filepath to which Keras model is saved."""
     history = None
     """dict: Model training history."""
+    filepath_history = None
+    """str: Filepath to which model history is saved."""
     loaded_existing_history = None
     """bool: Whether an existing history object was loaded from the model training directory."""
     loaded_existing_model = None
@@ -36,121 +42,96 @@ class Experiment(object):
     logger = None
     """logging.Logger: Root logger for Experiment. Available if user wants to directly modify the log formatting,
     handling, or other behavior."""
+    filepath_logs = None
+    """str: Filepath to which model logs are saved."""
+    _init_epoch = 0
+    """int: Initial epoch for model training"""
 
     def __init__(self, config: configs.Config) -> None:
         errors = config.get_human_readable_config_errors(exclude_sections=['raw_files', 'model_reporting'])
         assert not errors, errors
-
         self.config = config
+        self.filepath_config = get_config_filepath(config)
+        self.filepath_model = get_model_filepath(config)
+        self.filepath_history = get_history_filepath(config)
+        self.filepath_logs = get_log_filepath(config)
+
         if not os.path.exists(self.config.model_training.dir_out):
             os.makedirs(self.config.model_training.dir_out)
 
-        self.logger = root_logging.get_root_logger(get_log_filepath(self.config))
+        self.logger = root_logging.get_root_logger(self.filepath_logs)
         self.logger.setLevel(self.config.model_training.log_level)
 
-        # Either save config to new model directory or check that existing config matches provided config
-        filepath_config = get_config_filepath(self.config)
-        if not os.path.exists(filepath_config):
-            configs.save_config_to_file(self.config, filepath_config)
+        self._save_new_config_or_assert_existing_config_matches()
+
+    def _save_new_config_or_assert_existing_config_matches(self) -> None:
+        if not os.path.exists(self.filepath_config):
+            configs.save_config_to_file(self.config, self.filepath_config)
         else:
-            config_existing = configs.create_config_from_file(filepath_config)
+            config_existing = configs.create_config_from_file(self.filepath_config)
             config_differences = configs.get_config_differences(self.config, config_existing)
             assert not config_differences, \
                 'Provided configuration differs from existing configuration at {}; differing values: {}'.format(
-                    filepath_config, config_differences)
+                    self.filepath_config, config_differences)
 
     def build_or_load_model(self, data_container: DataContainer = None, num_features: int = None) -> None:
-        _logger.info('Building or loading model')
-
-        loss_function = losses.get_cropped_loss_function(
-            self.config.model_training.loss_metric,
-            2 * self.config.data_build.window_radius,
-            2 * self.config.data_build.loss_window_radius,
-            self.config.model_training.weighted
-        )
-
-        if os.path.exists(get_model_filepath(self.config)):
-            _logger.debug('Loading existing model from model training directory at {}'.format(
-                get_model_filepath(self.config)))
-            self.loaded_existing_model = True
-            self.model = models.load_model(
-                get_model_filepath(self.config),
-                custom_objects={'_cropped_loss': loss_function}
-            )
+        assert bool(data_container) != bool(num_features), \
+            'Model building requires either DataContainer or num_features, not both.'
+        if data_container:
+            num_features = len(data_container.feature_band_types)
+        input_shape = (self.config.data_build.window_radius * 2, self.config.data_build.window_radius * 2, num_features)
+        if not os.path.exists(self.filepath_model):
+            self._build_new_model(input_shape)
+            self._build_new_history()
         else:
-            _logger.debug('Building new model, no model exists at {}'.format(
-                get_model_filepath(self.config)))
+            self._load_existing_model(input_shape)
+            self._load_existing_history()
 
-            assert data_container or num_features, 'Model building requires either DataContainer or num_features.'
-            if not num_features:
-                inshape = (
-                    self.config.data_build.window_radius * 2,
-                    self.config.data_build.window_radius * 2,
-                    len(data_container.feature_band_types)
-                )
-            _logger.debug('Inshape is set to {}, was determined from {}'.format(
-                inshape, 'DataContainer' if data_container else 'num_features'
-            ))
+    def _build_new_model(self, input_shape: Tuple[int, int, int]) -> None:
+        self.model = config_sections.create_model_from_architecture_config_section(
+            self.config.model_training.architecture_name, self.config.architecture, input_shape)
+        self.model.compile(loss=self._create_loss_function(), optimizer=self.config.model_training.optimizer)
+        models.save_model(self.model, self.filepath_model)
+        self.loaded_existing_model = False
 
-            self.loaded_existing_model = False
-            self.model = config_sections.create_model_from_architecture_config_section(
-                self.config.model_training.architecture_name, self.config.architecture, inshape)
-            self.model.compile(loss=loss_function, optimizer=self.config.model_training.optimizer)
-            self.model.summary()
+    def _build_new_history(self) -> None:
+        self.history = {'model_name': self.config.model_training.dir_out, KEY_HISTORY_IS_MODEL_TRAINED: False}
+        histories.save_history(self.history, self.filepath_history)
+        self.is_model_trained = False
+        self.loaded_existing_history = False
 
-        if os.path.exists(get_history_filepath(self.config)):
-            assert self.loaded_existing_model, \
-                'Model training history exists in model training directory, but no model found; directory: {}' \
-                .format(self.config.model_training.dir_out)
-            _logger.debug('Loading existing history from model training directory at {}'.format(
-                get_history_filepath(self.config)))
-            self.loaded_existing_history = True
-            self.history = histories.load_history(get_history_filepath(self.config))
-            if 'lr' in self.history:
-                learning_rate = self.history['lr'][-1]
-                _logger.debug('Setting learning rate to value from last training epoch: {}'.format(learning_rate))
-                K.set_value(self.model.optimizer.lr, learning_rate)
-        else:
-            assert not self.loaded_existing_model, \
-                'Trained model exists in model training directory, but no training history found; directory: {}' \
-                .format(self.config.model_training.dir_out)
-            self.loaded_existing_history = False
-            self.history = {
-                'model_name': self.config.model_training.dir_out,
-                _KEY_HISTORY_IS_MODEL_TRAINED: False
-            }
-        self.is_model_trained = self.history[_KEY_HISTORY_IS_MODEL_TRAINED]
-
-    def copy_model_from_experiment(self, reference_config: configs.Config) -> None:
-        _logger.info('Loading external model')
-
-        loss_function = losses.get_cropped_loss_function(
-            self.config.model_training.loss_metric,
-            2 * self.config.data_build.window_radius,
-            2 * self.config.data_build.loss_window_radius,
-            self.config.model_training.weighted
-        )
-
-        err_str = 'No model exists at {}'.format(get_model_filepath(reference_config))
-        assert os.path.exists(get_model_filepath(reference_config)), err_str
-
-        _logger.debug('Loading existing model from model training directory at {}'.format(
-            get_model_filepath(reference_config)))
+    def _load_existing_model(self, input_shape: Tuple[int, int, int]) -> None:
+        self.model = models.load_model(
+            self.filepath_model, custom_objects={'_cropped_loss': self._create_loss_function()})
+        existing_shape = self.model.layers[0].input_shape[1:]
+        assert existing_shape == input_shape, \
+            'Existing model\'s input shape ({}) does not match provided input shape ({})'.format(
+                existing_shape, input_shape)
         self.loaded_existing_model = True
 
-        prev_model = models.load_model(
-            get_model_filepath(reference_config),
-            custom_objects={'_cropped_loss': loss_function}
-        )
-        self.model = keras.models.clone_model(prev_model)
-        self.model.set_weights(prev_model.get_weights())
+    def _load_existing_history(self):
+        # TODO:  Phil, confirm this is what you want/expect
+        self.history = histories.load_history(get_history_filepath(self.config))
+        self.is_model_trained = self.history[KEY_HISTORY_IS_MODEL_TRAINED]
+        self.loaded_existing_history = True
+        _logger.debug('Setting initial epoch and learning rate from best model epoch, if possible, otherwise from ' +
+                      'most recent model epoch')
+        if 'val_loss' not in self.history and 'lr' not in self.history:
+            return
+        if 'val_loss' in self.history:
+            self._init_epoch = 1 + np.argmin(self.history['val_loss'])
+        elif 'lr' in self.history:
+            self._init_epoch = len(self.history['lr'])
+        init_learning_rate = self.history['lr'][self._init_epoch - 1]
+        K.set_value(self.model.optimizer.lr, init_learning_rate)
 
-        self.loaded_existing_history = False
-        self.history = {
-            'model_name': self.config.model_training.dir_out,
-            _KEY_HISTORY_IS_MODEL_TRAINED: False
-        }
-        self.is_model_trained = False
+    def _create_loss_function(self) -> Callable:
+        return losses.get_cropped_loss_function(
+            self.config.model_training.loss_metric,
+            2 * self.config.data_build.window_radius,
+            2 * self.config.data_build.loss_window_radius,
+            self.config.model_training.weighted
+        )
 
     def fit_model_with_data_container(self, data_container: DataContainer, resume_training: bool = False) -> None:
         return self.fit_model_with_sequences(
@@ -170,10 +151,6 @@ class Experiment(object):
 
         model_callbacks = callbacks.get_model_callbacks(self.config, self.history)
 
-        init_epoch = 0
-        if (len(self.history.get('lr', list())) > 0):
-            init_epoch = np.argmin(np.array(self.history.get('lr')))
-
         new_history = self.model.fit_generator(
             training_sequence,
             epochs=self.config.model_training.max_epochs,
@@ -183,13 +160,13 @@ class Experiment(object):
             max_queue_size=min(10, 2*compute_access.get_count_available_cpus()),
             use_multiprocessing=False,
             shuffle=False,
-            initial_epoch=init_epoch,
+            initial_epoch=self._init_epoch,
         )
-        self.history = histories.combine_histories(self.history, new_history.history)
-        self.history[_KEY_HISTORY_IS_MODEL_TRAINED] = True
-        self.is_model_trained = True
-        histories.save_history(self.history, get_history_filepath(self.config))
         models.save_model(self.model, get_model_filepath(self.config))
+        self.is_model_trained = True
+        self.history = histories.combine_histories(self.history, new_history.history)
+        self.history[KEY_HISTORY_IS_MODEL_TRAINED] = True
+        histories.save_history(self.history, get_history_filepath(self.config))
 
     def calculate_model_memory_footprint(self, batch_size: int) -> float:
         """Calculate model memory footprint. Shamelessly copied from (but not tested rigorously):

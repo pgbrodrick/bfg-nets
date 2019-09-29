@@ -20,6 +20,7 @@ def create_model(
         output_activation: str,
         block_structure: Tuple[int, ...] = config_sections.DEFAULT_BLOCK_STRUCTURE,
         filters: int = config_sections.DEFAULT_FILTERS,
+        internal_activation: str = config_sections.DEFAULT_INTERNAL_ACTIVATION,
         kernel_size: Tuple[int, int] = config_sections.DEFAULT_KERNEL_SIZE,
         padding: str = config_sections.DEFAULT_PADDING,
         use_batch_norm: bool = config_sections.DEFAULT_USE_BATCH_NORM,

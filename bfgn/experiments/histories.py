@@ -1,5 +1,4 @@
 import logging
-import os
 import pickle
 from typing import Union
 
@@ -19,9 +18,6 @@ def load_history(filepath: str) -> Union[dict, None]:
     Returns:
         History object if it exists at path.
     """
-    if not os.path.exists(filepath):
-        _logger.debug('History not loaded; file does not exist at {}'.format(filepath))
-        return None
     _logger.debug('Load history from {}'.format(filepath))
     with open(filepath, 'rb') as file_:
         history = pickle.load(file_)
@@ -38,9 +34,6 @@ def save_history(history: dict, filepath: str) -> None:
     Returns:
         None.
     """
-    if not os.path.exists(os.path.dirname(filepath)):
-        _logger.debug('Create directory to save history at {}'.format(os.path.dirname(filepath)))
-        os.makedirs(os.path.dirname(filepath))
     _logger.debug('Save history to {}'.format(filepath))
     with open(filepath, 'wb') as file_:
         pickle.dump(history, file_)

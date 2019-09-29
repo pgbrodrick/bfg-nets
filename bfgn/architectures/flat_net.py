@@ -18,6 +18,7 @@ def create_model(
         n_classes: int,
         output_activation: str,
         filters: int = config_sections.DEFAULT_FILTERS,
+        internal_activation: str = config_sections.DEFAULT_INTERNAL_ACTIVATION,
         kernel_size: Tuple[int, int] = config_sections.DEFAULT_KERNEL_SIZE,
         num_layers: int = config_sections.DEFAULT_NUM_LAYERS,
         padding: str = config_sections.DEFAULT_PADDING,

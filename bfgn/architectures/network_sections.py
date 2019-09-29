@@ -1,12 +1,17 @@
 from typing import Tuple
 
-
 import keras
-from keras.layers import BatchNormalization, Concatenate, Conv2D, Conv2DTranspose, MaxPooling2D, ReLU, UpSampling2D
+from keras.layers import BatchNormalization, Concatenate, Conv2D
 
 
-def colorspace_transformation(inshape: Tuple[int, int, int], inlayer: keras.layers,
-                              batch_normalization: bool = False) -> keras.layers:
+# TODO: rename functions where necessary
+
+
+def colorspace_transformation(
+        inshape: Tuple[int, int, int],
+        inlayer: keras.layers,
+        batch_normalization: bool = False
+) -> keras.layers:
     """ Perform a series of layer transformations prior to the start of the main network.
 
     Args:
