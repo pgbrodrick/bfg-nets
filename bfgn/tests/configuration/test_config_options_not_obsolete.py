@@ -5,16 +5,9 @@ from typing import List, Tuple
 
 from bfgn import architectures, utils
 from bfgn.configuration import configs, sections
-from bfgn.utils import logging
 
 
-_logger = utils.logging.get_root_logger()
-_logger.setLevel('INFO')
-
-
-def check_config_options_not_obsolete():
-    _logger.info('Check config options are not obsolete')
-    _logger.warning('NOTE: this check may have false positives or negatives depending on how options are referenced')
+def test_config_options_not_obsolete():
     all_obsolete = list()
     num_all_obsolete = 0
     architecture_names = architectures.get_available_architectures()
@@ -22,17 +15,16 @@ def check_config_options_not_obsolete():
         config = configs.create_config_template(architecture_name)
         if idx_config == 0:
             all_generic_obsolete, num_obsolete = _check_generic_config_options(config)
-            all_obsolete.extend(all_generic_obsolete)
-            num_all_obsolete += num_obsolete
+            if num_obsolete > 0:
+                all_obsolete.extend(all_generic_obsolete)
+                num_all_obsolete += num_obsolete
         architecture_obsolete, num_architecture_obsolete = _check_architecture_config_options(config)
-        all_obsolete.append(architecture_obsolete)
-        num_all_obsolete += num_architecture_obsolete
-    message = 'Config parameter check complete:  found {} potentially obsolete options'.format(num_all_obsolete)
-    if num_all_obsolete == 0:
-        _logger.info(message)
-    else:
-        _logger.warning(message)
-    return all_obsolete
+        if num_architecture_obsolete > 0:
+            all_obsolete.append(architecture_obsolete)
+            num_all_obsolete += num_architecture_obsolete
+    message = 'Config parameter check complete:  found {} potentially obsolete options: {}'.format(
+        num_all_obsolete, '\n'.join(all_obsolete))
+    assert num_all_obsolete == 0, message
 
 
 def _check_generic_config_options(config: configs.Config) -> Tuple[List[str], int]:
@@ -40,18 +32,14 @@ def _check_generic_config_options(config: configs.Config) -> Tuple[List[str], in
     num_obsolete = 0
     for config_section in sections.get_config_sections():
         section_name = config_section.get_config_name_as_snake_case()
-        _logger.debug('Check options for config section {}'.format(section_name))
         section = getattr(config, section_name)
         obsolete = [option_key for option_key in section.get_option_keys()
                     if not _is_option_key_in_package(option_key, section_name)]
         message = 'Config section {} has {} potentially obsolete options'.format(section_name, len(obsolete))
         if obsolete:
             message += ':  {}'.format(', '.join(obsolete))
-            _logger.warning(message)
-        else:
-            _logger.debug(message)
-        all_obsolete.append(message)
-        num_obsolete += len(obsolete)
+            all_obsolete.append(message)
+            num_obsolete += len(obsolete)
     return all_obsolete, num_obsolete
 
 
@@ -62,9 +50,6 @@ def _check_architecture_config_options(config: configs.Config) -> Tuple[str, int
         config.model_training.architecture_name, len(obsolete))
     if obsolete:
         message += ':  {}'.format(', '.join(obsolete))
-        _logger.warning(message)
-    else:
-        _logger.debug(message)
     return message, len(obsolete)
 
 
@@ -84,7 +69,3 @@ def _is_string_in_package(string: str, includes: str) -> bool:
     if len(filenames) == 0:
         return False
     return True
-
-
-if __name__ == '__main__':
-    check_config_options_not_obsolete()
