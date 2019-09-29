@@ -55,9 +55,7 @@ class Samples(object):
         self._get_sampled_features_responses_and_set_metadata_and_weights()
         if is_model_trained:
             self.trans_predictions = model.predict(self.trans_features)
-            self.raw_predictions = self.data_sequence.response_scaler.inverse_transform(
-                self.trans_predictions
-            )
+            self.raw_predictions = self.data_sequence.response_scaler.inverse_transform(self.trans_predictions)
         self._set_has_transforms()
         self._set_raw_and_transformed_ranges()
 
@@ -98,17 +96,13 @@ class Samples(object):
 
         self.raw_responses_range = self._get_range(self.raw_responses)
         tmp_responses = self.trans_responses.copy()
-        tmp_responses[
-            tmp_responses == self.data_sequence.nan_replacement_value
-        ] = np.nan
+        tmp_responses[tmp_responses == self.data_sequence.nan_replacement_value] = np.nan
         self.trans_responses_range = self._get_range(tmp_responses)
 
         if self.raw_predictions is not None and self.trans_predictions is not None:
             self.raw_predictions_range = self._get_range(self.raw_predictions)
             tmp_predictions = self.trans_predictions.copy()
-            tmp_predictions[
-                tmp_predictions == self.data_sequence.nan_replacement_value
-            ] = np.nan
+            tmp_predictions[tmp_predictions == self.data_sequence.nan_replacement_value] = np.nan
             self.trans_predictions_range = self._get_range(tmp_predictions)
 
         tmp_weights = self.weights.copy()

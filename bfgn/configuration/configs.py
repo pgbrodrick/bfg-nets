@@ -89,9 +89,7 @@ class Config(object):
                 config["architecture"] = self.architecture.get_config_options_as_dict()
         return config
 
-    def get_config_errors(
-        self, include_sections: List[str] = None, exclude_sections: List[str] = None
-    ) -> list:
+    def get_config_errors(self, include_sections: List[str] = None, exclude_sections: List[str] = None) -> list:
         """Get configuration option errors by checking the validity of each config section.
 
         Args:
@@ -110,18 +108,12 @@ class Config(object):
         errors = list()
         config_sections = sections.get_config_sections()
         if include_sections:
-            _logger.debug(
-                "Only checking config sections: {}".format(", ".join(include_sections))
-            )
+            _logger.debug("Only checking config sections: {}".format(", ".join(include_sections)))
             config_sections = [
-                section
-                for section in config_sections
-                if section.get_config_name_as_snake_case() in include_sections
+                section for section in config_sections if section.get_config_name_as_snake_case() in include_sections
             ]
         if exclude_sections:
-            _logger.debug(
-                "Not checking config sections: {}".format(", ".join(exclude_sections))
-            )
+            _logger.debug("Not checking config sections: {}".format(", ".join(exclude_sections)))
             config_sections = [
                 section
                 for section in config_sections
@@ -150,15 +142,10 @@ class Config(object):
         Returns:
             Human-readable string of configuration option errors.
         """
-        errors = self.get_config_errors(
-            include_sections=include_sections, exclude_sections=exclude_sections
-        )
+        errors = self.get_config_errors(include_sections=include_sections, exclude_sections=exclude_sections)
         if not errors:
             return ""
-        return (
-            "List of configuration section and option errors is as follows:\n"
-            + "\n".join(error for error in errors)
-        )
+        return "List of configuration section and option errors is as follows:\n" + "\n".join(error for error in errors)
 
 
 def create_config_from_file(filepath: str) -> Config:
@@ -188,11 +175,7 @@ def create_config_template(architecture_name: str, filepath: str = None) -> Conf
     Returns:
         Template version of a Config.
     """
-    _logger.debug(
-        "Creating config template for architecture {} at {}".format(
-            architecture_name, filepath
-        )
-    )
+    _logger.debug("Creating config template for architecture {} at {}".format(architecture_name, filepath))
     config_options = {"model_training": {"architecture_name": architecture_name}}
     config = _create_config(config_options, is_template=True)
     if filepath is not None:
@@ -201,31 +184,23 @@ def create_config_template(architecture_name: str, filepath: str = None) -> Conf
 
 
 def _create_config(config_options: dict, is_template: bool) -> Config:
-    config_copy = copy.deepcopy(
-        config_options
-    )  # Use a copy because config options are popped from the dict
+    config_copy = copy.deepcopy(config_options)  # Use a copy because config options are popped from the dict
     # Populate config sections with the provided configuration options, tracking errors
     populated_sections = dict()
     for config_section in sections.get_config_sections():
         section_name = config_section.get_config_name_as_snake_case()
         populated_section = config_section()
-        populated_section.set_config_options(
-            config_copy.get(section_name, dict()), is_template
-        )
+        populated_section.set_config_options(config_copy.get(section_name, dict()), is_template)
         populated_sections[section_name] = populated_section
     # Populate architecture options given architecture name
     architecture_name = populated_sections["model_training"].architecture_name
     architecture = config_sections.get_architecture_config_section(architecture_name)
-    architecture.set_config_options(
-        config_copy.get("architecture", dict()), is_template
-    )
+    architecture.set_config_options(config_copy.get("architecture", dict()), is_template)
     populated_sections["architecture"] = architecture
     return Config(**populated_sections)
 
 
-def save_config_to_file(
-    config: Config, filepath: str, include_sections: List[str] = None
-) -> None:
+def save_config_to_file(config: Config, filepath: str, include_sections: List[str] = None) -> None:
     """Saves/serializes a Config object to a YAML file.
 
     Args:
@@ -242,18 +217,14 @@ def save_config_to_file(
         return self.represent_mapping("tag:yaml.org,2002:map", dict_data.items())
 
     def _represent_list_inline(self, list_data):
-        return self.represent_sequence(
-            "tag:yaml.org,2002:seq", list_data, flow_style=True
-        )
+        return self.represent_sequence("tag:yaml.org,2002:seq", list_data, flow_style=True)
 
     yaml.add_representer(OrderedDict, _represent_dictionary_order)
     yaml.add_representer(list, _represent_list_inline)
     config_out = config.get_config_as_dict()
     _logger.debug("Saving config file to {}".format(filepath))
     if include_sections:
-        _logger.debug(
-            "Only saving config sections: {}".format(", ".join(include_sections))
-        )
+        _logger.debug("Only saving config sections: {}".format(", ".join(include_sections)))
         config_out = {section: config_out[section] for section in include_sections}
     with open(filepath, "w") as file_:
         yaml.dump(config_out, file_, default_flow_style=False)

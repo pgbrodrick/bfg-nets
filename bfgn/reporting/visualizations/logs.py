@@ -16,9 +16,7 @@ _LINE_CHARACTER_LIMIT = 140
 _LINE_INDENT = "    "
 
 
-def plot_log_warnings_and_errors(
-    config_data: configs.Config, config_model: configs.Config
-) -> List[plt.Figure]:
+def plot_log_warnings_and_errors(config_data: configs.Config, config_model: configs.Config) -> List[plt.Figure]:
     figures = list()
     filepath_logs_data = data_core.get_log_filepath(config_data)
     figures.append(_plot_log_warnings_and_errors(filepath_logs_data, "Built data"))
@@ -31,16 +29,10 @@ def _plot_log_warnings_and_errors(filepath_log: str, log_label: str) -> plt.Figu
     if os.path.exists(filepath_log):
         with open(filepath_log) as file_:
             raw_lines = [
-                re.sub("\n", "", line)
-                for line in file_.readlines()
-                if re.search("(warn|error)", line, re.IGNORECASE)
+                re.sub("\n", "", line) for line in file_.readlines() if re.search("(warn|error)", line, re.IGNORECASE)
             ]
         if not raw_lines:
-            raw_lines = [
-                "{} log report:  no lines were found containing obvious warnings or errors".format(
-                    log_label
-                )
-            ]
+            raw_lines = ["{} log report:  no lines were found containing obvious warnings or errors".format(log_label)]
         else:
             raw_lines.insert(
                 0,
@@ -49,16 +41,10 @@ def _plot_log_warnings_and_errors(filepath_log: str, log_label: str) -> plt.Figu
                 ),
             )
     else:
-        raw_lines = [
-            "{} log report:  no log file was found at {}".format(
-                log_label, filepath_log
-            )
-        ]
+        raw_lines = ["{} log report:  no log file was found at {}".format(log_label, filepath_log)]
     wrapped_lines = list()
     for line in raw_lines:
-        wrapped = textwrap.wrap(
-            line, width=_LINE_CHARACTER_LIMIT, subsequent_indent=_LINE_INDENT
-        )
+        wrapped = textwrap.wrap(line, width=_LINE_CHARACTER_LIMIT, subsequent_indent=_LINE_INDENT)
         wrapped_lines.append("\n".join(wrapped))
     finished_lines = "\n\n".join(wrapped_lines)
     fig, axes = plt.subplots(figsize=(8.5, 11), nrows=1, ncols=1)

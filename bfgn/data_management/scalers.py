@@ -36,9 +36,9 @@ def get_scaler(scaler_name: str, scaler_options: dict) -> "BaseGlobalScaler":
         Scaler matching the provided name.
     """
     available_scalers = get_available_scalers()
-    assert (
-        scaler_name in available_scalers
-    ), "Scaler {} not in available scalers: {}".format(scaler_name, available_scalers)
+    assert scaler_name in available_scalers, "Scaler {} not in available scalers: {}".format(
+        scaler_name, available_scalers
+    )
     return getattr(sys.modules[__name__], scaler_name)(**scaler_options)
 
 
@@ -174,11 +174,7 @@ class ConstantScaler(BaseGlobalScaler):
         return image_array
 
     def save(self):
-        np.savez(
-            self.savename + ".npz",
-            constant_scaler=self.constant_scaler,
-            constant_offset=self.constant_offset,
-        )
+        np.savez(self.savename + ".npz", constant_scaler=self.constant_scaler, constant_offset=self.constant_offset)
 
     def load(self):
         if os.path.isfile(self.savename + ".npz"):
@@ -196,17 +192,13 @@ class StandardScaler(BaseSklearnScaler):
 
 class MinMaxScaler(BaseSklearnScaler):
     def __init__(self, savename_base, feature_range=(0, 1)):
-        self.scaler = sklearn.preprocessing.MinMaxScaler(
-            feature_range=feature_range, copy=True
-        )
+        self.scaler = sklearn.preprocessing.MinMaxScaler(feature_range=feature_range, copy=True)
         super().__init__(savename_base)
 
 
 class RobustScaler(BaseSklearnScaler):
     def __init__(self, savename_base, quantile_range=(10.0, 90.0)):
-        self.scaler = sklearn.preprocessing.RobustScaler(
-            quantile_range=quantile_range, copy=True
-        )
+        self.scaler = sklearn.preprocessing.RobustScaler(quantile_range=quantile_range, copy=True)
         super().__init__(savename_base)
 
 
@@ -218,7 +210,5 @@ class PowerScaler(BaseSklearnScaler):
 
 class QuantileUniformScaler(BaseSklearnScaler):
     def __init__(self, savename_base, output_distribution="uniform"):
-        self.scaler = sklearn.preprocessing.QuantileTransformer(
-            output_distribution=output_distribution, copy=True
-        )
+        self.scaler = sklearn.preprocessing.QuantileTransformer(output_distribution=output_distribution, copy=True)
         super().__init__(savename_base)

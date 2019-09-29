@@ -62,9 +62,7 @@ class DataContainer:
         Args:
             config: Configuration file.
         """
-        errors = config.get_human_readable_config_errors(
-            include_sections=["raw_files", "data_build", "data_samples"]
-        )
+        errors = config.get_human_readable_config_errors(include_sections=["raw_files", "data_build", "data_samples"])
         assert not errors, errors
         self.config = config
 
@@ -92,9 +90,7 @@ class DataContainer:
 
         # Load data if it already exists
         if training_data.check_built_data_files_exist(self.config) and not rebuild:
-            features, responses, weights = training_data.load_built_data_files(
-                self.config
-            )
+            features, responses, weights = training_data.load_built_data_files(self.config)
 
         else:
             errors = sections.check_input_file_validity(
@@ -121,45 +117,30 @@ class DataContainer:
             )
 
             errors.extend(
-                self.check_band_types(
-                    self.config.raw_files.feature_files,
-                    self.config.raw_files.feature_data_type,
-                )
+                self.check_band_types(self.config.raw_files.feature_files, self.config.raw_files.feature_data_type)
             )
             errors.extend(
-                self.check_band_types(
-                    self.config.raw_files.response_files,
-                    self.config.raw_files.response_data_type,
-                )
+                self.check_band_types(self.config.raw_files.response_files, self.config.raw_files.response_data_type)
             )
 
             if len(errors) > 0:
-                print(
-                    "List of raw data file format errors is as follows:\n"
-                    + "\n".join(error for error in errors)
-                )
+                print("List of raw data file format errors is as follows:\n" + "\n".join(error for error in errors))
             assert not errors, "Raw data file errors found, terminating"
 
             self.feature_raw_band_types = self.get_band_types(
-                self.config.raw_files.feature_files,
-                self.config.raw_files.feature_data_type,
+                self.config.raw_files.feature_files, self.config.raw_files.feature_data_type
             )
             self.response_raw_band_types = self.get_band_types(
-                self.config.raw_files.response_files,
-                self.config.raw_files.response_data_type,
+                self.config.raw_files.response_files, self.config.raw_files.response_data_type
             )
 
             if self.config.data_build.network_category == "FCN":
                 features, responses, weights, feature_band_types, response_band_types, feature_per_band_encoded_values, response_per_band_encoded_values = training_data.build_training_data_ordered(
-                    self.config,
-                    self.feature_raw_band_types,
-                    self.response_raw_band_types,
+                    self.config, self.feature_raw_band_types, self.response_raw_band_types
                 )
             elif self.config.data_build.network_category == "CNN":
                 features, responses, weights, feature_band_types, response_band_types, feature_per_band_encoded_values, response_per_band_encoded_values = training_data.build_training_data_from_response_points(
-                    self.config,
-                    self.feature_raw_band_types,
-                    self.response_raw_band_types,
+                    self.config, self.feature_raw_band_types, self.response_raw_band_types
                 )
             else:
                 raise NotImplementedError("Unknown response data format")
@@ -191,24 +172,16 @@ class DataContainer:
         #  Specifically, the feature_scaler and response_scaler assignments need to be vectorized.
         basename = get_memmap_basename(self.config)
         feat_scaler_atr = {"savename_base": basename + "_feature_scaler"}
-        feature_scaler = scalers.get_scaler(
-            self.config.data_samples.feature_scaler_names[0], feat_scaler_atr
-        )
+        feature_scaler = scalers.get_scaler(self.config.data_samples.feature_scaler_names[0], feat_scaler_atr)
         resp_scaler_atr = {"savename_base": basename + "_response_scaler"}
-        response_scaler = scalers.get_scaler(
-            self.config.data_samples.response_scaler_names[0], resp_scaler_atr
-        )
+        response_scaler = scalers.get_scaler(self.config.data_samples.response_scaler_names[0], resp_scaler_atr)
         feature_scaler.load()
         response_scaler.load()
 
         self.train_folds = [
             x
             for x in range(self.config.data_build.number_folds)
-            if x
-            not in (
-                self.config.data_build.validation_fold,
-                self.config.data_build.test_fold,
-            )
+            if x not in (self.config.data_build.validation_fold, self.config.data_build.test_fold)
         ]
 
         if feature_scaler.is_fitted is False or rebuild is True:
@@ -223,9 +196,7 @@ class DataContainer:
         self.feature_scaler = feature_scaler
         self.response_scaler = response_scaler
 
-    def load_sequences(
-        self, custom_augmentations: albumentations.Compose = None
-    ) -> None:
+    def load_sequences(self, custom_augmentations: albumentations.Compose = None) -> None:
         """
         Create and attach sequences to self.  Requires data to already be built and any scalers to have been fit.
 
@@ -246,24 +217,14 @@ class DataContainer:
         train_folds = [
             idx
             for idx in range(self.config.data_build.number_folds)
-            if idx
-            not in (
-                self.config.data_build.validation_fold,
-                self.config.data_build.test_fold,
-            )
+            if idx not in (self.config.data_build.validation_fold, self.config.data_build.test_fold)
         ]
 
-        self.training_sequence = self._build_memmapped_sequence(
-            train_folds, custom_augmentations
-        )
-        self.validation_sequence = self._build_memmapped_sequence(
-            [self.config.data_build.validation_fold]
-        )
+        self.training_sequence = self._build_memmapped_sequence(train_folds, custom_augmentations)
+        self.validation_sequence = self._build_memmapped_sequence([self.config.data_build.validation_fold])
 
     def _build_memmapped_sequence(
-        self,
-        fold_indices: List[int],
-        custom_augmentations: albumentations.Compose = None,
+        self, fold_indices: List[int], custom_augmentations: albumentations.Compose = None
     ) -> MemmappedSequence:
         errors = []
         if self.features is None:
@@ -282,10 +243,7 @@ class DataContainer:
             errors.append("config.data_samples.batch_size must be defined")
 
         if len(errors) > 0:
-            print(
-                "List of memmap sequence errors is as follows:\n"
-                + "\n".join(error for error in errors)
-            )
+            print("List of memmap sequence errors is as follows:\n" + "\n".join(error for error in errors))
         assert not errors, "Memmap sequence build errors found, terminating"
 
         data_sequence = MemmappedSequence(
@@ -322,14 +280,10 @@ class DataContainer:
         #    files and the inner list referring to bands
 
         # TODO - add in some check for vector types
-        is_vector = any(
-            [x.split(".")[-1] in sections.VECTORIZED_FILENAMES for x in file_list[0]]
-        )
+        is_vector = any([x.split(".")[-1] in sections.VECTORIZED_FILENAMES for x in file_list[0]])
         if is_vector:
             return errors
-        num_bands_per_file = [
-            gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in file_list[0]
-        ]
+        num_bands_per_file = [gdal.Open(x, gdal.GA_ReadOnly).RasterCount for x in file_list[0]]
 
         if band_types is not None:
 
@@ -343,20 +297,12 @@ class DataContainer:
             if type(band_types[0]) is list:
                 for _file in range(len(band_types)):
                     if type(band_types[_file]) is not list:
-                        errors.append(
-                            "If one element of band_types is a list, all elements must be lists"
-                        )
+                        errors.append("If one element of band_types is a list, all elements must be lists")
                     if len(band_types[_file]) != num_bands_per_file[_file]:
-                        errors.append(
-                            "File {} has wrong number of band types".format(_file)
-                        )
+                        errors.append("File {} has wrong number of band types".format(_file))
                     for _band in range(len(band_types[_file])):
                         if band_types[_file][_band] not in valid_band_types:
-                            errors.append(
-                                "Invalid band types at file {}, band {}".format(
-                                    _file, _band
-                                )
-                            )
+                            errors.append("Invalid band types at file {}, band {}".format(_file, _band))
 
             else:
                 if len(band_types) != len(file_list[0]):
@@ -392,9 +338,7 @@ class DataContainer:
         #    files and the inner list referring to bands
 
         num_bands_per_file = [
-            None
-            if common_io.noerror_open(x) is None
-            else gdal.Open(x, gdal.GA_ReadOnly).RasterCount
+            None if common_io.noerror_open(x) is None else gdal.Open(x, gdal.GA_ReadOnly).RasterCount
             for x in file_list[0]
         ]
 
@@ -405,9 +349,7 @@ class DataContainer:
                 if num_bands_per_file[_file] is None:
                     output_raw_band_types.append(["C"])
                 else:
-                    output_raw_band_types.append(
-                        ["R" for _band in range(num_bands_per_file[_file])]
-                    )
+                    output_raw_band_types.append(["R" for _band in range(num_bands_per_file[_file])])
 
         else:
 
@@ -420,17 +362,10 @@ class DataContainer:
                     if num_bands_per_file[_file] is None:
                         output_raw_band_types.append(["C"])
                     else:
-                        output_raw_band_types.append(
-                            [
-                                band_types[_file]
-                                for _band in range(num_bands_per_file[_file])
-                            ]
-                        )
+                        output_raw_band_types.append([band_types[_file] for _band in range(num_bands_per_file[_file])])
 
         # since it's more convenient, flatten this list of lists into a list before returning
-        output_raw_band_types = [
-            item for sublist in output_raw_band_types for item in sublist
-        ]
+        output_raw_band_types = [item for sublist in output_raw_band_types for item in sublist]
 
         return output_raw_band_types
 
@@ -447,9 +382,7 @@ class DataContainer:
         )
 
     def _load_data_core(self):
-        npzf = np.load(
-            get_built_data_container_filepath(self.config), allow_pickle=True
-        )
+        npzf = np.load(get_built_data_container_filepath(self.config), allow_pickle=True)
         self.feature_band_types = npzf["feature_band_types"]
         self.response_band_types = npzf["response_band_types"]
         self.feature_raw_band_types = npzf["feature_raw_band_types"]
@@ -458,16 +391,10 @@ class DataContainer:
 
         # Support deprecated data containers, if no errors thrown
         if "feature_per_band_encoded_values" in list(npzf):
-            self.feature_per_band_encoded_values = npzf[
-                "feature_per_band_encoded_values"
-            ]
-            self.response_per_band_encoded_values = npzf[
-                "response_per_band_encoded_values"
-            ]
+            self.feature_per_band_encoded_values = npzf["feature_per_band_encoded_values"]
+            self.response_per_band_encoded_values = npzf["response_per_band_encoded_values"]
         else:
-            if "C" not in list(self.response_band_types) and "C" not in list(
-                self.feature_band_types
-            ):
+            if "C" not in list(self.response_band_types) and "C" not in list(self.feature_band_types):
                 _logger.error(
                     "Error, deprecated form of data container that does not container feature encodings "
                     + "detected, and response or features include categorical variables.  Please rebuild data."
@@ -476,9 +403,7 @@ class DataContainer:
             else:
                 self.feature_per_band_encoded_values = []
                 self.response_per_band_encoded_values = []
-                _logger.warning(
-                    "Deprecated form of data container found - no categoricals detected, so proceeding."
-                )
+                _logger.warning("Deprecated form of data container found - no categoricals detected, so proceeding.")
 
 
 ################### Filepath Nomenclature Functions ##############################
@@ -486,9 +411,7 @@ class DataContainer:
 
 def create_built_data_output_directory(config: configs.Config) -> None:
     if not os.path.exists(config.data_build.dir_out):
-        _logger.debug(
-            "Create built data output directory at {}".format(config.data_build.dir_out)
-        )
+        _logger.debug("Create built data output directory at {}".format(config.data_build.dir_out))
         os.makedirs(config.data_build.dir_out)
 
 
@@ -538,24 +461,16 @@ def get_built_data_config_filepath(config: configs.Config) -> str:
 
 def get_built_data_filepaths(config: configs.Config, filename_suffix: str) -> List[str]:
     basename = get_memmap_basename(config)
-    filepaths = [
-        basename + filename_suffix.format(idx_fold)
-        for idx_fold in range(config.data_build.number_folds)
-    ]
+    filepaths = [basename + filename_suffix.format(idx_fold) for idx_fold in range(config.data_build.number_folds)]
     return filepaths
 
 
 def get_memmap_basename(config: configs.Config) -> str:
-    filepath_separator = (
-        config.data_build.filename_prefix_out + "_"
-        if config.data_build.filename_prefix_out
-        else ""
-    )
+    filepath_separator = config.data_build.filename_prefix_out + "_" if config.data_build.filename_prefix_out else ""
     return os.path.join(config.data_build.dir_out, filepath_separator)
 
 
 def get_built_data_container_filepath(config: configs.Config) -> str:
     return os.path.join(
-        config.data_build.dir_out,
-        _FILENAME_DATA_CONTAINER.format(config.data_build.filename_prefix_out),
+        config.data_build.dir_out, _FILENAME_DATA_CONTAINER.format(config.data_build.filename_prefix_out)
     )

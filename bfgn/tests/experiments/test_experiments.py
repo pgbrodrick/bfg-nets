@@ -9,9 +9,7 @@ from bfgn.experiments import experiments, histories, models
 
 @pytest.fixture()
 def config_new(tmp_path) -> configs.Config:
-    config = configs.create_config_from_file(
-        os.path.join(os.path.dirname(__file__), "test_config.yaml")
-    )
+    config = configs.create_config_from_file(os.path.join(os.path.dirname(__file__), "test_config.yaml"))
     config.data_build.dir_out = str(tmp_path)
     config.model_training.dir_out = str(tmp_path)
     return config
@@ -28,9 +26,7 @@ def test_experiment_initialized_with_existing(config_new) -> None:
     assert type(experiment_b) is experiments.Experiment
 
 
-def test_experiment_asserts_error_on_initialization_with_conflicting_config(
-    config_new
-) -> None:
+def test_experiment_asserts_error_on_initialization_with_conflicting_config(config_new) -> None:
     experiment_a = experiments.Experiment(config_new)
     config = config_new
     config.data_build.max_samples += 1
@@ -38,9 +34,7 @@ def test_experiment_asserts_error_on_initialization_with_conflicting_config(
         experiments.Experiment(config)
 
 
-def test_experiment_build_or_load_model_builds_new_model_successfully(
-    config_new
-) -> None:
+def test_experiment_build_or_load_model_builds_new_model_successfully(config_new) -> None:
     experiment = experiments.Experiment(config_new)
     experiment.build_or_load_model(data_container=None, num_features=1)
     assert experiment.loaded_existing_model is False
@@ -48,9 +42,7 @@ def test_experiment_build_or_load_model_builds_new_model_successfully(
     assert experiment.is_model_trained is False
 
 
-def test_experiment_build_or_load_model_loads_existing_model_successfully(
-    config_new
-) -> None:
+def test_experiment_build_or_load_model_loads_existing_model_successfully(config_new) -> None:
     experiment_a = experiments.Experiment(config_new)
     experiment_a.build_or_load_model(data_container=None, num_features=1)
     experiment_b = experiments.Experiment(config_new)
@@ -94,15 +86,9 @@ def test_experiment__load_existing_model_wrong_input_shape_raises(config_new) ->
         experiment_b._load_existing_model((4, 4, 3))
 
 
-def test_experiment__load_existing_history_loads_sets_attrs_with_val_loss(
-    config_new
-) -> None:
+def test_experiment__load_existing_history_loads_sets_attrs_with_val_loss(config_new) -> None:
     experiment = experiments.Experiment(config_new)
-    expected_history = {
-        "val_loss": [1, 1, 0, 1],
-        "lr": [1, 1, 0, 1],
-        experiments.KEY_HISTORY_IS_MODEL_TRAINED: True,
-    }
+    expected_history = {"val_loss": [1, 1, 0, 1], "lr": [1, 1, 0, 1], experiments.KEY_HISTORY_IS_MODEL_TRAINED: True}
     histories.save_history(expected_history, experiment.filepath_history)
     experiment._build_new_model((3, 3, 2))
     experiment._load_existing_history()
@@ -113,14 +99,9 @@ def test_experiment__load_existing_history_loads_sets_attrs_with_val_loss(
     assert experiment.is_model_trained is True
 
 
-def test_experiment__load_existing_history_loads_sets_attrs_no_val_loss(
-    config_new
-) -> None:
+def test_experiment__load_existing_history_loads_sets_attrs_no_val_loss(config_new) -> None:
     experiment = experiments.Experiment(config_new)
-    expected_history = {
-        "lr": [1, 1, 0, 1],
-        experiments.KEY_HISTORY_IS_MODEL_TRAINED: False,
-    }
+    expected_history = {"lr": [1, 1, 0, 1], experiments.KEY_HISTORY_IS_MODEL_TRAINED: False}
     histories.save_history(expected_history, experiment.filepath_history)
     experiment._build_new_model((3, 3, 2))
     experiment._load_existing_history()
@@ -131,9 +112,7 @@ def test_experiment__load_existing_history_loads_sets_attrs_no_val_loss(
     assert experiment.is_model_trained is False
 
 
-def test_experiment_fit_model_with_sequences_raises_on_existing_model_no_resume(
-    config_new
-) -> None:
+def test_experiment_fit_model_with_sequences_raises_on_existing_model_no_resume(config_new) -> None:
     experiment_a = experiments.Experiment(config_new)
     experiment_a.build_or_load_model(num_features=1)
     experiment_b = experiments.Experiment(config_new)
@@ -142,9 +121,7 @@ def test_experiment_fit_model_with_sequences_raises_on_existing_model_no_resume(
         experiment_b.fit_model_with_sequences(None, None, resume_training=False)
 
 
-def test_experiment_fit_model_with_data_container_does_everything(
-    config_new, monkeypatch
-) -> None:
+def test_experiment_fit_model_with_data_container_does_everything(config_new, monkeypatch) -> None:
     experiment = experiments.Experiment(config_new)
     experiment.build_or_load_model(num_features=1)
 
@@ -170,9 +147,7 @@ def test_experiment_fit_model_with_data_container_does_everything(
     assert histories.load_history(experiment.filepath_history) == experiment.history
 
 
-def test_experiment_fit_model_with_sequences_does_everything(
-    config_new, monkeypatch
-) -> None:
+def test_experiment_fit_model_with_sequences_does_everything(config_new, monkeypatch) -> None:
     experiment = experiments.Experiment(config_new)
     experiment.build_or_load_model(num_features=1)
 
@@ -196,7 +171,5 @@ def test_experiment_fit_model_with_sequences_does_everything(
 
 def test_load_experiment_from_directory_returns_experiment(config_new) -> None:
     experiment_a = experiments.Experiment(config_new)
-    experiment_b = experiments.load_experiment_from_directory(
-        config_new.model_training.dir_out
-    )
+    experiment_b = experiments.load_experiment_from_directory(config_new.model_training.dir_out)
     assert type(experiment_b) is experiments.Experiment

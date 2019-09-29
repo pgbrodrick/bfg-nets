@@ -55,19 +55,13 @@ class BaseArchitectureConfigSection(sections.BaseConfigSection):
     evidence that it may be useful before convolutions in at least some architectures or applications, and we plan on 
     supporting both options in the near future."""
     _use_initial_colorspace_transformation_layer_type = bool
-    use_initial_colorspace_transformation_layer = (
-        DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
-    )
+    use_initial_colorspace_transformation_layer = DEFAULT_USE_INITIAL_COLORSPACE_TRANSFORMATION_LAYER
     """bool: Whether to use an initial colorspace transformation layer. There is evidence that model-learned color
     transformations can be more effective than other types of transformations."""
 
     def get_option_keys(self):
         # TODO:  figure out why the inherited get_option_keys is not returning anything. Maybe because of mixins?
-        return [
-            key
-            for key in dir(self)
-            if not key.startswith("_") and not callable(getattr(self, key))
-        ]
+        return [key for key in dir(self) if not key.startswith("_") and not callable(getattr(self, key))]
 
 
 class AutoencoderMixin(object):
@@ -123,9 +117,7 @@ class GrowthMixin(object):
 
 
 def create_model_from_architecture_config_section(
-    architecture_name: str,
-    architecture_config_section: BaseArchitectureConfigSection,
-    inshape: tuple,
+    architecture_name: str, architecture_config_section: BaseArchitectureConfigSection, inshape: tuple
 ) -> keras.models.Model:
     """Creates a Keras model for a specific architecture using the provided options.
 
@@ -139,17 +131,12 @@ def create_model_from_architecture_config_section(
         Keras model object.
     """
     architecture_module = _import_architecture_module(architecture_name)
-    kwargs = {
-        key: getattr(architecture_config_section, key)
-        for key in architecture_config_section.get_option_keys()
-    }
+    kwargs = {key: getattr(architecture_config_section, key) for key in architecture_config_section.get_option_keys()}
     kwargs["inshape"] = inshape
     return architecture_module.create_model(**kwargs)
 
 
-def get_architecture_config_section(
-    architecture_name: str
-) -> BaseArchitectureConfigSection:
+def get_architecture_config_section(architecture_name: str) -> BaseArchitectureConfigSection:
     """Gets architecture options for the specified architecture.
 
     Args:
@@ -165,11 +152,7 @@ def get_architecture_config_section(
 
 def _import_architecture_module(architecture_name: str) -> ModuleType:
     try:
-        architecture_module = importlib.import_module(
-            "bfgn.architectures.{}".format(architecture_name)
-        )
+        architecture_module = importlib.import_module("bfgn.architectures.{}".format(architecture_name))
     except ModuleNotFoundError:
-        raise ModuleNotFoundError(
-            "Architecture {} is not a valid architecture".format(architecture_name)
-        )
+        raise ModuleNotFoundError("Architecture {} is not a valid architecture".format(architecture_name))
     return architecture_module

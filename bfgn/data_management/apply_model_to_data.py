@@ -52,9 +52,7 @@ def apply_model_to_site(
 
     assert os.path.dirname(destination_basename), "Output directory does not exist"
 
-    assert (
-        type(feature_files) is list
-    ), "Feature files for given site must be provided as a list"
+    assert type(feature_files) is list, "Feature files for given site must be provided as a list"
 
     valid_output_formats = ["GTiff", "ENVI"]
     err_str = "Not a viable output format, options are: {}".format(valid_output_formats)
@@ -86,12 +84,8 @@ def apply_model_to_site(
         temporary_outname = temporary_outname + "_temporary_ENVI_file"
         _logger.debug("Creating output envi file: {}".format(temporary_outname))
     else:
-        _logger.debug(
-            "Creating temporary output envi file: {}".format(temporary_outname)
-        )
-    outDataset = driver.Create(
-        temporary_outname, x_len, y_len, n_classes, gdal.GDT_Float32
-    )
+        _logger.debug("Creating temporary output envi file: {}".format(temporary_outname))
+    outDataset = driver.Create(temporary_outname, x_len, y_len, n_classes, gdal.GDT_Float32)
     out_trans = list(feature_sets[0].GetGeoTransform())
     out_trans[0] = out_trans[0] + internal_ul_list[0][0] * out_trans[1]
     out_trans[3] = out_trans[3] + internal_ul_list[0][0] * out_trans[5]
@@ -99,23 +93,15 @@ def apply_model_to_site(
     outDataset.SetGeoTransform(out_trans)
     del outDataset
 
-    for _row in tqdm(
-        range(0, y_len, config.data_build.loss_window_radius * 2), ncols=80
-    ):
+    for _row in tqdm(range(0, y_len, config.data_build.loss_window_radius * 2), ncols=80):
         _row = min(_row, y_len - 2 * config.data_build.window_radius)
         col_dat = common_io.read_chunk_by_row(
-            feature_sets,
-            internal_ul_list,
-            x_len,
-            config.data_build.window_radius * 2,
-            _row,
+            feature_sets, internal_ul_list, x_len, config.data_build.window_radius * 2, _row
         )
         _logger.debug("Read data chunk of shape: {}".format(col_dat.shape))
 
         tile_dat, x_index = _convert_chunk_to_tiles(
-            col_dat,
-            config.data_build.loss_window_radius,
-            config.data_build.window_radius,
+            col_dat, config.data_build.loss_window_radius, config.data_build.window_radius
         )
         _logger.debug("Data tiled to shape: {}".format(tile_dat.shape))
 
@@ -146,14 +132,8 @@ def apply_model_to_site(
             pred_y[is_excluded, ...] = config.raw_files.response_nodata_value
         del tile_dat
 
-        window_radius_difference = (
-            config.data_build.window_radius - config.data_build.loss_window_radius
-        )
-        _logger.debug(
-            "Creating output dataset, using window_radius_difference {}".format(
-                window_radius_difference
-            )
-        )
+        window_radius_difference = config.data_build.window_radius - config.data_build.loss_window_radius
+        _logger.debug("Creating output dataset, using window_radius_difference {}".format(window_radius_difference))
         if window_radius_difference > 0:
             pred_y = pred_y[
                 :,
@@ -161,9 +141,7 @@ def apply_model_to_site(
                 window_radius_difference:-window_radius_difference,
                 :,
             ]
-        output = np.zeros(
-            (config.data_build.loss_window_radius * 2, x_len, pred_y.shape[-1])
-        )
+        output = np.zeros((config.data_build.loss_window_radius * 2, x_len, pred_y.shape[-1]))
         for _c in range(len(x_index)):
             output[
                 :,
@@ -177,21 +155,12 @@ def apply_model_to_site(
         _logger.debug("Convert output shape from (y,x,b) to (b,y,x)")
         output = np.moveaxis(output, [0, 1, 2], [1, 2, 0])
 
-        output_memmap = np.memmap(
-            temporary_outname,
-            mode="r+",
-            shape=(n_classes, y_len, x_len),
-            dtype=np.float32,
-        )
+        output_memmap = np.memmap(temporary_outname, mode="r+", shape=(n_classes, y_len, x_len), dtype=np.float32)
         outrow = _row + window_radius_difference
-        output_memmap[
-            :, outrow : outrow + config.data_build.loss_window_radius * 2, :
-        ] = output
+        output_memmap[:, outrow : outrow + config.data_build.loss_window_radius * 2, :] = output
         del output_memmap
 
-    common_io.convert_envi_file(
-        temporary_outname, destination_basename, output_format, True, creation_options
-    )
+    common_io.convert_envi_file(temporary_outname, destination_basename, output_format, True, creation_options)
 
 
 def maximum_likelihood_classification(
@@ -225,21 +194,15 @@ def maximum_likelihood_classification(
         temporary_outname = temporary_outname + "_temporary_ENVI_file"
         _logger.debug("Creating output envi file: {}".format(temporary_outname))
     else:
-        _logger.debug(
-            "Creating temporary output envi file: {}".format(temporary_outname)
-        )
+        _logger.debug("Creating temporary output envi file: {}".format(temporary_outname))
 
-    outDataset = driver.Create(
-        temporary_outname, dataset.RasterXSize, dataset.RasterYSize, 1, gdal.GDT_Int16
-    )
+    outDataset = driver.Create(temporary_outname, dataset.RasterXSize, dataset.RasterYSize, 1, gdal.GDT_Int16)
     outDataset.SetProjection(dataset.GetProjection())
     outDataset.SetGeoTransform(dataset.GetGeoTransform())
     del outDataset
 
     for _row in tqdm(range(0, dataset.RasterYSize), ncols=80):
-        col_dat = common_io.read_chunk_by_row(
-            [dataset], [[0, 0]], dataset.RasterXSize, 1, _row
-        )
+        col_dat = common_io.read_chunk_by_row([dataset], [[0, 0]], dataset.RasterXSize, 1, _row)
         _logger.debug("Read data chunk of shape: {}".format(col_dat.shape))
 
         # Necessary because apply_model_to_site will set (0, 0, ..., 0) to pixels with nodata, and argmax will predict
@@ -250,13 +213,8 @@ def maximum_likelihood_classification(
 
         col_dat = np.argmax(col_dat, axis=-1)
 
-        out_dat = (
-            np.zeros(col_dat.shape)
-            + data_container.config.raw_files.response_nodata_value
-        )
-        for idx_band, _encoded_value in enumerate(
-            data_container.response_per_band_encoded_values[0]
-        ):
+        out_dat = np.zeros(col_dat.shape) + data_container.config.raw_files.response_nodata_value
+        for idx_band, _encoded_value in enumerate(data_container.response_per_band_encoded_values[0]):
             out_dat[col_dat == idx_band] = _encoded_value
 
         col_dat[is_masked] = data_container.config.raw_files.response_nodata_value
@@ -267,17 +225,12 @@ def maximum_likelihood_classification(
         out_dat = np.moveaxis(out_dat, [0, 1, 2], [1, 2, 0])
 
         output_memmap = np.memmap(
-            temporary_outname,
-            mode="r+",
-            shape=(1, dataset.RasterYSize, dataset.RasterXSize),
-            dtype=np.int16,
+            temporary_outname, mode="r+", shape=(1, dataset.RasterYSize, dataset.RasterXSize), dtype=np.int16
         )
         output_memmap[:, _row : _row + 1, :] = out_dat
         del output_memmap
 
-    common_io.convert_envi_file(
-        temporary_outname, destination_basename, output_format, True, creation_options
-    )
+    common_io.convert_envi_file(temporary_outname, destination_basename, output_format, True, creation_options)
 
 
 def _convert_chunk_to_tiles(
@@ -297,18 +250,10 @@ def _convert_chunk_to_tiles(
     col_index = []
     for _col in range(0, feature_data.shape[1], loss_window_radius * 2):
         col_index.append(min(_col, feature_data.shape[1] - window_radius * 2))
-        output_array.append(
-            feature_data[:, col_index[-1] : col_index[-1] + window_radius * 2, :]
-        )
+        output_array.append(feature_data[:, col_index[-1] : col_index[-1] + window_radius * 2, :])
     output_array = np.stack(output_array)
     output_array = np.reshape(
-        output_array,
-        (
-            output_array.shape[0],
-            output_array.shape[1],
-            output_array.shape[2],
-            feature_data.shape[-1],
-        ),
+        output_array, (output_array.shape[0], output_array.shape[1], output_array.shape[2], feature_data.shape[-1])
     )
 
     col_index = np.array(col_index)

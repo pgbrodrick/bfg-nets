@@ -40,26 +40,8 @@ def get_overlapping_extent(dataset_list_of_lists: List[List[gdal.Dataset]]):
         ul_list.append(list(upper_left_pixel(trans_list[_d], interior_x, interior_y)))
 
     # calculate the size of the matched interior extent
-    x_len = int(
-        np.floor(
-            np.min(
-                [
-                    dataset_list[_d].RasterXSize - ul_list[_d][0]
-                    for _d in range(len(dataset_list))
-                ]
-            )
-        )
-    )
-    y_len = int(
-        np.floor(
-            np.min(
-                [
-                    dataset_list[_d].RasterYSize - ul_list[_d][1]
-                    for _d in range(len(dataset_list))
-                ]
-            )
-        )
-    )
+    x_len = int(np.floor(np.min([dataset_list[_d].RasterXSize - ul_list[_d][0] for _d in range(len(dataset_list))])))
+    y_len = int(np.floor(np.min([dataset_list[_d].RasterYSize - ul_list[_d][1] for _d in range(len(dataset_list))])))
 
     # separate out into list of lists for return
     return_ul_list = []
@@ -94,16 +76,10 @@ def get_overlapping_extent_coordinates(dataset_list_of_lists: List[List[gdal.Dat
     interior_y = np.nanmin([x[3] for x in trans_list])
 
     exterior_x = np.nanmin(
-        [
-            trans_list[x][0] + dataset_list[x].RasterXSize * trans_list[x][1]
-            for x in range(len(trans_list))
-        ]
+        [trans_list[x][0] + dataset_list[x].RasterXSize * trans_list[x][1] for x in range(len(trans_list))]
     )
     exterior_y = np.nanmax(
-        [
-            trans_list[x][3] + dataset_list[x].RasterYSize * trans_list[x][5]
-            for x in range(len(trans_list))
-        ]
+        [trans_list[x][3] + dataset_list[x].RasterYSize * trans_list[x][5] for x in range(len(trans_list))]
     )
 
     return [interior_x, interior_y], [exterior_x, exterior_y]
@@ -123,22 +99,10 @@ def get_all_interior_extent_subset_pixel_locations(
     all_upper_lefts, x_px_size, y_px_size = get_overlapping_extent(gdal_datasets)
 
     _logger.debug("Calculate pixel-based interior offsets for data acquisition")
-    x_sample_locations = [
-        x
-        for x in range(
-            0, int(x_px_size - 2 * window_radius) - 1, int(inner_window_radius * 2)
-        )
-    ]
-    y_sample_locations = [
-        y
-        for y in range(
-            0, int(y_px_size - 2 * window_radius) - 1, int(inner_window_radius * 2)
-        )
-    ]
+    x_sample_locations = [x for x in range(0, int(x_px_size - 2 * window_radius) - 1, int(inner_window_radius * 2))]
+    y_sample_locations = [y for y in range(0, int(y_px_size - 2 * window_radius) - 1, int(inner_window_radius * 2))]
 
-    xy_sample_locations = np.zeros(
-        (len(x_sample_locations) * len(y_sample_locations), 2)
-    ).astype(int)
+    xy_sample_locations = np.zeros((len(x_sample_locations) * len(y_sample_locations), 2)).astype(int)
     xy_sample_locations[:, 0] = np.matlib.repmat(
         np.array(x_sample_locations).reshape((-1, 1)), 1, len(y_sample_locations)
     ).flatten()
@@ -148,9 +112,7 @@ def get_all_interior_extent_subset_pixel_locations(
     del x_sample_locations, y_sample_locations
 
     if shuffle:
-        xy_sample_locations = xy_sample_locations[
-            np.random.permutation(xy_sample_locations.shape[0]), :
-        ]
+        xy_sample_locations = xy_sample_locations[np.random.permutation(xy_sample_locations.shape[0]), :]
 
     if return_xy_size:
         return all_upper_lefts, xy_sample_locations, [x_px_size, y_px_size]
@@ -190,15 +152,10 @@ def read_map_subset(
             file_set = datasets[_file]
             file_upper_left = upper_lefts[_file]
 
-            file_array = np.zeros(
-                (window_diameter, window_diameter, file_set.RasterCount)
-            )
+            file_array = np.zeros((window_diameter, window_diameter, file_set.RasterCount))
             for _b in range(file_set.RasterCount):
                 file_array[:, :, _b] = file_set.GetRasterBand(_b + 1).ReadAsArray(
-                    int(file_upper_left[0]),
-                    int(file_upper_left[1]),
-                    window_diameter,
-                    window_diameter,
+                    int(file_upper_left[0]), int(file_upper_left[1]), window_diameter, window_diameter
                 )
 
             if nodata_value is not None:
@@ -217,11 +174,7 @@ def read_map_subset(
         else:
             assert reference_geotransform is not None
 
-            file_array = rasterize_vector(
-                datafiles[_f],
-                reference_geotransform,
-                (window_diameter, window_diameter, 1),
-            )
+            file_array = rasterize_vector(datafiles[_f], reference_geotransform, (window_diameter, window_diameter, 1))
 
         if np.all(mask):
             return None, None
@@ -236,8 +189,7 @@ def get_boundary_sets_from_boundary_files(config: configs.Config) -> List[gdal.D
         boundary_sets = [None] * len(config.raw_files.feature_files)
     else:
         boundary_sets = [
-            noerror_open(loc_file) if loc_file is not None else None
-            for loc_file in config.raw_files.boundary_files
+            noerror_open(loc_file) if loc_file is not None else None for loc_file in config.raw_files.boundary_files
         ]
     return boundary_sets
 
@@ -262,9 +214,7 @@ def get_site_boundary_vector_file(config: configs.Config, _site) -> str:
     return boundary_file
 
 
-def rasterize_vector(
-    vector_file: str, geotransform: List[float], output_shape: Tuple
-) -> np.array:
+def rasterize_vector(vector_file: str, geotransform: List[float], output_shape: Tuple) -> np.array:
     """ Rasterizes an input vector directly into a numpy array.
 
     Args:
@@ -280,36 +230,24 @@ def rasterize_vector(
     trans = [trans[1], trans[2], trans[0], trans[4], trans[5], trans[3]]
     mask = np.zeros(output_shape)
     for n in range(0, len(ds)):
-        rasterio.features.rasterize(
-            [ds[n]["geometry"]], transform=trans, default_value=1, out=mask
-        )
+        rasterio.features.rasterize([ds[n]["geometry"]], transform=trans, default_value=1, out=mask)
     ds.close()
     return mask
 
 
 def read_mask_chunk(
-    _site: int,
-    upper_left: List[int],
-    window_diameter: int,
-    reference_geotransform: List[float],
-    config: configs.Config,
+    _site: int, upper_left: List[int], window_diameter: int, reference_geotransform: List[float], config: configs.Config
 ) -> np.array:
 
     mask = None
     boundary_set = get_site_boundary_set(config, _site)
     if boundary_set is not None:
-        mask = boundary_set.ReadAsArray(
-            int(upper_left[0]), int(upper_left[1]), window_diameter, window_diameter
-        )
+        mask = boundary_set.ReadAsArray(int(upper_left[0]), int(upper_left[1]), window_diameter, window_diameter)
     else:
         boundary_vector_file = get_site_boundary_vector_file(config, _site)
 
         if boundary_vector_file is not None:
-            mask = rasterize_vector(
-                boundary_vector_file,
-                reference_geotransform,
-                (window_diameter, window_diameter),
-            )
+            mask = rasterize_vector(boundary_vector_file, reference_geotransform, (window_diameter, window_diameter))
 
     if mask is None:
         mask = np.zeros((window_diameter, window_diameter)).astype(bool)
@@ -363,9 +301,7 @@ def convert_envi_file(
         options += " -co {}".format(co)
     if output_format == "GTiff":
         options += " -co BIGTIFF=IF_SAFER"
-    gdal.Translate(
-        final_outname, gdal.Open(original_file, gdal.GA_ReadOnly), options=options
-    )
+    gdal.Translate(final_outname, gdal.Open(original_file, gdal.GA_ReadOnly), options=options)
 
     test_outdataset = gdal.Open(final_outname, gdal.GA_ReadOnly)
     if cleanup:
@@ -422,10 +358,7 @@ def read_chunk_by_row(
             dat[:, _line : _line + 1, :] = (
                 datasets[_feat]
                 .ReadAsArray(
-                    int(pixel_upper_lefts[_feat][0]),
-                    int(pixel_upper_lefts[_feat][1] + line_offset + _line),
-                    x_size,
-                    1,
+                    int(pixel_upper_lefts[_feat][0]), int(pixel_upper_lefts[_feat][1] + line_offset + _line), x_size, 1
                 )
                 .astype(np.float32)
             )

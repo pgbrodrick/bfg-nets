@@ -15,42 +15,26 @@ _logger = logging.getLogger(__name__)
 
 def plot_classification_report(sampled: samples.Samples) -> List[plt.Figure]:
     if sampled.raw_responses is None or sampled.raw_predictions is None:
-        _logger.debug(
-            "Confusion matrix not plotted; no responses or predictions available."
-        )
+        _logger.debug("Confusion matrix not plotted; no responses or predictions available.")
         return list()
 
-    classes, actual, predicted = _calculate_classification_classes_actual_and_predicted(
-        sampled
-    )
-    report = "Classification report\n\n" + sklearn.metrics.classification_report(
-        actual, predicted, classes
-    )
+    classes, actual, predicted = _calculate_classification_classes_actual_and_predicted(sampled)
+    report = "Classification report\n\n" + sklearn.metrics.classification_report(actual, predicted, classes)
     fig, ax = plt.subplots(figsize=(8.5, 11), nrows=1, ncols=1)
     ax.text(0, 0, report, **{"fontsize": 8, "fontfamily": "monospace"})
     ax.axis("off")
-    fig.suptitle(
-        "{} Sequence Classification Report".format(sampled.data_sequence_label)
-    )
+    fig.suptitle("{} Sequence Classification Report".format(sampled.data_sequence_label))
     return [fig]
 
 
 def plot_confusion_matrix(sampled: samples.Samples) -> [plt.Figure]:
     if sampled.raw_responses is None or sampled.raw_predictions is None:
-        _logger.debug(
-            "Confusion matrix not plotted; no responses or predictions available."
-        )
+        _logger.debug("Confusion matrix not plotted; no responses or predictions available.")
         return list()
 
-    classes, actual, predicted = _calculate_classification_classes_actual_and_predicted(
-        sampled
-    )
-    confusion_matrix = sklearn.metrics.confusion_matrix(
-        actual, predicted, labels=classes
-    )
-    normed_matrix = (
-        confusion_matrix.astype(float) / confusion_matrix.sum(axis=1)[:, np.newaxis]
-    )
+    classes, actual, predicted = _calculate_classification_classes_actual_and_predicted(sampled)
+    confusion_matrix = sklearn.metrics.confusion_matrix(actual, predicted, labels=classes)
+    normed_matrix = confusion_matrix.astype(float) / confusion_matrix.sum(axis=1)[:, np.newaxis]
     fig, axes = plt.subplots(figsize=(16, 8), nrows=1, ncols=2)
 
     for idx_ax, ax in enumerate(axes):
@@ -64,13 +48,7 @@ def plot_confusion_matrix(sampled: samples.Samples) -> [plt.Figure]:
             matrix = normed_matrix
             value_format = ".2f"
             max_ = 1
-        im = ax.imshow(
-            matrix,
-            interpolation="nearest",
-            vmin=0,
-            vmax=max_,
-            cmap=colormaps.COLORMAP_METRICS,
-        )
+        im = ax.imshow(matrix, interpolation="nearest", vmin=0, vmax=max_, cmap=colormaps.COLORMAP_METRICS)
 
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.05)
@@ -98,9 +76,7 @@ def plot_confusion_matrix(sampled: samples.Samples) -> [plt.Figure]:
                     color="white" if matrix[i, j] > max_ / 2.0 else "black",
                 )
 
-    fig.suptitle(
-        "{} Sequence Confusion Matrix".format(sampled.data_sequence_label or "")
-    )
+    fig.suptitle("{} Sequence Confusion Matrix".format(sampled.data_sequence_label or ""))
     plt.tight_layout(h_pad=1)
     return [fig]
 
@@ -118,17 +94,14 @@ def plot_spatial_classification_error(
     sampled: samples.Samples, max_pages: int = 8, max_responses_per_page: int = 10
 ) -> List[plt.Figure]:
     if sampled.raw_responses is None or sampled.raw_predictions is None:
-        _logger.debug(
-            "Spatial classification residuals not plotted; no raw responses or predictions available."
-        )
+        _logger.debug("Spatial classification residuals not plotted; no raw responses or predictions available.")
         return list()
 
     actual = np.expand_dims(np.argmax(sampled.raw_responses, axis=-1), -1)
     predicted = np.expand_dims(np.argmax(sampled.raw_predictions, axis=-1), -1)
     error = (actual != predicted).astype(float)
     is_finite = np.logical_and(
-        np.isfinite(sampled.raw_responses).all(axis=-1),
-        np.isfinite(sampled.raw_predictions).all(axis=-1),
+        np.isfinite(sampled.raw_responses).all(axis=-1), np.isfinite(sampled.raw_predictions).all(axis=-1)
     )
     error[~is_finite] = np.nan
     error = np.nanmean(error, axis=0)
@@ -139,22 +112,15 @@ def plot_spatial_regression_error(
     sampled: samples.Samples, max_pages: int = 8, max_responses_per_page: int = 10
 ) -> List[plt.Figure]:
     if sampled.raw_responses is None or sampled.raw_predictions is None:
-        _logger.debug(
-            "Spatial regression residuals not plotted; no raw responses or predictions available."
-        )
+        _logger.debug("Spatial regression residuals not plotted; no raw responses or predictions available.")
         return list()
 
-    abs_error = np.nanmean(
-        np.abs(sampled.raw_predictions - sampled.raw_responses), axis=0
-    )
+    abs_error = np.nanmean(np.abs(sampled.raw_predictions - sampled.raw_responses), axis=0)
     return _plot_spatial_error(abs_error, sampled, max_pages, max_responses_per_page)
 
 
 def _plot_spatial_error(
-    error: np.array,
-    sampled: samples.Samples,
-    max_pages: int,
-    max_responses_per_page: int,
+    error: np.array, sampled: samples.Samples, max_pages: int, max_responses_per_page: int
 ) -> List[plt.Figure]:
     figures = []
 
@@ -185,12 +151,7 @@ def _plot_spatial_error(
                 max_ = np.nanmax(error[buffer:-buffer, buffer:-buffer, idx_response])
             else:
                 max_ = np.nanmax(error[..., idx_response])
-            ax.imshow(
-                error[..., idx_response],
-                vmin=min_,
-                vmax=max_,
-                cmap=colormaps.COLORMAP_ERROR,
-            )
+            ax.imshow(error[..., idx_response], vmin=min_, vmax=max_, cmap=colormaps.COLORMAP_ERROR)
             ax.set_xlabel("Response {}".format(idx_response))
             ax.xaxis.set_label_position("top")
             ax.set_xticks([])
@@ -202,8 +163,6 @@ def _plot_spatial_error(
         figures.append(fig)
         idx_page += 1
         fig.suptitle(
-            "{} Sequence Response Spatial Deviation (page {})".format(
-                sampled.data_sequence_label or "", idx_page + 1
-            )
+            "{} Sequence Response Spatial Deviation (page {})".format(sampled.data_sequence_label or "", idx_page + 1)
         )
     return figures

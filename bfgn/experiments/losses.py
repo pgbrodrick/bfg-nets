@@ -17,16 +17,10 @@ def get_available_loss_methods():
     Returns:
         List of available loss methods.
     """
-    return [
-        lm
-        for lms in (_LOSS_TYPE_CC, _LOSS_TYPE_MAE, _LOSS_TYPE_MSE, _LOSS_TYPE_RSME)
-        for lm in lms
-    ]
+    return [lm for lms in (_LOSS_TYPE_CC, _LOSS_TYPE_MAE, _LOSS_TYPE_MSE, _LOSS_TYPE_RSME) for lm in lms]
 
 
-def get_cropped_loss_function(
-    loss_method: str, outer_width: int, inner_width: int, weighted: bool = True
-) -> Callable:
+def get_cropped_loss_function(loss_method: str, outer_width: int, inner_width: int, weighted: bool = True) -> Callable:
     """ Creates a loss function callable with optional per-pixel weighting and edge-trimming.
 
     Arguments:
@@ -68,9 +62,7 @@ def get_cropped_loss_function(
         elif loss_method in _LOSS_TYPE_MSE:
             loss = keras.backend.mean(keras.backend.pow(y_true - y_pred, 2))
         elif loss_method in _LOSS_TYPE_RSME:
-            loss = keras.backend.pow(
-                keras.backend.mean(keras.backend.pow(y_true - y_pred, 2)), 0.5
-            )
+            loss = keras.backend.pow(keras.backend.mean(keras.backend.pow(y_true - y_pred, 2)), 0.5)
 
         if weighted:
             loss = loss * weights

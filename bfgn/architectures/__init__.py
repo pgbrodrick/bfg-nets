@@ -9,10 +9,4 @@ def get_available_architectures() -> List[str]:
         List of available architectures.
     """
     dir_arch = os.path.dirname(__file__)
-    return sorted(
-        [
-            os.path.splitext(path)[0]
-            for path in os.listdir(dir_arch)
-            if path.endswith("net.py")
-        ]
-    )
+    return sorted([os.path.splitext(path)[0] for path in os.listdir(dir_arch) if path.endswith("net.py")])

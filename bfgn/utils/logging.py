@@ -23,9 +23,7 @@ def get_root_logger(log_outfile: str = None) -> logging.Logger:
     """
     logger = logging.getLogger("bfgn")
     logger.setLevel(logging.INFO)
-    formatter = logging.Formatter(
-        fmt="%(asctime)s - %(processName)s - %(name)s - %(levelname)s - %(message)s"
-    )
+    formatter = logging.Formatter(fmt="%(asctime)s - %(processName)s - %(name)s - %(levelname)s - %(message)s")
     # Stream handler
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(formatter)

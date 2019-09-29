@@ -128,16 +128,8 @@ def fill_nearest_neighbor(image, nodata=VALUE_NO_DATA):
     nodata_sum = np.sum(np.all(image == VALUE_NO_DATA, axis=2))
     if nodata_sum > 0 and nodata_sum < image.size:
         ims = image.shape
-        x_arr = (
-            np.matlib.repmat(np.arange(0, ims[1]).reshape(1, ims[1]), ims[0], 1)
-            .flatten()
-            .astype(float)
-        )
-        y_arr = (
-            np.matlib.repmat(np.arange(0, ims[0]).reshape(ims[0], 1), 1, ims[1])
-            .flatten()
-            .astype(float)
-        )
+        x_arr = np.matlib.repmat(np.arange(0, ims[1]).reshape(1, ims[1]), ims[0], 1).flatten().astype(float)
+        y_arr = np.matlib.repmat(np.arange(0, ims[0]).reshape(ims[0], 1), 1, ims[1]).flatten().astype(float)
 
         if len(ims) == 3:
             image = image.reshape((ims[0] * ims[1], ims[2]))

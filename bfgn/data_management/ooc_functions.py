@@ -11,10 +11,7 @@ _logger = logging.getLogger(__name__)
 
 
 def one_hot_encode_array(
-    raw_band_types: List[str],
-    array: np.array,
-    memmap_file: str = None,
-    per_band_encoding: List[np.array] = None,
+    raw_band_types: List[str], array: np.array, memmap_file: str = None, per_band_encoding: List[np.array] = None
 ) -> Tuple[np.array, List[str], List[np.array]]:
     """One hot encode an array of mixed real and categorical variables.
 
@@ -54,9 +51,7 @@ def one_hot_encode_array(
 
         assert (
             len(un_array) < _MAX_UNIQUE_RESPONSES
-        ), "Too many ({}) unique responses found, suspected incorrect categorical specification".format(
-            len(un_array)
-        )
+        ), "Too many ({}) unique responses found, suspected incorrect categorical specification".format(len(un_array))
         _logger.info("Found {} categorical responses".format(len(un_array)))
         _logger.info("Cat response: {}".format(un_array))
 
@@ -65,12 +60,9 @@ def one_hot_encode_array(
 
         if memmap_file is not None:
             cat_memmap_file = os.path.join(
-                os.path.dirname(memmap_file),
-                str(os.path.splitext(os.path.basename(memmap_file))[0]) + "_cat.npy",
+                os.path.dirname(memmap_file), str(os.path.splitext(os.path.basename(memmap_file))[0]) + "_cat.npy"
             )
-            cat_array = np.memmap(
-                cat_memmap_file, dtype=np.float32, mode="w+", shape=tuple(array_shape)
-            )
+            cat_array = np.memmap(cat_memmap_file, dtype=np.float32, mode="w+", shape=tuple(array_shape))
         else:
             cat_array = np.zeros(tuple(array_shape))
 
@@ -78,8 +70,7 @@ def one_hot_encode_array(
         for _r in range(array_shape[-1]):
             if _r >= cat_band_locations[_c] and _r < len(un_array):
                 cat_array[..., _r] = np.squeeze(
-                    array[..., cat_band_locations[_c]]
-                    == un_array[_r - cat_band_locations[_c]]
+                    array[..., cat_band_locations[_c]] == un_array[_r - cat_band_locations[_c]]
                 )
             else:
                 if _r < cat_band_locations[_c]:
@@ -94,9 +85,7 @@ def one_hot_encode_array(
             if os.path.isfile(memmap_file):
                 os.remove(memmap_file)
             memmap_file = cat_memmap_file
-            array = np.memmap(
-                memmap_file, dtype=np.float32, mode="r+", shape=tuple(array_shape)
-            )
+            array = np.memmap(memmap_file, dtype=np.float32, mode="r+", shape=tuple(array_shape))
 
         band_types.pop(cat_band_locations[_c])
         for _r in range(len(un_array)):
@@ -108,12 +97,9 @@ def one_hot_encode_array(
         return array, band_types, return_band_encoding
 
 
-def permute_array(
-    source: np.array, source_filename: str, permutation: np.array
-) -> np.array:
+def permute_array(source: np.array, source_filename: str, permutation: np.array) -> np.array:
     perm_memmap_file = os.path.join(
-        os.path.dirname(source_filename),
-        str(os.path.splitext(os.path.basename(source_filename))[0]) + "_perm.npy",
+        os.path.dirname(source_filename), str(os.path.splitext(os.path.basename(source_filename))[0]) + "_perm.npy"
     )
 
     shape = source.shape

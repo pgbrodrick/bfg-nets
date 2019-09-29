@@ -49,9 +49,7 @@ def create_model(
 
     # Optional colorspace transformation (not in block format)
     if use_initial_colorspace_transformation_layer:
-        encoder = network_sections.colorspace_transformation(
-            inshape, encoder, use_batch_norm
-        )
+        encoder = network_sections.colorspace_transformation(inshape, encoder, use_batch_norm)
 
     # Encoding, block-wise
     passthrough_layers = list()
@@ -72,15 +70,11 @@ def create_model(
             transition_options["filters"] *= 2
 
     # Encoder/Decoder Transition Block
-    transition = network_sections.dense_2d_block(
-        encoder, conv2d_options, block_structure[-1]
-    )
+    transition = network_sections.dense_2d_block(encoder, conv2d_options, block_structure[-1])
 
     decoder = transition
     # Decoding, block-wise
-    for num_layers, layer_passed_through in zip(
-        reversed(block_structure), reversed(passthrough_layers)
-    ):
+    for num_layers, layer_passed_through in zip(reversed(block_structure), reversed(passthrough_layers)):
 
         if use_growth:
             conv2d_options["filters"] = int(conv2d_options["filters"] / 2)
@@ -94,17 +88,12 @@ def create_model(
         decoder = Concatenate()([layer_passed_through, decoder])
 
         # Add a transition block
-        decoder = network_sections.dense_2d_block(
-            decoder, transition_options, num_layers
-        )
+        decoder = network_sections.dense_2d_block(decoder, transition_options, num_layers)
 
     # Output convolutions
     output_layer = decoder
     output_layer = network_sections.Conv2D_Options(output_layer, conv2d_options)
-    output_layer = Conv2D(
-        filters=n_classes,
-        kernel_size=(1, 1),
-        padding="same",
-        activation=output_activation,
-    )(output_layer)
+    output_layer = Conv2D(filters=n_classes, kernel_size=(1, 1), padding="same", activation=output_activation)(
+        output_layer
+    )
     return keras.models.Model(inputs=[inlayer], outputs=[output_layer])

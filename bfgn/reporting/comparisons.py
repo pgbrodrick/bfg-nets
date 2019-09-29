@@ -11,9 +11,7 @@ plt.switch_backend("Agg")  # Needed for remote server plotting
 
 
 def create_model_comparison_report(
-    filepath_out: str,
-    dirs_histories: List[str] = None,
-    paths_histories: List[str] = None,
+    filepath_out: str, dirs_histories: List[str] = None, paths_histories: List[str] = None
 ) -> None:
     assert (
         dirs_histories or paths_histories
@@ -23,9 +21,7 @@ def create_model_comparison_report(
     if dirs_histories:
         paths_histories.extend(walk_directories_for_model_histories(dirs_histories))
         assert len(paths_histories) > 0, "No model histories found to compare"
-    model_histories = [
-        histories.load_history(path_history) for path_history in paths_histories
-    ]
+    model_histories = [histories.load_history(path_history) for path_history in paths_histories]
     with PdfPages(filepath_out) as pdf:
         _add_figures(plot_model_loss_comparison(model_histories), pdf)
         _add_figures(plot_model_timing_comparison(model_histories), pdf)
@@ -61,12 +57,7 @@ def plot_model_loss_comparison(model_histories: List[dict]) -> List[plt.Figure]:
         ax.set_xlabel("Epochs")
         ax.set_ylabel("Loss")
         ax.set_yscale("log")
-    fig.legend(
-        loc="lower center",
-        ncol=4,
-        bbox_to_anchor=(0.0, -0.1, 1.0, 1.0),
-        bbox_transform=plt.gcf().transFigure,
-    )
+    fig.legend(loc="lower center", ncol=4, bbox_to_anchor=(0.0, -0.1, 1.0, 1.0), bbox_transform=plt.gcf().transFigure)
     axes[0].set_title("Training loss")
     axes[1].set_title("Validation loss")
     return [fig]

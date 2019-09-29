@@ -7,9 +7,7 @@ from bfgn.architectures import config_sections
 
 
 class ArchitectureConfigSection(
-    config_sections.BlockMixin,
-    config_sections.GrowthMixin,
-    config_sections.BaseArchitectureConfigSection,
+    config_sections.BlockMixin, config_sections.GrowthMixin, config_sections.BaseArchitectureConfigSection
 ):
     pass
 
@@ -33,15 +31,11 @@ def create_model(
 
     if use_initial_colorspace_transformation_layer:
         intermediate_color_depth = int(inshape[-1] ** 2)
-        conv = Conv2D(
-            filters=intermediate_color_depth, kernel_size=(1, 1), padding="same"
-        )(inlayer)
+        conv = Conv2D(filters=intermediate_color_depth, kernel_size=(1, 1), padding="same")(inlayer)
         conv = Conv2D(filters=inshape[-1], kernel_size=(1, 1), padding="same")(conv)
         conv = BatchNormalization()(conv)
     else:
-        conv = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(
-            inlayer
-        )
+        conv = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(inlayer)
 
     # Track linear filter increase if use_growth
     if use_growth:
@@ -59,9 +53,7 @@ def create_model(
             if use_growth:
                 # Increase number of filters for new layer
                 filters += filter_increase
-            conv = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(
-                conv
-            )
+            conv = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(conv)
             output_layers.append(conv)
             # The next layer input is the concatenation of the dense block input and all layer outputs, regardless of
             # whether the next layer is in this block or the next
@@ -73,8 +65,6 @@ def create_model(
                 conv = BatchNormalization()(conv)
             conv = Conv2D(filters=filters, kernel_size=(1, 1), padding=padding)(conv)
 
-    output_layer = Conv2D(
-        n_classes, (1, 1), activation=output_activation, padding=padding
-    )(conv)
+    output_layer = Conv2D(n_classes, (1, 1), activation=output_activation, padding=padding)(conv)
     model = keras.models.Model(inputs=inlayer, outputs=output_layer)
     return model

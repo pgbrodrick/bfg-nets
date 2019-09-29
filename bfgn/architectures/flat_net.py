@@ -6,9 +6,7 @@ from keras.layers import BatchNormalization, Conv2D
 from bfgn.architectures import config_sections
 
 
-class ArchitectureConfigSection(
-    config_sections.FlatMixin, config_sections.BaseArchitectureConfigSection
-):
+class ArchitectureConfigSection(config_sections.FlatMixin, config_sections.BaseArchitectureConfigSection):
     pass
 
 
@@ -31,9 +29,7 @@ def create_model(
     conv = inlayer
     if use_initial_colorspace_transformation_layer:
         intermediate_color_depth = int(inshape[-1] ** 2)
-        conv = Conv2D(
-            filters=intermediate_color_depth, kernel_size=(1, 1), padding="same"
-        )(inlayer)
+        conv = Conv2D(filters=intermediate_color_depth, kernel_size=(1, 1), padding="same")(inlayer)
         conv = Conv2D(filters=inshape[-1], kernel_size=(1, 1), padding="same")(conv)
         conv = BatchNormalization()(conv)
 
@@ -43,8 +39,6 @@ def create_model(
         if use_batch_norm:
             conv = BatchNormalization()(conv)
 
-    output_layer = Conv2D(
-        n_classes, (1, 1), activation=output_activation, padding=padding
-    )(conv)
+    output_layer = Conv2D(n_classes, (1, 1), activation=output_activation, padding=padding)(conv)
     model = keras.models.Model(inputs=inlayer, outputs=output_layer)
     return model

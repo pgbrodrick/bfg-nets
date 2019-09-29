@@ -38,21 +38,15 @@ def create_model(
 
     if use_initial_colorspace_transformation_layer:
         intermediate_color_depth = int(inshape[-1] ** 2)
-        encoder = Conv2D(
-            filters=intermediate_color_depth, kernel_size=(1, 1), padding="same"
-        )(inlayer)
-        encoder = Conv2D(filters=inshape[-1], kernel_size=(1, 1), padding="same")(
-            encoder
-        )
+        encoder = Conv2D(filters=intermediate_color_depth, kernel_size=(1, 1), padding="same")(inlayer)
+        encoder = Conv2D(filters=inshape[-1], kernel_size=(1, 1), padding="same")(encoder)
         encoder = BatchNormalization()(encoder)
 
     # Each encoder block has a number of subblocks
     for num_subblocks in block_structure:
         for idx_sublayer in range(num_subblocks):
             # Each subblock has a number of convolutions
-            encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(
-                encoder
-            )
+            encoder = Conv2D(filters=filters, kernel_size=kernel_size, padding=padding)(encoder)
             if use_batch_norm:
                 encoder = BatchNormalization()(encoder)
         # Each encoder block passes its pre-pooled layers through to the decoder

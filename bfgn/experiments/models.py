@@ -9,9 +9,7 @@ _logger = logging.getLogger(__name__)
 DEFAULT_FILENAME_MODEL = "model.h5"
 
 
-def load_model(
-    filepath: str, custom_objects: dict = None
-) -> Union[keras.models.Model, None]:
+def load_model(filepath: str, custom_objects: dict = None) -> Union[keras.models.Model, None]:
     """Loads model from serialized file.
 
     Args:

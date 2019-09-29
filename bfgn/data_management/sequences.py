@@ -33,25 +33,17 @@ class BaseSequence(keras.utils.Sequence):
         self.nan_replacement_value = nan_replacement_value
 
     def __len__(self) -> int:
-        raise NotImplementedError(
-            "Method is required for Keras functionality. Should return steps_per_epoch."
-        )
+        raise NotImplementedError("Method is required for Keras functionality. Should return steps_per_epoch.")
 
     def __getitem__(
         self, index: int, return_raw_sample: bool = False
     ) -> Union[
         Tuple[List[np.array], List[np.array]],
-        Tuple[
-            Tuple[List[np.array], List[np.array]], Tuple[List[np.array], List[np.array]]
-        ],
+        Tuple[Tuple[List[np.array], List[np.array]], Tuple[List[np.array], List[np.array]]],
     ]:
         # Method is required for Keras functionality, reuse names to avoid creating many new, potentially large objects
-        _logger.debug(
-            "Get batch {} with {} items via sequence".format(index, self.batch_size)
-        )
-        raw_features, raw_responses, raw_weights = self._get_features_responses_weights(
-            index
-        )
+        _logger.debug("Get batch {} with {} items via sequence".format(index, self.batch_size))
+        raw_features, raw_responses, raw_weights = self._get_features_responses_weights(index)
 
         trans_features = [raw_feature.copy() for raw_feature in raw_features]
         trans_responses = [raw_response.copy() for raw_response in raw_responses]
@@ -66,12 +58,8 @@ class BaseSequence(keras.utils.Sequence):
         trans_responses = self._scale_responses(trans_responses)
 
         if self.nan_replacement_value is not None:
-            trans_features = self._replace_nan_data_values(
-                trans_features, self.nan_replacement_value
-            )
-            trans_responses = self._replace_nan_data_values(
-                trans_responses, self.nan_replacement_value
-            )
+            trans_features = self._replace_nan_data_values(trans_features, self.nan_replacement_value)
+            trans_responses = self._replace_nan_data_values(trans_responses, self.nan_replacement_value)
         else:
             assert np.all(np.isfinite(trans_features)), (
                 "Some feature values are nan but nan_replacement_value not provided in data config. Please provide "
@@ -79,21 +67,12 @@ class BaseSequence(keras.utils.Sequence):
             )
 
         # Append weights to responses for loss function calculations
-        raw_responses = [
-            np.append(response, weight, axis=-1)
-            for response, weight in zip(raw_responses, raw_weights)
-        ]
-        trans_responses = [
-            np.append(resp, weight, axis=-1)
-            for resp, weight in zip(trans_responses, trans_weights)
-        ]
+        raw_responses = [np.append(response, weight, axis=-1) for response, weight in zip(raw_responses, raw_weights)]
+        trans_responses = [np.append(resp, weight, axis=-1) for resp, weight in zip(trans_responses, trans_weights)]
 
         if return_raw_sample is True:
             # This is for BGFN reporting and other functionality
-            return_value = (
-                (raw_features, raw_responses),
-                (trans_features, trans_responses),
-            )
+            return_value = ((raw_features, raw_responses), (trans_features, trans_responses))
         else:
             # This is for Keras sequence generator behavior
             return_value = (trans_features, trans_responses)
@@ -101,14 +80,10 @@ class BaseSequence(keras.utils.Sequence):
 
     def get_raw_and_transformed_sample(
         self, index: int
-    ) -> Tuple[
-        Tuple[List[np.array], List[np.array]], Tuple[List[np.array], List[np.array]]
-    ]:
+    ) -> Tuple[Tuple[List[np.array], List[np.array]], Tuple[List[np.array], List[np.array]]]:
         return self.__getitem__(index, return_raw_sample=True)
 
-    def _get_features_responses_weights(
-        self, index: int
-    ) -> Tuple[List[np.array], List[np.array], List[np.array]]:
+    def _get_features_responses_weights(self, index: int) -> Tuple[List[np.array], List[np.array], List[np.array]]:
         raise NotImplementedError(
             "Custom Sequences must implement _get_features_responses_weights for training and reporting to work. "
             + "See method header for expected arguments and returned objects."
@@ -120,10 +95,7 @@ class BaseSequence(keras.utils.Sequence):
         return data
 
     def _apply_augmentations(
-        self,
-        features: List[np.array],
-        responses: List[np.array],
-        weights: List[np.array],
+        self, features: List[np.array], responses: List[np.array], weights: List[np.array]
     ) -> Tuple[List[np.array], List[np.array], List[np.array]]:
         assert len(responses) == 1, (
             "Custom augmentations have not been tested on multiple responses. Please feel free to handle this "
@@ -138,10 +110,7 @@ class BaseSequence(keras.utils.Sequence):
             sample_weights = weights[0][idx_sample]
             mask_loss_window = (sample_weights > 0)[..., 0]
             # Format for albumentations.Compose
-            data_to_augment = {
-                "image": sample_features.pop(0),
-                "mask": np.dstack([sample_responses, sample_weights]),
-            }
+            data_to_augment = {"image": sample_features.pop(0), "mask": np.dstack([sample_responses, sample_weights])}
             target_keys = ["image"]
             for idx, feature in enumerate(sample_features):
                 key_feature = ADDITIONAL_TARGETS_KEY.format(idx + 1)
@@ -156,9 +125,7 @@ class BaseSequence(keras.utils.Sequence):
             responses[0][idx_sample] = augmented["mask"][..., :-1]
             mask_features = np.isfinite(np.dstack(sample_features)).all(axis=-1)
             mask = np.logical_and(mask_features, mask_loss_window)
-            weights[0][idx_sample] = np.expand_dims(
-                mask * augmented["mask"][..., -1], axis=-1
-            )
+            weights[0][idx_sample] = np.expand_dims(mask * augmented["mask"][..., -1], axis=-1)
         return features, responses, weights
 
     def _scale_features(self, features: List[np.array]) -> List[np.array]:
@@ -196,9 +163,7 @@ class MemmappedSequence(BaseSequence):
         # it to roll between files when extracting samples
         self.cum_samples_per_array = np.zeros(len(features) + 1).astype(int)
         for _array in range(1, len(features) + 1):
-            self.cum_samples_per_array[_array] = (
-                features[_array - 1].shape[0] + self.cum_samples_per_array[_array - 1]
-            )
+            self.cum_samples_per_array[_array] = features[_array - 1].shape[0] + self.cum_samples_per_array[_array - 1]
 
         self.feature_mean_centering = feature_mean_centering
 
@@ -209,35 +174,24 @@ class MemmappedSequence(BaseSequence):
     def _mean_center(self, data: np.array) -> np.array:
         return data - np.mean(data, axis=(1, 2))[:, np.newaxis, np.newaxis, :]
 
-    def _get_features_responses_weights(
-        self, index: int
-    ) -> Tuple[List[np.array], List[np.array], List[np.array]]:
+    def _get_features_responses_weights(self, index: int) -> Tuple[List[np.array], List[np.array], List[np.array]]:
         # start by finding which array we're starting in, based on the input index, batch size,
         # and the number of samples per array
         current_array = 0
         while current_array < len(self.cum_samples_per_array) - 1:
             if (
                 index * self.batch_size >= self.cum_samples_per_array[current_array]
-                and index * self.batch_size
-                < self.cum_samples_per_array[current_array + 1]
+                and index * self.batch_size < self.cum_samples_per_array[current_array + 1]
             ):
                 break
             current_array += 1
 
         # grab the the appropriate number of samples from the current array
-        sample_index = int(
-            index * self.batch_size - self.cum_samples_per_array[current_array]
-        )
+        sample_index = int(index * self.batch_size - self.cum_samples_per_array[current_array])
 
-        batch_features = (self.features[current_array])[
-            sample_index : sample_index + self.batch_size, ...
-        ].copy()
-        batch_responses = (self.responses[current_array])[
-            sample_index : sample_index + self.batch_size, ...
-        ].copy()
-        batch_weights = (self.weights[current_array])[
-            sample_index : sample_index + self.batch_size, ...
-        ].copy()
+        batch_features = (self.features[current_array])[sample_index : sample_index + self.batch_size, ...].copy()
+        batch_responses = (self.responses[current_array])[sample_index : sample_index + self.batch_size, ...].copy()
+        batch_weights = (self.weights[current_array])[sample_index : sample_index + self.batch_size, ...].copy()
 
         # if the current array didn't have enough samples in it, roll forward to the next one (and keep
         # doing so until we have enough samples)
@@ -250,28 +204,18 @@ class MemmappedSequence(BaseSequence):
 
             stop_ind = self.batch_size - batch_features.shape[0]
             batch_features = np.append(
-                batch_features,
-                (self.features[current_array])[sample_index:stop_ind, ...],
-                axis=0,
+                batch_features, (self.features[current_array])[sample_index:stop_ind, ...], axis=0
             )
             batch_responses = np.append(
-                batch_responses,
-                (self.responses[current_array])[sample_index:stop_ind, ...],
-                axis=0,
+                batch_responses, (self.responses[current_array])[sample_index:stop_ind, ...], axis=0
             )
-            batch_weights = np.append(
-                batch_weights,
-                (self.weights[current_array])[sample_index:stop_ind, ...],
-                axis=0,
-            )
+            batch_weights = np.append(batch_weights, (self.weights[current_array])[sample_index:stop_ind, ...], axis=0)
         if self.feature_mean_centering is True:
             batch_features = self._mean_center(batch_features)
         return [batch_features], [batch_responses], [batch_weights]
 
 
-def sample_custom_augmentations_constructor(
-    num_features: int, window_radius: int
-) -> albumentations.Compose:
+def sample_custom_augmentations_constructor(num_features: int, window_radius: int) -> albumentations.Compose:
     """
     This function returns a custom augmentations object for use with sequences via the load_sequences function in
     data_core.py. Please note that these augmentations have only been tested with RGB data between 0 and 1 and that
@@ -288,9 +232,7 @@ def sample_custom_augmentations_constructor(
     """
     max_kernel = int(round(0.1 * window_radius))
     max_hole_size = int(round(0.1 * window_radius))
-    additional_targets = [
-        ADDITIONAL_TARGETS_KEY.format(idx) for idx in range(1, num_features)
-    ]
+    additional_targets = [ADDITIONAL_TARGETS_KEY.format(idx) for idx in range(1, num_features)]
 
     return albumentations.Compose(
         [
@@ -301,36 +243,23 @@ def sample_custom_augmentations_constructor(
             albumentations.Transpose(p=0.5),
             albumentations.Rotate(limit=90, p=0.5),
             # Fogging as it's quite similar to top-down cloud effects, seems reasonable to apply up front
-            albumentations.RandomFog(
-                fog_coef_lower=0.2, fog_coef_upper=0.8, alpha_coef=0.08, p=0.5
-            ),
+            albumentations.RandomFog(fog_coef_lower=0.2, fog_coef_upper=0.8, alpha_coef=0.08, p=0.5),
             # Color modifications
             albumentations.OneOf(
                 [
                     albumentations.RandomBrightnessContrast(
-                        brightness_limit=0.2,
-                        contrast_limit=0.6,
-                        brightness_by_max=True,
-                        p=1.0,
+                        brightness_limit=0.2, contrast_limit=0.6, brightness_by_max=True, p=1.0
                     ),
-                    albumentations.RGBShift(
-                        r_shift_limit=0.2, g_shift_limit=0.2, b_shift_limit=0.2, p=1.0
-                    ),
+                    albumentations.RGBShift(r_shift_limit=0.2, g_shift_limit=0.2, b_shift_limit=0.2, p=1.0),
                 ],
                 p=0.25,
             ),
             # Distortions
             albumentations.OneOf(
                 [
-                    albumentations.ElasticTransform(
-                        alpha=1, sigma=50, alpha_affine=50, p=1.0
-                    ),
-                    albumentations.GridDistortion(
-                        num_steps=5, distort_limit=0.4, p=1.0
-                    ),
-                    albumentations.OpticalDistortion(
-                        distort_limit=0.1, shift_limit=0.1, p=1.0
-                    ),
+                    albumentations.ElasticTransform(alpha=1, sigma=50, alpha_affine=50, p=1.0),
+                    albumentations.GridDistortion(num_steps=5, distort_limit=0.4, p=1.0),
+                    albumentations.OpticalDistortion(distort_limit=0.1, shift_limit=0.1, p=1.0),
                 ],
                 p=0.25,
             ),
@@ -339,11 +268,7 @@ def sample_custom_augmentations_constructor(
             albumentations.OneOf(
                 [
                     albumentations.CoarseDropout(
-                        max_holes=8,
-                        max_height=max_hole_size,
-                        max_width=max_hole_size,
-                        fill_value=np.nan,
-                        p=1.0,
+                        max_holes=8, max_height=max_hole_size, max_width=max_hole_size, fill_value=np.nan, p=1.0
                     ),
                     albumentations.GaussNoise(var_limit=0.05, mean=0, p=1.0),
                 ],
@@ -353,12 +278,8 @@ def sample_custom_augmentations_constructor(
             albumentations.RandomScale(scale_limit=0.05, p=0.25),
             # Augmentations may not return images of the same size, images can be both smaller and larger than expected, so
             # these two augmentations are added to keep things consistent
-            albumentations.PadIfNeeded(
-                2 * window_radius, 2 * window_radius, always_apply=True, p=1.0
-            ),
-            albumentations.CenterCrop(
-                2 * window_radius, 2 * window_radius, always_apply=True, p=1.0
-            ),
+            albumentations.PadIfNeeded(2 * window_radius, 2 * window_radius, always_apply=True, p=1.0),
+            albumentations.CenterCrop(2 * window_radius, 2 * window_radius, always_apply=True, p=1.0),
             # Return the data to its original scale
             albumentations.FromFloat(max_value=255, always_apply=True, p=1.0),
         ],

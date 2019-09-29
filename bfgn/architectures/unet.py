@@ -38,9 +38,7 @@ def create_model(
     minimum_width = input_width / 2 ** len(block_structure)
     assert minimum_width >= 2, (
         "The convolution width in the last encoding block ({}) is less than 2."
-        + "Reduce the number of blocks in block_structure (currently {}).".format(
-            len(block_structure)
-        )
+        + "Reduce the number of blocks in block_structure (currently {}).".format(len(block_structure))
     )
 
     conv2d_options = {
@@ -57,9 +55,7 @@ def create_model(
     encoder = inlayer
 
     if use_initial_colorspace_transformation_layer:
-        encoder = network_sections.colorspace_transformation(
-            inshape, encoder, use_batch_norm
-        )
+        encoder = network_sections.colorspace_transformation(inshape, encoder, use_batch_norm)
 
     # Encoding Layers
     # Each encoder block has a number of subblocks
@@ -81,9 +77,7 @@ def create_model(
     # Decoding Layers
     decoder = transition
     # Each decoder block has a number of subblocks, but in reverse order of encoder
-    for num_subblocks, layer_passed_through in zip(
-        reversed(block_structure), reversed(layers_pass_through)
-    ):
+    for num_subblocks, layer_passed_through in zip(reversed(block_structure), reversed(layers_pass_through)):
         if use_growth:
             conv2d_options["filters"] = int(conv2d_options["filters"] / 2)
 
@@ -98,10 +92,7 @@ def create_model(
     # Output convolutions
     output_layer = decoder
     output_layer = network_sections.Conv2D_Options(output_layer, conv2d_options)
-    output_layer = Conv2D(
-        filters=n_classes,
-        kernel_size=(1, 1),
-        padding="same",
-        activation=output_activation,
-    )(output_layer)
+    output_layer = Conv2D(filters=n_classes, kernel_size=(1, 1), padding="same", activation=output_activation)(
+        output_layer
+    )
     return keras.models.Model(inputs=[inlayer], outputs=[output_layer])

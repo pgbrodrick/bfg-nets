@@ -26,9 +26,7 @@ class HistoryCheckpoint(keras.callbacks.Callback):
     epochs_since_last_save = None
     epoch_begin = None
 
-    def __init__(
-        self, config: configs.Config, existing_history=None, period=1, verbose=0
-    ):
+    def __init__(self, config: configs.Config, existing_history=None, period=1, verbose=0):
         super().__init__()
         self.config = config
         if existing_history is None:
@@ -78,17 +76,11 @@ class HistoryCheckpoint(keras.callbacks.Callback):
                 self.model.model, "history"
             ), "Parallel models are doing something unusual with histories. Tell Nick and let's debug."
             new_history = self.model.model.history
-        combined_history = histories.combine_histories(
-            self.existing_history, new_history
-        )
-        histories.save_history(
-            combined_history, experiments.get_history_filepath(self.config)
-        )
+        combined_history = histories.combine_histories(self.existing_history, new_history)
+        histories.save_history(combined_history, experiments.get_history_filepath(self.config))
 
 
-def get_model_callbacks(
-    config: configs.Config, existing_history: dict
-) -> List[keras.callbacks.Callback]:
+def get_model_callbacks(config: configs.Config, existing_history: dict) -> List[keras.callbacks.Callback]:
     """Creates model callbacks from a bfgn config.
 
     Args:

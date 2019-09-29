@@ -18,14 +18,10 @@ def plot_history(history: dict) -> [plt.Figure]:
     ax = axes[0, 0]
     if "epoch_start" in history and "epoch_finish" in history:
         epoch_time = [
-            (finish - start).seconds
-            for start, finish in zip(history["epoch_start"], history["epoch_finish"])
+            (finish - start).seconds for start, finish in zip(history["epoch_start"], history["epoch_finish"])
         ]
         epoch_delay = [
-            (start - finish).seconds
-            for start, finish in zip(
-                history["epoch_start"][1:], history["epoch_finish"][:-1]
-            )
+            (start - finish).seconds for start, finish in zip(history["epoch_start"][1:], history["epoch_finish"][:-1])
         ]
         ax.plot(epoch_time, c="black", label="Epoch time")
         ax.plot(epoch_delay, "--", c="blue", label="Epoch delay")
@@ -39,15 +35,10 @@ def plot_history(history: dict) -> [plt.Figure]:
     ax = axes[0, 1]
     if "train_start" in history and "epoch_finish" in history:
         minutes_elapsed_per_epoch = np.array(
-            [
-                (dt - history["train_start"]).seconds / 60
-                for dt in history["epoch_finish"]
-            ]
+            [(dt - history["train_start"]).seconds / 60 for dt in history["epoch_finish"]]
         )
         minutes_elapsed = range(0, int(1 + max(minutes_elapsed_per_epoch)))
-        cumulative_epochs = [
-            sum(minutes_elapsed_per_epoch < minutes) for minutes in minutes_elapsed
-        ]
+        cumulative_epochs = [sum(minutes_elapsed_per_epoch < minutes) for minutes in minutes_elapsed]
         ax.plot(cumulative_epochs, c="black")
         ax.set_xlabel("Minutes elapsed since training started")
         ax.set_ylabel("Cumulative epochs completed")
