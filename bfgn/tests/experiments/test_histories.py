@@ -2,7 +2,6 @@ import tempfile
 
 from bfgn.experiments import histories
 
-
 _MOCK_HISTORY_1 = {"a": [1, 2], "b": [5, 6]}
 _MOCK_HISTORY_2 = {"a": [3, 4], "c": [7, 8]}
 _MOCK_HISTORY_COMBINED = {"a": [1, 2, 3, 4], "b": [5, 6], "c": [7, 8]}

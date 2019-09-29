@@ -1,15 +1,14 @@
 import logging
 from typing import List
 
-from matplotlib import gridspec
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 import sklearn.metrics
+from matplotlib import gridspec
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from bfgn.reporting import samples
 from bfgn.reporting.visualizations import colormaps, subplots
-
 
 _logger = logging.getLogger(__name__)
 

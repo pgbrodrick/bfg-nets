@@ -1,14 +1,14 @@
 import logging
 import os
+import subprocess
 from typing import List, Tuple
 
 import gdal
 import keras
-import matplotlib.pyplot as plt
 import matplotlib as mpl
 import matplotlib.gridspec as gridspec
+import matplotlib.pyplot as plt
 import numpy as np
-import subprocess
 from tqdm import tqdm
 
 from bfgn.data_management import common_io, ooc_functions

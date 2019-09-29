@@ -1,15 +1,15 @@
-import os
 import copy
-import fiona
-import gdal
 import logging
-import numpy as np
-from numpy import matlib
-import rasterio.features
+import os
 from typing import List, Tuple
 
-from bfgn.configuration import configs
+import fiona
+import gdal
+import numpy as np
+import rasterio.features
+from numpy import matlib
 
+from bfgn.configuration import configs
 
 _logger = logging.getLogger(__name__)
 

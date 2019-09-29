@@ -10,8 +10,8 @@ from bfgn.configuration import configs
 from bfgn.data_management.data_core import DataContainer
 from bfgn.data_management.sequences import BaseSequence
 from bfgn.experiments import callbacks, histories, losses, models
-from bfgn.utils import compute_access, logging as root_logging
-
+from bfgn.utils import compute_access
+from bfgn.utils import logging as root_logging
 
 _logger = logging.getLogger(__name__)
 

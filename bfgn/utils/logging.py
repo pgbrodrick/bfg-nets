@@ -2,7 +2,6 @@ import logging
 import logging.handlers
 import sys
 
-
 MAX_BYTES = int(100 * 1024 * 1024)  # 10 MB
 
 

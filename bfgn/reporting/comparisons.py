@@ -2,11 +2,10 @@ import os
 from typing import List
 
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
+from matplotlib.backends.backend_pdf import PdfPages
 
 from bfgn.experiments import histories
-
 
 plt.switch_backend("Agg")  # Needed for remote server plotting
 

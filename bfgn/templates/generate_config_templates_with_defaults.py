@@ -4,7 +4,6 @@ from bfgn import architectures, utils
 from bfgn.configuration import configs
 from bfgn.utils import logging
 
-
 _logger = utils.logging.get_root_logger()
 _logger.setLevel("DEBUG")
 

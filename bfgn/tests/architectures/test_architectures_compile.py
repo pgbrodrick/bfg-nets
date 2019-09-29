@@ -1,14 +1,5 @@
-from bfgn.architectures import (
-    alex_net,
-    dense_flat_net,
-    dense_unet,
-    dilation_net,
-    flat_net,
-    residual_dilation_net,
-    residual_flat_net,
-    residual_unet,
-    unet,
-)
+from bfgn.architectures import alex_net, dense_flat_net, dense_unet, dilation_net, flat_net, residual_dilation_net, \
+    residual_flat_net, residual_unet, unet
 
 
 def test_alex_net_builds_and_compiles():

@@ -3,7 +3,6 @@ from typing import Tuple
 import keras
 from keras.layers import BatchNormalization, Concatenate, Conv2D
 
-
 # TODO: rename functions where necessary
 
 

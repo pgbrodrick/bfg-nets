@@ -7,7 +7,6 @@ import numpy as np
 
 from bfgn.reporting import samples
 
-
 plt.switch_backend("Agg")  # Needed for remote server plotting
 
 _logger = logging.getLogger(__name__)

@@ -1,14 +1,7 @@
 from typing import Tuple
 
 import keras
-from keras.layers import (
-    BatchNormalization,
-    Concatenate,
-    Conv2D,
-    MaxPooling2D,
-    UpSampling2D,
-    Conv2DTranspose,
-)
+from keras.layers import BatchNormalization, Concatenate, Conv2D, Conv2DTranspose, MaxPooling2D, UpSampling2D
 
 from bfgn.architectures import config_sections, network_sections
 

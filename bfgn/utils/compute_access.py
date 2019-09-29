@@ -1,7 +1,7 @@
-import tensorflow
 import os
-import psutil
 
+import psutil
+import tensorflow
 
 _GPU_TYPES = ["GPU", "XLA_GPU"]
 

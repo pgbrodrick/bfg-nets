@@ -2,14 +2,15 @@
 
 import argparse
 import os
-import sys
-import requests
-import gdal
 import subprocess
+import sys
 
-from rsCNN.configuration import configs
-from rsCNN.data_management import data_core, apply_model_to_data
+import gdal
+import requests
+
 import rsCNN.reporting.reports
+from rsCNN.configuration import configs
+from rsCNN.data_management import apply_model_to_data, data_core
 from rsCNN.experiments import experiments
 from rsCNN.utils import logging
 

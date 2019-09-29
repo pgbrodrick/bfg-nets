@@ -8,7 +8,6 @@ import numpy as np
 from bfgn.reporting import samples
 from bfgn.reporting.visualizations import subplots
 
-
 LABEL_CLASSIFICATION = "CLASSIFICATION"
 LABEL_REGRESSION = "REGRESSION"
 

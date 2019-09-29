@@ -1,14 +1,13 @@
-from collections import OrderedDict
 import copy
 import logging
 import os
+from collections import OrderedDict
 from typing import Dict, List
 
 import yaml
 
 from bfgn.architectures import config_sections
 from bfgn.configuration import sections
-
 
 _logger = logging.getLogger(__name__)
 

@@ -1,14 +1,13 @@
 import logging
 from typing import Union
 
-from matplotlib import patches
-import matplotlib.pyplot as plt
 import matplotlib.cm
+import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import patches
 
 from bfgn.reporting import samples
 from bfgn.reporting.visualizations import colormaps
-
 
 plt.switch_backend("Agg")  # Needed for remote server plotting
 

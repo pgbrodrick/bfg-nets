@@ -4,6 +4,7 @@ channels:
   - conda-forge
 dependencies:
   - black>=19.3b0
+  - isort>=4.3.21
   - pydocstyle>=3.0.0
   - pytest>=4.6.2
   - pytest-cov>=2.7.1

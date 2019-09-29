@@ -1,7 +1,8 @@
+from typing import List, Tuple
+
 import gdal
 import numpy as np
 from scipy import signal
-from typing import List, Tuple
 
 
 def add_edges_to_binary_image(

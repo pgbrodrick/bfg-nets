@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.interpolate import griddata
 
-
 VALUE_NO_DATA = -9999
 
 

@@ -8,7 +8,6 @@ import keras
 from bfgn.configuration import configs
 from bfgn.experiments import experiments, histories
 
-
 _logger = logging.getLogger(__name__)
 
 

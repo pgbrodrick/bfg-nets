@@ -1,6 +1,7 @@
+from typing import List
+
 import keras
 import numpy as np
-from typing import List
 
 from bfgn.configuration import configs
 from bfgn.data_management import scalers, sequences

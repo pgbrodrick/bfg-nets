@@ -1,9 +1,9 @@
 import logging
-import numpy as np
 import os
+import shutil
 from typing import List, Tuple
 
-import shutil
+import numpy as np
 
 _MAX_UNIQUE_RESPONSES = 100
 

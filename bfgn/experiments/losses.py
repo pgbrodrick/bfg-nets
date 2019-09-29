@@ -3,7 +3,6 @@ from typing import Callable
 
 import keras
 
-
 _logger = logging.getLogger(__name__)
 
 _LOSS_TYPE_CC = ("cc", "categorical_crossentropy")

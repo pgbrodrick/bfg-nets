@@ -9,7 +9,6 @@ from bfgn.configuration import configs
 from bfgn.data_management import data_core
 from bfgn.experiments import experiments
 
-
 plt.switch_backend("Agg")  # Needed for remote server plotting
 
 

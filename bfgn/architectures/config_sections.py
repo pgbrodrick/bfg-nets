@@ -5,7 +5,6 @@ import keras
 
 from bfgn.configuration import DEFAULT_REQUIRED_VALUE, sections
 
-
 # Global parameters
 DEFAULT_FILTERS = 64
 DEFAULT_KERNEL_SIZE = (3, 3)

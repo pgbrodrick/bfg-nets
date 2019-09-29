@@ -7,10 +7,9 @@ import gdal
 import numpy as np
 
 from bfgn.configuration import configs, sections
-from bfgn.data_management import scalers, training_data, common_io
+from bfgn.data_management import common_io, scalers, training_data
 from bfgn.data_management.sequences import MemmappedSequence
 from bfgn.utils import logging as root_logging
-
 
 _FILENAME_BUILT_DATA_CONFIG_SUFFIX = "built_data_config.yaml"
 _FILENAME_FEATURES_SUFFIX = "features_{}.npy"

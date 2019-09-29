@@ -1,16 +1,17 @@
 import copy
+import logging
+import os
+from typing import List, Tuple
+
 import fiona
 import gdal
-import logging
 import numpy as np
 import ogr
 import osr
-import os
 from tqdm import tqdm
-from typing import List, Tuple
 
 from bfgn.configuration import configs, sections
-from bfgn.data_management import common_io, ooc_functions, data_core
+from bfgn.data_management import common_io, data_core, ooc_functions
 
 _logger = logging.getLogger(__name__)
 

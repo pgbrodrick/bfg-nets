@@ -7,7 +7,6 @@ import joblib
 import numpy as np
 import sklearn.preprocessing
 
-
 _logger = logging.getLogger(__name__)
 
 

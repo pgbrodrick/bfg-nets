@@ -2,25 +2,19 @@ import logging
 import os
 from typing import List
 
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
-import matplotlib.gridspec as gridspec
 import matplotlib.cm as cm
-from scipy import stats
+import matplotlib.gridspec as gridspec
+import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.backends.backend_pdf import PdfPages
+from scipy import stats
 
 from bfgn.configuration import configs
 from bfgn.data_management import data_core
 from bfgn.experiments import experiments
 from bfgn.reporting import samples
-from bfgn.reporting.visualizations import (
-    histories,
-    logs,
-    model_performance,
-    networks,
-    samples as samples_viz,
-)
-
+from bfgn.reporting.visualizations import histories, logs, model_performance, networks
+from bfgn.reporting.visualizations import samples as samples_viz
 
 plt.switch_backend("Agg")  # Needed for remote server plotting
 

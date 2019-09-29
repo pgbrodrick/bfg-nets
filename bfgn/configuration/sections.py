@@ -1,16 +1,16 @@
-from collections import OrderedDict
-import gdal
 import logging
-import numpy as np
 import os
 import re
+from collections import OrderedDict
 from typing import Dict, List, Type
+
+import gdal
+import numpy as np
 
 from bfgn import architectures
 from bfgn.configuration import DEFAULT_OPTIONAL_VALUE, DEFAULT_REQUIRED_VALUE
 from bfgn.data_management import scalers
 from bfgn.experiments import losses
-
 
 """
 How to use sections:  Configs and ConfigSections are the tools we (currently) use to handle the numerous parameters

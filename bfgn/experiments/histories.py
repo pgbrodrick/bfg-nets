@@ -2,7 +2,6 @@ import logging
 import pickle
 from typing import Union
 
-
 _logger = logging.getLogger(__name__)
 
 

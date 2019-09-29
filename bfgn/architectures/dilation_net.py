@@ -5,7 +5,6 @@ from keras.layers import BatchNormalization, Conv2D
 
 from bfgn.architectures import config_sections
 
-
 DEFAULT_DILATION_RATE = 2
 DEFAULT_NUM_LAYERS = 8
 

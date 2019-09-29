@@ -7,7 +7,6 @@ import numpy as np
 
 from bfgn.data_management.scalers import BaseGlobalScaler
 
-
 _logger = logging.getLogger(__name__)
 
 

@@ -3,7 +3,6 @@ from typing import Union
 
 import keras
 
-
 _logger = logging.getLogger(__name__)
 
 
