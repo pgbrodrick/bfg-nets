@@ -157,6 +157,7 @@ def build_training_data_ordered(
     progress_bar = tqdm(desc="Reading data chunks", total=config.data_build.max_samples, ncols=80, mininterval=1)
 
     _num_samples_total = 0
+    is_total_sampling_complete = False
 
     for idx_site in range(len(config.raw_files.feature_files)):
         _logger.debug("Reading loop: Site {}".format(idx_site))
