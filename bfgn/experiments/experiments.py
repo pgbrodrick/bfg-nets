@@ -26,6 +26,11 @@ class Experiment(object):
     """str: Filepath to which model config is saved."""
     model = None
     """keras.models.Model: Keras model object."""
+    model_gbs = None
+    """float: Estimated size of model in gigabytes. Please note that this is just an estimate and that it may be
+    incorrect. We're getting unusual results with small models causing OOM errors and need to determine whether this is
+    due to model size estimates being too low, configuration issues with the compute resources including GPUs, or 
+    other."""
     filepath_model = None
     """str: Filepath to which Keras model is saved."""
     history = None
@@ -95,6 +100,8 @@ class Experiment(object):
             self.config.model_training.architecture_name, self.config.architecture, input_shape
         )
         self.model.compile(loss=self._create_loss_function(), optimizer=self.config.model_training.optimizer)
+        self.model_gbs = self.calculate_model_memory_footprint(self.config.data_samples.batch_size)
+        self.logger.debug('Estimated model size: {} GBs'.format(self.model_gbs))
         models.save_model(self.model, self.filepath_model)
         self.loaded_existing_model = False
 
@@ -108,6 +115,8 @@ class Experiment(object):
         self.model = models.load_model(
             self.filepath_model, custom_objects={"_cropped_loss": self._create_loss_function()}
         )
+        self.model_gbs = self.calculate_model_memory_footprint(self.config.data_samples.batch_size)
+        self.logger.debug('Estimated model size: {} GBs'.format(self.model_gbs))
         existing_shape = self.model.layers[0].input_shape[1:]
         assert (
             existing_shape == input_shape
@@ -177,6 +186,7 @@ class Experiment(object):
     def calculate_model_memory_footprint(self, batch_size: int) -> float:
         """Calculate model memory footprint. Shamelessly copied from (but not tested rigorously):
         https://stackoverflow.com/questions/43137288/how-to-determine-needed-memory-of-keras-model.
+        Please note that this is only an estimate and may be incorrect, but we have not been able to test this further.
         Args:
             batch_size:  Batch size for training.
 
@@ -185,6 +195,8 @@ class Experiment(object):
         """
         shapes_mem_count = 0
         for l in self.model.layers:
+            if l.name.startswith('concatenate'):
+                continue
             single_layer_mem = 1
             for s in l.output_shape:
                 if s is None:
