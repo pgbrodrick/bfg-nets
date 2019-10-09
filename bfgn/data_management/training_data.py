@@ -142,7 +142,7 @@ def build_training_data_ordered(
                             _logger.debug("Sparsity check response fraction: {}".format(response_fractions))
                             if np.any(response_fractions > config.data_build.response_nodata_maximum_fraction):
                                 valid_locations[subset[_x_loc]] = False
-            _logger.info(
+            _logger.debug(
                 "Filtering {} out of {} points from sprasity check.".format(
                     len(valid_locations) - np.sum(valid_locations), len(valid_locations)
                 )
@@ -320,7 +320,7 @@ def build_training_data_from_response_points(
                         y_sample_points.pop(-1)
                         band_responses.pop(-1)
                 else:
-                    _logger.info(
+                    _logger.warning(
                         "WARNING: Non point gemoetry ignored in file {}".format(
                             config.raw_files.response_files[_site][0]
                         )
@@ -1036,7 +1036,7 @@ def check_built_data_files_exist(config: configs.Config) -> bool:
     if not missing_files:
         _logger.debug("Built data files found at paths: {}".format(", ".join(filepaths)))
     else:
-        _logger.info("Built data files were not found at paths: {}".format(", ".join(missing_files)))
+        _logger.warning("Built data files were not found at paths: {}".format(", ".join(missing_files)))
     return not missing_files
 
 
@@ -1047,8 +1047,8 @@ def _log_munged_data_information(
     features_munged: np.array = None, responses_munged: np.array = None, weights_munged: np.array = None
 ) -> None:
     if features_munged is not None:
-        _logger.info("Munged features shape: {}".format(features_munged.shape))
+        _logger.debug("Munged features shape: {}".format(features_munged.shape))
     if responses_munged is not None:
-        _logger.info("Munged responses shape: {}".format(responses_munged.shape))
+        _logger.debug("Munged responses shape: {}".format(responses_munged.shape))
     if weights_munged is not None:
-        _logger.info("Munged weights shape: {}".format(weights_munged.shape))
+        _logger.debug("Munged weights shape: {}".format(weights_munged.shape))

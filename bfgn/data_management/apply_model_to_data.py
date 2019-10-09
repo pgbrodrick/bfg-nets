@@ -1,12 +1,9 @@
 import logging
 import os
-import subprocess
 from typing import List, Tuple
 
 import gdal
 import keras
-import matplotlib as mpl
-import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
