@@ -63,7 +63,7 @@ class HistoryCheckpoint(keras.callbacks.Callback):
         # Save if necessary
         self.epochs_since_last_save += 1
         if self.epochs_since_last_save >= self.period:
-            _logger.debug("Checkpointing")
+            _logger.debug("Checkpointing model")
             self._save_history()
             self.epochs_since_last_save = 0
 

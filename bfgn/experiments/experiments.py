@@ -66,7 +66,6 @@ class Experiment(object):
 
         self.logger = root_logging.get_bfgn_logger(
             'bfgn.experiments', self.config.model_training.log_level, self.filepath_logs)
-        self.logger.setLevel(self.config.model_training.log_level)
 
         self._save_new_config_or_assert_existing_config_matches()
 
@@ -95,6 +94,7 @@ class Experiment(object):
         else:
             self._load_existing_model(input_shape)
             self._load_existing_history()
+        self.logger.debug("Estimated model size: {} GBs".format(self.model_gbs))
 
     def _build_new_model(self, input_shape: Tuple[int, int, int]) -> None:
         self.model = config_sections.create_model_from_architecture_config_section(
@@ -102,7 +102,6 @@ class Experiment(object):
         )
         self.model.compile(loss=self._create_loss_function(), optimizer=self.config.model_training.optimizer)
         self.model_gbs = self.calculate_model_memory_footprint(self.config.data_samples.batch_size)
-        self.logger.debug("Estimated model size: {} GBs".format(self.model_gbs))
         models.save_model(self.model, self.filepath_model)
         self.loaded_existing_model = False
 
@@ -117,7 +116,6 @@ class Experiment(object):
             self.filepath_model, custom_objects={"_cropped_loss": self._create_loss_function()}
         )
         self.model_gbs = self.calculate_model_memory_footprint(self.config.data_samples.batch_size)
-        self.logger.debug("Estimated model size: {} GBs".format(self.model_gbs))
         existing_shape = self.model.layers[0].input_shape[1:]
         assert (
             existing_shape == input_shape
