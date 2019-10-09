@@ -1,10 +1,12 @@
 import logging
 import logging.handlers
+import socket
+import uuid
 
 MAX_BYTES = int(100 * 1024 * 1024)  # 10 MB
 
 
-def get_bfgn_logger(log_module: str, log_level: str, log_outfile: str) -> logging.Logger:
+def get_bfgn_logger(log_module: str, log_level: str, log_outfile: str) -> logging.LoggerAdapter:
     """Get a root logger configured to log to stdout and optionally to a log file. Note that bfgn log messages will
     also appear in the log files, so this is probably useful even if you don't write your own logging messages.
 
@@ -22,8 +24,9 @@ def get_bfgn_logger(log_module: str, log_level: str, log_outfile: str) -> loggin
     """
     logger = logging.getLogger(log_module)
     logger.setLevel(log_level)
-    formatter = logging.Formatter(fmt="%(asctime)s - %(processName)s - %(name)s - %(levelname)s - %(message)s")
+    formatter = logging.Formatter(
+        fmt="%(asctime)s - %(hostname)s - %(instanceuuid)s - %(processName)s - %(name)s - %(levelname)s - %(message)s")
     handler = logging.handlers.RotatingFileHandler(log_outfile, maxBytes=MAX_BYTES)
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    return logger
+    return logging.LoggerAdapter(logger, {'hostname': socket.gethostname(), 'instanceuuid': uuid.uuid1()})
