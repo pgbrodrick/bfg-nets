@@ -68,7 +68,8 @@ class DataContainer:
 
         create_built_data_output_directory(self.config)
 
-        self.logger = root_logging.get_root_logger(self.config.data_build.log_level, get_log_filepath(self.config))
+        self.logger = root_logging.get_bfgn_logger(
+            'bfgn.data_management', self.config.data_build.log_level, get_log_filepath(self.config))
         self.logger.setLevel(self.config.data_build.log_level)
 
         if os.path.isfile(get_built_data_container_filepath(self.config)):
