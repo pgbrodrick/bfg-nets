@@ -56,7 +56,7 @@ def _plot_samples(
 ) -> List[plt.Figure]:
     # Calculate figure parameters
     figures = list()
-    num_pages = min(max_pages, np.ceil(sampled.num_samples / max_samples_per_page))
+    num_pages = min(max_pages, int(np.ceil(sampled.num_samples / max_samples_per_page)))
     num_features = min(max_features_per_page, sampled.num_features)
     num_responses = min(max_responses_per_page, sampled.num_responses)
     if sample_type is LABEL_CLASSIFICATION:
@@ -72,9 +72,12 @@ def _plot_samples(
         height = 1.5 * max_samples_per_page
         fig = plt.figure(figsize=(width, height))
         grid = gridspec.GridSpec(max_samples_per_page, num_subplots)
-        idxs_samples = range(idx_page * max_samples_per_page, (1 + idx_page) * max_samples_per_page)
-        for idx_sample in idxs_samples:
-            sample_axes = iter([plt.subplot(grid[idx_sample, idx_subplot]) for idx_subplot in range(num_subplots)])
+        idxs_samples = range(
+            idx_page * max_samples_per_page,
+            min(sampled.num_samples, (1 + idx_page) * max_samples_per_page)
+        )
+        for idx_row, idx_sample in enumerate(idxs_samples):
+            sample_axes = iter([plt.subplot(grid[idx_row, idx_subplot]) for idx_subplot in range(num_subplots)])
             sample_plotter(sampled, idx_sample, num_features, num_responses, sample_axes)
         fig.suptitle("{}Sequence Samples (page {})".format(sampled.data_sequence_label + " " or "", idx_page + 1))
         figures.append(fig)
