@@ -24,11 +24,6 @@ def get_root_logger(log_level: str, log_outfile: str) -> logging.Logger:
     logger = logging.getLogger("bfgn")
     logger.setLevel(log_level)
     formatter = logging.Formatter(fmt="%(asctime)s - %(processName)s - %(name)s - %(levelname)s - %(message)s")
-    # Stream handler
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    # File handler
     handler = logging.handlers.RotatingFileHandler(log_outfile, maxBytes=MAX_BYTES)
     handler.setFormatter(formatter)
     logger.addHandler(handler)
