@@ -70,7 +70,7 @@ def test_experiment_build_or_load_model_sets_existing_model_history_attrs(config
 def test_experiment_build_or_load_model_existing_wrong_input_shape_raises(config_existing) -> None:
     experiment = experiments.Experiment(config_existing)
     with pytest.raises(AssertionError):
-        experiment.build_or_load_model(num_features=DEFAULT_NUM_FEATURES+1)
+        experiment.build_or_load_model(num_features=DEFAULT_NUM_FEATURES + 1)
 
 
 def test_experiment__load_existing_history_loads_sets_attrs_with_val_loss(config_new) -> None:

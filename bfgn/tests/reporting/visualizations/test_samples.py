@@ -18,7 +18,7 @@ def mock_sampled(tmp_path) -> object:
 
     class MockSampled:
         data_sequence = MockDataSeq
-        data_sequence_label = 'test'
+        data_sequence_label = "test"
         model = None
         is_model_trained = True
         config = MockConfig
@@ -41,8 +41,8 @@ def mock_sampled(tmp_path) -> object:
         trans_predictions_range = np.ones((5, 2))
         weights = np.ones((3, 8, 8))
         weights_range = np.ones((1, 2))
-        feature_band_types = ['R'] * 4
-        response_band_types = ['R'] * 5
+        feature_band_types = ["R"] * 4
+        response_band_types = ["R"] * 5
 
     return MockSampled
 

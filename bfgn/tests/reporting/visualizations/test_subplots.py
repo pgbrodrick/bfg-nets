@@ -105,7 +105,7 @@ def test__plot_sample_attribute_returns_early_no_attribute() -> None:
         raw_responses = None
 
     fig, ax = plt.subplots()
-    subplots._plot_sample_attribute(MockSampled, None, None, 'raw_responses', ax, None, None)
+    subplots._plot_sample_attribute(MockSampled, None, None, "raw_responses", ax, None, None)
 
 
 def test__plot_sample_attribute_passes_categorical() -> None:
@@ -114,7 +114,7 @@ def test__plot_sample_attribute_passes_categorical() -> None:
         num_responses = 2
 
     fig, ax = plt.subplots()
-    subplots._plot_sample_attribute(MockSampled, 0, 0, 'categorical_responses', ax, True, True)
+    subplots._plot_sample_attribute(MockSampled, 0, 0, "categorical_responses", ax, True, True)
 
 
 def test__plot_sample_attribute_passes_continuous() -> None:
@@ -123,7 +123,7 @@ def test__plot_sample_attribute_passes_continuous() -> None:
         raw_responses_range = np.array([0, 1]).reshape((1, 2))
 
     fig, ax = plt.subplots()
-    subplots._plot_sample_attribute(MockSampled, 0, 0, 'raw_responses', ax, True, True)
+    subplots._plot_sample_attribute(MockSampled, 0, 0, "raw_responses", ax, True, True)
 
 
 def test_plot_classification_predictions_max_likelihood_returns_early_no_axis() -> None:
@@ -270,8 +270,8 @@ def test_add_internal_window_to_subplot_passes() -> None:
 
 
 def test__format_number_int_valid() -> None:
-    assert subplots._format_number(1) == '1'
+    assert subplots._format_number(1) == "1"
 
 
 def test__format_number_float_valid() -> None:
-    assert subplots._format_number(1.2345678) == '1.23'
+    assert subplots._format_number(1.2345678) == "1.23"

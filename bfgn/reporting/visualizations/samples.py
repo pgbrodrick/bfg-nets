@@ -73,8 +73,7 @@ def _plot_samples(
         fig = plt.figure(figsize=(width, height))
         grid = gridspec.GridSpec(max_samples_per_page, num_subplots)
         idxs_samples = range(
-            idx_page * max_samples_per_page,
-            min(sampled.num_samples, (1 + idx_page) * max_samples_per_page)
+            idx_page * max_samples_per_page, min(sampled.num_samples, (1 + idx_page) * max_samples_per_page)
         )
         for idx_row, idx_sample in enumerate(idxs_samples):
             sample_axes = iter([plt.subplot(grid[idx_row, idx_subplot]) for idx_subplot in range(num_subplots)])
