@@ -64,7 +64,7 @@ class Experiment(object):
         if not os.path.exists(self.config.model_training.dir_out):
             os.makedirs(self.config.model_training.dir_out)
 
-        self.logger = root_logging.get_root_logger(self.filepath_logs)
+        self.logger = root_logging.get_root_logger(self.config.model_training.log_level, self.filepath_logs)
         self.logger.setLevel(self.config.model_training.log_level)
 
         self._save_new_config_or_assert_existing_config_matches()
