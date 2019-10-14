@@ -65,7 +65,8 @@ class Experiment(object):
             os.makedirs(self.config.model_training.dir_out)
 
         self.logger = root_logging.get_bfgn_logger(
-            'bfgn.experiments', self.config.model_training.log_level, self.filepath_logs)
+            "bfgn.experiments", self.config.model_training.log_level, self.filepath_logs
+        )
 
         self._save_new_config_or_assert_existing_config_matches()
 

@@ -69,7 +69,8 @@ class DataContainer:
         create_built_data_output_directory(self.config)
 
         self.logger = root_logging.get_bfgn_logger(
-            'bfgn.data_management', self.config.data_build.log_level, get_log_filepath(self.config))
+            "bfgn.data_management", self.config.data_build.log_level, get_log_filepath(self.config)
+        )
 
         if os.path.isfile(get_built_data_container_filepath(self.config)):
             _logger.info("Previously saved DataContainer found")

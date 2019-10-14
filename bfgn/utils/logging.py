@@ -22,8 +22,7 @@ def get_bfgn_logger(log_module: str, log_level: str, log_outfile: str) -> loggin
     """
     logger = logging.getLogger(log_module)
     logger.setLevel(log_level)
-    formatter = logging.Formatter(
-        fmt="%(asctime)s - %(processName)s - %(name)s - %(levelname)s - %(message)s")
+    formatter = logging.Formatter(fmt="%(asctime)s - %(processName)s - %(name)s - %(levelname)s - %(message)s")
     handler = logging.handlers.RotatingFileHandler(log_outfile, maxBytes=MAX_BYTES)
     handler.setFormatter(formatter)
     logger.addHandler(handler)
