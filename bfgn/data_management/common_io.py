@@ -1,7 +1,7 @@
 import copy
 import logging
 import os
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import fiona
 import gdal
@@ -194,23 +194,23 @@ def get_boundary_sets_from_boundary_files(config: configs.Config) -> List[gdal.D
     return boundary_sets
 
 
-def get_site_boundary_set(config: configs.Config, _site) -> gdal.Dataset:
+def get_site_boundary_set(config: configs.Config, _site) -> Union[gdal.Dataset, None]:
     if not config.raw_files.boundary_files:
-        boundary_set = None
-    else:
-        boundary_set = noerror_open(config.raw_files.boundary_files[_site])
+        return None
+    boundary_file = config.raw_files.boundary_files[_site]
+    if boundary_file is None:
+        return None
+    return noerror_open(boundary_file)
 
-    return boundary_set
 
-
-def get_site_boundary_vector_file(config: configs.Config, _site) -> str:
+def get_site_boundary_vector_file(config: configs.Config, _site) -> Union[str, None]:
     if not config.raw_files.boundary_files:
-        boundary_file = None
-    else:
-        boundary_file = config.raw_files.boundary_files[_site]
-        if boundary_file.split(".")[-1] not in configs.sections.VECTORIZED_FILENAMES:
-            boundary_file = None
-
+        return None
+    boundary_file = config.raw_files.boundary_files[_site]
+    if boundary_file is None:
+        return None
+    if boundary_file.split(".")[-1] not in configs.sections.VECTORIZED_FILENAMES:
+        return None
     return boundary_file
 
 
