@@ -1,7 +1,5 @@
 import logging
 import logging.handlers
-import socket
-import uuid
 
 MAX_BYTES = int(100 * 1024 * 1024)  # 10 MB
 
@@ -25,8 +23,8 @@ def get_bfgn_logger(log_module: str, log_level: str, log_outfile: str) -> loggin
     logger = logging.getLogger(log_module)
     logger.setLevel(log_level)
     formatter = logging.Formatter(
-        fmt="%(asctime)s - %(hostname)s - %(instanceuuid)s - %(processName)s - %(name)s - %(levelname)s - %(message)s")
+        fmt="%(asctime)s - %(processName)s - %(name)s - %(levelname)s - %(message)s")
     handler = logging.handlers.RotatingFileHandler(log_outfile, maxBytes=MAX_BYTES)
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    return logging.LoggerAdapter(logger, {'hostname': socket.gethostname(), 'instanceuuid': uuid.uuid1()})
+    return logger
