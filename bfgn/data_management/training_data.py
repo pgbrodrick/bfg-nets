@@ -584,7 +584,8 @@ def check_projections(f_files: List[List[str]], r_files: List[List[str]], b_file
 
         b_proj = None
         if len(b_files) > 0:
-            b_proj = get_proj(b_files[_site])
+            if b_files[_site] is not None:
+                b_proj = get_proj(b_files[_site])
 
         un_f_proj = np.unique(f_proj)
         if len(un_f_proj) > 1:
@@ -652,8 +653,9 @@ def check_resolutions(f_files: List[List[str]], r_files: List[List[str]], b_file
 
         b_res = None
         if len(b_files) > 0:
-            if not _is_vector_file(b_files[_site]):
-                b_res = np.array(gdal.Open(b_files[_site], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]]
+            if b_files[_site] is not None:
+                if not _is_vector_file(b_files[_site]):
+                    b_res = np.array(gdal.Open(b_files[_site], gdal.GA_ReadOnly).GetGeoTransform())[[1, 5]]
 
         un_f_res = []
         if len(f_res) > 0:
