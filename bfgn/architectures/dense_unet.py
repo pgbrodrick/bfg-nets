@@ -83,11 +83,13 @@ def create_model(
         # Upsample
         decoder = UpSampling2D(size=pool_size, interpolation="bilinear")(decoder)
 
-        # Create dense block and concatenate
-        decoder = network_sections.Conv2D_Options(decoder, conv2d_options)
+        # Concatenate
         decoder = Concatenate()([layer_passed_through, decoder])
 
-        # Add a transition block
+        # Reduce
+        decoder = Conv2D(filters, kernel_size=1, activation=internal_activation)(decoder)
+
+        # Dense block
         decoder = network_sections.dense_2d_block(decoder, transition_options, num_layers)
 
     # Output convolutions
