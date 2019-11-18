@@ -60,9 +60,14 @@ def dense_2d_block(inlayer: keras.layers, conv_options: dict, block_depth: int) 
     """
 
     dense_layer = inlayer
+    layers = [dense_layer]
     for _block_step in range(block_depth):
-        intermediate_layer = Conv2D_Options(dense_layer, conv_options)
-
-        dense_layer = Concatenate(axis=-1)([dense_layer, intermediate_layer])
+        # 1x1 conv on inputs to layer
+        dense_layer = Conv2D(conv_options['filters'], kernel_size=1, activation=conv_options['activation'])(dense_layer)
+        # kxk conv
+        dense_layer = Conv2D_Options(dense_layer, conv_options)
+        layers.append(dense_layer)
+        # concatenate
+        dense_layer = Concatenate(axis=-1)(layers)
 
     return dense_layer
