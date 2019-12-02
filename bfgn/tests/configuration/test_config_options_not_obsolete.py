@@ -12,6 +12,8 @@ def test_config_options_not_obsolete():
     num_all_obsolete = 0
     architecture_names = architectures.get_available_architectures()
     for idx_config, architecture_name in enumerate(architecture_names):
+        if architecture_name == "prebuilt":
+            continue
         config = configs.create_config_template(architecture_name)
         if idx_config == 0:
             all_generic_obsolete, num_obsolete = _check_generic_config_options(config)

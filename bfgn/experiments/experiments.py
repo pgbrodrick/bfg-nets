@@ -2,6 +2,7 @@ import logging
 import os
 from typing import Callable, Tuple
 
+import keras
 import keras.backend as K
 import numpy as np
 
@@ -82,7 +83,9 @@ class Experiment(object):
                 self.filepath_config, config_differences
             )
 
-    def build_or_load_model(self, data_container: DataContainer = None, num_features: int = None) -> None:
+    def build_or_load_model(
+        self, data_container: DataContainer = None, num_features: int = None, prebuilt_model: keras.models.Model = None
+    ) -> None:
         assert bool(data_container) != bool(
             num_features
         ), "Model building requires either DataContainer or num_features, not both."
@@ -90,17 +93,20 @@ class Experiment(object):
             num_features = len(data_container.feature_band_types)
         input_shape = (self.config.data_build.window_radius * 2, self.config.data_build.window_radius * 2, num_features)
         if not os.path.exists(self.filepath_model):
-            self._build_new_model(input_shape)
+            self._build_new_model(input_shape, prebuilt_model)
             self._build_new_history()
         else:
             self._load_existing_model(input_shape)
             self._load_existing_history()
         self.logger.debug("Estimated model size: {} GBs".format(self.model_gbs))
 
-    def _build_new_model(self, input_shape: Tuple[int, int, int]) -> None:
-        self.model = config_sections.create_model_from_architecture_config_section(
-            self.config.model_training.architecture_name, self.config.architecture, input_shape
-        )
+    def _build_new_model(self, input_shape: Tuple[int, int, int], prebuilt_model: keras.models.Model = None) -> None:
+        if prebuilt_model:
+            self.model = prebuilt_model
+        else:
+            self.model = config_sections.create_model_from_architecture_config_section(
+                self.config.model_training.architecture_name, self.config.architecture, input_shape
+            )
         self.model.compile(loss=self._create_loss_function(), optimizer=self.config.model_training.optimizer)
         self.model_gbs = self.calculate_model_memory_footprint(self.config.data_samples.batch_size)
         models.save_model(self.model, self.filepath_model)
